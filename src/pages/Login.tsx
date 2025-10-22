@@ -25,7 +25,7 @@ const Login = () => {
           description: "Redirecting to dashboard...",
         });
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate("/overview");
         }, 500);
       } else {
         toast({
