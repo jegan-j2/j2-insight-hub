@@ -1,238 +1,239 @@
-import { useParams } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, TrendingUp, Users, Calendar, Phone, Mail, DollarSign } from "lucide-react";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, CalendarIcon, Phone, CheckCircle, Mail, Target, TrendingUp, Calendar as CalendarDaysIcon } from "lucide-react";
+import { format, differenceInDays } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
+import { ClientSQLMeetingsTable } from "@/components/ClientSQLMeetingsTable";
 
 const ClientView = () => {
   const { clientSlug } = useParams();
+  const navigate = useNavigate();
   
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(2025, 9, 4), // October 4, 2025
+    to: new Date(2025, 10, 3), // November 3, 2025
+  });
+
+  const [lastUpdated] = useState(new Date());
+
   // Mock client data - in a real app, this would come from an API
   const clientNames: Record<string, string> = {
     "inxpress": "Inxpress",
     "congero": "Congero",
-    "techcorp": "TechCorp Solutions",
+    "techcorp-solutions": "TechCorp Solutions",
     "global-logistics": "Global Logistics",
-    "finserve": "FinServe Group",
+    "finserve-group": "FinServe Group",
     "healthcare-plus": "HealthCare Plus",
   };
 
   const clientName = clientNames[clientSlug || ""] || "Unknown Client";
 
-  const stats = [
-    {
-      title: "Total Leads",
-      value: "8,240",
-      icon: Users,
-      trend: "+14.2%",
-      color: "text-secondary",
-    },
-    {
-      title: "ROI",
-      value: "520%",
-      icon: TrendingUp,
-      trend: "+12.5%",
-      color: "text-accent",
-    },
-    {
-      title: "Meetings Booked",
-      value: "84",
-      icon: Calendar,
-      trend: "+18.3%",
-      color: "text-secondary",
-    },
-    {
-      title: "Revenue Generated",
-      value: "$245K",
-      icon: DollarSign,
-      trend: "+22.1%",
-      color: "text-accent",
-    },
-  ];
+  // KPI Data for Inxpress
+  const kpiData = {
+    dials: 861,
+    answered: 161,
+    answeredPercent: 18.70,
+    dmsReached: 59,
+    mqls: 21,
+    mqlsOnDmsPercent: 35.59,
+    mqlsOnDialsPercent: 2.44,
+    sqls: 6,
+    sqlsOnDmsPercent: 10.17,
+    sqlsOnDialsPercent: 0.70,
+  };
 
-  const recentLeads = [
-    { company: "ABC Corp", contact: "John Smith", email: "john@abc.com", phone: "+61 400 123 456", date: "Oct 22, 2025", status: "Qualified" },
-    { company: "XYZ Ltd", contact: "Sarah Jones", email: "sarah@xyz.com", phone: "+61 400 234 567", date: "Oct 21, 2025", status: "Meeting Booked" },
-    { company: "Tech Innovations", contact: "Mike Brown", email: "mike@tech.com", phone: "+61 400 345 678", date: "Oct 20, 2025", status: "Contacted" },
-    { company: "Global Systems", contact: "Emma Wilson", email: "emma@global.com", phone: "+61 400 456 789", date: "Oct 19, 2025", status: "Qualified" },
+  // Campaign Target Data
+  const campaignData = {
+    startDate: new Date(2025, 9, 4), // October 4
+    endDate: new Date(2025, 10, 3), // November 3
+    target: 16,
+    sqlsGenerated: 6,
+    leadsRemaining: 10,
+  };
+
+  const daysRemaining = differenceInDays(campaignData.endDate, new Date());
+  const avgDailyLeadsRequired = daysRemaining > 0 ? (campaignData.leadsRemaining / daysRemaining).toFixed(2) : "0.00";
+  const progressPercent = (campaignData.sqlsGenerated / campaignData.target) * 100;
+
+  const kpiCards = [
+    { label: "Dials", value: kpiData.dials, icon: Phone, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "Answered", value: kpiData.answered, subtitle: `${kpiData.answeredPercent.toFixed(2)}%`, icon: CheckCircle, color: "text-accent", bgColor: "bg-accent/10" },
+    { label: "DMs Reached", value: kpiData.dmsReached, icon: Mail, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "MQLs on DMs Reached", value: kpiData.mqls, subtitle: `${kpiData.mqlsOnDmsPercent.toFixed(2)}%`, icon: TrendingUp, color: "text-accent", bgColor: "bg-accent/10" },
+    { label: "MQLs on Dials", value: kpiData.mqls, subtitle: `${kpiData.mqlsOnDialsPercent.toFixed(2)}%`, icon: TrendingUp, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "SQLs on DMs Reached", value: kpiData.sqls, subtitle: `${kpiData.sqlsOnDmsPercent.toFixed(2)}%`, icon: Target, color: "text-accent", bgColor: "bg-accent/10" },
+    { label: "SQLs on Dials", value: kpiData.sqls, subtitle: `${kpiData.sqlsOnDialsPercent.toFixed(2)}%`, icon: Target, color: "text-secondary", bgColor: "bg-secondary/10" },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">{clientName}</h1>
-          <p className="text-muted-foreground">Lead generation campaign performance and analytics</p>
-        </div>
-        <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-          Generate Report
-        </Button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card
-            key={stat.title}
-            className="bg-card/50 backdrop-blur-sm border-border hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-            style={{ animationDelay: `${index * 100}ms` }}
+      {/* Header with Back Button and Date Range */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/overview")}
+            className="text-secondary hover:text-secondary/80"
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-secondary flex items-center mt-2">
-                <ArrowUpRight className="h-3 w-3 mr-1" />
-                {stat.trend} from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Recent Leads */}
-      <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "400ms" }}>
-        <CardHeader>
-          <CardTitle className="text-foreground">Recent Leads</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Latest leads generated for {clientName}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Company</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Contact</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Email</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Phone</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentLeads.map((lead, index) => (
-                  <tr
-                    key={index}
-                    className="border-b border-border/50 hover:bg-muted/20 transition-colors"
-                  >
-                    <td className="py-4 px-4 font-medium text-foreground">{lead.company}</td>
-                    <td className="py-4 px-4 text-foreground">{lead.contact}</td>
-                    <td className="py-4 px-4">
-                      <a href={`mailto:${lead.email}`} className="text-secondary hover:underline">
-                        {lead.email}
-                      </a>
-                    </td>
-                    <td className="py-4 px-4 text-foreground">{lead.phone}</td>
-                    <td className="py-4 px-4 text-muted-foreground">{lead.date}</td>
-                    <td className="py-4 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        lead.status === "Meeting Booked" 
-                          ? "bg-accent/20 text-accent"
-                          : lead.status === "Qualified"
-                          ? "bg-secondary/20 text-secondary"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {lead.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Overview
+          </Button>
+          <div className="border-l border-border h-6" />
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">{clientName}</h1>
+            <p className="text-sm text-muted-foreground">
+              Last Updated: {format(lastUpdated, "MMMM dd, yyyy, h:mm a")} AEDT
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Campaign Activity */}
+        {/* Date Range Picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "justify-start text-left font-normal border-border bg-card hover:bg-muted/50",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}
+                  </>
+                ) : (
+                  format(date.from, "MMM dd, yyyy")
+                )
+              ) : (
+                <span>Pick a date range</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="end">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={setDate}
+              numberOfMonths={2}
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Date Range Note */}
+      <div className="text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2">
+        Showing data for {date?.from && format(date.from, "MMM d")} - {date?.to && format(date.to, "MMM d, yyyy")}
+      </div>
+
+      {/* Section 1: KPIs - Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "500ms" }}>
+        {/* Left Column - KPIs */}
+        <Card className="bg-card/50 backdrop-blur-sm border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Campaign Activity</CardTitle>
-            <CardDescription className="text-muted-foreground">Recent campaign updates</CardDescription>
+            <CardTitle className="text-foreground">Key Performance Indicators</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border">
-                <Mail className="h-5 w-5 text-secondary mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">Email Campaign Sent</p>
-                  <p className="text-xs text-muted-foreground">Sent to 250 prospects - 68% open rate</p>
-                  <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
+          <CardContent className="space-y-4">
+            {kpiCards.map((kpi, index) => (
+              <div
+                key={kpi.label}
+                className="flex items-center justify-between p-4 rounded-lg bg-muted/20 border border-border hover:shadow-md transition-all duration-300"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn("p-2 rounded-lg", kpi.bgColor)}>
+                    <kpi.icon className={cn("h-4 w-4", kpi.color)} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                    <p className="text-2xl font-bold text-foreground">{kpi.value.toLocaleString()}</p>
+                    {kpi.subtitle && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{kpi.subtitle}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border">
-                <Phone className="h-5 w-5 text-accent mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">Cold Calling Session</p>
-                  <p className="text-xs text-muted-foreground">42 calls made - 12 qualified leads</p>
-                  <p className="text-xs text-muted-foreground mt-1">5 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border">
-                <Calendar className="h-5 w-5 text-secondary mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">Meetings Scheduled</p>
-                  <p className="text-xs text-muted-foreground">8 new meetings booked this week</p>
-                  <p className="text-xs text-muted-foreground mt-1">1 day ago</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "600ms" }}>
+        {/* Right Column - Campaign Target */}
+        <Card className="bg-card/50 backdrop-blur-sm border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Performance Insights</CardTitle>
-            <CardDescription className="text-muted-foreground">Key metrics and trends</CardDescription>
+            <CardTitle className="text-foreground">Campaign Target</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Lead Conversion Rate</span>
-                  <span className="font-medium text-foreground">24.5%</span>
+          <CardContent className="space-y-6">
+            {/* Date Range */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <CalendarDaysIcon className="h-4 w-4 text-secondary" />
+                  <p className="text-sm text-muted-foreground">Start Date</p>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-secondary h-2 rounded-full" style={{ width: "24.5%" }} />
-                </div>
+                <p className="text-lg font-bold text-foreground">
+                  {format(campaignData.startDate, "MMM d")}
+                </p>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Meeting Success Rate</span>
-                  <span className="font-medium text-foreground">68.3%</span>
+              <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <CalendarDaysIcon className="h-4 w-4 text-accent" />
+                  <p className="text-sm text-muted-foreground">End Date</p>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-accent h-2 rounded-full" style={{ width: "68.3%" }} />
-                </div>
+                <p className="text-lg font-bold text-foreground">
+                  {format(campaignData.endDate, "MMM d")}
+                </p>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Email Response Rate</span>
-                  <span className="font-medium text-foreground">18.7%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-secondary h-2 rounded-full" style={{ width: "18.7%" }} />
-                </div>
+            </div>
+
+            {/* Target Progress */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">Target SQLs</p>
+                <p className="text-2xl font-bold text-foreground">{campaignData.target}</p>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Campaign Efficiency</span>
-                  <span className="font-medium text-foreground">92.1%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-accent h-2 rounded-full" style={{ width: "92.1%" }} />
-                </div>
+              <Progress value={progressPercent} className="h-3" />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-medium text-foreground">{progressPercent.toFixed(1)}%</span>
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-secondary/10 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">SQLs Generated</p>
+                <p className="text-2xl font-bold text-secondary">{campaignData.sqlsGenerated}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-accent/10 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Leads Remaining</p>
+                <p className="text-2xl font-bold text-accent">{campaignData.leadsRemaining}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
+                <p className="text-2xl font-bold text-foreground">{daysRemaining}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Avg Daily Required</p>
+                <p className="text-2xl font-bold text-foreground">{avgDailyLeadsRequired}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Section 2: Client-specific SQL Booked Meetings Table */}
+      <ClientSQLMeetingsTable clientSlug={clientSlug || ""} />
     </div>
   );
 };
