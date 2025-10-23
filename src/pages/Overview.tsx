@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 import { CallActivityChart } from "@/components/CallActivityChart";
 import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
+import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
 
 const Overview = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -228,61 +229,7 @@ const Overview = () => {
       </div>
 
       {/* Client Performance Table */}
-      <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "400ms" }}>
-        <CardHeader>
-          <CardTitle className="text-foreground">Client Performance</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Real-time metrics for all active clients
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Client</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Total Leads</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">ROI %</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Meetings</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clients.map((client, index) => (
-                  <tr
-                    key={client.name}
-                    className="border-b border-border/50 hover:bg-muted/20 transition-colors"
-                    style={{ animationDelay: `${500 + index * 50}ms` }}
-                  >
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center">
-                          <Target className="h-4 w-4 text-secondary" />
-                        </div>
-                        <span className="font-medium text-foreground">{client.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-foreground">{client.leads.toLocaleString()}</td>
-                    <td className="py-4 px-4 text-accent font-semibold">{client.roi}%</td>
-                    <td className="py-4 px-4 text-foreground">{client.meetings}</td>
-                    <td className="py-4 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary">
-                        Active
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <Button variant="ghost" size="sm" className="text-secondary hover:text-secondary/80">
-                        View Details
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <ClientPerformanceTable />
     </div>
   );
 };
