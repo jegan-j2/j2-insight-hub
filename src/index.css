@@ -38,6 +38,13 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
+    /* Chart colors */
+    --chart-1: 199 89% 48%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(220, 45%, 12%), hsl(220, 40%, 18%));
     --gradient-accent: linear-gradient(135deg, hsl(190, 85%, 45%), hsl(200, 80%, 50%));
@@ -77,6 +84,13 @@ All colors MUST be HSL.
     --border: 220 30% 25%;
     --input: 220 30% 20%;
     --ring: 190 85% 45%;
+
+    /* Chart colors */
+    --chart-1: 199 89% 48%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 }
 

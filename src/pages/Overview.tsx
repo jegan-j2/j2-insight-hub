@@ -8,6 +8,8 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import { CallActivityChart } from "@/components/CallActivityChart";
+import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
 
 const Overview = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -217,6 +219,12 @@ const Overview = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in" style={{ animationDelay: "300ms" }}>
+        <CallActivityChart />
+        <ConversionFunnelChart />
       </div>
 
       {/* Client Performance Table */}
