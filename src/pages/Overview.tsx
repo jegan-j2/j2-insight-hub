@@ -11,6 +11,7 @@ import type { DateRange } from "react-day-picker";
 import { CallActivityChart } from "@/components/CallActivityChart";
 import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
 import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
+import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 
 const Overview = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -230,6 +231,9 @@ const Overview = () => {
 
       {/* Client Performance Table */}
       <ClientPerformanceTable />
+
+      {/* SQL Booked Meetings Table */}
+      <SQLBookedMeetingsTable />
     </div>
   );
 };
