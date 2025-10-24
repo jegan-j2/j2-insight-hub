@@ -21,10 +21,10 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="flex h-16 items-center px-4 gap-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80" role="banner">
+      <div className="flex h-16 items-center px-4 gap-2 sm:gap-4">
         {/* Sidebar Trigger */}
-        <SidebarTrigger className="text-foreground" />
+        <SidebarTrigger className="text-foreground" aria-label="Toggle sidebar" />
 
         {/* Logo and Title */}
         <div className="flex items-center gap-3">
@@ -54,8 +54,9 @@ const Navbar = () => {
             <Button
               variant="ghost"
               className="relative h-10 w-10 rounded-full border-2 border-secondary hover:border-secondary/80 transition-colors"
+              aria-label="User menu"
             >
-              <User className="h-5 w-5 text-foreground" />
+              <User className="h-5 w-5 text-foreground" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-card border-border z-[100]" align="end">

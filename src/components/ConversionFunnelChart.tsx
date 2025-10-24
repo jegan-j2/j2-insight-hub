@@ -40,8 +40,9 @@ export const ConversionFunnelChart = () => {
         <CardTitle className="text-foreground">Conversion Funnel</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div role="img" aria-label="Pie chart showing conversion funnel distribution">
+          <ChartContainer config={chartConfig} className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={chartData}
@@ -69,6 +70,7 @@ export const ConversionFunnelChart = () => {
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   );

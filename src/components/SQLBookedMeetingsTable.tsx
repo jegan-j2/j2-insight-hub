@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/EmptyState";
 
 interface MeetingData {
   id: string;
@@ -259,10 +260,11 @@ export const SQLBookedMeetingsTable = () => {
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 hover:text-foreground transition-colors"
+      className="flex items-center gap-1 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-2 py-1"
+      aria-label={`Sort by ${label}`}
     >
       {label}
-      <ArrowUpDown className="h-3 w-3" />
+      <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
     </button>
   );
 
@@ -297,9 +299,10 @@ export const SQLBookedMeetingsTable = () => {
                 setCurrentPage(1);
               }}
               className="sm:max-w-xs bg-background/50 border-border"
+              aria-label="Search meetings"
             />
             <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="sm:w-[180px] bg-background/50 border-border">
+              <SelectTrigger className="sm:w-[180px] bg-background/50 border-border" aria-label="Filter by client">
                 <SelectValue placeholder="All Clients" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border z-50">
@@ -310,7 +313,7 @@ export const SQLBookedMeetingsTable = () => {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="sm:w-[180px] bg-background/50 border-border">
+              <SelectTrigger className="sm:w-[180px] bg-background/50 border-border" aria-label="Filter by meeting status">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border z-50">
@@ -323,7 +326,7 @@ export const SQLBookedMeetingsTable = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-thin">
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
@@ -391,8 +394,12 @@ export const SQLBookedMeetingsTable = () => {
               ))}
               {paginatedMeetings.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    No meetings found
+                  <TableCell colSpan={8} className="py-12">
+                    <EmptyState 
+                      icon={Calendar}
+                      title="No meetings found"
+                      description="No SQL booked meetings match your current filters. Try adjusting your search criteria."
+                    />
                   </TableCell>
                 </TableRow>
               )}

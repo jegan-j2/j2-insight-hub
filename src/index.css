@@ -54,6 +54,10 @@ All colors MUST be HSL.
     --shadow-glow: 0 0 40px hsl(190 85% 45% / 0.3);
     --shadow-card: 0 10px 40px -10px hsl(220 45% 8% / 0.5);
     --shadow-elevated: 0 20px 60px -15px hsl(220 45% 8% / 0.6);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
   .dark {
@@ -101,5 +105,31 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Custom scrollbar styles */
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-muted/20 rounded;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded hover:bg-muted-foreground/50;
+  }
+
+  /* Focus visible styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Touch target sizes for mobile */
+  @media (pointer: coarse) {
+    button, a, [role="button"] {
+      @apply min-h-[44px] min-w-[44px];
+    }
   }
 }

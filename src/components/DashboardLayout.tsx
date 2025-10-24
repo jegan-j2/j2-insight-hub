@@ -12,9 +12,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-secondary/10">
         <AppSidebar />
-        <div className="flex-1 flex flex-col w-full">
+        <div className="flex-1 flex flex-col w-full min-w-0">
           <Navbar />
-          <main className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-4 sm:p-6 overflow-auto" role="main">
             {children}
           </main>
         </div>

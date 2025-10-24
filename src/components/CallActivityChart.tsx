@@ -34,8 +34,9 @@ export const CallActivityChart = () => {
         <CardTitle className="text-foreground">Call Activity Trends</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div role="img" aria-label="Line chart showing call activity trends over time">
+          <ChartContainer config={chartConfig} className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
               <XAxis 
@@ -82,6 +83,7 @@ export const CallActivityChart = () => {
             </LineChart>
           </ResponsiveContainer>
         </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   );

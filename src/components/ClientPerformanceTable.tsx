@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Target, ArrowUpDown, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { EmptyState } from "@/components/EmptyState";
 
 type SortField = "name" | "dials" | "answered" | "dms" | "mqls" | "sqls" | "target" | "progress";
 type SortOrder = "asc" | "desc";
@@ -146,10 +147,11 @@ export const ClientPerformanceTable = () => {
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 hover:text-foreground transition-colors"
+      className="flex items-center gap-1 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-2 py-1"
+      aria-label={`Sort by ${label}`}
     >
       {label}
-      <ArrowUpDown className="h-3 w-3" />
+      <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
     </button>
   );
 
@@ -165,14 +167,15 @@ export const ClientPerformanceTable = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-background/50 border-border"
+              aria-label="Search clients"
             />
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-thin">
           <Table>
-            <TableHeader className="sticky top-0 bg-card z-10">
+            <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-muted-foreground">
                   <SortButton field="name" label="Client" />
@@ -256,8 +259,12 @@ export const ClientPerformanceTable = () => {
               ))}
               {filteredAndSortedClients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    No clients found matching "{searchQuery}"
+                  <TableCell colSpan={9} className="py-12">
+                    <EmptyState 
+                      icon={Search}
+                      title="No clients found"
+                      description={`No clients match "${searchQuery}". Try adjusting your search.`}
+                    />
                   </TableCell>
                 </TableRow>
               )}

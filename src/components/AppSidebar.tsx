@@ -29,7 +29,7 @@ export function AppSidebar() {
   const { open } = useSidebar();
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
+    <Sidebar collapsible="icon" className="border-r border-border" aria-label="Main navigation">
       <SidebarContent className="bg-card">
         {/* Main Navigation */}
         <SidebarGroup>
