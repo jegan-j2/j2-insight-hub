@@ -5,7 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUpDown, Download, ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
+import { format, isWithinInterval } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 interface MeetingData {
   id: string;
@@ -56,9 +57,10 @@ type SortOrder = "asc" | "desc";
 
 interface ClientSQLMeetingsTableProps {
   clientSlug: string;
+  dateRange?: DateRange;
 }
 
-export const ClientSQLMeetingsTable = ({ clientSlug }: ClientSQLMeetingsTableProps) => {
+export const ClientSQLMeetingsTable = ({ clientSlug, dateRange }: ClientSQLMeetingsTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -104,6 +106,13 @@ export const ClientSQLMeetingsTable = ({ clientSlug }: ClientSQLMeetingsTablePro
   const sortedMeetings = useMemo(() => {
     let filtered = [...inxpressMeetings];
 
+    // Apply date range filter
+    if (dateRange?.from && dateRange?.to) {
+      filtered = filtered.filter(m => 
+        isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! })
+      );
+    }
+
     filtered.sort((a, b) => {
       let aVal: any = a[sortField];
       let bVal: any = b[sortField];
@@ -124,7 +133,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug }: ClientSQLMeetingsTablePro
     });
 
     return filtered;
-  }, [sortField, sortOrder]);
+  }, [dateRange, sortField, sortOrder]);
 
   const totalPages = Math.ceil(sortedMeetings.length / rowsPerPage);
   const paginatedMeetings = sortedMeetings.slice(

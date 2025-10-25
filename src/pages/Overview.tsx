@@ -1,23 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight, Users, TrendingUp, Target, Phone, CheckCircle, Mail, DollarSign, Calendar as CalendarDaysIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { DateRange } from "react-day-picker";
 import { CallActivityChart } from "@/components/CallActivityChart";
 import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
 import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
 import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
+import { DateRangePicker } from "@/components/DateRangePicker";
+import { useDateFilter } from "@/contexts/DateFilterContext";
+import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
 
 const Overview = () => {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2025, 9, 14), // October 14, 2025
-    to: new Date(2025, 9, 21), // October 21, 2025
-  });
+  const { dateRange, setDateRange, isLoading, setIsLoading } = useDateFilter();
+  const [showContent, setShowContent] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading when date changes
+    setShowContent(false);
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      setShowContent(true);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [dateRange, setIsLoading]);
 
   // KPI Cards Data
   const kpiCards = [
@@ -111,89 +118,76 @@ const Overview = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header with Date Range Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Overview Dashboard</h1>
-          <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Overview Dashboard</h1>
+        <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
+      </div>
+
+      {/* Date Range Picker with Quick Filters */}
+      <div className="space-y-3">
+        <DateRangePicker 
+          date={dateRange} 
+          onDateChange={setDateRange}
+          className="w-full"
+        />
         
-        {/* Date Range Picker */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "justify-start text-left font-normal border-border bg-card hover:bg-muted/50",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}
-                  </>
-                ) : (
-                  format(date.from, "MMM dd, yyyy")
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="end">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-              className="pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
+        {/* Selected Date Range Display */}
+        {dateRange?.from && dateRange?.to && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2">
+            <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
+            <span>
+              Showing data from {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiCards.map((kpi, index) => (
-          <Card
-            key={kpi.title}
-            className="bg-card border-border hover:shadow-lg transition-all duration-300 hover:scale-[1.02] animate-fade-in overflow-hidden group"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className={cn("p-3 rounded-lg", kpi.bgColor)}>
-                  <kpi.icon className={cn("h-5 w-5", kpi.color)} />
+      {!showContent ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <KPICardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
+          {kpiCards.map((kpi, index) => (
+            <Card
+              key={kpi.title}
+              className="bg-card border-border hover:shadow-lg transition-all duration-300 hover:scale-[1.02] overflow-hidden group"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={cn("p-3 rounded-lg", kpi.bgColor)}>
+                    <kpi.icon className={cn("h-5 w-5", kpi.color)} />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {kpi.trendUp ? (
+                      <ArrowUpRight className="h-4 w-4 text-secondary" />
+                    ) : (
+                      <ArrowDownRight className="h-4 w-4 text-destructive" />
+                    )}
+                    <span className={cn("text-sm font-medium", kpi.trendUp ? "text-secondary" : "text-destructive")}>
+                      {kpi.trend}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  {kpi.trendUp ? (
-                    <ArrowUpRight className="h-4 w-4 text-secondary" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-destructive" />
+                <div className="space-y-1">
+                  <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{kpi.title}</p>
+                  {kpi.subtitle && (
+                    <p className="text-xs text-muted-foreground">{kpi.subtitle}</p>
                   )}
-                  <span className={cn("text-sm font-medium", kpi.trendUp ? "text-secondary" : "text-destructive")}>
-                    {kpi.trend}
-                  </span>
                 </div>
-              </div>
-              <div className="space-y-1">
-                <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
-                <p className="text-sm font-medium text-muted-foreground">{kpi.title}</p>
-                {kpi.subtitle && (
-                  <p className="text-xs text-muted-foreground">{kpi.subtitle}</p>
-                )}
-              </div>
-              <div className="mt-3 pt-3 border-t border-border">
-                <p className="text-xs text-muted-foreground">{kpi.trendLabel}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="mt-3 pt-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground">{kpi.trendLabel}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -224,16 +218,25 @@ const Overview = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in" style={{ animationDelay: "300ms" }}>
-        <CallActivityChart />
-        <ConversionFunnelChart />
-      </div>
+      {!showContent ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+          <CallActivityChart />
+          <ConversionFunnelChart />
+        </div>
+      )}
 
       {/* Client Performance Table */}
-      <ClientPerformanceTable />
-
-      {/* SQL Booked Meetings Table */}
-      <SQLBookedMeetingsTable />
+      {showContent && (
+        <>
+          <ClientPerformanceTable />
+          <SQLBookedMeetingsTable dateRange={dateRange} />
+        </>
+      )}
     </div>
   );
 };

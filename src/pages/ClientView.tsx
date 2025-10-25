@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, CalendarIcon, Phone, CheckCircle, Mail, Target, TrendingUp, Calendar as CalendarDaysIcon } from "lucide-react";
+import { ArrowLeft, Phone, CheckCircle, Mail, Target, TrendingUp, Calendar as CalendarDaysIcon } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 import { ClientSQLMeetingsTable } from "@/components/ClientSQLMeetingsTable";
+import { DateRangePicker } from "@/components/DateRangePicker";
+import { KPICardSkeleton } from "@/components/LoadingSkeletons";
 
 const ClientView = () => {
   const { clientSlug } = useParams();
@@ -21,6 +21,19 @@ const ClientView = () => {
   });
 
   const [lastUpdated] = useState(new Date());
+  const [isLoading, setIsLoading] = useState(false);
+  const [showContent, setShowContent] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading when date changes
+    setShowContent(false);
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      setShowContent(true);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [date]);
 
   // Mock client data - in a real app, this would come from an API
   const clientNames: Record<string, string> = {
@@ -73,167 +86,151 @@ const ClientView = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header with Back Button and Date Range */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/overview")}
-            className="text-secondary hover:text-secondary/80"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Overview
-          </Button>
-          <div className="border-l border-border h-6" />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{clientName}</h1>
-            <p className="text-sm text-muted-foreground">
-              Last Updated: {format(lastUpdated, "MMMM dd, yyyy, h:mm a")} AEDT
-            </p>
-          </div>
+      {/* Header with Back Button */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/overview")}
+          className="text-secondary hover:text-secondary/80"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Overview
+        </Button>
+        <div className="border-l border-border h-6" />
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">{clientName}</h1>
+          <p className="text-sm text-muted-foreground">
+            Last Updated: {format(lastUpdated, "MMMM dd, yyyy, h:mm a")} AEDT
+          </p>
         </div>
-
-        {/* Date Range Picker */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "justify-start text-left font-normal border-border bg-card hover:bg-muted/50",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}
-                  </>
-                ) : (
-                  format(date.from, "MMM dd, yyyy")
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="end">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-              className="pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
       </div>
 
-      {/* Date Range Note */}
-      <div className="text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2">
-        Showing data for {date?.from && format(date.from, "MMM d")} - {date?.to && format(date.to, "MMM d, yyyy")}
+      {/* Date Range Picker */}
+      <div className="space-y-3">
+        <DateRangePicker 
+          date={date} 
+          onDateChange={setDate}
+          className="w-full"
+        />
+        
+        {/* Campaign Period Display */}
+        {date?.from && date?.to && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2">
+            <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
+            <span>
+              Campaign Period: {format(date.from, "MMM dd")} - {format(date.to, "MMM dd, yyyy")}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Section 1: KPIs - Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - KPIs */}
-        <Card className="bg-card/50 backdrop-blur-sm border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Key Performance Indicators</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {kpiCards.map((kpi, index) => (
-              <div
-                key={kpi.label}
-                className="flex items-center justify-between p-4 rounded-lg bg-muted/20 border border-border hover:shadow-md transition-all duration-300"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn("p-2 rounded-lg", kpi.bgColor)}>
-                    <kpi.icon className={cn("h-4 w-4", kpi.color)} />
+      {!showContent ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <KPICardSkeleton />
+          <KPICardSkeleton />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+          {/* Left Column - KPIs */}
+          <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Key Performance Indicators</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {kpiCards.map((kpi, index) => (
+                <div
+                  key={kpi.label}
+                  className="flex items-center justify-between p-4 rounded-lg bg-muted/20 border border-border hover:shadow-md transition-all duration-300"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("p-2 rounded-lg", kpi.bgColor)}>
+                      <kpi.icon className={cn("h-4 w-4", kpi.color)} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                      <p className="text-2xl font-bold text-foreground">{kpi.value.toLocaleString()}</p>
+                      {kpi.subtitle && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{kpi.subtitle}</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                    <p className="text-2xl font-bold text-foreground">{kpi.value.toLocaleString()}</p>
-                    {kpi.subtitle && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{kpi.subtitle}</p>
-                    )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Right Column - Campaign Target */}
+          <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Campaign Target</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Date Range */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarDaysIcon className="h-4 w-4 text-secondary" />
+                    <p className="text-sm text-muted-foreground">Start Date</p>
                   </div>
+                  <p className="text-lg font-bold text-foreground">
+                    {format(campaignData.startDate, "MMM d")}
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarDaysIcon className="h-4 w-4 text-accent" />
+                    <p className="text-sm text-muted-foreground">End Date</p>
+                  </div>
+                  <p className="text-lg font-bold text-foreground">
+                    {format(campaignData.endDate, "MMM d")}
+                  </p>
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
 
-        {/* Right Column - Campaign Target */}
-        <Card className="bg-card/50 backdrop-blur-sm border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Campaign Target</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Date Range */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                <div className="flex items-center gap-2 mb-2">
-                  <CalendarDaysIcon className="h-4 w-4 text-secondary" />
-                  <p className="text-sm text-muted-foreground">Start Date</p>
+              {/* Target Progress */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">Target SQLs</p>
+                  <p className="text-2xl font-bold text-foreground">{campaignData.target}</p>
                 </div>
-                <p className="text-lg font-bold text-foreground">
-                  {format(campaignData.startDate, "MMM d")}
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                <div className="flex items-center gap-2 mb-2">
-                  <CalendarDaysIcon className="h-4 w-4 text-accent" />
-                  <p className="text-sm text-muted-foreground">End Date</p>
+                <Progress value={progressPercent} className="h-3" />
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium text-foreground">{progressPercent.toFixed(1)}%</span>
                 </div>
-                <p className="text-lg font-bold text-foreground">
-                  {format(campaignData.endDate, "MMM d")}
-                </p>
               </div>
-            </div>
 
-            {/* Target Progress */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Target SQLs</p>
-                <p className="text-2xl font-bold text-foreground">{campaignData.target}</p>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-secondary/10 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">SQLs Generated</p>
+                  <p className="text-2xl font-bold text-secondary">{campaignData.sqlsGenerated}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-accent/10 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Leads Remaining</p>
+                  <p className="text-2xl font-bold text-accent">{campaignData.leadsRemaining}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
+                  <p className="text-2xl font-bold text-foreground">{daysRemaining}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Avg Daily Required</p>
+                  <p className="text-2xl font-bold text-foreground">{avgDailyLeadsRequired}</p>
+                </div>
               </div>
-              <Progress value={progressPercent} className="h-3" />
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium text-foreground">{progressPercent.toFixed(1)}%</span>
-              </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-secondary/10 border border-border">
-                <p className="text-xs text-muted-foreground mb-1">SQLs Generated</p>
-                <p className="text-2xl font-bold text-secondary">{campaignData.sqlsGenerated}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-accent/10 border border-border">
-                <p className="text-xs text-muted-foreground mb-1">Leads Remaining</p>
-                <p className="text-2xl font-bold text-accent">{campaignData.leadsRemaining}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
-                <p className="text-2xl font-bold text-foreground">{daysRemaining}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                <p className="text-xs text-muted-foreground mb-1">Avg Daily Required</p>
-                <p className="text-2xl font-bold text-foreground">{avgDailyLeadsRequired}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Section 2: Client-specific SQL Booked Meetings Table */}
-      <ClientSQLMeetingsTable clientSlug={clientSlug || ""} />
+      {showContent && (
+        <ClientSQLMeetingsTable clientSlug={clientSlug || ""} dateRange={date} />
+      )}
     </div>
   );
 };

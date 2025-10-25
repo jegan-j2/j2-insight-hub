@@ -5,9 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays } from "lucide-react";
+import { format, isWithinInterval } from "date-fns";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
+import type { DateRange } from "react-day-picker";
 
 interface MeetingData {
   id: string;
@@ -159,13 +164,20 @@ const mockMeetingsData: MeetingData[] = [
 type SortField = "sqlDate" | "clientName" | "contactPerson" | "companyName" | "sdr" | "meetingDate" | "meetingHeld";
 type SortOrder = "asc" | "desc";
 
-export const SQLBookedMeetingsTable = () => {
+interface SQLBookedMeetingsTableProps {
+  dateRange?: DateRange;
+}
+
+export const SQLBookedMeetingsTable = ({ dateRange }: SQLBookedMeetingsTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sdrFilter, setSdrFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [bookingDateFilter, setBookingDateFilter] = useState<Date | undefined>();
+  const [meetingDateFilter, setMeetingDateFilter] = useState<Date | undefined>();
   
   const rowsPerPage = 10;
 
@@ -205,8 +217,34 @@ export const SQLBookedMeetingsTable = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const clearAllFilters = () => {
+    setClientFilter("all");
+    setStatusFilter("all");
+    setSdrFilter("all");
+    setSearchQuery("");
+    setBookingDateFilter(undefined);
+    setMeetingDateFilter(undefined);
+    setCurrentPage(1);
+  };
+
+  const activeFiltersCount = [
+    clientFilter !== "all",
+    statusFilter !== "all",
+    sdrFilter !== "all",
+    searchQuery !== "",
+    bookingDateFilter !== undefined,
+    meetingDateFilter !== undefined,
+  ].filter(Boolean).length;
+
   const filteredMeetings = useMemo(() => {
     let filtered = [...mockMeetingsData];
+
+    // Apply date range filter from context
+    if (dateRange?.from && dateRange?.to) {
+      filtered = filtered.filter(m => 
+        isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! })
+      );
+    }
 
     if (clientFilter !== "all") {
       filtered = filtered.filter(m => m.clientName === clientFilter);
@@ -216,6 +254,22 @@ export const SQLBookedMeetingsTable = () => {
       filtered = filtered.filter(m => m.meetingHeld);
     } else if (statusFilter === "not-held") {
       filtered = filtered.filter(m => !m.meetingHeld);
+    }
+
+    if (sdrFilter !== "all") {
+      filtered = filtered.filter(m => m.sdr === sdrFilter);
+    }
+
+    if (bookingDateFilter) {
+      filtered = filtered.filter(m => 
+        format(m.sqlDate, "yyyy-MM-dd") === format(bookingDateFilter, "yyyy-MM-dd")
+      );
+    }
+
+    if (meetingDateFilter) {
+      filtered = filtered.filter(m => 
+        format(m.meetingDate, "yyyy-MM-dd") === format(meetingDateFilter, "yyyy-MM-dd")
+      );
     }
 
     if (searchQuery) {
@@ -247,7 +301,7 @@ export const SQLBookedMeetingsTable = () => {
     });
 
     return filtered;
-  }, [clientFilter, statusFilter, searchQuery, sortField, sortOrder]);
+  }, [dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateFilter, meetingDateFilter, sortField, sortOrder]);
 
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
   const paginatedMeetings = filteredMeetings.slice(
@@ -256,6 +310,7 @@ export const SQLBookedMeetingsTable = () => {
   );
 
   const clients = Array.from(new Set(mockMeetingsData.map(m => m.clientName))).sort();
+  const sdrs = Array.from(new Set(mockMeetingsData.map(m => m.sdr))).sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
@@ -276,33 +331,104 @@ export const SQLBookedMeetingsTable = () => {
             <div>
               <CardTitle className="text-foreground">SQL Booked Meetings - All Clients</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Showing {filteredMeetings.length} meetings
+                Showing {filteredMeetings.length} of {mockMeetingsData.length} meetings
               </p>
             </div>
-            <Button
-              onClick={handleExportCSV}
-              variant="outline"
-              className="gap-2 border-secondary text-secondary hover:bg-secondary/10"
-            >
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
+            <div className="flex gap-2">
+              {activeFiltersCount > 0 && (
+                <Button
+                  onClick={clearAllFilters}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Clear Filters ({activeFiltersCount})
+                </Button>
+              )}
+              <Button
+                onClick={handleExportCSV}
+                variant="outline"
+                size="sm"
+                className="gap-2 border-secondary text-secondary hover:bg-secondary/10"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+            </div>
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             <Input
-              placeholder="Search contact, company, or SDR..."
+              placeholder="Search contact, company..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="sm:max-w-xs bg-background/50 border-border"
+              className="bg-background/50 border-border min-h-[44px]"
               aria-label="Search meetings"
             />
+            
+            {/* Booking Date Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal min-h-[44px]",
+                    !bookingDateFilter && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {bookingDateFilter ? format(bookingDateFilter, "MMM dd, yyyy") : "Booking Date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                <Calendar
+                  mode="single"
+                  selected={bookingDateFilter}
+                  onSelect={(date) => {
+                    setBookingDateFilter(date);
+                    setCurrentPage(1);
+                  }}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Meeting Date Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal min-h-[44px]",
+                    !meetingDateFilter && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  {meetingDateFilter ? format(meetingDateFilter, "MMM dd, yyyy") : "Meeting Date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                <Calendar
+                  mode="single"
+                  selected={meetingDateFilter}
+                  onSelect={(date) => {
+                    setMeetingDateFilter(date);
+                    setCurrentPage(1);
+                  }}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
             <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="sm:w-[180px] bg-background/50 border-border" aria-label="Filter by client">
+              <SelectTrigger className="bg-background/50 border-border min-h-[44px]" aria-label="Filter by client">
                 <SelectValue placeholder="All Clients" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border z-50">
@@ -312,8 +438,21 @@ export const SQLBookedMeetingsTable = () => {
                 ))}
               </SelectContent>
             </Select>
+
+            <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+              <SelectTrigger className="bg-background/50 border-border min-h-[44px]" aria-label="Filter by SDR">
+                <SelectValue placeholder="All SDRs" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="all">All SDRs</SelectItem>
+                {sdrs.map(sdr => (
+                  <SelectItem key={sdr} value={sdr}>{sdr}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="sm:w-[180px] bg-background/50 border-border" aria-label="Filter by meeting status">
+              <SelectTrigger className="bg-background/50 border-border min-h-[44px]" aria-label="Filter by meeting status">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border z-50">
@@ -323,6 +462,84 @@ export const SQLBookedMeetingsTable = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Active Filter Badges */}
+          {activeFiltersCount > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {clientFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  Client: {clientFilter}
+                  <button
+                    onClick={() => setClientFilter("all")}
+                    className="ml-1 hover:text-destructive"
+                    aria-label="Remove client filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {statusFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  Status: {statusFilter === "held" ? "Held" : "Not Held"}
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className="ml-1 hover:text-destructive"
+                    aria-label="Remove status filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {sdrFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  SDR: {sdrFilter}
+                  <button
+                    onClick={() => setSdrFilter("all")}
+                    className="ml-1 hover:text-destructive"
+                    aria-label="Remove SDR filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {bookingDateFilter && (
+                <Badge variant="secondary" className="gap-1">
+                  Booked: {format(bookingDateFilter, "MMM dd, yyyy")}
+                  <button
+                    onClick={() => setBookingDateFilter(undefined)}
+                    className="ml-1 hover:text-destructive"
+                    aria-label="Remove booking date filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {meetingDateFilter && (
+                <Badge variant="secondary" className="gap-1">
+                  Meeting: {format(meetingDateFilter, "MMM dd, yyyy")}
+                  <button
+                    onClick={() => setMeetingDateFilter(undefined)}
+                    className="ml-1 hover:text-destructive"
+                    aria-label="Remove meeting date filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {searchQuery && (
+                <Badge variant="secondary" className="gap-1">
+                  Search: "{searchQuery}"
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="ml-1 hover:text-destructive"
+                    aria-label="Remove search filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -396,7 +613,7 @@ export const SQLBookedMeetingsTable = () => {
                 <TableRow>
                   <TableCell colSpan={8} className="py-12">
                     <EmptyState 
-                      icon={Calendar}
+                      icon={CalendarIcon}
                       title="No meetings found"
                       description="No SQL booked meetings match your current filters. Try adjusting your search criteria."
                     />
