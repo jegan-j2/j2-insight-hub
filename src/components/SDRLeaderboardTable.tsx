@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { useState } from "react";
+import { SDRDetailModal } from "@/components/SDRDetailModal";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 
 interface SDRData {
   rank: number;
@@ -27,6 +29,8 @@ const initialData: SDRData[] = [
 
 export const SDRLeaderboardTable = () => {
   const [sortedData] = useState(initialData);
+  const [selectedSDR, setSelectedSDR] = useState<SDRData | null>(null);
+  const { dateRange } = useDateFilter();
 
   const getAnswerRateBadge = (answered: number, dials: number) => {
     const rate = (answered / dials) * 100;
@@ -47,83 +51,97 @@ export const SDRLeaderboardTable = () => {
   };
 
   return (
-    <Card className="bg-card border-border shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">SDR Leaderboard</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">Rank</TableHead>
-              <TableHead>SDR Name</TableHead>
-              <TableHead className="text-right">Total Dials</TableHead>
-              <TableHead className="text-right">Answer Rate</TableHead>
-              <TableHead className="text-right">DMs Reached</TableHead>
-              <TableHead className="text-right">SQLs</TableHead>
-              <TableHead className="text-right">Conv. Rate</TableHead>
-              <TableHead className="text-right">Trend</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedData.map((sdr) => {
-              const conversionRate = ((sdr.sqls / sdr.dials) * 100).toFixed(2);
-              const isTopPerformer = sdr.rank === 1;
-              
-              return (
-                <TableRow 
-                  key={sdr.name}
-                  className={`hover:bg-muted/50 transition-colors ${
-                    isTopPerformer ? "bg-green-500/5" : ""
-                  }`}
-                >
-                  <TableCell className="font-medium text-lg">
-                    {getRankDisplay(sdr.rank)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                          {sdr.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{sdr.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">{sdr.dials}</TableCell>
-                  <TableCell className="text-right">
-                    {getAnswerRateBadge(sdr.answered, sdr.dials)}
-                  </TableCell>
-                  <TableCell className="text-right">{sdr.dms}</TableCell>
-                  <TableCell className="text-right">
-                    <span className="text-lg font-bold">{sdr.sqls}</span>
-                  </TableCell>
-                  <TableCell className="text-right">{conversionRate}%</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {sdr.trend > 0 ? (
-                        <>
-                          <ArrowUp className="h-4 w-4 text-green-600" />
-                          <span className="text-green-600 font-medium">
-                            {sdr.trend.toFixed(1)}%
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <ArrowDown className="h-4 w-4 text-red-600" />
-                          <span className="text-red-600 font-medium">
-                            {Math.abs(sdr.trend).toFixed(1)}%
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <>
+      <Card className="bg-card border-border shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">SDR Leaderboard</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-16">Rank</TableHead>
+                <TableHead>SDR Name</TableHead>
+                <TableHead className="text-right">Total Dials</TableHead>
+                <TableHead className="text-right">Answer Rate</TableHead>
+                <TableHead className="text-right">DMs Reached</TableHead>
+                <TableHead className="text-right">SQLs</TableHead>
+                <TableHead className="text-right">Conv. Rate</TableHead>
+                <TableHead className="text-right">Trend</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedData.map((sdr) => {
+                const conversionRate = ((sdr.sqls / sdr.dials) * 100).toFixed(2);
+                const isTopPerformer = sdr.rank === 1;
+                
+                return (
+                  <TableRow 
+                    key={sdr.name}
+                    className={`hover:bg-muted/50 transition-colors ${
+                      isTopPerformer ? "bg-green-500/5" : ""
+                    }`}
+                  >
+                    <TableCell className="font-medium text-lg">
+                      {getRankDisplay(sdr.rank)}
+                    </TableCell>
+                    <TableCell>
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => setSelectedSDR(sdr)}
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            {sdr.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{sdr.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">{sdr.dials}</TableCell>
+                    <TableCell className="text-right">
+                      {getAnswerRateBadge(sdr.answered, sdr.dials)}
+                    </TableCell>
+                    <TableCell className="text-right">{sdr.dms}</TableCell>
+                    <TableCell className="text-right">
+                      <span className="text-lg font-bold">{sdr.sqls}</span>
+                    </TableCell>
+                    <TableCell className="text-right">{conversionRate}%</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {sdr.trend > 0 ? (
+                          <>
+                            <ArrowUp className="h-4 w-4 text-green-600" />
+                            <span className="text-green-600 font-medium">
+                              {sdr.trend.toFixed(1)}%
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDown className="h-4 w-4 text-red-600" />
+                            <span className="text-red-600 font-medium">
+                              {Math.abs(sdr.trend).toFixed(1)}%
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {selectedSDR && (
+        <SDRDetailModal
+          isOpen={!!selectedSDR}
+          onClose={() => setSelectedSDR(null)}
+          sdr={selectedSDR}
+          globalDateRange={dateRange}
+        />
+      )}
+    </>
   );
 };

@@ -2,10 +2,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Crown, TrendingUp, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { SDRDetailModal } from "@/components/SDRDetailModal";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 
 export const SDRQuickStatsCards = () => {
+  const [selectedSDR, setSelectedSDR] = useState<string | null>(null);
+  const { dateRange } = useDateFilter();
+
+  // Mock SDR data
+  const topPerformer = { name: "Ava Monyebane", initials: "AM", rank: 1, dials: 320, answered: 75, dms: 48, sqls: 12, trend: 15.2 };
+  const mostImproved = { name: "Barry Geduld", initials: "BG", rank: 4, dials: 265, answered: 60, dms: 38, sqls: 8, trend: 45.0 };
+  const coachingFocus = { name: "Ben De Beer", initials: "BD", rank: 6, dials: 255, answered: 66, dms: 35, sqls: 2, trend: -12.8 };
+
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       {/* Top Performer Card */}
       <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="pb-3">
@@ -26,6 +38,7 @@ export const SDRQuickStatsCards = () => {
           <Button 
             variant="link" 
             className="h-auto p-0 text-green-600 hover:text-green-700"
+            onClick={() => setSelectedSDR("ava")}
           >
             View Profile →
           </Button>
@@ -52,6 +65,7 @@ export const SDRQuickStatsCards = () => {
           <Button 
             variant="link" 
             className="h-auto p-0 text-blue-600 hover:text-blue-700"
+            onClick={() => setSelectedSDR("barry")}
           >
             View Details →
           </Button>
@@ -81,11 +95,39 @@ export const SDRQuickStatsCards = () => {
           <Button 
             size="sm"
             className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+            onClick={() => setSelectedSDR("ben")}
           >
             Schedule 1-on-1
           </Button>
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+
+      {/* SDR Detail Modals */}
+      {selectedSDR === "ava" && (
+        <SDRDetailModal
+          isOpen={true}
+          onClose={() => setSelectedSDR(null)}
+          sdr={topPerformer}
+          globalDateRange={dateRange}
+        />
+      )}
+      {selectedSDR === "barry" && (
+        <SDRDetailModal
+          isOpen={true}
+          onClose={() => setSelectedSDR(null)}
+          sdr={mostImproved}
+          globalDateRange={dateRange}
+        />
+      )}
+      {selectedSDR === "ben" && (
+        <SDRDetailModal
+          isOpen={true}
+          onClose={() => setSelectedSDR(null)}
+          sdr={coachingFocus}
+          globalDateRange={dateRange}
+        />
+      )}
+    </>
   );
 };
