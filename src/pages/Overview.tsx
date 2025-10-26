@@ -10,6 +10,10 @@ import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
+import { SDRActivityChart } from "@/components/SDRActivityChart";
+import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
+import { SDRQuickStatsCards } from "@/components/SDRQuickStatsCards";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Overview = () => {
   const { dateRange, setDateRange, isLoading, setIsLoading } = useDateFilter();
@@ -234,6 +238,62 @@ const Overview = () => {
       {showContent && (
         <>
           <ClientPerformanceTable />
+          
+          {/* Team Performance Section */}
+          <div className="space-y-6 mt-8 pt-8 border-t border-border">
+            {/* Section Header */}
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Sales Development Team Performance</h2>
+                <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
+              </div>
+              
+              {/* Date Range Info and Client Filter */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                {dateRange?.from && dateRange?.to && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
+                    <span>
+                      Performance data for: {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Client Filter */}
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Clients</SelectItem>
+                    <SelectItem value="inxpress">Inxpress</SelectItem>
+                    <SelectItem value="congero">Congero</SelectItem>
+                    <SelectItem value="techcorp">TechCorp Solutions</SelectItem>
+                    <SelectItem value="global">Global Logistics</SelectItem>
+                    <SelectItem value="finserve">FinServe Group</SelectItem>
+                    <SelectItem value="healthcare">HealthCare Plus</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* SDR Activity Breakdown Chart - Full Width */}
+            <SDRActivityChart />
+
+            {/* Bottom Section: Leaderboard + Quick Stats */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* SDR Leaderboard - Takes 2 columns on desktop */}
+              <div className="lg:col-span-2">
+                <SDRLeaderboardTable />
+              </div>
+
+              {/* Quick Stat Cards - Takes 1 column on desktop */}
+              <div className="lg:col-span-1">
+                <SDRQuickStatsCards />
+              </div>
+            </div>
+          </div>
+
           <SQLBookedMeetingsTable dateRange={dateRange} />
         </>
       )}
