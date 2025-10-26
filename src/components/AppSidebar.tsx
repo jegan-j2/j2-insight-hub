@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Users, Settings, ChevronDown, UserCog } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -49,6 +49,23 @@ export function AppSidebar() {
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     <span>Overview</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Team Performance */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/team"
+                    className={({ isActive }) =>
+                      isActive
+                        ? "bg-secondary/20 text-secondary font-medium"
+                        : "text-foreground hover:bg-muted/50"
+                    }
+                  >
+                    <UserCog className="h-4 w-4" />
+                    <span>Team Performance</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

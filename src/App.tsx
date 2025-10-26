@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Overview from "./pages/Overview";
 import ClientView from "./pages/ClientView";
+import TeamPerformance from "./pages/TeamPerformance";
 import Settings from "./pages/Settings";
 import DashboardLayout from "./components/DashboardLayout";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
             
             {/* Dashboard Routes with Layout */}
             <Route path="/overview" element={<DashboardLayout><Overview /></DashboardLayout>} />
+            <Route path="/team" element={<DashboardLayout><TeamPerformance /></DashboardLayout>} />
             <Route path="/client/:clientSlug" element={<DashboardLayout><ClientView /></DashboardLayout>} />
             <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
             
