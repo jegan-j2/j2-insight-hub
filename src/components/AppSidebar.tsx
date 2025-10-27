@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, ChevronDown, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, CalendarCheck } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -66,6 +66,23 @@ export function AppSidebar() {
                   >
                     <UserCog className="h-4 w-4" />
                     <span>Team Performance</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* SQL Meetings */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/sql-meetings"
+                    className={({ isActive }) =>
+                      isActive
+                        ? "bg-secondary/20 text-secondary font-medium"
+                        : "text-foreground hover:bg-muted/50"
+                    }
+                  >
+                    <CalendarCheck className="h-4 w-4" />
+                    <span>SQL Meetings</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
