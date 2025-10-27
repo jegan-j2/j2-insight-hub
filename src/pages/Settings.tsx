@@ -4,7 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Users, Mail, Bell, X } from "lucide-react";
@@ -39,7 +40,10 @@ const Settings = () => {
     { id: "3", name: "Clive Sambane", email: "clive@j2group.com.au", role: "SDR" },
   ]);
 
-  const [dailyReports, setDailyReports] = useState(true);
+  const [reportFrequency, setReportFrequency] = useState<"daily" | "weekly" | "monthly" | "disabled">("daily");
+  const [sendTime, setSendTime] = useState("4:00 PM");
+  const [sendDay, setSendDay] = useState("Monday");
+  const [sendDate, setSendDate] = useState("1st of month");
   const [reportEmails, setReportEmails] = useState("admin@j2group.com.au");
   const [slackWebhook, setSlackWebhook] = useState("");
 
@@ -409,37 +413,161 @@ const Settings = () => {
         <TabsContent value="notifications" className="space-y-4">
           <Card className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader>
-              <CardTitle>Email Reports</CardTitle>
-              <CardDescription>Configure daily email report settings</CardDescription>
+              <CardTitle>Email Reports Configuration</CardTitle>
+              <CardDescription>Configure automated email report settings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="daily-reports" className="text-base font-medium">Daily Email Reports</Label>
-                  <p className="text-sm text-muted-foreground">Send automated reports every day at 4:00 PM AEDT</p>
-                </div>
-                <Switch
-                  id="daily-reports"
-                  checked={dailyReports}
-                  onCheckedChange={setDailyReports}
-                  aria-label="Toggle daily email reports"
-                />
+              {/* Report Frequency */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Report Frequency</Label>
+                <RadioGroup 
+                  value={reportFrequency} 
+                  onValueChange={(value) => setReportFrequency(value as "daily" | "weekly" | "monthly" | "disabled")}
+                  className="flex flex-wrap gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="daily" id="daily" className="border-accent data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground" />
+                    <Label htmlFor="daily" className="font-normal cursor-pointer">Daily</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="weekly" id="weekly" className="border-accent data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground" />
+                    <Label htmlFor="weekly" className="font-normal cursor-pointer">Weekly</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="monthly" id="monthly" className="border-accent data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground" />
+                    <Label htmlFor="monthly" className="font-normal cursor-pointer">Monthly</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="disabled" id="disabled" className="border-accent data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground" />
+                    <Label htmlFor="disabled" className="font-normal cursor-pointer">Disabled</Label>
+                  </div>
+                </RadioGroup>
               </div>
-              
-              {dailyReports && (
-                <div className="grid gap-2 animate-fade-in">
-                  <Label htmlFor="report-emails">Email Recipients</Label>
-                  <Input
-                    id="report-emails"
-                    type="email"
-                    placeholder="admin@j2group.com.au, manager@j2group.com.au"
-                    value={reportEmails}
-                    onChange={(e) => setReportEmails(e.target.value)}
-                    className="bg-background/50 border-border"
-                  />
-                  <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
+
+              {/* Conditional Time Settings */}
+              {reportFrequency === "daily" && (
+                <div className="space-y-3 animate-fade-in">
+                  <div className="grid gap-2">
+                    <Label htmlFor="send-time">Send Time</Label>
+                    <Select value={sendTime} onValueChange={setSendTime}>
+                      <SelectTrigger id="send-time" className="bg-background/50 border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="6:00 AM">6:00 AM AEDT</SelectItem>
+                        <SelectItem value="9:00 AM">9:00 AM AEDT</SelectItem>
+                        <SelectItem value="12:00 PM">12:00 PM AEDT</SelectItem>
+                        <SelectItem value="3:00 PM">3:00 PM AEDT</SelectItem>
+                        <SelectItem value="4:00 PM">4:00 PM AEDT</SelectItem>
+                        <SelectItem value="6:00 PM">6:00 PM AEDT</SelectItem>
+                        <SelectItem value="9:00 PM">9:00 PM AEDT</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Reports sent every day at selected time</p>
+                  </div>
                 </div>
               )}
+
+              {reportFrequency === "weekly" && (
+                <div className="space-y-3 animate-fade-in">
+                  <div className="grid gap-2">
+                    <Label htmlFor="send-day">Send Day</Label>
+                    <Select value={sendDay} onValueChange={setSendDay}>
+                      <SelectTrigger id="send-day" className="bg-background/50 border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Monday">Monday</SelectItem>
+                        <SelectItem value="Tuesday">Tuesday</SelectItem>
+                        <SelectItem value="Wednesday">Wednesday</SelectItem>
+                        <SelectItem value="Thursday">Thursday</SelectItem>
+                        <SelectItem value="Friday">Friday</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="send-time-weekly">Send Time</Label>
+                    <Select value={sendTime} onValueChange={setSendTime}>
+                      <SelectTrigger id="send-time-weekly" className="bg-background/50 border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="6:00 AM">6:00 AM AEDT</SelectItem>
+                        <SelectItem value="9:00 AM">9:00 AM AEDT</SelectItem>
+                        <SelectItem value="12:00 PM">12:00 PM AEDT</SelectItem>
+                        <SelectItem value="3:00 PM">3:00 PM AEDT</SelectItem>
+                        <SelectItem value="4:00 PM">4:00 PM AEDT</SelectItem>
+                        <SelectItem value="6:00 PM">6:00 PM AEDT</SelectItem>
+                        <SelectItem value="9:00 PM">9:00 PM AEDT</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Reports sent every {sendDay} at {sendTime} AEDT</p>
+                  </div>
+                </div>
+              )}
+
+              {reportFrequency === "monthly" && (
+                <div className="space-y-3 animate-fade-in">
+                  <div className="grid gap-2">
+                    <Label htmlFor="send-date">Send On</Label>
+                    <Select value={sendDate} onValueChange={setSendDate}>
+                      <SelectTrigger id="send-date" className="bg-background/50 border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1st of month">1st of month</SelectItem>
+                        <SelectItem value="5th of month">5th of month</SelectItem>
+                        <SelectItem value="10th of month">10th of month</SelectItem>
+                        <SelectItem value="15th of month">15th of month</SelectItem>
+                        <SelectItem value="20th of month">20th of month</SelectItem>
+                        <SelectItem value="25th of month">25th of month</SelectItem>
+                        <SelectItem value="Last day of month">Last day of month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="send-time-monthly">Send Time</Label>
+                    <Select value={sendTime} onValueChange={setSendTime}>
+                      <SelectTrigger id="send-time-monthly" className="bg-background/50 border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="6:00 AM">6:00 AM AEDT</SelectItem>
+                        <SelectItem value="9:00 AM">9:00 AM AEDT</SelectItem>
+                        <SelectItem value="12:00 PM">12:00 PM AEDT</SelectItem>
+                        <SelectItem value="3:00 PM">3:00 PM AEDT</SelectItem>
+                        <SelectItem value="4:00 PM">4:00 PM AEDT</SelectItem>
+                        <SelectItem value="6:00 PM">6:00 PM AEDT</SelectItem>
+                        <SelectItem value="9:00 PM">9:00 PM AEDT</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Reports sent on the {sendDate} at {sendTime} AEDT</p>
+                  </div>
+                </div>
+              )}
+
+              {reportFrequency === "disabled" && (
+                <div className="rounded-md bg-muted/20 p-4 animate-fade-in">
+                  <p className="text-sm text-muted-foreground">
+                    Automated reports are disabled. You can still export reports manually from the dashboard.
+                  </p>
+                </div>
+              )}
+
+              {/* Email Recipients */}
+              <div className="grid gap-2">
+                <Label htmlFor="report-emails">Email Recipients</Label>
+                <Input
+                  id="report-emails"
+                  type="email"
+                  placeholder="admin@j2group.com.au, manager@j2group.com.au"
+                  value={reportEmails}
+                  onChange={(e) => setReportEmails(e.target.value)}
+                  className={`bg-background/50 border-border ${reportFrequency === "disabled" ? "opacity-50" : ""}`}
+                  disabled={reportFrequency === "disabled"}
+                />
+                <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
+              </div>
             </CardContent>
           </Card>
 
