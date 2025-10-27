@@ -105,61 +105,68 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
         </Card>
       </div>
 
-      {/* Performance Trend Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Trend (Last 4 Weeks)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={performanceTrendData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="week" className="text-xs" />
-              <YAxis className="text-xs" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="dials" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="Dials" />
-              <Line type="monotone" dataKey="answered" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name="Answered" />
-              <Line type="monotone" dataKey="dms" stroke="#06B6D4" strokeWidth={2} dot={{ r: 4 }} name="DMs" />
-              <Line type="monotone" dataKey="sqls" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 4 }} name="SQLs" />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Performance Trend Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance Trend (Last 4 Weeks)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={performanceTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="week" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="dials" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="Dials" />
+                  <Line type="monotone" dataKey="answered" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name="Answered" />
+                  <Line type="monotone" dataKey="dms" stroke="#06B6D4" strokeWidth={2} dot={{ r: 4 }} name="DMs" />
+                  <Line type="monotone" dataKey="sqls" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 4 }} name="SQLs" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Conversion Funnel */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Conversion Funnel</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={funnelData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis type="number" className="text-xs" />
-              <YAxis type="category" dataKey="stage" className="text-xs" width={80} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-                formatter={(value: number, name: string, props: any) => [
-                  `${value} (${props.payload.percentage}%)`,
-                  "Count"
-                ]}
-              />
-              <Bar dataKey="count" fill="#8B5CF6" radius={[0, 8, 8, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        {/* Conversion Funnel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Conversion Funnel</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={funnelData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" className="text-xs" />
+                  <YAxis type="category" dataKey="stage" className="text-xs" width={80} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value: number, name: string, props: any) => [
+                      `${value} (${props.payload.percentage}%)`,
+                      "Count"
+                    ]}
+                  />
+                  <Bar dataKey="count" fill="#8B5CF6" radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Client Breakdown Table */}
       <Card>
