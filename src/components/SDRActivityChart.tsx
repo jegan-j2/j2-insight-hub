@@ -12,7 +12,7 @@ const sdrData = [
 
 export const SDRActivityChart = () => {
   return (
-    <Card className="bg-card border-border shadow-sm">
+    <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">SDR Activity Breakdown</CardTitle>
       </CardHeader>

@@ -19,7 +19,7 @@ export const SDRQuickStatsCards = () => {
     <>
       <div className="space-y-4">
       {/* Top Performer Card */}
-      <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm hover:shadow-md hover:border-yellow-500/40 transition-all">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-yellow-500/20">
@@ -46,7 +46,7 @@ export const SDRQuickStatsCards = () => {
       </Card>
 
       {/* Most Improved Card */}
-      <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 shadow-sm hover:shadow-md hover:border-yellow-500/40 transition-all">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-blue-500/20">
@@ -73,7 +73,7 @@ export const SDRQuickStatsCards = () => {
       </Card>
 
       {/* Coaching Opportunity Card */}
-      <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 shadow-sm hover:shadow-md hover:border-yellow-500/40 transition-all">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-amber-500/20">

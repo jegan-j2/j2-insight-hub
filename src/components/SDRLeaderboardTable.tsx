@@ -52,7 +52,7 @@ export const SDRLeaderboardTable = () => {
 
   return (
     <>
-      <Card className="bg-card border-border shadow-sm">
+      <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">SDR Leaderboard</CardTitle>
         </CardHeader>
@@ -78,7 +78,7 @@ export const SDRLeaderboardTable = () => {
                 return (
                   <TableRow 
                     key={sdr.name}
-                    className={`hover:bg-muted/50 transition-colors ${
+                    className={`hover:bg-yellow-500/10 transition-colors cursor-pointer ${
                       isTopPerformer ? "bg-green-500/5" : ""
                     }`}
                   >

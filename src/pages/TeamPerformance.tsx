@@ -56,10 +56,7 @@ const TeamPerformance = () => {
         </div>
       </div>
 
-      {/* SDR Activity Breakdown Chart - Full Width */}
-      <SDRActivityChart />
-
-      {/* Bottom Section: Leaderboard + Quick Stats */}
+      {/* Top Section: Leaderboard + Quick Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* SDR Leaderboard - Takes 2 columns on desktop */}
         <div className="lg:col-span-2">
@@ -71,6 +68,9 @@ const TeamPerformance = () => {
           <SDRQuickStatsCards />
         </div>
       </div>
+
+      {/* SDR Activity Breakdown Chart - Full Width */}
+      <SDRActivityChart />
     </div>
   );
 };
