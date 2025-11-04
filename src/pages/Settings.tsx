@@ -37,8 +37,12 @@ const Settings = () => {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     { id: "1", name: "Ava Monyebane", email: "ava@j2group.com.au", role: "Senior SDR" },
-    { id: "2", name: "Reggie Makhanya", email: "reggie@j2group.com.au", role: "SDR" },
-    { id: "3", name: "Clive Sambane", email: "clive@j2group.com.au", role: "SDR" },
+    { id: "2", name: "Jegan Rajes", email: "jegan@j2group.com.au", role: "Head of Data" },
+    { id: "3", name: "Barry Geduld", email: "barry@j2group.com.au", role: "SDR" },
+    { id: "4", name: "Ben De Beer", email: "ben@j2group.com.au", role: "SDR" },
+    { id: "5", name: "Clive Sambane", email: "clive@j2group.com.au", role: "SDR" },
+    { id: "6", name: "Ivory Geduld", email: "ivory@j2group.com.au", role: "SDR" },
+    { id: "7", name: "Reggie Makhanya", email: "reggie@j2group.com.au", role: "SDR" },
   ]);
 
   const [reportFrequency, setReportFrequency] = useState<"daily" | "weekly" | "monthly" | "disabled">("daily");
