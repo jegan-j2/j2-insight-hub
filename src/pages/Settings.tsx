@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Mail, Bell, X, Send } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Mail, Bell, X, Send, Save, CheckCircle2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Client {
@@ -60,6 +60,14 @@ const Settings = () => {
     detailedActivityBreakdown: false,
   });
 
+  // Change tracking and loading states
+  const [hasUnsavedClientChanges, setHasUnsavedClientChanges] = useState(false);
+  const [hasUnsavedTeamChanges, setHasUnsavedTeamChanges] = useState(false);
+  const [isSavingClients, setIsSavingClients] = useState(false);
+  const [isSavingTeam, setIsSavingTeam] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -96,12 +104,14 @@ const Settings = () => {
       setClients([...clients, newClient]);
       toast({ title: "Client added", description: `${clientForm.name} has been added successfully.` });
     }
+    setHasUnsavedClientChanges(true);
     setIsClientDialogOpen(false);
   };
 
   const handleDeleteClient = (id: string) => {
     const client = clients.find(c => c.id === id);
     setClients(clients.filter(c => c.id !== id));
+    setHasUnsavedClientChanges(true);
     toast({ title: "Client deleted", description: `${client?.name} has been removed.`, variant: "destructive" });
   };
 
@@ -129,21 +139,65 @@ const Settings = () => {
       setTeamMembers([...teamMembers, newMember]);
       toast({ title: "Team member added", description: `${memberForm.name} has been added successfully.` });
     }
+    setHasUnsavedTeamChanges(true);
     setIsTeamDialogOpen(false);
   };
 
   const handleDeleteMember = (id: string) => {
     const member = teamMembers.find(m => m.id === id);
     setTeamMembers(teamMembers.filter(m => m.id !== id));
+    setHasUnsavedTeamChanges(true);
     toast({ title: "Team member removed", description: `${member?.name} has been removed.`, variant: "destructive" });
   };
 
-  const handleSaveNotifications = () => {
-    toast({ title: "Settings saved", description: "Notification preferences have been updated." });
+  const handleSaveClientSettings = async () => {
+    setIsSavingClients(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setHasUnsavedClientChanges(false);
+    setIsSavingClients(false);
+    toast({ 
+      title: "Client settings saved successfully",
+      description: "All client changes have been saved.",
+      className: "border-green-500",
+    });
   };
 
-  const handleSendTestEmail = () => {
-    toast({ title: "Test email sent", description: "A test report has been sent to the configured email addresses." });
+  const handleSaveTeamSettings = async () => {
+    setIsSavingTeam(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setHasUnsavedTeamChanges(false);
+    setIsSavingTeam(false);
+    toast({ 
+      title: "Team member settings saved successfully",
+      description: "All team member changes have been saved.",
+      className: "border-green-500",
+    });
+  };
+
+  const handleSaveNotifications = async () => {
+    setIsSavingNotifications(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setIsSavingNotifications(false);
+    toast({ 
+      title: "Notification settings saved successfully",
+      description: "Your notification preferences have been updated.",
+      className: "border-green-500",
+    });
+  };
+
+  const handleSendTestEmail = async () => {
+    setIsSendingTestEmail(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsSendingTestEmail(false);
+    toast({ 
+      title: "Test email sent",
+      description: `A test report has been sent to ${reportEmails}`,
+      className: "border-green-500",
+    });
   };
 
   return (
@@ -307,6 +361,26 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSaveClientSettings} 
+              disabled={!hasUnsavedClientChanges || isSavingClients}
+              className="gap-2"
+            >
+              {isSavingClients ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
         </TabsContent>
 
         {/* Team Members Tab */}
@@ -424,6 +498,26 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSaveTeamSettings} 
+              disabled={!hasUnsavedTeamChanges || isSavingTeam}
+              className="gap-2"
+            >
+              {isSavingTeam ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
         </TabsContent>
 
         {/* Notifications Tab */}
@@ -662,18 +756,40 @@ const Settings = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
-                <Button onClick={handleSaveNotifications} className="gap-2 flex-1 sm:flex-initial">
-                  <Mail className="h-4 w-4" />
-                  Save Settings
+                <Button 
+                  onClick={handleSaveNotifications} 
+                  className="gap-2 flex-1 sm:flex-initial"
+                  disabled={isSavingNotifications}
+                >
+                  {isSavingNotifications ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Settings
+                    </>
+                  )}
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleSendTestEmail}
                   className="gap-2 flex-1 sm:flex-initial"
-                  disabled={reportFrequency === "disabled"}
+                  disabled={reportFrequency === "disabled" || isSendingTestEmail}
                 >
-                  <Send className="h-4 w-4" />
-                  Send Test Email
+                  {isSendingTestEmail ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send Test Email
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -707,9 +823,23 @@ const Settings = () => {
                 </p>
               </div>
               <div className="flex justify-end pt-2">
-                <Button onClick={handleSaveNotifications} variant="outline" className="gap-2">
-                  <Mail className="h-4 w-4" />
-                  Save Slack Settings
+                <Button 
+                  onClick={handleSaveNotifications} 
+                  variant="outline" 
+                  className="gap-2"
+                  disabled={isSavingNotifications}
+                >
+                  {isSavingNotifications ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Slack Settings
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
