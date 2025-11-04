@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Mail, Bell, X } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Mail, Bell, X, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Client {
@@ -46,6 +47,14 @@ const Settings = () => {
   const [sendDate, setSendDate] = useState("1st of month");
   const [reportEmails, setReportEmails] = useState("admin@j2group.com.au");
   const [slackWebhook, setSlackWebhook] = useState("");
+  
+  const [reportContent, setReportContent] = useState({
+    campaignOverview: true,
+    topPerformingClients: true,
+    teamPerformance: true,
+    sqlBookedMeetings: true,
+    detailedActivityBreakdown: false,
+  });
 
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
@@ -127,6 +136,10 @@ const Settings = () => {
 
   const handleSaveNotifications = () => {
     toast({ title: "Settings saved", description: "Notification preferences have been updated." });
+  };
+
+  const handleSendTestEmail = () => {
+    toast({ title: "Test email sent", description: "A test report has been sent to the configured email addresses." });
   };
 
   return (
@@ -563,10 +576,101 @@ const Settings = () => {
                   placeholder="admin@j2group.com.au, manager@j2group.com.au"
                   value={reportEmails}
                   onChange={(e) => setReportEmails(e.target.value)}
-                  className={`bg-background/50 border-border ${reportFrequency === "disabled" ? "opacity-50" : ""}`}
+                  className={`bg-background/50 border-border transition-opacity ${reportFrequency === "disabled" ? "opacity-50" : ""}`}
                   disabled={reportFrequency === "disabled"}
                 />
                 <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
+              </div>
+
+              {/* Report Content */}
+              {reportFrequency !== "disabled" && (
+                <div className="space-y-3 animate-fade-in">
+                  <Label className="text-base font-medium">Include in Report:</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="campaign-overview"
+                        checked={reportContent.campaignOverview}
+                        onCheckedChange={(checked) => 
+                          setReportContent({ ...reportContent, campaignOverview: checked as boolean })
+                        }
+                        className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      />
+                      <Label htmlFor="campaign-overview" className="font-normal cursor-pointer">
+                        Campaign Overview (KPIs across all clients)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="top-performing"
+                        checked={reportContent.topPerformingClients}
+                        onCheckedChange={(checked) => 
+                          setReportContent({ ...reportContent, topPerformingClients: checked as boolean })
+                        }
+                        className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      />
+                      <Label htmlFor="top-performing" className="font-normal cursor-pointer">
+                        Top Performing Clients
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="team-performance"
+                        checked={reportContent.teamPerformance}
+                        onCheckedChange={(checked) => 
+                          setReportContent({ ...reportContent, teamPerformance: checked as boolean })
+                        }
+                        className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      />
+                      <Label htmlFor="team-performance" className="font-normal cursor-pointer">
+                        Team Performance Summary
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="sql-meetings"
+                        checked={reportContent.sqlBookedMeetings}
+                        onCheckedChange={(checked) => 
+                          setReportContent({ ...reportContent, sqlBookedMeetings: checked as boolean })
+                        }
+                        className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      />
+                      <Label htmlFor="sql-meetings" className="font-normal cursor-pointer">
+                        SQL Booked Meetings
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="detailed-activity"
+                        checked={reportContent.detailedActivityBreakdown}
+                        onCheckedChange={(checked) => 
+                          setReportContent({ ...reportContent, detailedActivityBreakdown: checked as boolean })
+                        }
+                        className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      />
+                      <Label htmlFor="detailed-activity" className="font-normal cursor-pointer">
+                        Detailed Activity Breakdown
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
+                <Button onClick={handleSaveNotifications} className="gap-2 flex-1 sm:flex-initial">
+                  <Mail className="h-4 w-4" />
+                  Save Settings
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleSendTestEmail}
+                  className="gap-2 flex-1 sm:flex-initial"
+                  disabled={reportFrequency === "disabled"}
+                >
+                  <Send className="h-4 w-4" />
+                  Send Test Email
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -598,15 +702,14 @@ const Settings = () => {
                   </a>
                 </p>
               </div>
+              <div className="flex justify-end pt-2">
+                <Button onClick={handleSaveNotifications} variant="outline" className="gap-2">
+                  <Mail className="h-4 w-4" />
+                  Save Slack Settings
+                </Button>
+              </div>
             </CardContent>
           </Card>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSaveNotifications} className="gap-2">
-              <Mail className="h-4 w-4" />
-              Save Notification Settings
-            </Button>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
