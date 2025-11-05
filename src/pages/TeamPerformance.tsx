@@ -7,9 +7,24 @@ import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
 import { SDRQuickStatsCards } from "@/components/SDRQuickStatsCards";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
+import { useState, useEffect } from "react";
 
 const TeamPerformance = () => {
   const { dateRange, setDateRange } = useDateFilter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showContent, setShowContent] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading when date changes
+    setShowContent(false);
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      setShowContent(true);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [dateRange]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -57,20 +72,35 @@ const TeamPerformance = () => {
       </div>
 
       {/* Top Section: Leaderboard + Quick Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* SDR Leaderboard - Takes 2 columns on desktop */}
-        <div className="lg:col-span-2">
-          <SDRLeaderboardTable />
+      {!showContent ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ChartSkeleton />
+          </div>
+          <div className="lg:col-span-1">
+            <KPICardSkeleton />
+          </div>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* SDR Leaderboard - Takes 2 columns on desktop */}
+          <div className="lg:col-span-2">
+            <SDRLeaderboardTable />
+          </div>
 
-        {/* Quick Stat Cards - Takes 1 column on desktop */}
-        <div className="lg:col-span-1">
-          <SDRQuickStatsCards />
+          {/* Quick Stat Cards - Takes 1 column on desktop */}
+          <div className="lg:col-span-1">
+            <SDRQuickStatsCards />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* SDR Activity Breakdown Chart - Full Width */}
-      <SDRActivityChart />
+      {!showContent ? (
+        <ChartSkeleton />
+      ) : (
+        <SDRActivityChart />
+      )}
     </div>
   );
 };

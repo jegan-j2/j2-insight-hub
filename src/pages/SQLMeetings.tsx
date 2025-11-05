@@ -1,8 +1,19 @@
 import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { useState, useEffect } from "react";
 
 const SQLMeetings = () => {
   const { dateRange } = useDateFilter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Simulate loading when date changes
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [dateRange]);
 
   return (
     <div className="space-y-6 p-6">
@@ -13,7 +24,7 @@ const SQLMeetings = () => {
         </p>
       </div>
       
-      <SQLBookedMeetingsTable dateRange={dateRange} />
+      <SQLBookedMeetingsTable dateRange={dateRange} isLoading={isLoading} />
     </div>
   );
 };

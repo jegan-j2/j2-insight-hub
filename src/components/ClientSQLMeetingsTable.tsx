@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, CalendarX } from "lucide-react";
 import { format, isWithinInterval } from "date-fns";
 import type { DateRange } from "react-day-picker";
+import { EmptyState } from "@/components/EmptyState";
 
 interface MeetingData {
   id: string;
@@ -251,8 +252,20 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange }: ClientSQLMeeti
               ))}
               {paginatedMeetings.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No meetings found
+                  <TableCell colSpan={7} className="py-12">
+                    {inxpressMeetings.length === 0 ? (
+                      <EmptyState 
+                        icon={CalendarX}
+                        title="No campaign data yet"
+                        description="Data will appear once the campaign begins"
+                      />
+                    ) : (
+                      <EmptyState 
+                        icon={CalendarX}
+                        title="No meetings in this period"
+                        description="No SQL booked meetings found for the selected date range"
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               )}

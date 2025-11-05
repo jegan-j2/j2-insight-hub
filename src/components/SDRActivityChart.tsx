@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { EmptyState } from "@/components/EmptyState";
+import { TrendingUp } from "lucide-react";
 
 const sdrData = [
   { name: "Ava Monyebane", dials: 320, answered: 75, dms: 48, sqls: 12 },
@@ -17,7 +19,14 @@ export const SDRActivityChart = () => {
         <CardTitle className="text-xl font-semibold">SDR Activity Breakdown</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
+        {sdrData.length === 0 ? (
+          <EmptyState 
+            icon={TrendingUp}
+            title="No activity data yet"
+            description="SDR activity data will appear once team members start making calls"
+          />
+        ) : (
+          <ResponsiveContainer width="100%" height={400}>
           <BarChart
             data={sdrData}
             layout="vertical"
@@ -44,6 +53,7 @@ export const SDRActivityChart = () => {
             <Bar dataKey="sqls" stackId="a" fill="#8B5CF6" name="SQLs Generated" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   );

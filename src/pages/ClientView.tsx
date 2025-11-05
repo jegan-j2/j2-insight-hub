@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 import { ClientSQLMeetingsTable } from "@/components/ClientSQLMeetingsTable";
 import { DateRangePicker } from "@/components/DateRangePicker";
-import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
+import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 import { ClientCallActivityChart } from "@/components/ClientCallActivityChart";
 import { ClientWeeklyComparisonChart } from "@/components/ClientWeeklyComparisonChart";
 
@@ -243,7 +243,9 @@ const ClientView = () => {
       )}
 
       {/* Section 3: Client-specific SQL Booked Meetings Table */}
-      {showContent && (
+      {!showContent ? (
+        <TableSkeleton />
+      ) : (
         <ClientSQLMeetingsTable clientSlug={clientSlug || ""} dateRange={date} />
       )}
     </div>

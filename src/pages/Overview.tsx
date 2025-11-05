@@ -9,7 +9,7 @@ import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
 import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
+import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 
 const Overview = () => {
   const { dateRange, setDateRange, isLoading, setIsLoading } = useDateFilter();
@@ -231,7 +231,12 @@ const Overview = () => {
       )}
 
       {/* Client Performance Table */}
-      {showContent && (
+      {!showContent ? (
+        <>
+          <TableSkeleton />
+          <TableSkeleton />
+        </>
+      ) : (
         <>
           <ClientPerformanceTable />
           <SQLBookedMeetingsTable dateRange={dateRange} />

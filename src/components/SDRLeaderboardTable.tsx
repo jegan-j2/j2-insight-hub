@@ -2,10 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, Users } from "lucide-react";
 import { useState } from "react";
 import { SDRDetailModal } from "@/components/SDRDetailModal";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { EmptyState } from "@/components/EmptyState";
 
 interface SDRData {
   rank: number;
@@ -57,7 +58,14 @@ export const SDRLeaderboardTable = () => {
           <CardTitle className="text-xl font-semibold">SDR Leaderboard</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          {sortedData.length === 0 ? (
+            <EmptyState 
+              icon={Users}
+              title="No team data available"
+              description="Add team members in Settings to see performance metrics"
+            />
+          ) : (
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16">Rank</TableHead>
@@ -131,6 +139,7 @@ export const SDRLeaderboardTable = () => {
               })}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
 

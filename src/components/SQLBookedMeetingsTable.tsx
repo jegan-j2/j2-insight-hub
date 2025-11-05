@@ -12,7 +12,9 @@ import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar as CalendarI
 import { format, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
+import { TableSkeleton } from "@/components/LoadingSkeletons";
 import type { DateRange } from "react-day-picker";
+import { CalendarX, Search as SearchIcon } from "lucide-react";
 
 interface MeetingData {
   id: string;
@@ -166,9 +168,10 @@ type SortOrder = "asc" | "desc";
 
 interface SQLBookedMeetingsTableProps {
   dateRange?: DateRange;
+  isLoading?: boolean;
 }
 
-export const SQLBookedMeetingsTable = ({ dateRange }: SQLBookedMeetingsTableProps) => {
+export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBookedMeetingsTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -322,6 +325,13 @@ export const SQLBookedMeetingsTable = ({ dateRange }: SQLBookedMeetingsTableProp
       <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
     </button>
   );
+
+  if (isLoading) {
+    return <TableSkeleton />;
+  }
+
+  const hasActiveFilters = activeFiltersCount > 0;
+  const showEmptyState = filteredMeetings.length === 0;
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "600ms" }}>
@@ -612,11 +622,27 @@ export const SQLBookedMeetingsTable = ({ dateRange }: SQLBookedMeetingsTableProp
               {paginatedMeetings.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="py-12">
-                    <EmptyState 
-                      icon={CalendarIcon}
-                      title="No meetings found"
-                      description="No SQL booked meetings match your current filters. Try adjusting your search criteria."
-                    />
+                    {hasActiveFilters ? (
+                      <EmptyState 
+                        icon={SearchIcon}
+                        title="No results found"
+                        description="Try adjusting your search terms or filters"
+                        actionLabel="Clear Filters"
+                        onAction={clearAllFilters}
+                      />
+                    ) : mockMeetingsData.length === 0 ? (
+                      <EmptyState 
+                        icon={CalendarX}
+                        title="No meetings booked yet"
+                        description="SQL meetings will appear here once leads are generated"
+                      />
+                    ) : (
+                      <EmptyState 
+                        icon={CalendarX}
+                        title="No meetings in this period"
+                        description="No SQL booked meetings found for the selected date range"
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               )}
