@@ -129,7 +129,25 @@ All colors MUST be HSL.
   /* Touch target sizes for mobile */
   @media (pointer: coarse) {
     button, a, [role="button"] {
-      @apply min-h-[44px] min-w-[44px];
+      @apply min-h-[44px];
     }
+  }
+
+  /* Improved touch feedback */
+  @media (hover: none) and (pointer: coarse) {
+    button:active, a:active, [role="button"]:active {
+      @apply scale-95 transition-transform duration-100;
+    }
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }

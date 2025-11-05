@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
+import { BreakpointIndicator } from "@/components/BreakpointIndicator";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Overview from "./pages/Overview";
@@ -22,6 +23,7 @@ const App = () => (
       <DateFilterProvider>
         <Toaster />
         <Sonner />
+        <BreakpointIndicator />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />

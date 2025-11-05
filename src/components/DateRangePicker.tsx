@@ -44,16 +44,16 @@ export const DateRangePicker = ({ date, onDateChange, className }: DateRangePick
   };
 
   return (
-    <div className={cn("flex flex-col sm:flex-row gap-2", className)}>
+    <div className={cn("flex flex-col gap-2", className)}>
       {/* Quick Filter Buttons */}
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
         {quickFilters.map((filter) => (
           <Button
             key={filter.label}
             variant="outline"
             size="sm"
             onClick={() => handleQuickFilter(filter.range)}
-            className="border-border text-foreground hover:bg-muted/50 transition-all min-h-[44px] active:scale-95"
+            className="border-border text-foreground hover:bg-muted/50 transition-all min-h-[44px] active:scale-95 text-xs sm:text-sm"
             aria-label={filter.label}
           >
             {filter.label}
@@ -67,26 +67,29 @@ export const DateRangePicker = ({ date, onDateChange, className }: DateRangePick
           <Button
             variant="outline"
             className={cn(
-              "justify-start text-left font-normal border-border bg-card hover:bg-muted/50 min-h-[44px]",
+              "justify-start text-left font-normal border-border bg-card hover:bg-muted/50 min-h-[44px] w-full sm:w-auto text-xs sm:text-sm",
               !date && "text-muted-foreground"
             )}
             aria-label="Select custom date range"
           >
-            <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}
-                </>
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    <span className="hidden sm:inline">{format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}</span>
+                    <span className="sm:hidden">{format(date.from, "MMM dd")} - {format(date.to, "MMM dd")}</span>
+                  </>
+                ) : (
+                  format(date.from, "MMM dd, yyyy")
+                )
               ) : (
-                format(date.from, "MMM dd, yyyy")
-              )
-            ) : (
-              <span>Custom Range</span>
-            )}
+                <span>Custom Range</span>
+              )}
+            </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="end">
+        <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="center" sideOffset={8}>
           <Calendar
             initialFocus
             mode="range"
@@ -98,8 +101,8 @@ export const DateRangePicker = ({ date, onDateChange, className }: DateRangePick
                 setIsOpen(false);
               }
             }}
-            numberOfMonths={2}
-            className="pointer-events-auto"
+            numberOfMonths={window.innerWidth >= 768 ? 2 : 1}
+            className="pointer-events-auto p-3"
           />
         </PopoverContent>
       </Popover>

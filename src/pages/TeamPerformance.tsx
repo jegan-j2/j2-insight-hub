@@ -27,11 +27,14 @@ const TeamPerformance = () => {
   }, [dateRange]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
-        <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+          <span className="hidden sm:inline">Sales Development Team Performance</span>
+          <span className="sm:hidden">Team Performance</span>
+        </h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Monitor individual SDR performance across all clients</p>
       </div>
 
       {/* Date Range Picker with Quick Filters */}
@@ -43,22 +46,23 @@ const TeamPerformance = () => {
         />
         
         {/* Selected Date Range Display and Client Filter */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-3">
           {dateRange?.from && dateRange?.to && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2">
-              <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
-              <span>
-                Performance data for: {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-3 sm:px-4 py-2">
+              <CalendarDaysIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">
+                <span className="hidden sm:inline">Performance data for: {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
+                <span className="sm:hidden">{format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
               </span>
             </div>
           )}
           
           {/* Client Filter */}
           <Select defaultValue="all">
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px] min-h-[44px]">
               <SelectValue placeholder="Filter by client" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[100] bg-card">
               <SelectItem value="all">All Clients</SelectItem>
               <SelectItem value="inxpress">Inxpress</SelectItem>
               <SelectItem value="congero">Congero</SelectItem>

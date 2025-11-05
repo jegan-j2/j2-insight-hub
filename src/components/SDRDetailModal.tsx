@@ -35,49 +35,69 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="max-w-full md:max-w-[90vw] h-screen md:h-auto md:max-h-[90vh] overflow-y-auto p-0 gap-0">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-card z-10">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="text-lg bg-primary/20 text-primary">
+        <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border sticky top-0 bg-card z-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 w-full sm:w-auto">
+              <Avatar className="h-12 w-12 sm:h-16 sm:w-16 shrink-0">
+                <AvatarFallback className="text-base sm:text-lg bg-primary/20 text-primary">
                   {sdr.initials}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">{sdr.name}</h2>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate">{sdr.name}</h2>
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs sm:text-sm">
                     Rank: #{sdr.rank}
                   </Badge>
-                  <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30">
+                  <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30 text-xs sm:text-sm">
                     {sdr.sqls} SQLs
                   </Badge>
-                  <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30">
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-xs sm:text-sm hidden sm:inline-flex">
                     {conversionRate}% Conversion
                   </Badge>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <DateRangePicker date={dateRange} onDateChange={setDateRange} />
-              <Button variant="ghost" size="icon" onClick={onClose}>
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+              <div className="hidden md:block">
+                <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+              </div>
+              <Button variant="ghost" size="icon" onClick={onClose} className="min-h-[44px] min-w-[44px]">
                 <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
+          {/* Mobile Date Picker */}
+          <div className="md:hidden mt-3 w-full">
+            <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
+          </div>
         </DialogHeader>
 
         {/* Tabs Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6">
-              <TabsTrigger value="overview">Performance Overview</TabsTrigger>
-              <TabsTrigger value="timeline">Activity Timeline</TabsTrigger>
-              <TabsTrigger value="meetings">Meetings & Results</TabsTrigger>
-              <TabsTrigger value="notes">Notes & Coaching</TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto scrollbar-thin -mx-4 sm:mx-0 px-4 sm:px-0">
+              <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 min-w-[500px] sm:min-w-0">
+                <TabsTrigger value="overview" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Performance Overview</span>
+                  <span className="sm:hidden">Overview</span>
+                </TabsTrigger>
+                <TabsTrigger value="timeline" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Activity Timeline</span>
+                  <span className="sm:hidden">Timeline</span>
+                </TabsTrigger>
+                <TabsTrigger value="meetings" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Meetings & Results</span>
+                  <span className="sm:hidden">Meetings</span>
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Notes & Coaching</span>
+                  <span className="sm:hidden">Notes</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="overview" className="space-y-6">
               <SDRPerformanceOverview sdr={sdr} />
@@ -98,18 +118,20 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border p-4 flex items-center justify-between sticky bottom-0 bg-card">
-          <p className="text-sm text-muted-foreground">
+        <div className="border-t border-border p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 sticky bottom-0 bg-card">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Last updated: {format(new Date(), "MMM dd, yyyy h:mm a")}
           </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" size="sm" disabled className="min-h-[44px] w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
-              Export PDF Report
+              <span className="hidden sm:inline">Export PDF Report</span>
+              <span className="sm:hidden">Export PDF</span>
             </Button>
-            <Button variant="outline" size="sm" disabled>
+            <Button variant="outline" size="sm" disabled className="min-h-[44px] w-full sm:w-auto">
               <Share2 className="h-4 w-4 mr-2" />
-              Share Report
+              <span className="hidden sm:inline">Share Report</span>
+              <span className="sm:hidden">Share</span>
             </Button>
           </div>
         </div>
