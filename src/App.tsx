@@ -26,19 +26,19 @@ const App = () => (
         <BreakpointIndicator />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<div className="page-transition"><Index /></div>} />
+            <Route path="/login" element={<div className="page-transition"><Login /></div>} />
             <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
             
             {/* Dashboard Routes with Layout */}
-            <Route path="/overview" element={<DashboardLayout><Overview /></DashboardLayout>} />
-            <Route path="/team" element={<DashboardLayout><TeamPerformance /></DashboardLayout>} />
-            <Route path="/sql-meetings" element={<DashboardLayout><SQLMeetings /></DashboardLayout>} />
-            <Route path="/client/:clientSlug" element={<DashboardLayout><ClientView /></DashboardLayout>} />
-            <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
+            <Route path="/overview" element={<DashboardLayout><div className="page-transition"><Overview /></div></DashboardLayout>} />
+            <Route path="/team" element={<DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout>} />
+            <Route path="/sql-meetings" element={<DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout>} />
+            <Route path="/client/:clientSlug" element={<DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout>} />
+            <Route path="/settings" element={<DashboardLayout><div className="page-transition"><Settings /></div></DashboardLayout>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<div className="page-transition"><NotFound /></div>} />
           </Routes>
         </BrowserRouter>
       </DateFilterProvider>

@@ -43,8 +43,8 @@ export function AppSidebar() {
                     to="/overview"
                     className={({ isActive }) =>
                       isActive
-                        ? "bg-secondary/20 text-secondary font-medium"
-                        : "text-foreground hover:bg-muted/50"
+                        ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
                     }
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -60,8 +60,8 @@ export function AppSidebar() {
                     to="/team"
                     className={({ isActive }) =>
                       isActive
-                        ? "bg-secondary/20 text-secondary font-medium"
-                        : "text-foreground hover:bg-muted/50"
+                        ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
                     }
                   >
                     <UserCog className="h-4 w-4" />
@@ -74,10 +74,10 @@ export function AppSidebar() {
               <Collapsible defaultOpen className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="text-foreground hover:bg-muted/50">
+                    <SidebarMenuButton className="text-foreground hover:bg-muted/50 transition-all duration-150">
                       <Users className="h-4 w-4" />
                       <span>Clients</span>
-                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                      <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -89,8 +89,8 @@ export function AppSidebar() {
                               to={`/client/${client.slug}`}
                               className={({ isActive }) =>
                                 isActive
-                                  ? "bg-secondary/20 text-secondary font-medium"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                  ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-150"
                               }
                             >
                               <span>{client.name}</span>
@@ -116,8 +116,8 @@ export function AppSidebar() {
                     to="/settings"
                     className={({ isActive }) =>
                       isActive
-                        ? "bg-secondary/20 text-secondary font-medium"
-                        : "text-foreground hover:bg-muted/50"
+                        ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
                     }
                   >
                     <Settings className="h-4 w-4" />

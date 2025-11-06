@@ -58,6 +58,8 @@ All colors MUST be HSL.
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-fast: all 0.15s ease;
+    --transition-medium: all 0.2s ease;
   }
 
   .dark {
@@ -149,5 +151,76 @@ All colors MUST be HSL.
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    @apply shadow-elevated;
+    transform: translateY(-2px);
+  }
+
+  /* Icon animations */
+  .icon-rotate:hover {
+    @apply transition-transform duration-200;
+    transform: rotate(15deg);
+  }
+
+  .icon-shake:hover {
+    animation: shake 0.3s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+
+  .icon-scale:hover {
+    @apply transition-transform duration-200;
+    transform: scale(1.1);
+  }
+
+  /* Input focus glow */
+  input:focus, textarea:focus, select:focus {
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.1);
+  }
+
+  /* Page transitions */
+  @keyframes page-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .page-transition {
+    animation: page-fade-in 150ms ease-out;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .card-hover:hover {
+      transform: none;
+    }
+
+    .icon-rotate:hover,
+    .icon-scale:hover {
+      transform: none;
+    }
   }
 }
