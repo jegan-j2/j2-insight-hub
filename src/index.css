@@ -123,6 +123,34 @@ All colors MUST be HSL.
     @apply bg-muted-foreground/30 rounded hover:bg-muted-foreground/50;
   }
 
+  /* Scroll indicator gradient */
+  .scroll-gradient {
+    position: relative;
+  }
+
+  .scroll-gradient::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to left, hsl(var(--card)), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .scroll-gradient:not(:hover)::after {
+    opacity: 0;
+  }
+
+  @media (max-width: 768px) {
+    .scroll-gradient::after {
+      opacity: 1;
+    }
+  }
+
   /* Focus visible styles */
   *:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;

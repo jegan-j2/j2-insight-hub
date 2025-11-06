@@ -22,8 +22,8 @@ export const EmptyState = ({
       role="status"
       aria-label={title}
     >
-      <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center mb-4">
-        <Icon className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted/20 flex items-center justify-center mb-4">
+        <Icon className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" aria-hidden="true" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-sm text-muted-foreground max-w-sm mb-6">{description}</p>

@@ -190,11 +190,11 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange }: ClientSQLMeeti
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-thin scroll-gradient">
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground">
+                <TableHead className="text-muted-foreground sticky left-0 bg-card z-20">
                   <SortButton field="sqlDate" label="SQL Date" />
                 </TableHead>
                 <TableHead className="text-muted-foreground">
@@ -223,7 +223,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange }: ClientSQLMeeti
                     index % 2 === 0 ? "bg-muted/5" : ""
                   }`}
                 >
-                  <TableCell className="text-foreground whitespace-nowrap">
+                  <TableCell className="text-foreground whitespace-nowrap sticky left-0 bg-card z-10">
                     {format(meeting.sqlDate, "MMM dd, yyyy")}
                   </TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">

@@ -28,8 +28,8 @@ const Navbar = () => {
 
         {/* Logo and Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center">
+            <Building2 className="w-6 h-6 sm:w-5 sm:h-5 text-primary" />
           </div>
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold text-foreground">J2 Group</h1>

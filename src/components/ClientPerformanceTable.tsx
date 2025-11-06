@@ -173,11 +173,11 @@ export const ClientPerformanceTable = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto scrollbar-thin">
+        <div className="overflow-x-auto scrollbar-thin scroll-gradient">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
               <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground">
+                <TableHead className="text-muted-foreground sticky left-0 bg-card z-20">
                   <SortButton field="name" label="Client" />
                 </TableHead>
                 <TableHead className="text-muted-foreground">
@@ -212,7 +212,7 @@ export const ClientPerformanceTable = () => {
                   style={{ animationDelay: `${600 + index * 50}ms` }}
                   onClick={() => navigate(`/client/${client.slug}`)}
                 >
-                  <TableCell>
+                  <TableCell className="sticky left-0 bg-card z-10">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center flex-shrink-0">
                         <Target className="h-4 w-4 text-secondary" />

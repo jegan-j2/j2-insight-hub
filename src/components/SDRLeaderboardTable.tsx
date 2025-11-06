@@ -65,19 +65,20 @@ export const SDRLeaderboardTable = () => {
               description="Add team members in Settings to see performance metrics"
             />
           ) : (
-            <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">Rank</TableHead>
-                <TableHead>SDR Name</TableHead>
-                <TableHead className="text-right">Total Dials</TableHead>
-                <TableHead className="text-right">Answer Rate</TableHead>
-                <TableHead className="text-right">DMs Reached</TableHead>
-                <TableHead className="text-right">SQLs</TableHead>
-                <TableHead className="text-right">Conv. Rate</TableHead>
-                <TableHead className="text-right">Trend</TableHead>
-              </TableRow>
-            </TableHeader>
+            <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16 sticky left-0 bg-card z-10">Rank</TableHead>
+                    <TableHead className="sticky left-16 bg-card z-10 min-w-[180px]">SDR Name</TableHead>
+                    <TableHead className="text-right">Total Dials</TableHead>
+                    <TableHead className="text-right">Answer Rate</TableHead>
+                    <TableHead className="text-right">DMs Reached</TableHead>
+                    <TableHead className="text-right">SQLs</TableHead>
+                    <TableHead className="text-right">Conv. Rate</TableHead>
+                    <TableHead className="text-right">Trend</TableHead>
+                  </TableRow>
+                </TableHeader>
             <TableBody>
               {sortedData.map((sdr) => {
                 const conversionRate = ((sdr.sqls / sdr.dials) * 100).toFixed(2);
@@ -90,10 +91,10 @@ export const SDRLeaderboardTable = () => {
                       isTopPerformer ? "bg-green-500/5" : ""
                     }`}
                   >
-                    <TableCell className="font-medium text-lg">
+                    <TableCell className="font-medium text-lg sticky left-0 bg-card z-10">
                       {getRankDisplay(sdr.rank)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="sticky left-16 bg-card z-10">
                       <div 
                         className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
                         onClick={() => setSelectedSDR(sdr)}
@@ -103,7 +104,7 @@ export const SDRLeaderboardTable = () => {
                             {sdr.initials}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{sdr.name}</span>
+                        <span className="font-medium whitespace-nowrap">{sdr.name}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">{sdr.dials}</TableCell>
@@ -137,8 +138,9 @@ export const SDRLeaderboardTable = () => {
                   </TableRow>
                 );
               })}
-            </TableBody>
-          </Table>
+              </TableBody>
+            </Table>
+          </div>
           )}
         </CardContent>
       </Card>
