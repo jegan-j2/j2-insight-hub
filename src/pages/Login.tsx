@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2 } from "lucide-react";
+import j2Logo from "@/assets/j2-logo.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +12,10 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    document.title = "J2 Dashboard - Login";
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,9 +50,11 @@ const Login = () => {
         <div className="bg-card/50 backdrop-blur-xl border border-border rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)] p-8 space-y-6 animate-fade-in">
           {/* Logo */}
           <div className="flex flex-col items-center space-y-2">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center shadow-lg">
-              <Building2 className="w-10 h-10 text-primary" />
-            </div>
+            <img 
+              src={j2Logo} 
+              alt="J2 Group" 
+              className="w-24 h-24 rounded-full object-cover shadow-lg"
+            />
             <h1 className="text-3xl font-bold text-foreground">J2 Group</h1>
             <p className="text-muted-foreground text-sm">Lead Generation Dashboard</p>
           </div>

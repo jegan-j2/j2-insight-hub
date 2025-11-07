@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,10 @@ interface TeamMember {
 
 const Settings = () => {
   const { toast } = useToast();
+
+  useEffect(() => {
+    document.title = "J2 Dashboard - Settings";
+  }, []);
   const [clients, setClients] = useState<Client[]>([
     { id: "1", name: "Inxpress", slug: "inxpress", sheetUrl: "https://docs.google.com/spreadsheets/d/...", logoUrl: undefined },
     { id: "2", name: "Congero", slug: "congero", sheetUrl: "https://docs.google.com/spreadsheets/d/...", logoUrl: undefined },

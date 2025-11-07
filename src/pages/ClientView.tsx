@@ -50,6 +50,10 @@ const ClientView = () => {
 
   const clientName = clientNames[clientSlug || ""] || "Unknown Client";
 
+  useEffect(() => {
+    document.title = `J2 Dashboard - ${clientName}`;
+  }, [clientName]);
+
   // KPI Data for Inxpress
   const kpiData = {
     dials: 861,

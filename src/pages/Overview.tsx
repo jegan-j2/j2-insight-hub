@@ -16,6 +16,10 @@ const Overview = () => {
   const [showContent, setShowContent] = useState(true);
 
   useEffect(() => {
+    document.title = "J2 Dashboard - Overview";
+  }, []);
+
+  useEffect(() => {
     // Simulate loading when date changes
     setShowContent(false);
     setIsLoading(true);

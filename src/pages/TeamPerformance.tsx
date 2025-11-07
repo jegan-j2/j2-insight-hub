@@ -16,6 +16,10 @@ const TeamPerformance = () => {
   const [showContent, setShowContent] = useState(true);
 
   useEffect(() => {
+    document.title = "J2 Dashboard - Team Performance";
+  }, []);
+
+  useEffect(() => {
     // Simulate loading when date changes
     setShowContent(false);
     setIsLoading(true);

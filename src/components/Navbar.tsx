@@ -1,6 +1,7 @@
-import { Building2, LogOut, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import j2Logo from "@/assets/j2-logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,9 +29,11 @@ const Navbar = () => {
 
         {/* Logo and Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center">
-            <Building2 className="w-6 h-6 sm:w-5 sm:h-5 text-primary" />
-          </div>
+          <img 
+            src={j2Logo} 
+            alt="J2 Group" 
+            className="w-10 h-10 sm:w-10 sm:h-10 rounded-full object-cover"
+          />
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold text-foreground">J2 Group</h1>
             <p className="text-xs text-muted-foreground">Lead Generation Dashboard</p>
