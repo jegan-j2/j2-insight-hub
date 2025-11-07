@@ -11,7 +11,7 @@ import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
 import { useState, useEffect } from "react";
 
 const TeamPerformance = () => {
-  const { dateRange, setDateRange } = useDateFilter();
+  const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
   const [isLoading, setIsLoading] = useState(false);
   const [showContent, setShowContent] = useState(true);
 
@@ -46,17 +46,19 @@ const TeamPerformance = () => {
         <DateRangePicker 
           date={dateRange} 
           onDateChange={setDateRange}
+          filterType={filterType}
+          onFilterTypeChange={setFilterType}
           className="w-full"
         />
         
         {/* Selected Date Range Display and Client Filter */}
         <div className="flex flex-col gap-3">
           {dateRange?.from && dateRange?.to && (
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-3 sm:px-4 py-2">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-3 sm:px-4 py-2 transition-all duration-200">
               <CalendarDaysIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="truncate">
-                <span className="hidden sm:inline">Performance data for: {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
-                <span className="sm:hidden">{format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
+                <span className="hidden sm:inline">Performance data for: {format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
+                <span className="sm:hidden">{format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
               </span>
             </div>
           )}

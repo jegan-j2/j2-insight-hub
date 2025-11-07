@@ -1,9 +1,14 @@
 import { createContext, useContext, useState, ReactNode } from "react";
+import { startOfMonth, endOfMonth } from "date-fns";
 import type { DateRange } from "react-day-picker";
+
+export type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "custom";
 
 interface DateFilterContextType {
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
+  filterType: FilterType;
+  setFilterType: (type: FilterType) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }
@@ -11,14 +16,40 @@ interface DateFilterContextType {
 const DateFilterContext = createContext<DateFilterContextType | undefined>(undefined);
 
 export const DateFilterProvider = ({ children }: { children: ReactNode }) => {
+  // Default to "This Month"
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(2025, 9, 14), // October 14, 2025
-    to: new Date(2025, 9, 21), // October 21, 2025
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
   });
+  const [filterType, setFilterType] = useState<FilterType>("thisMonth");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Log date changes for testing
+  const handleDateChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    console.log("📅 Date filter changed:", {
+      from: range?.from,
+      to: range?.to,
+      filterType,
+    });
+  };
+
+  const handleFilterTypeChange = (type: FilterType) => {
+    setFilterType(type);
+    console.log("🔄 Filter type changed:", type);
+  };
+
   return (
-    <DateFilterContext.Provider value={{ dateRange, setDateRange, isLoading, setIsLoading }}>
+    <DateFilterContext.Provider 
+      value={{ 
+        dateRange, 
+        setDateRange: handleDateChange, 
+        filterType, 
+        setFilterType: handleFilterTypeChange,
+        isLoading, 
+        setIsLoading 
+      }}
+    >
       {children}
     </DateFilterContext.Provider>
   );

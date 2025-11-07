@@ -3,34 +3,47 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import type { FilterType } from "@/contexts/DateFilterContext";
 
 interface DateRangePickerProps {
   date: DateRange | undefined;
   onDateChange: (range: DateRange | undefined) => void;
+  filterType?: FilterType;
+  onFilterTypeChange?: (type: FilterType) => void;
   className?: string;
 }
 
-export const DateRangePicker = ({ date, onDateChange, className }: DateRangePickerProps) => {
+export const DateRangePicker = ({ 
+  date, 
+  onDateChange, 
+  filterType,
+  onFilterTypeChange,
+  className 
+}: DateRangePickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const quickFilters = [
     {
       label: "Last 7 Days",
+      type: "last7days" as FilterType,
       range: { from: subDays(new Date(), 7), to: new Date() },
     },
     {
       label: "Last 30 Days",
+      type: "last30days" as FilterType,
       range: { from: subDays(new Date(), 30), to: new Date() },
     },
     {
       label: "This Month",
+      type: "thisMonth" as FilterType,
       range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) },
     },
     {
       label: "Last Month",
+      type: "lastMonth" as FilterType,
       range: { 
         from: startOfMonth(subMonths(new Date(), 1)), 
         to: endOfMonth(subMonths(new Date(), 1)) 
@@ -38,8 +51,14 @@ export const DateRangePicker = ({ date, onDateChange, className }: DateRangePick
     },
   ];
 
-  const handleQuickFilter = (range: DateRange) => {
-    onDateChange(range);
+  const isFilterActive = (filter: typeof quickFilters[0]) => {
+    if (!date?.from || !date?.to) return false;
+    return isSameDay(date.from, filter.range.from) && isSameDay(date.to, filter.range.to);
+  };
+
+  const handleQuickFilter = (filter: typeof quickFilters[0]) => {
+    onDateChange(filter.range);
+    onFilterTypeChange?.(filter.type);
     setIsOpen(false);
   };
 
@@ -47,18 +66,27 @@ export const DateRangePicker = ({ date, onDateChange, className }: DateRangePick
     <div className={cn("flex flex-col gap-2", className)}>
       {/* Quick Filter Buttons */}
       <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-        {quickFilters.map((filter) => (
-          <Button
-            key={filter.label}
-            variant="outline"
-            size="sm"
-            onClick={() => handleQuickFilter(filter.range)}
-            className="border-border text-foreground hover:bg-muted/50 transition-all min-h-[44px] active:scale-95 text-xs sm:text-sm"
-            aria-label={filter.label}
-          >
-            {filter.label}
-          </Button>
-        ))}
+        {quickFilters.map((filter) => {
+          const isActive = isFilterActive(filter);
+          return (
+            <Button
+              key={filter.label}
+              variant={isActive ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleQuickFilter(filter)}
+              className={cn(
+                "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                isActive
+                  ? "bg-secondary hover:bg-secondary/90 text-white shadow-md"
+                  : "border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+              aria-label={filter.label}
+              aria-pressed={isActive}
+            >
+              {filter.label}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Custom Date Range Picker */}
@@ -97,6 +125,7 @@ export const DateRangePicker = ({ date, onDateChange, className }: DateRangePick
             selected={date}
             onSelect={(range) => {
               onDateChange(range);
+              onFilterTypeChange?.("custom");
               if (range?.from && range?.to) {
                 setIsOpen(false);
               }

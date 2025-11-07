@@ -7,6 +7,10 @@ const SQLMeetings = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    document.title = "J2 Dashboard - SQL Meetings";
+  }, []);
+
+  useEffect(() => {
     // Simulate loading when date changes
     setIsLoading(true);
     const timer = setTimeout(() => {

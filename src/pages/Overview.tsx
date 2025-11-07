@@ -12,7 +12,7 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 
 const Overview = () => {
-  const { dateRange, setDateRange, isLoading, setIsLoading } = useDateFilter();
+  const { dateRange, setDateRange, filterType, setFilterType, isLoading, setIsLoading } = useDateFilter();
   const [showContent, setShowContent] = useState(true);
 
   useEffect(() => {
@@ -133,15 +133,17 @@ const Overview = () => {
         <DateRangePicker 
           date={dateRange} 
           onDateChange={setDateRange}
+          filterType={filterType}
+          onFilterTypeChange={setFilterType}
           className="w-full"
         />
         
         {/* Selected Date Range Display */}
         {dateRange?.from && dateRange?.to && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2 transition-all duration-200">
             <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
             <span>
-              Showing data from {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
+              Showing data from {format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}
             </span>
           </div>
         )}

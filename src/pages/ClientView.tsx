@@ -129,10 +129,10 @@ const ClientView = () => {
         
         {/* Campaign Period Display */}
         {date?.from && date?.to && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2 transition-all duration-200">
             <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
             <span>
-              Campaign Period: {format(date.from, "MMM dd")} - {format(date.to, "MMM dd, yyyy")}
+              Campaign Period: {format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}
             </span>
           </div>
         )}
