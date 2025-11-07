@@ -12,6 +12,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 import { ClientCallActivityChart } from "@/components/ClientCallActivityChart";
 import { ClientWeeklyComparisonChart } from "@/components/ClientWeeklyComparisonChart";
+import { ClientBanner } from "@/components/ClientBanner";
 
 const ClientView = () => {
   const { clientSlug } = useParams();
@@ -88,6 +89,13 @@ const ClientView = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Client Banner */}
+      <ClientBanner 
+        clientSlug={clientSlug || ""}
+        clientName={clientName}
+        dateRange={date}
+      />
+      
       {/* Header with Back Button */}
       <div className="flex items-center gap-4">
         <Button
@@ -101,7 +109,6 @@ const ClientView = () => {
         </Button>
         <div className="border-l border-border h-6" />
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{clientName}</h1>
           <p className="text-sm text-muted-foreground">
             Last Updated: {format(lastUpdated, "MMMM dd, yyyy, h:mm a")} AEDT
           </p>
