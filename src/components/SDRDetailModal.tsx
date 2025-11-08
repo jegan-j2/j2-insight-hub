@@ -3,11 +3,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Download, Share2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { X, Download, Share2, Loader2, Mail, Link2, Download as DownloadIcon } from "lucide-react";
 import { format } from "date-fns";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 import { SDRPerformanceOverview } from "@/components/SDRDetailTabs/SDRPerformanceOverview";
 import { SDRActivityTimeline } from "@/components/SDRDetailTabs/SDRActivityTimeline";
 import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResults";
@@ -31,7 +34,33 @@ interface SDRDetailModalProps {
 
 export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDetailModalProps) => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(globalDateRange);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const { toast } = useToast();
   const conversionRate = ((sdr.sqls / sdr.dials) * 100).toFixed(2);
+
+  const handleExportPDF = () => {
+    setIsExporting(true);
+    
+    // Simulate PDF generation
+    setTimeout(() => {
+      setIsExporting(false);
+      toast({
+        title: "PDF report generated!",
+        description: "PDF generation will be available once backend is connected",
+        className: "border-primary/30",
+      });
+    }, 2000);
+  };
+
+  const handleShareOption = (option: string) => {
+    toast({
+      title: "Coming soon",
+      description: `${option} sharing will be enabled after backend integration`,
+      className: "border-primary/30",
+    });
+    setIsShareModalOpen(false);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -123,16 +152,89 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
             Last updated: {format(new Date(), "MMM dd, yyyy h:mm a")}
           </p>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" disabled className="min-h-[44px] w-full sm:w-auto">
-              <Download className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Export PDF Report</span>
-              <span className="sm:hidden">Export PDF</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              className="min-h-[44px] w-full sm:w-auto hover:border-primary/50 transition-colors"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <span>Generating PDF...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Export PDF Report</span>
+                  <span className="sm:hidden">Export PDF</span>
+                </>
+              )}
             </Button>
-            <Button variant="outline" size="sm" disabled className="min-h-[44px] w-full sm:w-auto">
-              <Share2 className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Share Report</span>
-              <span className="sm:hidden">Share</span>
-            </Button>
+            
+            <Popover open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="min-h-[44px] w-full sm:w-auto hover:border-primary/50 transition-colors"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Share Report</span>
+                  <span className="sm:hidden">Share</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3" align="end">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm text-foreground mb-3">Share via:</h4>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start hover:bg-accent"
+                    onClick={() => handleShareOption("Email")}
+                  >
+                    <Mail className="h-4 w-4 mr-3 text-primary" />
+                    <span>Email</span>
+                    <span className="ml-auto text-xs text-muted-foreground">Soon</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start hover:bg-accent"
+                    onClick={() => handleShareOption("Link")}
+                  >
+                    <Link2 className="h-4 w-4 mr-3 text-primary" />
+                    <span>Copy Link</span>
+                    <span className="ml-auto text-xs text-muted-foreground">Soon</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start hover:bg-accent"
+                    onClick={() => handleShareOption("Download")}
+                  >
+                    <DownloadIcon className="h-4 w-4 mr-3 text-primary" />
+                    <span>Download</span>
+                    <span className="ml-auto text-xs text-muted-foreground">Soon</span>
+                  </Button>
+
+                  <Separator className="my-2" />
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setIsShareModalOpen(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </DialogContent>
