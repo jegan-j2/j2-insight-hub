@@ -62,14 +62,12 @@ export const useClientDashboardData = (clientId: string, startDate: string, endD
     table: 'daily_snapshots',
     filter: `client_id=eq.${clientId}`,
     onChange: fetchData,
-    showNotification: true,
   })
 
   useRealtimeSubscription({
     table: 'sql_meetings',
     filter: `client_id=eq.${clientId}`,
     onChange: fetchData,
-    showNotification: true,
   })
 
   const kpis = useMemo(() => {
