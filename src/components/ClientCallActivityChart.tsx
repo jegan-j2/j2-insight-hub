@@ -1,7 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { format, parseISO } from "date-fns";
 
-const chartData = [
+interface ChartDataPoint {
+  date: string;
+  dials: number;
+  answered: number;
+  dms: number;
+  sqls: number;
+}
+
+interface ClientCallActivityChartProps {
+  data?: ChartDataPoint[];
+}
+
+const fallbackData: ChartDataPoint[] = [
   { date: "Oct 4", dials: 120, answered: 25, dms: 8, sqls: 1 },
   { date: "Oct 5", dials: 135, answered: 28, dms: 10, sqls: 0 },
   { date: "Oct 6", dials: 110, answered: 22, dms: 7, sqls: 1 },
@@ -23,25 +36,24 @@ const chartData = [
 ];
 
 const chartConfig = {
-  dials: {
-    label: "Dials",
-    color: "hsl(var(--chart-1))",
-  },
-  answered: {
-    label: "Answered",
-    color: "hsl(var(--chart-2))",
-  },
-  dms: {
-    label: "DMs Reached",
-    color: "hsl(var(--chart-3))",
-  },
-  sqls: {
-    label: "SQLs",
-    color: "hsl(var(--chart-4))",
-  },
+  dials: { label: "Dials", color: "hsl(var(--chart-1))" },
+  answered: { label: "Answered", color: "hsl(var(--chart-2))" },
+  dms: { label: "DMs Reached", color: "hsl(var(--chart-3))" },
+  sqls: { label: "SQLs", color: "hsl(var(--chart-4))" },
 };
 
-export const ClientCallActivityChart = () => {
+const formatDateLabel = (dateStr: string) => {
+  try {
+    // Try ISO date format first
+    const parsed = parseISO(dateStr);
+    if (!isNaN(parsed.getTime())) return format(parsed, "MMM d");
+  } catch {}
+  return dateStr;
+};
+
+export const ClientCallActivityChart = ({ data }: ClientCallActivityChartProps) => {
+  const chartData = data && data.length > 0 ? data : fallbackData;
+
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" role="img" aria-label="Daily activity trends chart">
       <CardHeader>
@@ -50,76 +62,20 @@ export const ClientCallActivityChart = () => {
       <CardContent>
         <div className="w-full" style={{ height: "350px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-              <XAxis
-                dataKey="date"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatDateLabel} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                  color: "hsl(var(--popover-foreground))",
-                }}
+                contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "var(--radius)", color: "hsl(var(--popover-foreground))" }}
                 labelStyle={{ color: "hsl(var(--foreground))" }}
+                labelFormatter={formatDateLabel}
               />
-              <Legend
-                wrapperStyle={{
-                  paddingTop: "20px",
-                  fontSize: "14px",
-                }}
-                iconType="line"
-              />
-              <Line
-                type="monotone"
-                dataKey="dials"
-                stroke={chartConfig.dials.color}
-                strokeWidth={2}
-                dot={{ fill: chartConfig.dials.color, r: 4 }}
-                activeDot={{ r: 6 }}
-                name={chartConfig.dials.label}
-              />
-              <Line
-                type="monotone"
-                dataKey="answered"
-                stroke={chartConfig.answered.color}
-                strokeWidth={2}
-                dot={{ fill: chartConfig.answered.color, r: 4 }}
-                activeDot={{ r: 6 }}
-                name={chartConfig.answered.label}
-              />
-              <Line
-                type="monotone"
-                dataKey="dms"
-                stroke={chartConfig.dms.color}
-                strokeWidth={2}
-                dot={{ fill: chartConfig.dms.color, r: 4 }}
-                activeDot={{ r: 6 }}
-                name={chartConfig.dms.label}
-              />
-              <Line
-                type="monotone"
-                dataKey="sqls"
-                stroke={chartConfig.sqls.color}
-                strokeWidth={2}
-                dot={{ fill: chartConfig.sqls.color, r: 4 }}
-                activeDot={{ r: 6 }}
-                name={chartConfig.sqls.label}
-              />
+              <Legend wrapperStyle={{ paddingTop: "20px", fontSize: "14px" }} iconType="line" />
+              <Line type="monotone" dataKey="dials" stroke={chartConfig.dials.color} strokeWidth={2} dot={{ fill: chartConfig.dials.color, r: 4 }} activeDot={{ r: 6 }} name={chartConfig.dials.label} />
+              <Line type="monotone" dataKey="answered" stroke={chartConfig.answered.color} strokeWidth={2} dot={{ fill: chartConfig.answered.color, r: 4 }} activeDot={{ r: 6 }} name={chartConfig.answered.label} />
+              <Line type="monotone" dataKey="dms" stroke={chartConfig.dms.color} strokeWidth={2} dot={{ fill: chartConfig.dms.color, r: 4 }} activeDot={{ r: 6 }} name={chartConfig.dms.label} />
+              <Line type="monotone" dataKey="sqls" stroke={chartConfig.sqls.color} strokeWidth={2} dot={{ fill: chartConfig.sqls.color, r: 4 }} activeDot={{ r: 6 }} name={chartConfig.sqls.label} />
             </LineChart>
           </ResponsiveContainer>
         </div>
