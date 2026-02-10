@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useToast } from '@/hooks/use-toast'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface RealtimeSubscriptionOptions {
@@ -8,7 +7,6 @@ interface RealtimeSubscriptionOptions {
   event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*'
   filter?: string
   onChange?: () => void
-  showNotification?: boolean
 }
 
 export const useRealtimeSubscription = ({
@@ -16,10 +14,9 @@ export const useRealtimeSubscription = ({
   event = '*',
   filter,
   onChange,
-  showNotification = false
 }: RealtimeSubscriptionOptions) => {
-  const { toast } = useToast()
-  const channelRef = useRef<RealtimeChannel | null>(null)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
 
   useEffect(() => {
     const channelName = `realtime-${table}-${filter || 'all'}-${Date.now()}`
@@ -34,24 +31,7 @@ export const useRealtimeSubscription = ({
       },
       (payload) => {
         console.log(`Realtime update on ${table}:`, payload.eventType)
-
-        if (onChange) onChange()
-
-        if (showNotification) {
-          if (payload.eventType === 'INSERT' && table === 'sql_meetings') {
-            toast({
-              title: '🎉 New SQL Booked!',
-              description: 'Dashboard updated with new meeting',
-              duration: 3000,
-            })
-          } else if (payload.eventType === 'UPDATE') {
-            toast({
-              title: '📊 Data Updated',
-              description: 'Dashboard refreshed with latest data',
-              duration: 2000,
-            })
-          }
-        }
+        onChangeRef.current?.()
       }
     )
 
@@ -61,12 +41,8 @@ export const useRealtimeSubscription = ({
       }
     })
 
-    channelRef.current = channel
-
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-      }
+      supabase.removeChannel(channel)
     }
   }, [table, event, filter])
 }

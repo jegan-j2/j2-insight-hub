@@ -86,13 +86,11 @@ export const useOverviewData = (dateRange: DateRange | undefined): OverviewData 
   useRealtimeSubscription({
     table: 'daily_snapshots',
     onChange: fetchDashboardData,
-    showNotification: true,
   });
 
   useRealtimeSubscription({
     table: 'sql_meetings',
     onChange: fetchDashboardData,
-    showNotification: true,
   });
 
   const kpis = useMemo<OverviewKPIs>(() => {
