@@ -1,10 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUpDown, Download, ChevronLeft, ChevronRight, CalendarX } from "lucide-react";
+import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import type { SQLMeeting } from "@/lib/supabase-types";
@@ -53,6 +55,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [dateFilterType, setDateFilterType] = useState<string>("booking");
+  const { updateMeetingHeld, updateRemarks, updating } = useMeetingUpdate();
   
   const rowsPerPage = 10;
 
@@ -60,6 +63,27 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
     if (meetings && meetings.length > 0) return mapMeetingsToDisplay(meetings);
     return fallbackMeetings;
   }, [meetings]);
+
+  const [localMeetings, setLocalMeetings] = useState<MeetingData[]>(displayMeetings);
+  useEffect(() => { setLocalMeetings(displayMeetings); }, [displayMeetings]);
+
+  const handleMeetingHeldChange = useCallback(async (meetingId: string, newValue: boolean) => {
+    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: newValue } : m));
+    const success = await updateMeetingHeld(meetingId, newValue);
+    if (!success) {
+      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: !newValue } : m));
+    }
+  }, [updateMeetingHeld]);
+
+  const handleRemarksChange = useCallback(async (meetingId: string, newRemarks: string) => {
+    const original = localMeetings.find(m => m.id === meetingId)?.remarks || "";
+    if (newRemarks === original) return;
+    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: newRemarks } : m));
+    const success = await updateRemarks(meetingId, newRemarks);
+    if (!success) {
+      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: original } : m));
+    }
+  }, [updateRemarks, localMeetings]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -92,7 +116,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
   };
 
   const sortedMeetings = useMemo(() => {
-    let filtered = [...displayMeetings];
+    let filtered = [...localMeetings];
     if (dateRange?.from && dateRange?.to) {
       filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
@@ -109,7 +133,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
       return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
     });
     return filtered;
-  }, [displayMeetings, dateRange, sortField, sortOrder]);
+  }, [localMeetings, dateRange, sortField, sortOrder]);
 
   const totalPages = Math.ceil(sortedMeetings.length / rowsPerPage);
   const paginatedMeetings = sortedMeetings.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
@@ -167,16 +191,29 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
             </TableHeader>
             <TableBody>
               {paginatedMeetings.map((meeting, index) => (
-                <TableRow key={meeting.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${index % 2 === 0 ? "bg-muted/5" : ""}`}>
+                <TableRow key={meeting.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${index % 2 === 0 ? "bg-muted/5" : ""} ${updating === meeting.id ? "opacity-60" : ""}`}>
                   <TableCell className="text-foreground whitespace-nowrap sticky left-0 bg-card z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
                   <TableCell className="text-foreground">{meeting.companyName}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell>
-                    <Checkbox checked={meeting.meetingHeld} disabled className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary" />
+                    <Checkbox
+                      checked={meeting.meetingHeld}
+                      onCheckedChange={(checked) => handleMeetingHeldChange(meeting.id, checked as boolean)}
+                      disabled={updating === meeting.id}
+                      className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary"
+                    />
                   </TableCell>
-                  <TableCell className="text-muted-foreground max-w-xs"><div className="truncate">{meeting.remarks}</div></TableCell>
+                  <TableCell className="text-muted-foreground max-w-xs">
+                    <Input
+                      defaultValue={meeting.remarks || ""}
+                      onBlur={(e) => handleRemarksChange(meeting.id, e.target.value)}
+                      placeholder="Add remarks..."
+                      disabled={updating === meeting.id}
+                      className="bg-transparent border-transparent hover:border-border focus:border-ring h-8 text-sm"
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
               {paginatedMeetings.length === 0 && (

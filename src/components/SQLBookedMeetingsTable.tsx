@@ -1,8 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
+import { Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
@@ -181,6 +184,26 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
   const [searchQuery, setSearchQuery] = useState("");
   const [bookingDateFilter, setBookingDateFilter] = useState<Date | undefined>();
   const [meetingDateFilter, setMeetingDateFilter] = useState<Date | undefined>();
+  const [localMeetings, setLocalMeetings] = useState<MeetingData[]>(mockMeetingsData);
+  const { updateMeetingHeld, updateRemarks, updating } = useMeetingUpdate();
+
+  const handleMeetingHeldChange = useCallback(async (meetingId: string, newValue: boolean) => {
+    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: newValue } : m));
+    const success = await updateMeetingHeld(meetingId, newValue);
+    if (!success) {
+      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: !newValue } : m));
+    }
+  }, [updateMeetingHeld]);
+
+  const handleRemarksChange = useCallback(async (meetingId: string, newRemarks: string) => {
+    const original = localMeetings.find(m => m.id === meetingId)?.remarks || "";
+    if (newRemarks === original) return;
+    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: newRemarks } : m));
+    const success = await updateRemarks(meetingId, newRemarks);
+    if (!success) {
+      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: original } : m));
+    }
+  }, [updateRemarks, localMeetings]);
   
   const rowsPerPage = 10;
 
@@ -240,7 +263,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
-    let filtered = [...mockMeetingsData];
+    let filtered = [...localMeetings];
 
     // Apply date range filter from context
     if (dateRange?.from && dateRange?.to) {
@@ -304,7 +327,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
     });
 
     return filtered;
-  }, [dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateFilter, meetingDateFilter, sortField, sortOrder]);
+  }, [localMeetings, dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateFilter, meetingDateFilter, sortField, sortOrder]);
 
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
   const paginatedMeetings = filteredMeetings.slice(
@@ -312,8 +335,8 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
     currentPage * rowsPerPage
   );
 
-  const clients = Array.from(new Set(mockMeetingsData.map(m => m.clientName))).sort();
-  const sdrs = Array.from(new Set(mockMeetingsData.map(m => m.sdr))).sort();
+  const clients = Array.from(new Set(localMeetings.map(m => m.clientName))).sort();
+  const sdrs = Array.from(new Set(localMeetings.map(m => m.sdr))).sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
@@ -341,7 +364,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
             <div>
               <CardTitle className="text-foreground">SQL Booked Meetings - All Clients</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Showing {filteredMeetings.length} of {mockMeetingsData.length} meetings
+                Showing {filteredMeetings.length} of {localMeetings.length} meetings
               </p>
             </div>
             <div className="flex gap-2">
@@ -587,7 +610,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
                   key={meeting.id}
                   className={`border-border/50 hover:bg-muted/20 transition-colors ${
                     index % 2 === 0 ? "bg-muted/5" : ""
-                  }`}
+                  } ${updating === meeting.id ? "opacity-60" : ""}`}
                 >
                   <TableCell className="text-foreground whitespace-nowrap sticky left-0 bg-card z-10">
                     {format(meeting.sqlDate, "MMM dd, yyyy")}
@@ -610,12 +633,19 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
                   <TableCell>
                     <Checkbox
                       checked={meeting.meetingHeld}
-                      disabled
+                      onCheckedChange={(checked) => handleMeetingHeldChange(meeting.id, checked as boolean)}
+                      disabled={updating === meeting.id}
                       className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary"
                     />
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-xs">
-                    <div className="truncate">{meeting.remarks}</div>
+                    <Input
+                      defaultValue={meeting.remarks || ""}
+                      onBlur={(e) => handleRemarksChange(meeting.id, e.target.value)}
+                      placeholder="Add remarks..."
+                      disabled={updating === meeting.id}
+                      className="bg-transparent border-transparent hover:border-border focus:border-ring h-8 text-sm"
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -630,7 +660,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
                         actionLabel="Clear Filters"
                         onAction={clearAllFilters}
                       />
-                    ) : mockMeetingsData.length === 0 ? (
+                    ) : localMeetings.length === 0 ? (
                       <EmptyState 
                         icon={CalendarX}
                         title="No meetings booked yet"
