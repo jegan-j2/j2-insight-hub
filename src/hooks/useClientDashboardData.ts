@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { DailySnapshot, SQLMeeting, Client } from '@/lib/supabase-types'
+import { useRealtimeSubscription } from './useRealtimeSubscription'
 
 export const useClientDashboardData = (clientId: string, startDate: string, endDate: string) => {
   const [loading, setLoading] = useState(true)
@@ -56,6 +57,20 @@ export const useClientDashboardData = (clientId: string, startDate: string, endD
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useRealtimeSubscription({
+    table: 'daily_snapshots',
+    filter: `client_id=eq.${clientId}`,
+    onChange: fetchData,
+    showNotification: true,
+  })
+
+  useRealtimeSubscription({
+    table: 'sql_meetings',
+    filter: `client_id=eq.${clientId}`,
+    onChange: fetchData,
+    showNotification: true,
+  })
 
   const kpis = useMemo(() => {
     const totalDials = snapshots.reduce((sum, s) => sum + s.dials, 0)
