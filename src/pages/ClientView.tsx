@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Phone, CheckCircle, Mail, Target, TrendingUp, Calendar as CalendarDaysIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, Phone, CheckCircle, Mail, Target, TrendingUp, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
@@ -13,87 +14,49 @@ import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/Load
 import { ClientCallActivityChart } from "@/components/ClientCallActivityChart";
 import { ClientWeeklyComparisonChart } from "@/components/ClientWeeklyComparisonChart";
 import { ClientBanner } from "@/components/ClientBanner";
+import { EmptyState } from "@/components/EmptyState";
+import { useClientDashboardData } from "@/hooks/useClientDashboardData";
 
 const ClientView = () => {
   const { clientSlug } = useParams();
   const navigate = useNavigate();
   
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2025, 9, 4), // October 4, 2025
-    to: new Date(2025, 10, 3), // November 3, 2025
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    to: new Date(),
   });
 
-  const [lastUpdated] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(false);
-  const [showContent, setShowContent] = useState(true);
+  const startDate = date?.from ? format(date.from, "yyyy-MM-dd") : "";
+  const endDate = date?.to ? format(date.to, "yyyy-MM-dd") : "";
 
-  useEffect(() => {
-    // Simulate loading when date changes
-    setShowContent(false);
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setShowContent(true);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [date]);
+  const { loading, error, client, kpis, campaignProgress, snapshots, meetings, chartData, refetch } = 
+    useClientDashboardData(clientSlug || "", startDate, endDate);
 
-  // Mock client data - in a real app, this would come from an API
-  const clientNames: Record<string, string> = {
-    "inxpress": "Inxpress",
-    "congero": "Congero",
-    "techcorp-solutions": "TechCorp Solutions",
-    "global-logistics": "Global Logistics",
-    "finserve-group": "FinServe Group",
-    "healthcare-plus": "HealthCare Plus",
-  };
-
-  const clientName = clientNames[clientSlug || ""] || "Unknown Client";
+  const clientName = client?.client_name || clientSlug?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || "Unknown Client";
 
   useEffect(() => {
     document.title = `J2 Dashboard - ${clientName}`;
   }, [clientName]);
 
-  // KPI Data for Inxpress
-  const kpiData = {
-    dials: 861,
-    answered: 161,
-    answeredPercent: 18.70,
-    dmsReached: 59,
-    mqls: 21,
-    mqlsOnDmsPercent: 35.59,
-    mqlsOnDialsPercent: 2.44,
-    sqls: 6,
-    sqlsOnDmsPercent: 10.17,
-    sqlsOnDialsPercent: 0.70,
-  };
-
-  // Campaign Target Data
-  const campaignData = {
-    startDate: new Date(2025, 9, 4), // October 4
-    endDate: new Date(2025, 10, 3), // November 3
-    target: 16,
-    sqlsGenerated: 6,
-    leadsRemaining: 10,
-  };
-
-  const daysRemaining = differenceInDays(campaignData.endDate, new Date());
-  const avgDailyLeadsRequired = daysRemaining > 0 ? (campaignData.leadsRemaining / daysRemaining).toFixed(2) : "0.00";
-  const progressPercent = (campaignData.sqlsGenerated / campaignData.target) * 100;
+  const campaignStart = campaignProgress?.campaignStart ? new Date(campaignProgress.campaignStart) : null;
+  const campaignEnd = campaignProgress?.campaignEnd ? new Date(campaignProgress.campaignEnd) : null;
+  const daysRemaining = campaignEnd ? Math.max(0, differenceInDays(campaignEnd, new Date())) : 0;
+  const avgDailyLeadsRequired = daysRemaining > 0 && campaignProgress
+    ? (campaignProgress.remaining / daysRemaining).toFixed(2) 
+    : "0.00";
 
   const kpiCards = [
-    { label: "Dials", value: kpiData.dials, icon: Phone, color: "text-secondary", bgColor: "bg-secondary/10" },
-    { label: "Answered", value: kpiData.answered, subtitle: `${kpiData.answeredPercent.toFixed(2)}%`, icon: CheckCircle, color: "text-accent", bgColor: "bg-accent/10" },
-    { label: "DMs Reached", value: kpiData.dmsReached, icon: Mail, color: "text-secondary", bgColor: "bg-secondary/10" },
-    { label: "MQLs on DMs Reached", value: kpiData.mqls, subtitle: `${kpiData.mqlsOnDmsPercent.toFixed(2)}%`, icon: TrendingUp, color: "text-accent", bgColor: "bg-accent/10" },
-    { label: "MQLs on Dials", value: kpiData.mqls, subtitle: `${kpiData.mqlsOnDialsPercent.toFixed(2)}%`, icon: TrendingUp, color: "text-secondary", bgColor: "bg-secondary/10" },
-    { label: "SQLs on DMs Reached", value: kpiData.sqls, subtitle: `${kpiData.sqlsOnDmsPercent.toFixed(2)}%`, icon: Target, color: "text-accent", bgColor: "bg-accent/10" },
-    { label: "SQLs on Dials", value: kpiData.sqls, subtitle: `${kpiData.sqlsOnDialsPercent.toFixed(2)}%`, icon: Target, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "Dials", value: kpis.totalDials, icon: Phone, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "Answered", value: kpis.totalAnswered, subtitle: `${kpis.answerRate}%`, icon: CheckCircle, color: "text-accent", bgColor: "bg-accent/10" },
+    { label: "DMs Reached", value: kpis.totalDMs, icon: Mail, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "MQLs on DMs Reached", value: kpis.totalMQLs, subtitle: `${kpis.mqlsOnDmsRate}%`, icon: TrendingUp, color: "text-accent", bgColor: "bg-accent/10" },
+    { label: "MQLs on Dials", value: kpis.totalMQLs, subtitle: `${kpis.mqlsOnDialsRate}%`, icon: TrendingUp, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "SQLs on DMs Reached", value: kpis.totalSQLs, subtitle: `${kpis.sqlsOnDmsRate}%`, icon: Target, color: "text-accent", bgColor: "bg-accent/10" },
+    { label: "SQLs on Dials", value: kpis.totalSQLs, subtitle: `${kpis.sqlsOnDialsRate}%`, icon: Target, color: "text-secondary", bgColor: "bg-secondary/10" },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Client Banner */}
       <ClientBanner 
         clientSlug={clientSlug || ""}
         clientName={clientName}
@@ -114,10 +77,24 @@ const ClientView = () => {
         <div className="border-l border-border h-6" />
         <div>
           <p className="text-sm text-muted-foreground">
-            Last Updated: {format(lastUpdated, "MMMM dd, yyyy, h:mm a")} AEDT
+            Last Updated: {format(new Date(), "MMMM dd, yyyy, h:mm a")} AEDT
           </p>
         </div>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error}</span>
+            <Button variant="outline" size="sm" onClick={refetch} className="ml-4 gap-2">
+              <RefreshCw className="h-3 w-3" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Date Range Picker */}
       <div className="space-y-3">
@@ -127,7 +104,6 @@ const ClientView = () => {
           className="w-full"
         />
         
-        {/* Campaign Period Display */}
         {date?.from && date?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2 transition-all duration-200">
             <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
@@ -138,12 +114,18 @@ const ClientView = () => {
         )}
       </div>
 
-      {/* Section 1: KPIs - Two Column Layout */}
-      {!showContent ? (
+      {/* Section 1: KPIs */}
+      {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <KPICardSkeleton />
           <KPICardSkeleton />
         </div>
+      ) : !error && snapshots.length === 0 ? (
+        <EmptyState
+          icon={DatabaseZap}
+          title="No campaign data available yet"
+          description="Data will appear once HubSpot sync is active for this client"
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
           {/* Left Column - KPIs */}
@@ -181,83 +163,91 @@ const ClientView = () => {
               <CardTitle className="text-foreground">Campaign Target</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Date Range */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CalendarDaysIcon className="h-4 w-4 text-secondary" />
-                    <p className="text-sm text-muted-foreground">Start Date</p>
-                  </div>
-                  <p className="text-lg font-bold text-foreground">
-                    {format(campaignData.startDate, "MMM d")}
-                  </p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CalendarDaysIcon className="h-4 w-4 text-accent" />
-                    <p className="text-sm text-muted-foreground">End Date</p>
-                  </div>
-                  <p className="text-lg font-bold text-foreground">
-                    {format(campaignData.endDate, "MMM d")}
-                  </p>
-                </div>
-              </div>
+              {campaignProgress ? (
+                <>
+                  {campaignStart && campaignEnd && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CalendarDaysIcon className="h-4 w-4 text-secondary" />
+                          <p className="text-sm text-muted-foreground">Start Date</p>
+                        </div>
+                        <p className="text-lg font-bold text-foreground">
+                          {format(campaignStart, "MMM d")}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CalendarDaysIcon className="h-4 w-4 text-accent" />
+                          <p className="text-sm text-muted-foreground">End Date</p>
+                        </div>
+                        <p className="text-lg font-bold text-foreground">
+                          {format(campaignEnd, "MMM d")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Target Progress */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">Target SQLs</p>
-                  <p className="text-2xl font-bold text-foreground">{campaignData.target}</p>
-                </div>
-                <Progress value={progressPercent} className="h-3" />
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium text-foreground">{progressPercent.toFixed(1)}%</span>
-                </div>
-              </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">Target SQLs</p>
+                      <p className="text-2xl font-bold text-foreground">{campaignProgress.target}</p>
+                    </div>
+                    <Progress value={parseFloat(campaignProgress.percentage)} className="h-3" />
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="font-medium text-foreground">{campaignProgress.percentage}%</span>
+                    </div>
+                  </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-secondary/10 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">SQLs Generated</p>
-                  <p className="text-2xl font-bold text-secondary">{campaignData.sqlsGenerated}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-secondary/10 border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">SQLs Generated</p>
+                      <p className="text-2xl font-bold text-secondary">{campaignProgress.achieved}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-accent/10 border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">Leads Remaining</p>
+                      <p className="text-2xl font-bold text-accent">{campaignProgress.remaining}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
+                      <p className="text-2xl font-bold text-foreground">{daysRemaining}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                      <p className="text-xs text-muted-foreground mb-1">Avg Daily Required</p>
+                      <p className="text-2xl font-bold text-foreground">{avgDailyLeadsRequired}</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No campaign target configured</p>
                 </div>
-                <div className="p-4 rounded-lg bg-accent/10 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Leads Remaining</p>
-                  <p className="text-2xl font-bold text-accent">{campaignData.leadsRemaining}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
-                  <p className="text-2xl font-bold text-foreground">{daysRemaining}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Avg Daily Required</p>
-                  <p className="text-2xl font-bold text-foreground">{avgDailyLeadsRequired}</p>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
       )}
 
       {/* Section 2: Charts */}
-      {!showContent ? (
+      {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ChartSkeleton />
           <ChartSkeleton />
         </div>
-      ) : (
+      ) : snapshots.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          <ClientCallActivityChart />
-          <ClientWeeklyComparisonChart />
+          <ClientCallActivityChart data={chartData} />
+          <ClientWeeklyComparisonChart snapshots={snapshots} />
         </div>
       )}
 
-      {/* Section 3: Client-specific SQL Booked Meetings Table */}
-      {!showContent ? (
+      {/* Section 3: SQL Booked Meetings Table */}
+      {loading ? (
         <TableSkeleton />
       ) : (
-        <ClientSQLMeetingsTable clientSlug={clientSlug || ""} dateRange={date} />
+        <ClientSQLMeetingsTable clientSlug={clientSlug || ""} dateRange={date} meetings={meetings} />
       )}
     </div>
   );
