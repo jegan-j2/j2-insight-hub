@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDownRight, Users, TrendingUp, Target, Phone, CheckCircle, Mail, DollarSign, Calendar as CalendarDaysIcon } from "lucide-react";
+import { useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowUpRight, ArrowDownRight, Phone, CheckCircle, Mail, Target, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CallActivityChart } from "@/components/CallActivityChart";
@@ -10,114 +11,61 @@ import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
+import { EmptyState } from "@/components/EmptyState";
+import { useOverviewData } from "@/hooks/useOverviewData";
 
 const Overview = () => {
-  const { dateRange, setDateRange, filterType, setFilterType, isLoading, setIsLoading } = useDateFilter();
-  const [showContent, setShowContent] = useState(true);
+  const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
+  const { kpis, snapshots, loading, error, refetch } = useOverviewData(dateRange);
 
   useEffect(() => {
     document.title = "J2 Dashboard - Overview";
   }, []);
 
-  useEffect(() => {
-    // Simulate loading when date changes
-    setShowContent(false);
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setShowContent(true);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [dateRange, setIsLoading]);
-
-  // KPI Cards Data
+  // KPI Cards driven by Supabase data
   const kpiCards = [
     {
       title: "Total Dials",
-      value: "1,735",
+      value: kpis.totalDials.toLocaleString(),
       icon: Phone,
-      trend: "+8%",
+      trend: "--",
       trendUp: true,
-      trendLabel: "vs last week",
+      trendLabel: "vs previous period",
       color: "text-secondary",
       bgColor: "bg-secondary/10",
     },
     {
       title: "Total Answered",
-      value: "406",
-      subtitle: "23.4% rate",
+      value: kpis.totalAnswered.toLocaleString(),
+      subtitle: `${kpis.answerRate}% rate`,
       icon: CheckCircle,
-      trend: "+5.2%",
+      trend: "--",
       trendUp: true,
-      trendLabel: "vs last week",
+      trendLabel: "vs previous period",
       color: "text-accent",
       bgColor: "bg-accent/10",
     },
     {
       title: "Total DMs Reached",
-      value: "281",
+      value: kpis.totalDMs.toLocaleString(),
       icon: Mail,
-      trend: "+12%",
+      trend: "--",
       trendUp: true,
-      trendLabel: "vs last week",
+      trendLabel: "vs previous period",
       color: "text-secondary",
       bgColor: "bg-secondary/10",
     },
     {
       title: "Total SQLs Generated",
-      value: "46",
-      subtitle: "16.4% conversion",
+      value: kpis.totalSQLs.toLocaleString(),
+      subtitle: `${kpis.sqlConversionRate}% conversion`,
       icon: Target,
-      trend: "+3.8%",
+      trend: "--",
       trendUp: true,
-      trendLabel: "vs last week",
+      trendLabel: "vs previous period",
       color: "text-accent",
       bgColor: "bg-accent/10",
     },
-  ];
-
-  const stats = [
-    {
-      title: "Total Leads Generated",
-      value: "45,580",
-      icon: Users,
-      trend: "+12.5%",
-      color: "text-secondary",
-      description: "Across all clients",
-    },
-    {
-      title: "Average Client ROI",
-      value: "486%",
-      icon: TrendingUp,
-      trend: "+8.2%",
-      color: "text-accent",
-      description: "Return on investment",
-    },
-    {
-      title: "Meetings Booked",
-      value: "456",
-      icon: CalendarDaysIcon,
-      trend: "+15.3%",
-      color: "text-secondary",
-      description: "This month",
-    },
-    {
-      title: "Total Revenue",
-      value: "$1.2M",
-      icon: DollarSign,
-      trend: "+18.7%",
-      color: "text-accent",
-      description: "Monthly recurring",
-    },
-  ];
-
-  const clients = [
-    { name: "Inxpress", leads: 8240, roi: 520, meetings: 84, status: "active" },
-    { name: "Congero", leads: 6890, roi: 468, meetings: 72, status: "active" },
-    { name: "TechCorp Solutions", leads: 7150, roi: 492, meetings: 78, status: "active" },
-    { name: "Global Logistics", leads: 5920, roi: 445, meetings: 61, status: "active" },
-    { name: "FinServe Group", leads: 8890, roi: 534, meetings: 92, status: "active" },
-    { name: "HealthCare Plus", leads: 8490, roi: 501, meetings: 69, status: "active" },
   ];
 
   return (
@@ -130,15 +78,13 @@ const Overview = () => {
 
       {/* Date Range Picker with Quick Filters */}
       <div className="space-y-3">
-        <DateRangePicker 
-          date={dateRange} 
+        <DateRangePicker
+          date={dateRange}
           onDateChange={setDateRange}
           filterType={filterType}
           onFilterTypeChange={setFilterType}
           className="w-full"
         />
-        
-        {/* Selected Date Range Display */}
         {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2 transition-all duration-200">
             <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
@@ -149,8 +95,20 @@ const Overview = () => {
         )}
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive animate-fade-in">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <span className="text-sm flex-1">{error}</span>
+          <Button variant="outline" size="sm" onClick={refetch} className="gap-2 shrink-0">
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      )}
+
       {/* KPI Cards */}
-      {!showContent ? (
+      {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
             <KPICardSkeleton key={i} />
@@ -158,7 +116,7 @@ const Overview = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
-          {kpiCards.map((kpi, index) => (
+          {kpiCards.map((kpi) => (
             <Card
               key={kpi.title}
               className="bg-card border-border hover:shadow-lg transition-all duration-300 hover:scale-[1.02] overflow-hidden group"
@@ -195,36 +153,19 @@ const Overview = () => {
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card
-            key={stat.title}
-            className="bg-card/50 backdrop-blur-sm border-border hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-secondary flex items-center">
-                  <ArrowUpRight className="h-3 w-3 mr-1" />
-                  {stat.trend}
-                </p>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Empty State */}
+      {!loading && !error && snapshots.length === 0 && (
+        <EmptyState
+          icon={DatabaseZap}
+          title="No data available for selected date range"
+          description="Data will appear once the backend database is populated. This is expected during initial setup."
+          actionLabel="Refresh"
+          onAction={refetch}
+        />
+      )}
 
       {/* Charts Section */}
-      {!showContent ? (
+      {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ChartSkeleton />
           <ChartSkeleton />
@@ -236,8 +177,8 @@ const Overview = () => {
         </div>
       )}
 
-      {/* Client Performance Table */}
-      {!showContent ? (
+      {/* Tables */}
+      {loading ? (
         <>
           <TableSkeleton />
           <TableSkeleton />
