@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import type { DailySnapshot } from '@/lib/supabase-types'
 import { format } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
+import { useRealtimeSubscription } from './useRealtimeSubscription'
 
 interface LeaderboardEntry {
   rank: number
@@ -58,6 +59,11 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useRealtimeSubscription({
+    table: 'daily_snapshots',
+    onChange: fetchData,
+  })
 
   const leaderboard: LeaderboardEntry[] = useMemo(() => {
     const grouped = snapshots.reduce((acc, snapshot) => {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
 import { format } from "date-fns";
+import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 
 interface OverviewKPIs {
@@ -81,6 +82,18 @@ export const useOverviewData = (dateRange: DateRange | undefined): OverviewData 
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
+
+  useRealtimeSubscription({
+    table: 'daily_snapshots',
+    onChange: fetchDashboardData,
+    showNotification: true,
+  });
+
+  useRealtimeSubscription({
+    table: 'sql_meetings',
+    onChange: fetchDashboardData,
+    showNotification: true,
+  });
 
   const kpis = useMemo<OverviewKPIs>(() => {
     const totalDials = snapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
