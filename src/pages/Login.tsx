@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase, getUserMetadata } from "@/lib/supabase";
+import { Loader2 } from "lucide-react";
 import j2Logo from "@/assets/j2-logo.png";
 
 const Login = () => {
@@ -15,31 +17,55 @@ const Login = () => {
 
   useEffect(() => {
     document.title = "J2 Dashboard - Login";
-  }, []);
+    // Redirect if already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) navigate("/overview", { replace: true });
+    });
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock authentication - simulate API call
-    setTimeout(() => {
-      if (email && password) {
-        toast({
-          title: "Login successful",
-          description: "Redirecting to dashboard...",
-        });
-        setTimeout(() => {
-          navigate("/overview");
-        }, 500);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) throw error;
+
+      const metadata = await getUserMetadata();
+
+      toast({
+        title: "Login successful",
+        description: `Welcome back!`,
+        duration: 2000,
+      });
+
+      if (metadata?.role === "client" && metadata.clientId) {
+        navigate(`/client/${metadata.clientId}`, { replace: true });
       } else {
-        toast({
-          title: "Login failed",
-          description: "Please enter both email and password.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
+        navigate("/overview", { replace: true });
       }
-    }, 1000);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive",
+        duration: 4000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    toast({
+      title: "Password reset",
+      description: "Password reset will be available once admin creates accounts",
+    });
   };
 
   return (
@@ -71,6 +97,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-secondary transition-all"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -84,6 +111,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-secondary transition-all"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -92,12 +120,25 @@ const Login = () => {
               className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold transition-all duration-300 hover:shadow-[0_0_20px_rgba(194,255,0,0.3)] hover:scale-[1.02]"
               disabled={isLoading}
             >
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
 
-          <div className="text-center text-sm text-muted-foreground">
-            <p>Demo credentials: any email and password</p>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-sm text-secondary hover:underline"
+            >
+              Forgot password?
+            </button>
           </div>
         </div>
 
