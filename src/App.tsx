@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { BreakpointIndicator } from "@/components/BreakpointIndicator";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Overview from "./pages/Overview";
@@ -30,12 +31,12 @@ const App = () => (
             <Route path="/login" element={<div className="page-transition"><Login /></div>} />
             <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
             
-            {/* Dashboard Routes with Layout */}
-            <Route path="/overview" element={<DashboardLayout><div className="page-transition"><Overview /></div></DashboardLayout>} />
-            <Route path="/team" element={<DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout>} />
-            <Route path="/sql-meetings" element={<DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout>} />
-            <Route path="/client/:clientSlug" element={<DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout>} />
-            <Route path="/settings" element={<DashboardLayout><div className="page-transition"><Settings /></div></DashboardLayout>} />
+            {/* Protected Dashboard Routes */}
+            <Route path="/overview" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><Overview /></div></DashboardLayout></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout></ProtectedRoute>} />
+            <Route path="/sql-meetings" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout></ProtectedRoute>} />
+            <Route path="/client/:clientSlug" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><Settings /></div></DashboardLayout></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<div className="page-transition"><NotFound /></div>} />

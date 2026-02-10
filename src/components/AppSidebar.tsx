@@ -1,5 +1,7 @@
-import { LayoutDashboard, Users, Settings, ChevronDown, UserCog } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +29,28 @@ const clients = [
 
 export function AppSidebar() {
   const { open } = useSidebar();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+        duration: 2000,
+      });
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Logout failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border" aria-label="Main navigation">
@@ -106,7 +130,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Settings at Bottom */}
+        {/* Settings & Logout at Bottom */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
@@ -123,6 +147,15 @@ export function AppSidebar() {
                     <Settings className="h-4 w-4" />
                     <span>Settings</span>
                   </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleLogout}
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
