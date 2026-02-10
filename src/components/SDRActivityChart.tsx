@@ -3,23 +3,38 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { EmptyState } from "@/components/EmptyState";
 import { TrendingUp } from "lucide-react";
 
-const sdrData = [
+interface ChartDataEntry {
+  name: string;
+  dials: number;
+  answered: number;
+  dms: number;
+  sqls: number;
+}
+
+interface SDRActivityChartProps {
+  chartData?: ChartDataEntry[];
+}
+
+// Fallback mock data
+const fallbackData: ChartDataEntry[] = [
   { name: "Ava Monyebane", dials: 320, answered: 75, dms: 48, sqls: 12 },
   { name: "Reggie Makhanya", dials: 285, answered: 68, dms: 42, sqls: 10 },
   { name: "Clive Sambane", dials: 310, answered: 72, dms: 45, sqls: 9 },
   { name: "Barry Geduld", dials: 265, answered: 60, dms: 38, sqls: 8 },
   { name: "Ivory Geduld", dials: 290, answered: 65, dms: 40, sqls: 5 },
   { name: "Ben De Beer", dials: 255, answered: 66, dms: 35, sqls: 2 },
-].sort((a, b) => b.sqls - a.sqls); // Sort by SQLs descending
+].sort((a, b) => b.sqls - a.sqls);
 
-export const SDRActivityChart = () => {
+export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
+  const data = chartData || fallbackData;
+
   return (
     <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">SDR Activity Breakdown</CardTitle>
       </CardHeader>
       <CardContent>
-        {sdrData.length === 0 ? (
+        {data.length === 0 ? (
           <EmptyState 
             icon={TrendingUp}
             title="No activity data yet"
@@ -28,7 +43,7 @@ export const SDRActivityChart = () => {
         ) : (
           <ResponsiveContainer width="100%" height={400}>
           <BarChart
-            data={sdrData}
+            data={data}
             layout="vertical"
             margin={{ top: 5, right: 30, left: 120, bottom: 5 }}
           >

@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar as CalendarDaysIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap } from "lucide-react";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
@@ -8,27 +9,18 @@ import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
 import { SDRQuickStatsCards } from "@/components/SDRQuickStatsCards";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
+import { EmptyState } from "@/components/EmptyState";
+import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect } from "react";
 
 const TeamPerformance = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [showContent, setShowContent] = useState(true);
+  const [clientFilter, setClientFilter] = useState("all");
+  const { loading, error, leaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
 
   useEffect(() => {
     document.title = "J2 Dashboard - Team Performance";
   }, []);
-
-  useEffect(() => {
-    // Simulate loading when date changes
-    setShowContent(false);
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setShowContent(true);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [dateRange]);
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
@@ -64,7 +56,7 @@ const TeamPerformance = () => {
           )}
           
           {/* Client Filter */}
-          <Select defaultValue="all">
+          <Select value={clientFilter} onValueChange={setClientFilter}>
             <SelectTrigger className="w-full sm:w-[200px] min-h-[44px]">
               <SelectValue placeholder="Filter by client" />
             </SelectTrigger>
@@ -81,8 +73,31 @@ const TeamPerformance = () => {
         </div>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive animate-fade-in">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <span className="text-sm flex-1">{error}</span>
+          <Button variant="outline" size="sm" onClick={refetch} className="gap-2 shrink-0">
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && leaderboard.length === 0 && (
+        <EmptyState
+          icon={DatabaseZap}
+          title="No team performance data available"
+          description="Data will appear once the backend database is populated. This is expected during initial setup."
+          actionLabel="Refresh"
+          onAction={refetch}
+        />
+      )}
+
       {/* Top Section: Leaderboard + Quick Stats */}
-      {!showContent ? (
+      {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <ChartSkeleton />
@@ -91,26 +106,23 @@ const TeamPerformance = () => {
             <KPICardSkeleton />
           </div>
         </div>
-      ) : (
+      ) : leaderboard.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* SDR Leaderboard - Takes 2 columns on desktop */}
           <div className="lg:col-span-2">
-            <SDRLeaderboardTable />
+            <SDRLeaderboardTable leaderboardData={leaderboard} />
           </div>
-
-          {/* Quick Stat Cards - Takes 1 column on desktop */}
           <div className="lg:col-span-1">
-            <SDRQuickStatsCards />
+            <SDRQuickStatsCards leaderboardData={leaderboard} />
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* SDR Activity Breakdown Chart - Full Width */}
-      {!showContent ? (
+      {loading ? (
         <ChartSkeleton />
-      ) : (
-        <SDRActivityChart />
-      )}
+      ) : activityChartData.length > 0 ? (
+        <SDRActivityChart chartData={activityChartData} />
+      ) : null}
     </div>
   );
 };
