@@ -1,12 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Target, ArrowUpDown, Search } from "lucide-react";
+import { Target, ArrowUpDown, Search, DatabaseZap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
+import { supabase } from "@/lib/supabase";
+import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
 
 type SortField = "name" | "dials" | "answered" | "dms" | "mqls" | "sqls" | "target" | "progress";
 type SortOrder = "asc" | "desc";
@@ -25,92 +27,55 @@ interface ClientData {
   progress: number;
 }
 
-const clientsData: ClientData[] = [
-  {
-    name: "Inxpress",
-    slug: "inxpress",
-    dials: 861,
-    answered: 161,
-    answeredPercent: 18.7,
-    dms: 59,
-    mqls: 21,
-    sqls: 6,
-    sqlsPercent: 10.17,
-    target: 16,
-    progress: 37.5,
-  },
-  {
-    name: "Congero",
-    slug: "congero",
-    dials: 874,
-    answered: 245,
-    answeredPercent: 28.03,
-    dms: 222,
-    mqls: 1,
-    sqls: 40,
-    sqlsPercent: 18.02,
-    target: 465,
-    progress: 8.6,
-  },
-  {
-    name: "TechCorp Solutions",
-    slug: "techcorp-solutions",
-    dials: 792,
-    answered: 198,
-    answeredPercent: 25.0,
-    dms: 145,
-    mqls: 32,
-    sqls: 18,
-    sqlsPercent: 12.41,
-    target: 50,
-    progress: 36.0,
-  },
-  {
-    name: "Global Logistics",
-    slug: "global-logistics",
-    dials: 645,
-    answered: 142,
-    answeredPercent: 22.0,
-    dms: 98,
-    mqls: 24,
-    sqls: 12,
-    sqlsPercent: 12.24,
-    target: 35,
-    progress: 34.3,
-  },
-  {
-    name: "FinServe Group",
-    slug: "finserve-group",
-    dials: 934,
-    answered: 276,
-    answeredPercent: 29.55,
-    dms: 189,
-    mqls: 45,
-    sqls: 28,
-    sqlsPercent: 14.81,
-    target: 75,
-    progress: 37.3,
-  },
-  {
-    name: "HealthCare Plus",
-    slug: "healthcare-plus",
-    dials: 829,
-    answered: 183,
-    answeredPercent: 22.07,
-    dms: 124,
-    mqls: 28,
-    sqls: 15,
-    sqlsPercent: 12.1,
-    target: 40,
-    progress: 37.5,
-  },
-];
+interface ClientPerformanceTableProps {
+  snapshots?: DailySnapshot[];
+  meetings?: SQLMeeting[];
+}
 
-export const ClientPerformanceTable = () => {
+export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [clients, setClients] = useState<any[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("status", "active")
+        .order("client_name");
+      if (data) setClients(data);
+    };
+    fetchClients();
+  }, []);
+
+  const clientsData: ClientData[] = useMemo(() => {
+    return clients.map((client) => {
+      const clientSnapshots = (snapshots || []).filter((s) => s.client_id === client.client_id);
+      const totalDials = clientSnapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
+      const totalAnswered = clientSnapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
+      const totalDMs = clientSnapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0);
+      const totalMQLs = clientSnapshots.reduce((sum, s) => sum + (s.mqls || 0), 0);
+      const totalSQLs = clientSnapshots.reduce((sum, s) => sum + (s.sqls || 0), 0);
+      const target = client.target_sqls || 0;
+
+      return {
+        name: client.client_name,
+        slug: client.client_id,
+        dials: totalDials,
+        answered: totalAnswered,
+        answeredPercent: totalDials > 0 ? (totalAnswered / totalDials) * 100 : 0,
+        dms: totalDMs,
+        mqls: totalMQLs,
+        sqls: totalSQLs,
+        sqlsPercent: totalDMs > 0 ? (totalSQLs / totalDMs) * 100 : 0,
+        target,
+        progress: target > 0 ? (totalSQLs / target) * 100 : 0,
+      };
+    });
+  }, [clients, snapshots]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -142,7 +107,7 @@ export const ClientPerformanceTable = () => {
     });
 
     return filtered;
-  }, [searchQuery, sortField, sortOrder]);
+  }, [clientsData, searchQuery, sortField, sortOrder]);
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
@@ -173,104 +138,112 @@ export const ClientPerformanceTable = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto scrollbar-thin scroll-gradient">
-          <Table>
-            <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground sticky left-0 bg-card z-20">
-                  <SortButton field="name" label="Client" />
-                </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="dials" label="Dials" />
-                </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="answered" label="Answered" />
-                </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="dms" label="DMs" />
-                </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="mqls" label="MQLs" />
-                </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="sqls" label="SQLs" />
-                </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="target" label="Target" />
-                </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="progress" label="Progress" />
-                </TableHead>
-                <TableHead className="text-right text-muted-foreground">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedClients.map((client, index) => (
-                <TableRow
-                  key={client.slug}
-                  className="border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
-                  style={{ animationDelay: `${600 + index * 50}ms` }}
-                  onClick={() => navigate(`/client/${client.slug}`)}
-                >
-                  <TableCell className="sticky left-0 bg-card z-10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center flex-shrink-0">
-                        <Target className="h-4 w-4 text-secondary" />
+        {clients.length === 0 ? (
+          <EmptyState
+            icon={DatabaseZap}
+            title="No clients found"
+            description="Client data will appear once clients are added to the database"
+          />
+        ) : (
+          <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+            <Table>
+              <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-muted-foreground sticky left-0 bg-card z-20">
+                    <SortButton field="name" label="Client" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="dials" label="Dials" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="answered" label="Answered" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="dms" label="DMs" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="mqls" label="MQLs" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="sqls" label="SQLs" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="target" label="Target" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="progress" label="Progress" />
+                  </TableHead>
+                  <TableHead className="text-right text-muted-foreground">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedClients.map((client, index) => (
+                  <TableRow
+                    key={client.slug}
+                    className="border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
+                    style={{ animationDelay: `${600 + index * 50}ms` }}
+                    onClick={() => navigate(`/client/${client.slug}`)}
+                  >
+                    <TableCell className="sticky left-0 bg-card z-10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center flex-shrink-0">
+                          <Target className="h-4 w-4 text-secondary" />
+                        </div>
+                        <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
                       </div>
-                      <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground font-medium">{client.dials.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-foreground font-medium">{client.answered.toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground">{client.answeredPercent.toFixed(2)}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground font-medium">{client.dms.toLocaleString()}</TableCell>
-                  <TableCell className="text-foreground font-medium">{client.mqls.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-foreground font-medium">{client.sqls.toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground">{client.sqlsPercent.toFixed(2)}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground font-medium">{client.target.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1 min-w-[120px]">
-                      <Progress value={client.progress} className="h-2" />
-                      <span className="text-xs text-muted-foreground">{client.progress.toFixed(1)}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-secondary hover:text-secondary/80"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/client/${client.slug}`);
-                      }}
-                    >
-                      View Details
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredAndSortedClients.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} className="py-12">
-                    <EmptyState 
-                      icon={Search}
-                      title="No clients found"
-                      description={`No clients match "${searchQuery}". Try adjusting your search.`}
-                    />
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                    </TableCell>
+                    <TableCell className="text-foreground font-medium">{client.dials.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-foreground font-medium">{client.answered.toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">{client.answeredPercent.toFixed(2)}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-foreground font-medium">{client.dms.toLocaleString()}</TableCell>
+                    <TableCell className="text-foreground font-medium">{client.mqls.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-foreground font-medium">{client.sqls.toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">{client.sqlsPercent.toFixed(2)}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-foreground font-medium">{client.target.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1 min-w-[120px]">
+                        <Progress value={client.progress} className="h-2" />
+                        <span className="text-xs text-muted-foreground">{client.progress.toFixed(1)}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-secondary hover:text-secondary/80"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/client/${client.slug}`);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredAndSortedClients.length === 0 && clients.length > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="py-12">
+                      <EmptyState 
+                        icon={Search}
+                        title="No clients found"
+                        description={`No clients match "${searchQuery}". Try adjusting your search.`}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

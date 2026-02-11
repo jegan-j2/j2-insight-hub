@@ -2,6 +2,7 @@ import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut } from "
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,19 +19,31 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const clients = [
-  { name: "Inxpress", slug: "inxpress" },
-  { name: "Congero", slug: "congero" },
-  { name: "TechCorp Solutions", slug: "techcorp" },
-  { name: "Global Logistics", slug: "global-logistics" },
-  { name: "FinServe Group", slug: "finserve" },
-  { name: "HealthCare Plus", slug: "healthcare-plus" },
-];
+interface ClientItem {
+  name: string;
+  slug: string;
+}
 
 export function AppSidebar() {
   const { open } = useSidebar();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [clients, setClients] = useState<ClientItem[]>([]);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("client_id, client_name")
+        .eq("status", "active")
+        .order("client_name");
+
+      if (!error && data) {
+        setClients(data.map((c) => ({ name: c.client_name, slug: c.client_id })));
+      }
+    };
+    fetchClients();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -106,6 +119,11 @@ export function AppSidebar() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
+                      {clients.length === 0 && (
+                        <SidebarMenuSubItem>
+                          <span className="text-xs text-muted-foreground px-2 py-1">No clients found</span>
+                        </SidebarMenuSubItem>
+                      )}
                       {clients.map((client) => (
                         <SidebarMenuSubItem key={client.slug}>
                           <SidebarMenuSubButton asChild>

@@ -16,7 +16,7 @@ import { useOverviewData } from "@/hooks/useOverviewData";
 
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const { kpis, snapshots, loading, error, refetch } = useOverviewData(dateRange);
+  const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange);
 
   useEffect(() => {
     document.title = "J2 Dashboard - Overview";
@@ -172,8 +172,8 @@ const Overview = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          <CallActivityChart />
-          <ConversionFunnelChart />
+          <CallActivityChart snapshots={snapshots} />
+          <ConversionFunnelChart snapshots={snapshots} />
         </div>
       )}
 
@@ -185,8 +185,8 @@ const Overview = () => {
         </>
       ) : (
         <>
-          <ClientPerformanceTable />
-          <SQLBookedMeetingsTable dateRange={dateRange} />
+          <ClientPerformanceTable snapshots={snapshots} meetings={meetings} />
+          <SQLBookedMeetingsTable dateRange={dateRange} meetings={meetings} />
         </>
       )}
     </div>

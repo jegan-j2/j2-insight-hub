@@ -1,21 +1,14 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import type { DailySnapshot } from "@/lib/supabase-types";
 import { parseISO, isAfter, subDays } from "date-fns";
+import { EmptyState } from "@/components/EmptyState";
 
 interface ClientWeeklyComparisonChartProps {
   snapshots?: DailySnapshot[];
 }
-
-const fallbackData = [
-  { metric: "Dials", thisWeek: 450, lastWeek: 411, change: 9.5 },
-  { metric: "Answered", thisWeek: 85, lastWeek: 76, change: 11.8 },
-  { metric: "DMs", thisWeek: 28, lastWeek: 31, change: -9.7 },
-  { metric: "MQLs", thisWeek: 11, lastWeek: 10, change: 10.0 },
-  { metric: "SQLs", thisWeek: 3, lastWeek: 3, change: 0 },
-];
 
 const chartConfig = {
   thisWeek: { label: "This Week", color: "hsl(var(--secondary))" },
@@ -24,7 +17,7 @@ const chartConfig = {
 
 export const ClientWeeklyComparisonChart = ({ snapshots }: ClientWeeklyComparisonChartProps) => {
   const chartData = useMemo(() => {
-    if (!snapshots || snapshots.length === 0) return fallbackData;
+    if (!snapshots || snapshots.length === 0) return [];
 
     const now = new Date();
     const oneWeekAgo = subDays(now, 7);
@@ -67,6 +60,23 @@ export const ClientWeeklyComparisonChart = ({ snapshots }: ClientWeeklyCompariso
       </text>
     );
   };
+
+  if (chartData.length === 0) {
+    return (
+      <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in">
+        <CardHeader>
+          <CardTitle className="text-foreground">Week-over-Week Performance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EmptyState
+            icon={BarChart3}
+            title="No comparison data"
+            description="Weekly comparison will appear once sufficient data is available"
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const avgDialsChange = chartData[0]?.change ?? 0;
   const sqlsChange = chartData[4]?.change ?? 0;

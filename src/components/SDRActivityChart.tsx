@@ -15,18 +15,8 @@ interface SDRActivityChartProps {
   chartData?: ChartDataEntry[];
 }
 
-// Fallback mock data
-const fallbackData: ChartDataEntry[] = [
-  { name: "Ava Monyebane", dials: 320, answered: 75, dms: 48, sqls: 12 },
-  { name: "Reggie Makhanya", dials: 285, answered: 68, dms: 42, sqls: 10 },
-  { name: "Clive Sambane", dials: 310, answered: 72, dms: 45, sqls: 9 },
-  { name: "Barry Geduld", dials: 265, answered: 60, dms: 38, sqls: 8 },
-  { name: "Ivory Geduld", dials: 290, answered: 65, dms: 40, sqls: 5 },
-  { name: "Ben De Beer", dials: 255, answered: 66, dms: 35, sqls: 2 },
-].sort((a, b) => b.sqls - a.sqls);
-
 export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
-  const data = chartData || fallbackData;
+  const data = chartData || [];
 
   return (
     <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
