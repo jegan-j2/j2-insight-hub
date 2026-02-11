@@ -23,11 +23,6 @@ interface MeetingData {
   remarks: string;
 }
 
-const fallbackMeetings: MeetingData[] = [
-  { id: "1", sqlDate: new Date(2025, 9, 15), contactPerson: "John Smith", companyName: "Global Shipping Co", sdr: "Ava Monyebane", meetingDate: new Date(2025, 9, 18), meetingHeld: true, remarks: "Positive discussion, follow-up scheduled" },
-  { id: "3", sqlDate: new Date(2025, 9, 16), contactPerson: "Michael Brown", companyName: "Express Logistics Ltd", sdr: "Clive Sambane", meetingDate: new Date(2025, 9, 19), meetingHeld: false, remarks: "Rescheduled to next week" },
-  { id: "8", sqlDate: new Date(2025, 9, 19), contactPerson: "Jennifer Martinez", companyName: "Rapid Delivery Services", sdr: "Reggie Makhanya", meetingDate: new Date(2025, 9, 25), meetingHeld: false, remarks: "Technical questions raised" },
-];
 
 type SortField = "sqlDate" | "contactPerson" | "companyName" | "sdr" | "meetingDate" | "meetingHeld";
 type SortOrder = "asc" | "desc";
@@ -61,7 +56,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
 
   const displayMeetings = useMemo(() => {
     if (meetings && meetings.length > 0) return mapMeetingsToDisplay(meetings);
-    return fallbackMeetings;
+    return [];
   }, [meetings]);
 
   const [localMeetings, setLocalMeetings] = useState<MeetingData[]>(displayMeetings);

@@ -22,18 +22,8 @@ interface SDRQuickStatsCardsProps {
   leaderboardData?: LeaderboardEntry[];
 }
 
-// Fallback mock data
-const fallbackLeaderboard: LeaderboardEntry[] = [
-  { rank: 1, name: "Ava Monyebane", initials: "AM", totalDials: 320, totalAnswered: 75, totalDMs: 48, totalSQLs: 12, answerRate: "23.4", conversionRate: "3.75", trend: 15.2 },
-  { rank: 2, name: "Reggie Makhanya", initials: "RM", totalDials: 285, totalAnswered: 68, totalDMs: 42, totalSQLs: 10, answerRate: "23.9", conversionRate: "3.51", trend: 8.5 },
-  { rank: 3, name: "Clive Sambane", initials: "CS", totalDials: 310, totalAnswered: 72, totalDMs: 45, totalSQLs: 9, answerRate: "23.2", conversionRate: "2.90", trend: 12.3 },
-  { rank: 4, name: "Barry Geduld", initials: "BG", totalDials: 265, totalAnswered: 60, totalDMs: 38, totalSQLs: 8, answerRate: "22.6", conversionRate: "3.02", trend: 45.0 },
-  { rank: 5, name: "Ivory Geduld", initials: "IG", totalDials: 290, totalAnswered: 65, totalDMs: 40, totalSQLs: 5, answerRate: "22.4", conversionRate: "1.72", trend: -5.2 },
-  { rank: 6, name: "Ben De Beer", initials: "BD", totalDials: 255, totalAnswered: 66, totalDMs: 35, totalSQLs: 2, answerRate: "25.9", conversionRate: "0.78", trend: -12.8 },
-];
-
 export const SDRQuickStatsCards = ({ leaderboardData }: SDRQuickStatsCardsProps) => {
-  const data = leaderboardData || fallbackLeaderboard;
+  const data = leaderboardData || [];
   const [selectedSDR, setSelectedSDR] = useState<string | null>(null);
   const { dateRange } = useDateFilter();
 

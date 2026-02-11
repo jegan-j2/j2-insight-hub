@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays } from "lucide-react";
-import { format, isWithinInterval } from "date-fns";
+import { format, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { TableSkeleton } from "@/components/LoadingSkeletons";
 import type { DateRange } from "react-day-picker";
 import { CalendarX, Search as SearchIcon } from "lucide-react";
+import type { SQLMeeting } from "@/lib/supabase-types";
 
 interface MeetingData {
   id: string;
@@ -31,140 +32,18 @@ interface MeetingData {
   remarks: string;
 }
 
-const mockMeetingsData: MeetingData[] = [
-  {
-    id: "1",
-    sqlDate: new Date(2025, 9, 15),
-    clientName: "Inxpress",
-    contactPerson: "John Smith",
-    companyName: "Global Shipping Co",
-    sdr: "Ava Monyebane",
-    meetingDate: new Date(2025, 9, 18),
-    meetingHeld: true,
-    remarks: "Positive discussion, follow-up scheduled",
-  },
-  {
-    id: "2",
-    sqlDate: new Date(2025, 9, 16),
-    clientName: "Congero",
-    contactPerson: "Sarah Johnson",
-    companyName: "TechVision Inc",
-    sdr: "Reggie Makhanya",
-    meetingDate: new Date(2025, 9, 20),
-    meetingHeld: true,
-    remarks: "Interested in premium package",
-  },
-  {
-    id: "3",
-    sqlDate: new Date(2025, 9, 16),
-    clientName: "Inxpress",
-    contactPerson: "Michael Brown",
-    companyName: "Express Logistics Ltd",
-    sdr: "Clive Sambane",
-    meetingDate: new Date(2025, 9, 19),
-    meetingHeld: false,
-    remarks: "Rescheduled to next week",
-  },
-  {
-    id: "4",
-    sqlDate: new Date(2025, 9, 17),
-    clientName: "TechCorp Solutions",
-    contactPerson: "Emily Davis",
-    companyName: "Digital Dynamics",
-    sdr: "Ava Monyebane",
-    meetingDate: new Date(2025, 9, 22),
-    meetingHeld: true,
-    remarks: "Strong lead, proposal sent",
-  },
-  {
-    id: "5",
-    sqlDate: new Date(2025, 9, 17),
-    clientName: "Congero",
-    contactPerson: "David Wilson",
-    companyName: "Cloud Systems Pro",
-    sdr: "Reggie Makhanya",
-    meetingDate: new Date(2025, 9, 21),
-    meetingHeld: false,
-    remarks: "Waiting for decision maker availability",
-  },
-  {
-    id: "6",
-    sqlDate: new Date(2025, 9, 18),
-    clientName: "Global Logistics",
-    contactPerson: "Lisa Anderson",
-    companyName: "International Freight Co",
-    sdr: "Clive Sambane",
-    meetingDate: new Date(2025, 9, 23),
-    meetingHeld: true,
-    remarks: "Budget approved, moving to contract",
-  },
-  {
-    id: "7",
-    sqlDate: new Date(2025, 9, 18),
-    clientName: "FinServe Group",
-    contactPerson: "Robert Taylor",
-    companyName: "Capital Finance Ltd",
-    sdr: "Ava Monyebane",
-    meetingDate: new Date(2025, 9, 24),
-    meetingHeld: true,
-    remarks: "Compliance review in progress",
-  },
-  {
-    id: "8",
-    sqlDate: new Date(2025, 9, 19),
-    clientName: "Inxpress",
-    contactPerson: "Jennifer Martinez",
-    companyName: "Rapid Delivery Services",
-    sdr: "Reggie Makhanya",
-    meetingDate: new Date(2025, 9, 25),
-    meetingHeld: false,
-    remarks: "Technical questions raised",
-  },
-  {
-    id: "9",
-    sqlDate: new Date(2025, 9, 19),
-    clientName: "HealthCare Plus",
-    contactPerson: "Thomas Garcia",
-    companyName: "MedTech Solutions",
-    sdr: "Clive Sambane",
-    meetingDate: new Date(2025, 9, 26),
-    meetingHeld: true,
-    remarks: "Integration discussion completed",
-  },
-  {
-    id: "10",
-    sqlDate: new Date(2025, 9, 20),
-    clientName: "Congero",
-    contactPerson: "Patricia Lee",
-    companyName: "Enterprise Software Group",
-    sdr: "Ava Monyebane",
-    meetingDate: new Date(2025, 9, 27),
-    meetingHeld: false,
-    remarks: "Awaiting stakeholder approval",
-  },
-  {
-    id: "11",
-    sqlDate: new Date(2025, 9, 20),
-    clientName: "TechCorp Solutions",
-    contactPerson: "Christopher White",
-    companyName: "Innovation Labs",
-    sdr: "Reggie Makhanya",
-    meetingDate: new Date(2025, 9, 28),
-    meetingHeld: true,
-    remarks: "Demo scheduled for next phase",
-  },
-  {
-    id: "12",
-    sqlDate: new Date(2025, 9, 21),
-    clientName: "Global Logistics",
-    contactPerson: "Amanda Harris",
-    companyName: "Worldwide Transport",
-    sdr: "Clive Sambane",
-    meetingDate: new Date(2025, 9, 29),
-    meetingHeld: true,
-    remarks: "Contract negotiations ongoing",
-  },
-];
+const mapSQLMeetingsToDisplay = (meetings: SQLMeeting[]): MeetingData[] =>
+  meetings.map(m => ({
+    id: m.id,
+    sqlDate: parseISO(m.booking_date),
+    clientName: m.client_id || "",
+    contactPerson: m.contact_person,
+    companyName: m.company_name || "",
+    sdr: m.sdr_name || "",
+    meetingDate: m.meeting_date ? parseISO(m.meeting_date) : parseISO(m.booking_date),
+    meetingHeld: m.meeting_held ?? false,
+    remarks: m.remarks || "",
+  }));
 
 type SortField = "sqlDate" | "clientName" | "contactPerson" | "companyName" | "sdr" | "meetingDate" | "meetingHeld";
 type SortOrder = "asc" | "desc";
@@ -172,9 +51,10 @@ type SortOrder = "asc" | "desc";
 interface SQLBookedMeetingsTableProps {
   dateRange?: DateRange;
   isLoading?: boolean;
+  meetings?: SQLMeeting[];
 }
 
-export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBookedMeetingsTableProps) => {
+export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings }: SQLBookedMeetingsTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -184,7 +64,17 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false }: SQLBook
   const [searchQuery, setSearchQuery] = useState("");
   const [bookingDateFilter, setBookingDateFilter] = useState<Date | undefined>();
   const [meetingDateFilter, setMeetingDateFilter] = useState<Date | undefined>();
-  const [localMeetings, setLocalMeetings] = useState<MeetingData[]>(mockMeetingsData);
+
+  const displayMeetings = useMemo(() => {
+    if (meetings && meetings.length > 0) return mapSQLMeetingsToDisplay(meetings);
+    return [];
+  }, [meetings]);
+
+  const [localMeetings, setLocalMeetings] = useState<MeetingData[]>([]);
+
+  useEffect(() => {
+    setLocalMeetings(displayMeetings);
+  }, [displayMeetings]);
   const { updateMeetingHeld, updateRemarks, updating } = useMeetingUpdate();
 
   const handleMeetingHeldChange = useCallback(async (meetingId: string, newValue: boolean) => {
