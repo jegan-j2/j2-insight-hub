@@ -12,14 +12,30 @@ import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
 import { EmptyState } from "@/components/EmptyState";
 import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+interface ClientOption {
+  client_id: string;
+  client_name: string;
+}
 
 const TeamPerformance = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
   const [clientFilter, setClientFilter] = useState("all");
+  const [clients, setClients] = useState<ClientOption[]>([]);
   const { loading, error, leaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
 
   useEffect(() => {
     document.title = "J2 Dashboard - Team Performance";
+    const fetchClients = async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("client_id, client_name")
+        .eq("status", "active")
+        .order("client_name");
+      if (data) setClients(data);
+    };
+    fetchClients();
   }, []);
 
   return (
@@ -62,12 +78,9 @@ const TeamPerformance = () => {
             </SelectTrigger>
             <SelectContent className="z-[100] bg-card">
               <SelectItem value="all">All Clients</SelectItem>
-              <SelectItem value="inxpress">Inxpress</SelectItem>
-              <SelectItem value="congero">Congero</SelectItem>
-              <SelectItem value="techcorp">TechCorp Solutions</SelectItem>
-              <SelectItem value="global">Global Logistics</SelectItem>
-              <SelectItem value="finserve">FinServe Group</SelectItem>
-              <SelectItem value="healthcare">HealthCare Plus</SelectItem>
+              {clients.map((c) => (
+                <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
