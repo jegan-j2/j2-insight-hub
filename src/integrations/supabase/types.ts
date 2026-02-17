@@ -131,6 +131,7 @@ export type Database = {
         Row: {
           answer_rate: number | null
           answered: number | null
+          attendance: string | null
           busy_signals: number | null
           calls_to_dm_rate: number | null
           client_id: string | null
@@ -150,6 +151,7 @@ export type Database = {
         Insert: {
           answer_rate?: number | null
           answered?: number | null
+          attendance?: string | null
           busy_signals?: number | null
           calls_to_dm_rate?: number | null
           client_id?: string | null
@@ -169,6 +171,7 @@ export type Database = {
         Update: {
           answer_rate?: number | null
           answered?: number | null
+          attendance?: string | null
           busy_signals?: number | null
           calls_to_dm_rate?: number | null
           client_id?: string | null
@@ -309,6 +312,7 @@ export type Database = {
       }
       team_members: {
         Row: {
+          client_id: string | null
           created_at: string | null
           email: string
           hubspot_owner_id: string | null
@@ -319,6 +323,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          client_id?: string | null
           created_at?: string | null
           email: string
           hubspot_owner_id?: string | null
@@ -329,6 +334,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          client_id?: string | null
           created_at?: string | null
           email?: string
           hubspot_owner_id?: string | null
