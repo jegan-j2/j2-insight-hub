@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { supabase, getUserMetadata } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -10,8 +10,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
   const [loading, setLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+  const [redirectPath, setRedirectPath] = useState<string>("");
   const location = useLocation();
 
   useEffect(() => {
@@ -23,45 +22,50 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
 
         // Not logged in → go to login
         if (!session) {
-          setIsAuthorized(false);
+          setRedirectPath("/login");
           setLoading(false);
           return;
         }
 
-        // Get user role from user_roles table
-        const metadata = await getUserMetadata();
+        // Get role directly from user_roles table
+        const { data: roleData, error } = await supabase
+          .from("user_roles")
+          .select("role, client_id")
+          .eq("user_id", session.user.id)
+          .single();
 
-        // Can't get metadata → go to login
-        if (!metadata) {
-          setIsAuthorized(false);
+        console.log("🔍 ProtectedRoute role:", roleData, "Error:", error);
+
+        // Can't get role → go to login
+        if (error || !roleData) {
+          setRedirectPath("/login");
           setLoading(false);
           return;
         }
 
-        // CLIENT user trying to access admin pages → redirect to their page
-        if (metadata.role === "client") {
-          const clientPath = `/client/${metadata.clientId}`;
-
-          // If they're NOT already on their client page → redirect them!
+        // CLIENT user → enforce their own page only!
+        if (roleData.role === "client" && roleData.client_id) {
+          const clientPath = `/client/${roleData.client_id}`;
           if (!location.pathname.startsWith(clientPath)) {
-            setRedirectTo(clientPath);
-            setIsAuthorized(false);
+            console.log(`🔒 Client redirected to ${clientPath}`);
+            setRedirectPath(clientPath);
             setLoading(false);
             return;
           }
         }
 
         // requireAdmin check
-        if (requireAdmin && metadata.role !== "admin") {
-          setIsAuthorized(false);
+        if (requireAdmin && roleData.role !== "admin") {
+          setRedirectPath("/login");
           setLoading(false);
           return;
         }
 
-        setIsAuthorized(true);
+        // All good!
+        setRedirectPath("");
       } catch (error) {
         console.error("Auth check error:", error);
-        setIsAuthorized(false);
+        setRedirectPath("/login");
       } finally {
         setLoading(false);
       }
@@ -72,14 +76,13 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        setIsAuthorized(false);
-      }
+      if (!session) setRedirectPath("/login");
     });
 
     return () => subscription.unsubscribe();
   }, [requireAdmin, location.pathname]);
 
+  // Loading spinner
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -91,13 +94,9 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
     );
   }
 
-  // Redirect client to their own page
-  if (redirectTo) {
-    return <Navigate to={redirectTo} replace />;
-  }
-
-  if (!isAuthorized) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Redirect if needed
+  if (redirectPath) {
+    return <Navigate to={redirectPath} replace />;
   }
 
   return <>{children}</>;
