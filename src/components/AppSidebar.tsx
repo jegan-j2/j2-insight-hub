@@ -29,9 +29,24 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<ClientItem[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userClientId, setUserClientId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchClients = async () => {
+    const fetchRoleAndClients = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role, client_id")
+          .eq("user_id", session.user.id)
+          .single();
+        if (roleData) {
+          setUserRole(roleData.role);
+          setUserClientId(roleData.client_id);
+        }
+      }
+
       const { data, error } = await supabase
         .from("clients")
         .select("client_id, client_name")
@@ -42,7 +57,7 @@ export function AppSidebar() {
         setClients(data.map((c) => ({ name: c.client_name, slug: c.client_id })));
       }
     };
-    fetchClients();
+    fetchRoleAndClients();
   }, []);
 
   const handleLogout = async () => {
@@ -73,7 +88,8 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-muted-foreground">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Overview */}
+              {/* Overview - admin only */}
+              {userRole !== "client" && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
@@ -89,8 +105,10 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
 
-              {/* Team Performance */}
+              {/* Team Performance - admin only */}
+              {userRole !== "client" && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
@@ -106,10 +124,12 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
 
               {/* Clients Dropdown */}
               <Collapsible defaultOpen className="group/collapsible">
                 <SidebarMenuItem>
+                  {userRole !== "client" && (
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className="text-foreground hover:bg-muted/50 transition-all duration-150">
                       <Users className="h-4 w-4" />
@@ -117,14 +137,10 @@ export function AppSidebar() {
                       <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
+                  )}
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {clients.length === 0 && (
-                        <SidebarMenuSubItem>
-                          <span className="text-xs text-muted-foreground px-2 py-1">No clients found</span>
-                        </SidebarMenuSubItem>
-                      )}
-                      {clients.map((client) => (
+                      {(userRole === "client" ? clients.filter(c => c.slug === userClientId) : clients).map((client) => (
                         <SidebarMenuSubItem key={client.slug}>
                           <SidebarMenuSubButton asChild>
                             <NavLink
@@ -152,6 +168,7 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
+              {userRole !== "client" && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
@@ -167,6 +184,7 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={handleLogout}
