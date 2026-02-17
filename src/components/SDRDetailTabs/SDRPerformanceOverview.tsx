@@ -1,7 +1,10 @@
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ArrowUpRight, ArrowDownRight, Phone, CheckCircle, Mail, Target } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { startOfWeek, format } from "date-fns";
 
 interface SDRPerformanceOverviewProps {
   sdr: {
@@ -14,35 +17,90 @@ interface SDRPerformanceOverviewProps {
   };
 }
 
-// Mock data for performance trend
-const performanceTrendData = [
-  { week: "Week 1", dials: 72, answered: 18, dms: 11, sqls: 2 },
-  { week: "Week 2", dials: 78, answered: 19, dms: 12, sqls: 3 },
-  { week: "Week 3", dials: 85, answered: 20, dms: 13, sqls: 4 },
-  { week: "Week 4", dials: 85, answered: 18, dms: 12, sqls: 3 },
-];
-
-// Mock data for client breakdown
-const clientBreakdownData = [
-  { client: "Inxpress", dials: 95, sqls: 4, conversionRate: "4.21%" },
-  { client: "Congero", dials: 88, sqls: 3, conversionRate: "3.41%" },
-  { client: "TechCorp Solutions", dials: 72, sqls: 3, conversionRate: "4.17%" },
-  { client: "FinServe Group", dials: 65, sqls: 2, conversionRate: "3.08%" },
-];
-
-// Mock funnel data
-const funnelData = [
-  { stage: "Dials", count: 320, percentage: 100 },
-  { stage: "Answered", count: 75, percentage: 23.4 },
-  { stage: "DMs", count: 48, percentage: 15.0 },
-  { stage: "MQLs", count: 18, percentage: 5.6 },
-  { stage: "SQLs", count: 12, percentage: 3.75 },
-];
+interface Snapshot {
+  snapshot_date: string;
+  client_id: string | null;
+  dials: number | null;
+  answered: number | null;
+  dms_reached: number | null;
+  mqls: number | null;
+  sqls: number | null;
+}
 
 export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => {
-  const answerRate = ((sdr.answered / sdr.dials) * 100).toFixed(1);
-  const dmRate = ((sdr.dms / sdr.dials) * 100).toFixed(1);
-  const conversionRate = ((sdr.sqls / sdr.dials) * 100).toFixed(2);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("daily_snapshots")
+        .select("snapshot_date, client_id, dials, answered, dms_reached, mqls, sqls")
+        .eq("sdr_name", sdr.name)
+        .order("snapshot_date", { ascending: true });
+      if (data) setSnapshots(data);
+    };
+    fetch();
+  }, [sdr.name]);
+
+  // Performance Trend: group by week
+  const performanceTrendData = useMemo(() => {
+    const weekMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+    snapshots.forEach((s) => {
+      const weekStart = format(startOfWeek(new Date(s.snapshot_date), { weekStartsOn: 1 }), "MMM dd");
+      const entry = weekMap.get(weekStart) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
+      entry.dials += s.dials || 0;
+      entry.answered += s.answered || 0;
+      entry.dms += s.dms_reached || 0;
+      entry.sqls += s.sqls || 0;
+      weekMap.set(weekStart, entry);
+    });
+    return Array.from(weekMap.entries()).map(([week, data]) => ({ week, ...data }));
+  }, [snapshots]);
+
+  // Client Breakdown: group by client_id
+  const clientBreakdownData = useMemo(() => {
+    const clientMap = new Map<string, { dials: number; sqls: number }>();
+    snapshots.forEach((s) => {
+      const cid = s.client_id || "Unknown";
+      const entry = clientMap.get(cid) || { dials: 0, sqls: 0 };
+      entry.dials += s.dials || 0;
+      entry.sqls += s.sqls || 0;
+      clientMap.set(cid, entry);
+    });
+    return Array.from(clientMap.entries()).map(([client, data]) => ({
+      client,
+      dials: data.dials,
+      sqls: data.sqls,
+      conversionRate: data.dials > 0 ? ((data.sqls / data.dials) * 100).toFixed(2) + "%" : "0%",
+    }));
+  }, [snapshots]);
+
+  // Conversion Funnel
+  const funnelData = useMemo(() => {
+    const totals = snapshots.reduce(
+      (acc, s) => {
+        acc.dials += s.dials || 0;
+        acc.answered += s.answered || 0;
+        acc.dms += s.dms_reached || 0;
+        acc.mqls += s.mqls || 0;
+        acc.sqls += s.sqls || 0;
+        return acc;
+      },
+      { dials: 0, answered: 0, dms: 0, mqls: 0, sqls: 0 }
+    );
+    const pct = (v: number) => (totals.dials > 0 ? parseFloat(((v / totals.dials) * 100).toFixed(1)) : 0);
+    return [
+      { stage: "Dials", count: totals.dials, percentage: 100 },
+      { stage: "Answered", count: totals.answered, percentage: pct(totals.answered) },
+      { stage: "DMs", count: totals.dms, percentage: pct(totals.dms) },
+      { stage: "MQLs", count: totals.mqls, percentage: pct(totals.mqls) },
+      { stage: "SQLs", count: totals.sqls, percentage: pct(totals.sqls) },
+    ];
+  }, [snapshots]);
+
+  const answerRate = sdr.dials > 0 ? ((sdr.answered / sdr.dials) * 100).toFixed(1) : "0";
+  const dmRate = sdr.dials > 0 ? ((sdr.dms / sdr.dials) * 100).toFixed(1) : "0";
+  const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0";
 
   return (
     <>
@@ -110,7 +168,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
         {/* Performance Trend Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Performance Trend (Last 4 Weeks)</CardTitle>
+            <CardTitle>Performance Trend (Weekly)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="w-full h-[300px]">
@@ -177,7 +235,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client Name</TableHead>
+                <TableHead>Client</TableHead>
                 <TableHead className="text-right">Dials</TableHead>
                 <TableHead className="text-right">SQLs</TableHead>
                 <TableHead className="text-right">Conversion Rate</TableHead>
