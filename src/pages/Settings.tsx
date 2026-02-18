@@ -92,6 +92,41 @@ const Settings = () => {
     fetchTeamMembers();
   }, [fetchClients, fetchTeamMembers]);
 
+  // --- Show inactive toggles ---
+  const [showInactiveClients, setShowInactiveClients] = useState(false);
+  const [showInactiveMembers, setShowInactiveMembers] = useState(false);
+
+  const filteredClients = showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status);
+  const filteredMembers = showInactiveMembers ? teamMembers : teamMembers.filter(m => m.status === 'active' || !m.status);
+
+  const handleReactivateClient = async (client: ClientRow) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({ status: 'active' })
+        .eq('id', client.id);
+      if (error) throw error;
+      toast({ title: "Client reactivated", description: `${client.client_name} is now active.`, className: "border-green-500" });
+      fetchClients();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Could not reactivate client.", variant: "destructive" });
+    }
+  };
+
+  const handleReactivateMember = async (member: TeamMemberRow) => {
+    try {
+      const { error } = await supabase
+        .from('team_members')
+        .update({ status: 'active' })
+        .eq('id', member.id);
+      if (error) throw error;
+      toast({ title: "Team member reactivated", description: `${member.sdr_name} is now active.`, className: "border-green-500" });
+      fetchTeamMembers();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Could not reactivate member.", variant: "destructive" });
+    }
+  };
+
   // --- Notification settings (local only, no table) ---
   const [reportFrequency, setReportFrequency] = useState<"daily" | "weekly" | "monthly" | "disabled">("daily");
   const [sendTime, setSendTime] = useState("4:00 PM");
@@ -531,6 +566,16 @@ const Settings = () => {
               </div>
             </CardHeader>
             <CardContent>
+              <div className="flex items-center gap-2 mb-4">
+                <Checkbox
+                  id="show-inactive-clients"
+                  checked={showInactiveClients}
+                  onCheckedChange={(checked) => setShowInactiveClients(!!checked)}
+                />
+                <Label htmlFor="show-inactive-clients" className="text-sm text-muted-foreground cursor-pointer">
+                  Show inactive clients
+                </Label>
+              </div>
               <div className="overflow-x-auto scrollbar-thin">
                 <Table>
                   <TableHeader>
@@ -546,47 +591,66 @@ const Settings = () => {
                   <TableBody>
                     {loadingClients ? (
                       <TableSkeletonRows />
-                    ) : clients.length === 0 ? (
+                    ) : filteredClients.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           No clients found. Add your first client above.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      clients.map((client) => (
-                        <TableRow key={client.id} className="border-border/50 hover:bg-muted/20 transition-colors">
-                          <TableCell className="font-medium text-foreground flex items-center gap-2">
-                            {client.logo_url ? (
-                              <img src={client.logo_url} alt={`${client.client_name} logo`} className="h-6 w-6 rounded object-cover" />
-                            ) : (
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            {client.client_name}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{client.client_id}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm">
-                            {client.campaign_start && client.campaign_end
-                              ? `${client.campaign_start} → ${client.campaign_end}`
-                              : client.campaign_start || "—"}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{client.target_sqls ?? "—"}</TableCell>
-                          <TableCell>
-                            <span className={`text-xs px-2 py-1 rounded-full ${client.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-muted/30 text-muted-foreground'}`}>
-                              {client.status || "active"}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)} aria-label={`Edit ${client.client_name}`}>
-                                <Pencil className="h-4 w-4 text-secondary" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteClient(client)} aria-label={`Delete ${client.client_name}`}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      filteredClients.map((client) => {
+                        const isInactive = client.status === 'inactive';
+                        return (
+                          <TableRow key={client.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
+                            <TableCell className="font-medium text-foreground">
+                              <div className="flex items-center gap-2">
+                                {client.logo_url ? (
+                                  <img src={client.logo_url} alt={`${client.client_name} logo`} className="h-6 w-6 rounded object-cover" />
+                                ) : (
+                                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                {client.client_name}
+                                {isInactive && (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive uppercase">Inactive</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{client.client_id}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {client.campaign_start && client.campaign_end
+                                ? `${client.campaign_start} → ${client.campaign_end}`
+                                : client.campaign_start || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{client.target_sqls ?? "—"}</TableCell>
+                            <TableCell>
+                              <span className={`text-xs px-2 py-1 rounded-full ${client.status === 'active' || !client.status ? 'bg-green-500/20 text-green-400' : 'bg-muted/30 text-muted-foreground'}`}>
+                                {client.status || "active"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)} aria-label={`Edit ${client.client_name}`}>
+                                  <Pencil className="h-4 w-4 text-secondary" />
+                                </Button>
+                                {isInactive ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleReactivateClient(client)}
+                                    className="text-green-500 hover:text-green-400 hover:bg-green-500/10 text-xs gap-1"
+                                  >
+                                    Reactivate
+                                  </Button>
+                                ) : (
+                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteClient(client)} aria-label={`Delete ${client.client_name}`}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
@@ -671,6 +735,16 @@ const Settings = () => {
               </div>
             </CardHeader>
             <CardContent>
+              <div className="flex items-center gap-2 mb-4">
+                <Checkbox
+                  id="show-inactive-members"
+                  checked={showInactiveMembers}
+                  onCheckedChange={(checked) => setShowInactiveMembers(!!checked)}
+                />
+                <Label htmlFor="show-inactive-members" className="text-sm text-muted-foreground cursor-pointer">
+                  Show inactive team members
+                </Label>
+              </div>
               <div className="overflow-x-auto scrollbar-thin">
                 <Table>
                   <TableHeader>
@@ -685,35 +759,56 @@ const Settings = () => {
                   <TableBody>
                     {loadingTeam ? (
                       <TableSkeletonRows />
-                    ) : teamMembers.length === 0 ? (
+                    ) : filteredMembers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      teamMembers.map((member) => (
-                        <TableRow key={member.id} className="border-border/50 hover:bg-muted/20 transition-colors">
-                          <TableCell className="font-medium text-foreground">{member.sdr_name}</TableCell>
-                          <TableCell className="text-muted-foreground">{member.email}</TableCell>
-                          <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
-                          <TableCell>
-                            <span className={`text-xs px-2 py-1 rounded-full ${member.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-muted/30 text-muted-foreground'}`}>
-                              {member.status || "active"}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)} aria-label={`Edit ${member.sdr_name}`}>
-                                <Pencil className="h-4 w-4 text-secondary" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteMember(member)} aria-label={`Delete ${member.sdr_name}`}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      filteredMembers.map((member) => {
+                        const isInactive = member.status === 'inactive';
+                        return (
+                          <TableRow key={member.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
+                            <TableCell className="font-medium text-foreground">
+                              <div className="flex items-center gap-2">
+                                {member.sdr_name}
+                                {isInactive && (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive uppercase">Inactive</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                            <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
+                            <TableCell>
+                              <span className={`text-xs px-2 py-1 rounded-full ${member.status === 'active' || !member.status ? 'bg-green-500/20 text-green-400' : 'bg-muted/30 text-muted-foreground'}`}>
+                                {member.status || "active"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)} aria-label={`Edit ${member.sdr_name}`}>
+                                  <Pencil className="h-4 w-4 text-secondary" />
+                                </Button>
+                                {isInactive ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleReactivateMember(member)}
+                                    className="text-green-500 hover:text-green-400 hover:bg-green-500/10 text-xs gap-1"
+                                  >
+                                    Reactivate
+                                  </Button>
+                                ) : (
+                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteMember(member)} aria-label={`Delete ${member.sdr_name}`}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
