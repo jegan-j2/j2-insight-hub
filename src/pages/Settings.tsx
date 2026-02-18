@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2 } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -291,12 +291,118 @@ const Settings = () => {
     </>
   );
 
+  // --- Branding state ---
+  const [logoUrl, setLogoUrl] = useState<string | null>(() => localStorage.getItem("companyLogoUrl"));
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Please upload a PNG, JPG, or SVG file.", variant: "destructive" });
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const filePath = `company-logo.${ext}`;
+
+      // Remove old file first (ignore errors)
+      await supabase.storage.from("branding").remove([filePath]);
+
+      const { error: uploadError } = await supabase.storage
+        .from("branding")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("branding")
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+      localStorage.setItem("companyLogoUrl", publicUrl);
+      setLogoUrl(publicUrl);
+      toast({ title: "Logo uploaded", description: "Your company logo has been updated.", className: "border-green-500" });
+    } catch (error: any) {
+      console.error("Logo upload error:", error);
+      toast({ title: "Upload failed", description: error.message || "Could not upload logo.", variant: "destructive" });
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    localStorage.removeItem("companyLogoUrl");
+    setLogoUrl(null);
+    toast({ title: "Logo removed", description: "The company logo has been removed.", className: "border-green-500" });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
         <p className="text-muted-foreground">Manage your dashboard configuration and preferences</p>
       </div>
+
+      {/* Dashboard Branding Section */}
+      <Card className="bg-card/50 backdrop-blur-sm border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Image className="h-5 w-5 text-secondary" />
+            Company Logo
+          </CardTitle>
+          <CardDescription>Upload your company logo to customize the dashboard</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            {/* Logo Preview */}
+            <div className="h-20 w-20 rounded-full bg-secondary/10 border-2 border-dashed border-border flex items-center justify-center overflow-hidden shrink-0">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Company logo" className="h-full w-full object-cover rounded-full" />
+              ) : (
+                <div className="h-full w-full rounded-full bg-secondary flex items-center justify-center">
+                  <span className="text-2xl font-bold text-secondary-foreground">J2</span>
+                </div>
+              )}
+            </div>
+
+            {/* Upload Controls */}
+            <div className="flex flex-col gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.svg"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="gap-2"
+                >
+                  {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                </Button>
+                {logoUrl && (
+                  <Button variant="outline" onClick={handleRemoveLogo} className="gap-2 text-destructive hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                    Remove
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">PNG, JPG, or SVG. Recommended: 256×256px.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="clients" className="space-y-6">
         <TabsList className="bg-card border border-border">
