@@ -129,7 +129,7 @@ const Settings = () => {
     }
   };
 
-  // --- Notification settings (local only, no table) ---
+  // --- Notification settings ---
   const [reportFrequency, setReportFrequency] = useState<"daily" | "weekly" | "monthly" | "disabled">("daily");
   const [sendTime, setSendTime] = useState("4:00 PM");
   const [sendDay, setSendDay] = useState("Monday");
@@ -147,6 +147,53 @@ const Settings = () => {
   // --- Loading states ---
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [notificationSettingsId, setNotificationSettingsId] = useState<string | null>(null);
+
+  // --- Load notification settings from Supabase ---
+  const fetchNotificationSettings = useCallback(async () => {
+    try {
+      setLoadingNotifications(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('notification_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setNotificationSettingsId(data.id);
+        setReportFrequency((data.report_frequency as any) || "daily");
+        setSendTime(data.send_time || "4:00 PM");
+        setSendDay(data.send_day || "Monday");
+        setSendDate(data.send_date || "1st of month");
+        setReportEmails(data.report_emails || "admin@j2group.com.au");
+        setSlackWebhook(data.slack_webhook_url || "");
+        if (data.report_content && typeof data.report_content === 'object') {
+          const rc = data.report_content as Record<string, boolean>;
+          setReportContent({
+            campaignOverview: rc.campaignOverview ?? true,
+            topPerformingClients: rc.topPerformingClients ?? true,
+            teamPerformance: rc.teamPerformance ?? true,
+            sqlBookedMeetings: rc.sqlBookedMeetings ?? true,
+            detailedActivityBreakdown: rc.detailedActivityBreakdown ?? false,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching notification settings:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotificationSettings();
+  }, [fetchNotificationSettings]);
 
   // --- Client dialog ---
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
@@ -300,12 +347,49 @@ const Settings = () => {
     }
   };
 
-  // --- Notification handlers (no backend table yet) ---
+  // --- Notification handlers ---
   const handleSaveNotifications = async () => {
     setIsSavingNotifications(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setIsSavingNotifications(false);
-    toast({ title: "Notification settings saved", description: "Your notification preferences have been updated.", className: "border-green-500" });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const payload = {
+        user_id: user.id,
+        report_frequency: reportFrequency,
+        send_time: sendTime,
+        send_day: sendDay,
+        send_date: sendDate,
+        report_emails: reportEmails,
+        slack_webhook_url: slackWebhook || null,
+        report_content: reportContent,
+        updated_at: new Date().toISOString(),
+      };
+
+      let error;
+      if (notificationSettingsId) {
+        ({ error } = await supabase
+          .from('notification_settings')
+          .update(payload)
+          .eq('id', notificationSettingsId));
+      } else {
+        const result = await supabase
+          .from('notification_settings')
+          .insert(payload)
+          .select('id')
+          .single();
+        error = result.error;
+        if (result.data) setNotificationSettingsId(result.data.id);
+      }
+
+      if (error) throw error;
+      toast({ title: "Notification settings saved", description: "Your notification preferences have been updated.", className: "border-green-500" });
+    } catch (error: any) {
+      console.error('Error saving notification settings:', error);
+      toast({ title: "Error saving settings", description: error.message || "Could not save notification settings.", variant: "destructive" });
+    } finally {
+      setIsSavingNotifications(false);
+    }
   };
 
   const handleSendTestEmail = async () => {
@@ -899,6 +983,21 @@ const Settings = () => {
               <CardDescription>Configure automated email report settings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {loadingNotifications ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-40" />
+                  <div className="flex gap-4">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-5 w-20" />)}
+                  </div>
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-6 w-32" />
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-5 w-64" />)}
+                  </div>
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              ) : (
+                <div className="space-y-6">
               {/* Report Frequency */}
               <div className="space-y-3">
                 <Label className="text-base font-medium">Report Frequency</Label>
@@ -1050,6 +1149,8 @@ const Settings = () => {
                   {isSendingTestEmail ? (<><Loader2 className="h-4 w-4 animate-spin" />Sending...</>) : (<><Send className="h-4 w-4" />Send Test Email</>)}
                 </Button>
               </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
