@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,15 @@ const Login = () => {
               "Sign In"
             )}
           </Button>
+
+          <div className="text-center mt-4">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-muted-foreground hover:text-secondary transition-colors duration-200"
+            >
+              Forgot your password?
+            </Link>
+          </div>
         </form>
       </div>
     </div>
