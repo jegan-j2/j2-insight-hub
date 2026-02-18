@@ -1,0 +1,113 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Mail, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
+
+const ForgotPassword = () => {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { toast } = useToast();
+
+  const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValidEmail(email)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        setSent(true);
+      }
+    } catch {
+      toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = () => {
+    setSent(false);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
+        {sent ? (
+          <div className="text-center space-y-4">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-secondary" />
+            <h1 className="text-2xl font-bold text-foreground">Check Your Email</h1>
+            <p className="text-muted-foreground">
+              We've sent reset instructions to <span className="font-medium text-foreground">{email}</span>
+            </p>
+            <div className="flex flex-col gap-3 pt-2">
+              <Button variant="outline" onClick={handleResend} className="w-full">
+                Resend Email
+              </Button>
+              <Link to="/login">
+                <Button variant="ghost" className="w-full">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Login
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="text-center space-y-2">
+              <Mail className="mx-auto h-10 w-10 text-secondary" />
+              <h1 className="text-2xl font-bold text-foreground">Forgot Password?</h1>
+              <p className="text-muted-foreground">Enter your email and we'll send you reset instructions</p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading || !email.trim()}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reset Link"
+                )}
+              </Button>
+            </form>
+            <div className="text-center">
+              <Link
+                to="/login"
+                className="text-sm text-muted-foreground hover:text-secondary transition-colors duration-200 inline-flex items-center gap-1"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Back to Login
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ForgotPassword;
