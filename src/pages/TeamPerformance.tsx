@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap } from "lucide-react";
+import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
@@ -13,6 +13,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { toCSV, downloadCSV } from "@/lib/csvExport";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClientOption {
   client_id: string;
@@ -23,7 +25,31 @@ const TeamPerformance = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
   const [clientFilter, setClientFilter] = useState("all");
   const [clients, setClients] = useState<ClientOption[]>([]);
+  const [exporting, setExporting] = useState(false);
+  const { toast } = useToast();
   const { loading, error, leaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
+
+  const handleExportCSV = () => {
+    setExporting(true);
+    try {
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      const headers = ["Rank", "Name", "Dials", "Answered", "Answer Rate (%)", "DMs Reached", "SQLs", "Conversion Rate (%)"];
+      const rows = leaderboard.map(sdr => [
+        sdr.rank,
+        sdr.name,
+        sdr.totalDials,
+        sdr.totalAnswered,
+        sdr.answerRate,
+        sdr.totalDMs,
+        sdr.totalSQLs,
+        sdr.conversionRate,
+      ]);
+      downloadCSV(toCSV(headers, rows), `j2-team-performance-${dateStr}.csv`);
+      toast({ title: "CSV downloaded successfully", className: "border-green-500" });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "J2 Dashboard - Team Performance";
@@ -41,12 +67,23 @@ const TeamPerformance = () => {
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-          <span className="hidden sm:inline">Sales Development Team Performance</span>
-          <span className="sm:hidden">Team Performance</span>
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Monitor individual SDR performance across all clients</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            <span className="hidden sm:inline">Sales Development Team Performance</span>
+            <span className="sm:hidden">Team Performance</span>
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Monitor individual SDR performance across all clients</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleExportCSV}
+          disabled={loading || exporting || leaderboard.length === 0}
+          className="gap-2 shrink-0"
+        >
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          Export Data
+        </Button>
       </div>
 
       {/* Date Range Picker with Quick Filters */}
