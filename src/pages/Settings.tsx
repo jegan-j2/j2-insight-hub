@@ -427,6 +427,11 @@ const Settings = () => {
       return;
     }
 
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please upload an image under 2MB.", variant: "destructive" });
+      return;
+    }
+
     setUploadingLogo(true);
     try {
       const ext = file.name.split(".").pop();
@@ -458,7 +463,13 @@ const Settings = () => {
     }
   };
 
-  const handleRemoveLogo = () => {
+  const handleRemoveLogo = async () => {
+    try {
+      // Try to remove all possible logo files from storage
+      await supabase.storage.from("branding").remove(["company-logo.png", "company-logo.jpg", "company-logo.jpeg", "company-logo.svg"]);
+    } catch (err) {
+      console.error("Error removing logo from storage:", err);
+    }
     localStorage.removeItem("companyLogoUrl");
     setLogoUrl(null);
     toast({ title: "Logo removed", description: "The company logo has been removed.", className: "border-green-500" });
@@ -476,9 +487,9 @@ const Settings = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Image className="h-5 w-5 text-secondary" />
-            Company Logo
+            Dashboard Branding
           </CardTitle>
-          <CardDescription>Upload your company logo to customize the dashboard</CardDescription>
+          <CardDescription>Customize your dashboard with your company logo</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row items-center gap-6">
