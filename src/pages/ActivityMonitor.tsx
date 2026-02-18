@@ -173,6 +173,30 @@ const ActivityMonitor = () => {
     }
   }, [todayMelbourne, mode]);
 
+  // Helper to fetch all rows with pagination (bypasses 1000-row default limit)
+  const fetchAllRows = async <T,>(
+    tableName: string,
+    selectCols: string,
+    filters: (query: any) => any,
+    orderCol?: string
+  ): Promise<T[]> => {
+    const PAGE_SIZE = 1000;
+    let allData: T[] = [];
+    let from = 0;
+    let hasMore = true;
+    while (hasMore) {
+      let query = supabase.from(tableName).select(selectCols).range(from, from + PAGE_SIZE - 1);
+      query = filters(query);
+      if (orderCol) query = query.order(orderCol, { ascending: false });
+      const { data, error } = await query;
+      if (error) { console.error(`Fetch error ${tableName}:`, error); break; }
+      if (data) allData = allData.concat(data as T[]);
+      hasMore = (data?.length || 0) === PAGE_SIZE;
+      from += PAGE_SIZE;
+    }
+    return allData;
+  };
+
   // HISTORICAL fetch — query activity_log and sql_meetings directly
   const fetchHistoricalData = useCallback(async () => {
     if (mode !== "historical") return;
@@ -182,7 +206,6 @@ const ActivityMonitor = () => {
       const startHour = String(timeRange[0]).padStart(2, "0");
       const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
 
-      // For multi-day ranges, query from first date start to last date end
       const firstDate = dates[0];
       const lastDate = dates[dates.length - 1];
       const startTimestamp = `${firstDate}T${startHour}:00:00`;
@@ -190,14 +213,13 @@ const ActivityMonitor = () => {
 
       console.log("📊 Historical query:", { startTimestamp, endTimestamp, dates });
 
-      const [activityRes, sqlRes, snapshotRes] = await Promise.all([
-        supabase
-          .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
-          .gte("activity_date", startTimestamp)
-          .lte("activity_date", endTimestamp)
-          .order("activity_date", { ascending: false })
-          .limit(5000),
+      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id";
+
+      const [activityData, sqlRes, snapshotRes] = await Promise.all([
+        fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) =>
+          q.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp),
+          "activity_date"
+        ),
         supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id")
@@ -211,13 +233,13 @@ const ActivityMonitor = () => {
       ]);
 
       console.log("📊 Historical results:", {
-        activities: activityRes.data?.length,
+        activities: activityData.length,
         sqlMeetings: sqlRes.data?.length,
         snapshots: snapshotRes.data?.length,
-        error: activityRes.error || sqlRes.error || snapshotRes.error,
+        error: sqlRes.error || snapshotRes.error,
       });
 
-      if (activityRes.data) setActivities(activityRes.data);
+      setActivities(activityData);
       setHistSqlMeetings(sqlRes.data || []);
       setSnapshots(snapshotRes.data?.map(s => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || []);
     } catch (err) {
@@ -690,9 +712,9 @@ const ActivityMonitor = () => {
                     <TableHead><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Answer Rate %" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Conversion %" sortKeyName="conversion" /></TableHead>
+                    <TableHead className="text-center"><SortHeader label="Conversion" sortKeyName="conversion" /></TableHead>
                     {mode === "live" && <TableHead className="text-right">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
