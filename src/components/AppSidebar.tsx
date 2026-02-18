@@ -107,24 +107,6 @@ export function AppSidebar() {
               </SidebarMenuItem>
               )}
 
-              {/* Today's Activity - admin only */}
-              {userRole !== "client" && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/today"
-                    className={({ isActive }) =>
-                      isActive
-                        ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
-                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
-                    }
-                  >
-                    <Activity className="h-4 w-4" />
-                    <span>Today's Activity</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              )}
 
               {/* Activity Monitor - admin only */}
               {userRole !== "client" && (

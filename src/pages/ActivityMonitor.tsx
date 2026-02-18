@@ -50,6 +50,7 @@ interface ActivityRow {
   activity_type: string | null;
   is_sql: boolean | null;
   meeting_scheduled_date: string | null;
+  client_id: string | null;
 }
 
 interface SDRRow {
@@ -102,6 +103,7 @@ const ActivityMonitor = () => {
   const [histDate, setHistDate] = useState<Date>(new Date());
   const [timeRange, setTimeRange] = useState<number[]>([0, 24]);
   const [histApplied, setHistApplied] = useState(false);
+  const [histSqlMeetings, setHistSqlMeetings] = useState<SqlMeetingRow[]>([]);
 
   const todayMelbourne = useMemo(getMelbourneToday, []);
   const todayFormatted = useMemo(() => {
@@ -121,7 +123,7 @@ const ActivityMonitor = () => {
           .eq("snapshot_date", todayMelbourne),
         supabase
           .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
           .gte("activity_date", todayMelbourne + "T00:00:00")
           .lte("activity_date", todayMelbourne + "T23:59:59")
           .order("activity_date", { ascending: false }),
@@ -135,31 +137,38 @@ const ActivityMonitor = () => {
     }
   }, [todayMelbourne, mode]);
 
-  // HISTORICAL fetch
+  // HISTORICAL fetch — query activity_log and sql_meetings directly
   const fetchHistoricalData = useCallback(async () => {
     if (mode !== "historical") return;
     setLoading(true);
     try {
       const dateStr = format(histDate, "yyyy-MM-dd");
       const startHour = String(timeRange[0]).padStart(2, "0");
-      const endHour = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-      const startTs = `${dateStr}T${startHour}:00:00`;
-      const endTs = `${dateStr}T${endHour}`;
+      const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
+      const startTs = `${dateStr}T${startHour}:00:00+11:00`; // AEDT offset
+      const endTimestamp = `${dateStr}T${endTs}+11:00`;
 
-      const [snapshotRes, activityRes] = await Promise.all([
-        supabase
-          .from("daily_snapshots")
-          .select("sdr_name, client_id, dials, answered, dms_reached, sqls, answer_rate")
-          .eq("snapshot_date", dateStr),
+      const [activityRes, sqlRes, snapshotRes] = await Promise.all([
         supabase
           .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
           .gte("activity_date", startTs)
-          .lte("activity_date", endTs)
+          .lte("activity_date", endTimestamp)
           .order("activity_date", { ascending: false }),
+        supabase
+          .from("sql_meetings")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id")
+          .eq("booking_date", dateStr),
+        supabase
+          .from("daily_snapshots")
+          .select("sdr_name, client_id, dms_reached")
+          .eq("snapshot_date", dateStr),
       ]);
-      if (snapshotRes.data) setSnapshots(snapshotRes.data);
+
       if (activityRes.data) setActivities(activityRes.data);
+      // Store sql meetings count per SDR and snapshot DMs for KPI/table usage
+      setHistSqlMeetings(sqlRes.data || []);
+      setSnapshots(snapshotRes.data?.map(s => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || []);
     } catch (err) {
       console.error("Error fetching historical data:", err);
     } finally {
@@ -194,11 +203,11 @@ const ActivityMonitor = () => {
   // KPI totals
   const totals = useMemo(() => {
     if (mode === "historical") {
-      // Aggregate from activity_log for historical with time filters
       const dials = activities.length;
-      const answered = activities.filter(a => a.call_outcome === "Connected").length;
-      const dms = activities.filter(a => a.activity_type === "DM" || a.call_outcome === "DM Reached").length;
-      const sqls = activities.filter(a => a.is_sql).length;
+      const answered = activities.filter(a => a.call_outcome?.toLowerCase() === "connected").length;
+      // DMs from daily_snapshots for that date
+      const dms = snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0);
+      const sqls = histSqlMeetings.length;
       return { dials, answered, dms, sqls };
     }
     return snapshots.reduce(
@@ -210,7 +219,7 @@ const ActivityMonitor = () => {
       }),
       { dials: 0, answered: 0, dms: 0, sqls: 0 }
     );
-  }, [snapshots, activities, mode]);
+  }, [snapshots, activities, histSqlMeetings, mode]);
 
   // SDR rows
   const sdrRows = useMemo(() => {
@@ -240,26 +249,37 @@ const ActivityMonitor = () => {
       }
     } else {
       // Aggregate from activity_log for historical
-      for (const a of activities) {
-        if (!a.sdr_name) continue;
-        const existing = map.get(a.sdr_name);
-        if (existing) {
-          existing.dials += 1;
-          if (a.call_outcome === "Connected") existing.answered += 1;
-          if (a.activity_type === "DM" || a.call_outcome === "DM Reached") existing.dms += 1;
-          if (a.is_sql) existing.sqls += 1;
-        } else {
-          map.set(a.sdr_name, {
-            sdrName: a.sdr_name,
-            clientId: "",
-            dials: 1,
-            answered: a.call_outcome === "Connected" ? 1 : 0,
-            answerRate: 0,
-            dms: (a.activity_type === "DM" || a.call_outcome === "DM Reached") ? 1 : 0,
-            sqls: a.is_sql ? 1 : 0,
-            lastActivity: null,
-          });
-        }
+      // Build SQL counts per SDR from histSqlMeetings
+      const sqlCountBySdr = new Map<string, number>();
+      for (const m of histSqlMeetings) {
+        if (!m.sdr_name) continue;
+        sqlCountBySdr.set(m.sdr_name, (sqlCountBySdr.get(m.sdr_name) || 0) + 1);
+      }
+      // Build DMs per SDR from snapshots
+      const dmsBySdr = new Map<string, number>();
+      for (const s of snapshots) {
+        if (!s.sdr_name) continue;
+        dmsBySdr.set(s.sdr_name, (dmsBySdr.get(s.sdr_name) || 0) + (s.dms_reached || 0));
+      }
+
+      // Track all SDR names from all sources
+      const allSdrNames = new Set<string>();
+      for (const a of activities) if (a.sdr_name) allSdrNames.add(a.sdr_name);
+      for (const name of sqlCountBySdr.keys()) allSdrNames.add(name);
+
+      for (const sdrName of allSdrNames) {
+        const sdrActivities = activities.filter(a => a.sdr_name === sdrName);
+        const clientId = sdrActivities[0]?.client_id || "";
+        map.set(sdrName, {
+          sdrName,
+          clientId: typeof clientId === "string" ? clientId : "",
+          dials: sdrActivities.length,
+          answered: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected").length,
+          answerRate: 0,
+          dms: dmsBySdr.get(sdrName) || 0,
+          sqls: sqlCountBySdr.get(sdrName) || 0,
+          lastActivity: null,
+        });
       }
     }
 
@@ -290,7 +310,7 @@ const ActivityMonitor = () => {
     });
 
     return rows;
-  }, [snapshots, activities, mode, sortKey, sortDir]);
+  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -318,7 +338,7 @@ const ActivityMonitor = () => {
 
         const { data } = await supabase
           .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
           .eq("sdr_name", sdrName)
           .ilike("call_outcome", "connected")
           .gte("activity_date", `${dateStr}T${startHour}:00:00`)
