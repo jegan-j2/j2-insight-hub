@@ -5,15 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
   const redirectBasedOnRole = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     console.log("🔍 Login - getUser result:", user, "Error:", userError);
@@ -84,8 +84,18 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
+        {/* Logo & Branding */}
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
+              <span className="text-xl font-bold text-secondary-foreground tracking-tight">J2</span>
+            </div>
+          </div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Lead Generation Dashboard</p>
+        </div>
+
+        <div className="text-center space-y-1">
+          <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
           <p className="text-muted-foreground">Sign in to your dashboard</p>
         </div>
 
@@ -104,14 +114,25 @@ const Login = () => {
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
@@ -134,6 +155,10 @@ const Login = () => {
             </Link>
           </div>
         </form>
+
+        <p className="text-center text-xs text-muted-foreground pt-2">
+          © 2026 J2 Group • Melbourne, Australia
+        </p>
       </div>
     </div>
   );
