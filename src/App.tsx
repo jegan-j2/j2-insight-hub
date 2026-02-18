@@ -14,6 +14,7 @@ import TeamPerformance from "./pages/TeamPerformance";
 import SQLMeetings from "./pages/SQLMeetings";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import DashboardLayout from "./components/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -31,7 +32,7 @@ const App = () => (
             <Route path="/" element={<div className="page-transition"><Index /></div>} />
             <Route path="/login" element={<div className="page-transition"><Login /></div>} />
             <Route path="/forgot-password" element={<div className="page-transition"><ForgotPassword /></div>} />
-            <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
+            <Route path="/reset-password" element={<div className="page-transition"><ResetPassword /></div>} />
             <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
             
             {/* Protected Dashboard Routes */}
