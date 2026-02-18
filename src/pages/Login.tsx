@@ -84,19 +84,14 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
-        {/* Logo & Branding */}
-        <div className="text-center space-y-3">
+        {/* Logo & Heading */}
+        <div className="text-center space-y-4">
           <div className="flex justify-center">
             <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
               <span className="text-xl font-bold text-secondary-foreground tracking-tight">J2</span>
             </div>
           </div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Lead Generation Dashboard</p>
-        </div>
-
-        <div className="text-center space-y-1">
           <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to your dashboard</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
