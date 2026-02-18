@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownRight, Phone, CheckCircle, Mail, Target, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Phone, CheckCircle, Mail, Target, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CallActivityChart } from "@/components/CallActivityChart";
@@ -13,10 +13,77 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 import { EmptyState } from "@/components/EmptyState";
 import { useOverviewData } from "@/hooks/useOverviewData";
+import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
+import { useToast } from "@/hooks/use-toast";
 
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
   const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange);
+  const { toast } = useToast();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportCSV = () => {
+    setExporting(true);
+    try {
+      const startStr = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "all";
+      const endStr = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "all";
+
+      // KPI summary section
+      const kpiHeaders = ["Metric", "Value"];
+      const kpiRows = [
+        ["Total Dials", kpis.totalDials],
+        ["Total Answered", kpis.totalAnswered],
+        ["Answer Rate (%)", kpis.answerRate],
+        ["Total DMs Reached", kpis.totalDMs],
+        ["Total SQLs Generated", kpis.totalSQLs],
+        ["SQL Conversion Rate (%)", kpis.sqlConversionRate],
+      ];
+
+      // Client performance section - aggregate snapshots by client
+      const clientMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+      snapshots.forEach(s => {
+        const existing = clientMap.get(s.client_id) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
+        existing.dials += s.dials || 0;
+        existing.answered += s.answered || 0;
+        existing.dms += s.dms_reached || 0;
+        existing.sqls += s.sqls || 0;
+        clientMap.set(s.client_id, existing);
+      });
+
+      const clientHeaders = ["Client", "Dials", "Answered", "DMs Reached", "SQLs"];
+      const clientRows = Array.from(clientMap.entries()).map(([client, data]) => [
+        client, data.dials, data.answered, data.dms, data.sqls,
+      ]);
+
+      // Meetings section
+      const meetingHeaders = ["Booking Date", "Client", "SDR", "Contact Person", "Company", "Meeting Date", "Meeting Held"];
+      const meetingRows = meetings.map(m => [
+        formatDateForCSV(m.booking_date),
+        m.client_id || "",
+        m.sdr_name || "",
+        m.contact_person,
+        m.company_name || "",
+        formatDateForCSV(m.meeting_date),
+        m.meeting_held ? "Yes" : "No",
+      ]);
+
+      const sections = [
+        "=== KPI SUMMARY ===",
+        toCSV(kpiHeaders, kpiRows),
+        "",
+        "=== CLIENT PERFORMANCE ===",
+        toCSV(clientHeaders, clientRows),
+        "",
+        "=== SQL MEETINGS ===",
+        toCSV(meetingHeaders, meetingRows),
+      ];
+
+      downloadCSV(sections.join("\n"), `j2-overview-${startStr}-${endStr}.csv`);
+      toast({ title: "CSV downloaded successfully", className: "border-green-500" });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "J2 Dashboard - Overview";
@@ -71,9 +138,20 @@ const Overview = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Overview Dashboard</h1>
-        <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Overview Dashboard</h1>
+          <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleExportCSV}
+          disabled={loading || exporting || snapshots.length === 0}
+          className="gap-2 shrink-0"
+        >
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          Export Data
+        </Button>
       </div>
 
       {/* Date Range Picker with Quick Filters */}

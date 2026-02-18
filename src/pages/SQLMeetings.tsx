@@ -11,7 +11,6 @@ const SQLMeetings = () => {
   }, []);
 
   useEffect(() => {
-    // Simulate loading when date changes
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
