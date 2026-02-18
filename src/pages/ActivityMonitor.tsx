@@ -9,14 +9,14 @@ import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, Users, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 
 type Mode = "live" | "historical";
-type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "dms" | "sqls";
+type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "sqls" | "conversion";
 type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls";
 type DateMode = "day" | "week" | "month";
@@ -62,8 +62,8 @@ interface SDRRow {
   dials: number;
   answered: number;
   answerRate: number;
-  dms: number;
   sqls: number;
+  conversion: number;
   lastActivity: Date | null;
 }
 
@@ -263,18 +263,16 @@ const ActivityMonitor = () => {
     if (mode === "historical") {
       const dials = activities.length;
       const answered = activities.filter(a => a.call_outcome?.toLowerCase() === "connected").length;
-      const dms = snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0);
       const sqls = histSqlMeetings.length;
-      return { dials, answered, dms, sqls };
+      return { dials, answered, sqls };
     }
     return snapshots.reduce(
       (acc, s) => ({
         dials: acc.dials + (s.dials || 0),
         answered: acc.answered + (s.answered || 0),
-        dms: acc.dms + (s.dms_reached || 0),
         sqls: acc.sqls + (s.sqls || 0),
       }),
-      { dials: 0, answered: 0, dms: 0, sqls: 0 }
+      { dials: 0, answered: 0, sqls: 0 }
     );
   }, [snapshots, activities, histSqlMeetings, mode]);
 
@@ -289,7 +287,6 @@ const ActivityMonitor = () => {
         if (existing) {
           existing.dials += s.dials || 0;
           existing.answered += s.answered || 0;
-          existing.dms += s.dms_reached || 0;
           existing.sqls += s.sqls || 0;
         } else {
           map.set(s.sdr_name, {
@@ -298,8 +295,8 @@ const ActivityMonitor = () => {
             dials: s.dials || 0,
             answered: s.answered || 0,
             answerRate: 0,
-            dms: s.dms_reached || 0,
             sqls: s.sqls || 0,
+            conversion: 0,
             lastActivity: null,
           });
         }
@@ -309,11 +306,6 @@ const ActivityMonitor = () => {
       for (const m of histSqlMeetings) {
         if (!m.sdr_name) continue;
         sqlCountBySdr.set(m.sdr_name, (sqlCountBySdr.get(m.sdr_name) || 0) + 1);
-      }
-      const dmsBySdr = new Map<string, number>();
-      for (const s of snapshots) {
-        if (!s.sdr_name) continue;
-        dmsBySdr.set(s.sdr_name, (dmsBySdr.get(s.sdr_name) || 0) + (s.dms_reached || 0));
       }
 
       const allSdrNames = new Set<string>();
@@ -329,8 +321,8 @@ const ActivityMonitor = () => {
           dials: sdrActivities.length,
           answered: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected").length,
           answerRate: 0,
-          dms: dmsBySdr.get(sdrName) || 0,
           sqls: sqlCountBySdr.get(sdrName) || 0,
+          conversion: 0,
           lastActivity: null,
         });
       }
@@ -346,9 +338,10 @@ const ActivityMonitor = () => {
       }
     }
 
-    // Recalculate answer rate
+    // Recalculate answer rate and conversion
     for (const row of map.values()) {
       row.answerRate = row.dials > 0 ? (row.answered / row.dials) * 100 : 0;
+      row.conversion = row.dials > 0 ? (row.sqls / row.dials) * 100 : 0;
     }
 
     const rows = Array.from(map.values());
@@ -454,11 +447,13 @@ const ActivityMonitor = () => {
     }
   };
 
+  const answerRateDisplay = totals.dials > 0 ? ((totals.answered / totals.dials) * 100).toFixed(1) + "%" : "0.0%";
+
   const kpiCards = [
-    { label: "Total Dials", value: totals.dials, icon: Phone, color: "text-blue-500" },
-    { label: "Total Answered", value: totals.answered, icon: PhoneIncoming, color: "text-green-500" },
-    { label: "Total DMs", value: totals.dms, icon: Users, color: "text-purple-500" },
-    { label: "Total SQLs", value: totals.sqls, icon: Target, color: "text-secondary" },
+    { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, color: "text-blue-500" },
+    { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, color: "text-green-500" },
+    { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, color: "text-purple-500" },
+    { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, color: "text-secondary" },
   ];
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
@@ -657,7 +652,7 @@ const ActivityMonitor = () => {
               {loading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
-                <p className="text-3xl font-bold text-foreground">{kpi.value.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
               )}
             </CardContent>
           </Card>
@@ -695,9 +690,9 @@ const ActivityMonitor = () => {
                     <TableHead><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="DMs" sortKeyName="dms" /></TableHead>
+                    <TableHead className="text-center"><SortHeader label="Answer Rate %" sortKeyName="answerRate" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
+                    <TableHead className="text-center"><SortHeader label="Conversion %" sortKeyName="conversion" /></TableHead>
                     {mode === "live" && <TableHead className="text-right">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -728,7 +723,6 @@ const ActivityMonitor = () => {
                         <TableCell className="text-center text-muted-foreground">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
-                        <TableCell className="text-center text-foreground">{row.dms}</TableCell>
                         <TableCell className="text-center">
                           <Button
                             variant="ghost"
@@ -738,6 +732,9 @@ const ActivityMonitor = () => {
                           >
                             {row.sqls}
                           </Button>
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
                           <TableCell className="text-right text-muted-foreground text-sm">
