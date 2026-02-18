@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Image } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Image, Power } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -220,18 +222,18 @@ const Settings = () => {
     }
   };
 
-  const handleDeleteClient = async (client: ClientRow) => {
+  const handleDeactivateClient = async (client: ClientRow) => {
     try {
       const { error } = await supabase
         .from('clients')
         .update({ status: 'inactive' })
         .eq('id', client.id);
       if (error) throw error;
-      toast({ title: "Client deactivated", description: `${client.client_name} has been deactivated.`, variant: "destructive" });
+      toast({ title: "Client deactivated", description: `Toggle 'Show inactive clients' to view ${client.client_name}.`, className: "border-orange-500" });
       fetchClients();
     } catch (error: any) {
-      console.error('Error deleting client:', error);
-      toast({ title: "Error", description: error.message || "Could not delete client.", variant: "destructive" });
+      console.error('Error deactivating client:', error);
+      toast({ title: "Error", description: error.message || "Could not deactivate client.", variant: "destructive" });
     }
   };
 
@@ -283,18 +285,18 @@ const Settings = () => {
     }
   };
 
-  const handleDeleteMember = async (member: TeamMemberRow) => {
+  const handleDeactivateMember = async (member: TeamMemberRow) => {
     try {
       const { error } = await supabase
         .from('team_members')
         .update({ status: 'inactive' })
         .eq('id', member.id);
       if (error) throw error;
-      toast({ title: "Team member deactivated", description: `${member.sdr_name} has been deactivated.`, variant: "destructive" });
+      toast({ title: "Team member deactivated", description: `Toggle 'Show inactive team members' to view ${member.sdr_name}.`, className: "border-orange-500" });
       fetchTeamMembers();
     } catch (error: any) {
-      console.error('Error deleting team member:', error);
-      toast({ title: "Error", description: error.message || "Could not remove team member.", variant: "destructive" });
+      console.error('Error deactivating team member:', error);
+      toast({ title: "Error", description: error.message || "Could not deactivate team member.", variant: "destructive" });
     }
   };
 
@@ -628,25 +630,61 @@ const Settings = () => {
                               </span>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)} aria-label={`Edit ${client.client_name}`}>
-                                  <Pencil className="h-4 w-4 text-secondary" />
-                                </Button>
-                                {isInactive ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleReactivateClient(client)}
-                                    className="text-green-500 hover:text-green-400 hover:bg-green-500/10 text-xs gap-1"
-                                  >
-                                    Reactivate
-                                  </Button>
-                                ) : (
-                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteClient(client)} aria-label={`Delete ${client.client_name}`}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                )}
-                              </div>
+                                <TooltipProvider>
+                                <div className="flex justify-end gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)} aria-label={`Edit ${client.client_name}`}>
+                                        <Pencil className="h-4 w-4 text-secondary" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Edit</TooltipContent>
+                                  </Tooltip>
+                                  {isInactive ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleReactivateClient(client)}
+                                          aria-label={`Reactivate ${client.client_name}`}
+                                          className="text-green-500 hover:text-green-400 hover:bg-green-500/10"
+                                        >
+                                          <Power className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Reactivate</TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <AlertDialog>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" aria-label={`Deactivate ${client.client_name}`} className="text-orange-500 hover:text-orange-400 hover:bg-orange-500/10">
+                                              <Power className="h-4 w-4" />
+                                            </Button>
+                                          </AlertDialogTrigger>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Deactivate</TooltipContent>
+                                      </Tooltip>
+                                      <AlertDialogContent className="bg-card border-border">
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Deactivate Client?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This will hide <span className="font-medium text-foreground">{client.client_name}</span> from the active list. You can reactivate them anytime by toggling "Show inactive clients".
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDeactivateClient(client)} className="bg-orange-600 hover:bg-orange-700 text-white">
+                                            Deactivate
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+                                </div>
+                                </TooltipProvider>
                             </TableCell>
                           </TableRow>
                         );
@@ -786,25 +824,61 @@ const Settings = () => {
                               </span>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)} aria-label={`Edit ${member.sdr_name}`}>
-                                  <Pencil className="h-4 w-4 text-secondary" />
-                                </Button>
-                                {isInactive ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleReactivateMember(member)}
-                                    className="text-green-500 hover:text-green-400 hover:bg-green-500/10 text-xs gap-1"
-                                  >
-                                    Reactivate
-                                  </Button>
-                                ) : (
-                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteMember(member)} aria-label={`Delete ${member.sdr_name}`}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                )}
-                              </div>
+                              <TooltipProvider>
+                                <div className="flex justify-end gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)} aria-label={`Edit ${member.sdr_name}`}>
+                                        <Pencil className="h-4 w-4 text-secondary" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Edit</TooltipContent>
+                                  </Tooltip>
+                                  {isInactive ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleReactivateMember(member)}
+                                          aria-label={`Reactivate ${member.sdr_name}`}
+                                          className="text-green-500 hover:text-green-400 hover:bg-green-500/10"
+                                        >
+                                          <Power className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Reactivate</TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <AlertDialog>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" aria-label={`Deactivate ${member.sdr_name}`} className="text-orange-500 hover:text-orange-400 hover:bg-orange-500/10">
+                                              <Power className="h-4 w-4" />
+                                            </Button>
+                                          </AlertDialogTrigger>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Deactivate</TooltipContent>
+                                      </Tooltip>
+                                      <AlertDialogContent className="bg-card border-border">
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Deactivate Team Member?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This will hide <span className="font-medium text-foreground">{member.sdr_name}</span> from the active list. You can reactivate them anytime by toggling "Show inactive team members".
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDeactivateMember(member)} className="bg-orange-600 hover:bg-orange-700 text-white">
+                                            Deactivate
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+                                </div>
+                              </TooltipProvider>
                             </TableCell>
                           </TableRow>
                         );
