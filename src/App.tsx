@@ -12,7 +12,7 @@ import Overview from "./pages/Overview";
 import ClientView from "./pages/ClientView";
 import TeamPerformance from "./pages/TeamPerformance";
 import SQLMeetings from "./pages/SQLMeetings";
-import TodayActivity from "./pages/TodayActivity";
+
 import ActivityMonitor from "./pages/ActivityMonitor";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -39,7 +39,7 @@ const App = () => (
             
             {/* Protected Dashboard Routes */}
             <Route path="/overview" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><Overview /></div></DashboardLayout></ProtectedRoute>} />
-            <Route path="/today" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><TodayActivity /></div></DashboardLayout></ProtectedRoute>} />
+            
             <Route path="/team" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout></ProtectedRoute>} />
             <Route path="/sql-meetings" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout></ProtectedRoute>} />
             <Route path="/client/:clientSlug" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout></ProtectedRoute>} />
