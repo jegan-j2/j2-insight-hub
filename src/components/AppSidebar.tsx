@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, Activity } from "lucide-react";
+import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, Activity, MonitorDot } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -121,6 +121,25 @@ export function AppSidebar() {
                   >
                     <Activity className="h-4 w-4" />
                     <span>Today's Activity</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              )}
+
+              {/* Activity Monitor - admin only */}
+              {userRole !== "client" && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/activity-monitor"
+                    className={({ isActive }) =>
+                      isActive
+                        ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
+                    }
+                  >
+                    <MonitorDot className="h-4 w-4" />
+                    <span>Activity Monitor</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

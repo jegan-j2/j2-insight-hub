@@ -13,6 +13,7 @@ import ClientView from "./pages/ClientView";
 import TeamPerformance from "./pages/TeamPerformance";
 import SQLMeetings from "./pages/SQLMeetings";
 import TodayActivity from "./pages/TodayActivity";
+import ActivityMonitor from "./pages/ActivityMonitor";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/team" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout></ProtectedRoute>} />
             <Route path="/sql-meetings" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout></ProtectedRoute>} />
             <Route path="/client/:clientSlug" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout></ProtectedRoute>} />
+            <Route path="/activity-monitor" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><ActivityMonitor /></div></DashboardLayout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><Settings /></div></DashboardLayout></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
