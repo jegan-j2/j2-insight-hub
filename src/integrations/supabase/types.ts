@@ -248,6 +248,48 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          report_content: Json | null
+          report_emails: string | null
+          report_frequency: string | null
+          send_date: string | null
+          send_day: string | null
+          send_time: string | null
+          slack_webhook_url: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          report_content?: Json | null
+          report_emails?: string | null
+          report_frequency?: string | null
+          send_date?: string | null
+          send_day?: string | null
+          send_time?: string | null
+          slack_webhook_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          report_content?: Json | null
+          report_emails?: string | null
+          report_frequency?: string | null
+          send_date?: string | null
+          send_day?: string | null
+          send_time?: string | null
+          slack_webhook_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sql_meetings: {
         Row: {
           booking_date: string
