@@ -8,16 +8,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Phone, PhoneIncoming, Users, Target, CalendarIcon, ArrowUpDown, Clock } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Phone, PhoneIncoming, Users, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 
 type Mode = "live" | "historical";
 type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "dms" | "sqls";
 type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls";
+type DateMode = "day" | "week" | "month";
+type TimePreset = "fullday" | "morning" | "afternoon" | "custom";
 
 interface SqlMeetingRow {
   id: string;
@@ -85,6 +88,13 @@ const getMelbourneToday = () => {
   return `${y}-${m}-${d}`;
 };
 
+const TIME_PRESETS: { key: TimePreset; label: string; range: [number, number] }[] = [
+  { key: "fullday", label: "Full Day", range: [0, 24] },
+  { key: "morning", label: "Morning", range: [6, 12] },
+  { key: "afternoon", label: "Afternoon", range: [12, 18] },
+  { key: "custom", label: "Custom", range: [0, 24] },
+];
+
 const ActivityMonitor = () => {
   const [mode, setMode] = useState<Mode>("live");
   const [snapshots, setSnapshots] = useState<SnapshotRow[]>([]);
@@ -102,14 +112,40 @@ const ActivityMonitor = () => {
   // Historical filters
   const [histDate, setHistDate] = useState<Date>(new Date());
   const [timeRange, setTimeRange] = useState<number[]>([0, 24]);
+  const [timePreset, setTimePreset] = useState<TimePreset>("fullday");
   const [histApplied, setHistApplied] = useState(false);
   const [histSqlMeetings, setHistSqlMeetings] = useState<SqlMeetingRow[]>([]);
+  const [dateMode, setDateMode] = useState<DateMode>("day");
 
   const todayMelbourne = useMemo(getMelbourneToday, []);
   const todayFormatted = useMemo(() => {
     const d = new Date(todayMelbourne + "T00:00:00");
     return format(d, "EEEE, MMMM d, yyyy");
   }, [todayMelbourne]);
+
+  // Compute date range based on dateMode
+  const dateRangeInfo = useMemo(() => {
+    if (dateMode === "day") {
+      const dateStr = format(histDate, "yyyy-MM-dd");
+      return { dates: [dateStr], label: format(histDate, "EEEE, MMMM d, yyyy") };
+    } else if (dateMode === "week") {
+      const weekStart = startOfWeek(histDate, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(histDate, { weekStartsOn: 1 });
+      const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+      return {
+        dates: days.map(d => format(d, "yyyy-MM-dd")),
+        label: `${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d, yyyy")}`,
+      };
+    } else {
+      const monthStart = startOfMonth(histDate);
+      const monthEnd = endOfMonth(histDate);
+      const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+      return {
+        dates: days.map(d => format(d, "yyyy-MM-dd")),
+        label: format(histDate, "MMMM yyyy"),
+      };
+    }
+  }, [histDate, dateMode]);
 
   // LIVE fetch
   const fetchLiveData = useCallback(async () => {
@@ -142,31 +178,46 @@ const ActivityMonitor = () => {
     if (mode !== "historical") return;
     setLoading(true);
     try {
-      const dateStr = format(histDate, "yyyy-MM-dd");
+      const dates = dateRangeInfo.dates;
       const startHour = String(timeRange[0]).padStart(2, "0");
       const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-      const startTs = `${dateStr}T${startHour}:00:00+11:00`; // AEDT offset
-      const endTimestamp = `${dateStr}T${endTs}+11:00`;
+
+      // For multi-day ranges, query from first date start to last date end
+      const firstDate = dates[0];
+      const lastDate = dates[dates.length - 1];
+      const startTimestamp = `${firstDate}T${startHour}:00:00`;
+      const endTimestamp = `${lastDate}T${endTs}`;
+
+      console.log("📊 Historical query:", { startTimestamp, endTimestamp, dates });
 
       const [activityRes, sqlRes, snapshotRes] = await Promise.all([
         supabase
           .from("activity_log")
           .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
-          .gte("activity_date", startTs)
+          .gte("activity_date", startTimestamp)
           .lte("activity_date", endTimestamp)
-          .order("activity_date", { ascending: false }),
+          .order("activity_date", { ascending: false })
+          .limit(5000),
         supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id")
-          .eq("booking_date", dateStr),
+          .gte("booking_date", firstDate)
+          .lte("booking_date", lastDate),
         supabase
           .from("daily_snapshots")
           .select("sdr_name, client_id, dms_reached")
-          .eq("snapshot_date", dateStr),
+          .gte("snapshot_date", firstDate)
+          .lte("snapshot_date", lastDate),
       ]);
 
+      console.log("📊 Historical results:", {
+        activities: activityRes.data?.length,
+        sqlMeetings: sqlRes.data?.length,
+        snapshots: snapshotRes.data?.length,
+        error: activityRes.error || sqlRes.error || snapshotRes.error,
+      });
+
       if (activityRes.data) setActivities(activityRes.data);
-      // Store sql meetings count per SDR and snapshot DMs for KPI/table usage
       setHistSqlMeetings(sqlRes.data || []);
       setSnapshots(snapshotRes.data?.map(s => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || []);
     } catch (err) {
@@ -174,7 +225,7 @@ const ActivityMonitor = () => {
     } finally {
       setLoading(false);
     }
-  }, [histDate, timeRange, mode]);
+  }, [dateRangeInfo, timeRange, mode]);
 
   useEffect(() => {
     document.title = "J2 Dashboard - Activity Monitor";
@@ -189,6 +240,13 @@ const ActivityMonitor = () => {
       setHistApplied(false);
     }
   }, [histApplied, fetchHistoricalData, mode]);
+
+  // Auto-apply on mode switch to historical
+  useEffect(() => {
+    if (mode === "historical") {
+      setHistApplied(true);
+    }
+  }, [mode]);
 
   // Only subscribe in live mode
   useRealtimeSubscription({
@@ -205,7 +263,6 @@ const ActivityMonitor = () => {
     if (mode === "historical") {
       const dials = activities.length;
       const answered = activities.filter(a => a.call_outcome?.toLowerCase() === "connected").length;
-      // DMs from daily_snapshots for that date
       const dms = snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0);
       const sqls = histSqlMeetings.length;
       return { dials, answered, dms, sqls };
@@ -248,21 +305,17 @@ const ActivityMonitor = () => {
         }
       }
     } else {
-      // Aggregate from activity_log for historical
-      // Build SQL counts per SDR from histSqlMeetings
       const sqlCountBySdr = new Map<string, number>();
       for (const m of histSqlMeetings) {
         if (!m.sdr_name) continue;
         sqlCountBySdr.set(m.sdr_name, (sqlCountBySdr.get(m.sdr_name) || 0) + 1);
       }
-      // Build DMs per SDR from snapshots
       const dmsBySdr = new Map<string, number>();
       for (const s of snapshots) {
         if (!s.sdr_name) continue;
         dmsBySdr.set(s.sdr_name, (dmsBySdr.get(s.sdr_name) || 0) + (s.dms_reached || 0));
       }
 
-      // Track all SDR names from all sources
       const allSdrNames = new Set<string>();
       for (const a of activities) if (a.sdr_name) allSdrNames.add(a.sdr_name);
       for (const name of sqlCountBySdr.keys()) allSdrNames.add(name);
@@ -299,8 +352,6 @@ const ActivityMonitor = () => {
     }
 
     const rows = Array.from(map.values());
-
-    // Sort
     rows.sort((a, b) => {
       let cmp = 0;
       if (sortKey === "sdrName") cmp = a.sdrName.localeCompare(b.sdrName);
@@ -328,32 +379,49 @@ const ActivityMonitor = () => {
     setDrillDownData([]);
     setDrillDownSqlData([]);
     try {
-      const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
-
       if (metric === "answered") {
-        const startHour = mode === "historical" ? String(timeRange[0]).padStart(2, "0") : "00";
-        const endTs = mode === "historical"
-          ? (timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`)
-          : "23:59:59";
+        let startTimestamp: string;
+        let endTimestamp: string;
+
+        if (mode === "live") {
+          startTimestamp = `${todayMelbourne}T00:00:00`;
+          endTimestamp = `${todayMelbourne}T23:59:59`;
+        } else {
+          const dates = dateRangeInfo.dates;
+          const startHour = String(timeRange[0]).padStart(2, "0");
+          const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
+          startTimestamp = `${dates[0]}T${startHour}:00:00`;
+          endTimestamp = `${dates[dates.length - 1]}T${endTs}`;
+        }
 
         const { data } = await supabase
           .from("activity_log")
           .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
           .eq("sdr_name", sdrName)
           .ilike("call_outcome", "connected")
-          .gte("activity_date", `${dateStr}T${startHour}:00:00`)
-          .lte("activity_date", `${dateStr}T${endTs}`)
+          .gte("activity_date", startTimestamp)
+          .lte("activity_date", endTimestamp)
           .order("activity_date", { ascending: false });
 
         setDrillDownData(data || []);
       } else if (metric === "sqls") {
-        const { data } = await supabase
+        const dates = mode === "live" ? [todayMelbourne] : dateRangeInfo.dates;
+        const firstDate = dates[0];
+        const lastDate = dates[dates.length - 1];
+
+        let query = supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at")
           .eq("sdr_name", sdrName)
-          .eq("booking_date", dateStr)
           .order("created_at", { ascending: false });
 
+        if (firstDate === lastDate) {
+          query = query.eq("booking_date", firstDate);
+        } else {
+          query = query.gte("booking_date", firstDate).lte("booking_date", lastDate);
+        }
+
+        const { data } = await query;
         setDrillDownSqlData(data || []);
       }
     } catch (err) {
@@ -366,6 +434,24 @@ const ActivityMonitor = () => {
   const isRecentActivity = (lastActivity: Date | null) => {
     if (!lastActivity) return false;
     return Date.now() - lastActivity.getTime() < 5 * 60 * 1000;
+  };
+
+  const handleTimePreset = (preset: TimePreset) => {
+    setTimePreset(preset);
+    if (preset !== "custom") {
+      const found = TIME_PRESETS.find(p => p.key === preset);
+      if (found) setTimeRange([...found.range]);
+    }
+  };
+
+  const navigateDate = (direction: "prev" | "next") => {
+    if (dateMode === "day") {
+      setHistDate(d => direction === "next" ? new Date(d.getTime() + 86400000) : new Date(d.getTime() - 86400000));
+    } else if (dateMode === "week") {
+      setHistDate(d => direction === "next" ? addWeeks(d, 1) : subWeeks(d, 1));
+    } else {
+      setHistDate(d => direction === "next" ? addMonths(d, 1) : subMonths(d, 1));
+    }
   };
 
   const kpiCards = [
@@ -396,7 +482,7 @@ const ActivityMonitor = () => {
             {mode === "live" ? "Today's Activity" : "Performance Analysis"}
           </h1>
           <p className="text-muted-foreground">
-            {mode === "live" ? todayFormatted : format(histDate, "EEEE, MMMM d, yyyy")}
+            {mode === "live" ? todayFormatted : dateRangeInfo.label}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -439,56 +525,113 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && (
         <Card className="bg-card/50 backdrop-blur-sm border-border">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
+            {/* Date Mode Tabs */}
+            <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as DateMode)}>
+              <TabsList className="bg-muted/50">
+                <TabsTrigger value="day">Single Day</TabsTrigger>
+                <TabsTrigger value="week">Week</TabsTrigger>
+                <TabsTrigger value="month">Month</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
-              {/* Date picker */}
+              {/* Date selector */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Date</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(histDate, "MMM d, yyyy")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={histDate}
-                      onSelect={(d) => d && setHistDate(d)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <label className="text-sm font-medium text-muted-foreground">
+                  {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
+                </label>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigateDate("prev")}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {dateMode === "day" ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {format(histDate, "MMM d, yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={histDate}
+                          onSelect={(d) => d && setHistDate(d)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <div className="px-4 py-2 border border-border rounded-md bg-card text-sm font-medium min-w-[200px] text-center">
+                      {dateRangeInfo.label}
+                    </div>
+                  )}
+                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigateDate("next")}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
-              {/* Time range slider */}
-              <div className="flex-1 space-y-2 w-full">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
-                    Time Range
-                  </label>
-                  <span className="text-sm font-medium text-foreground">
-                    {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                  </span>
+              {/* Time Range Section (only for single day) */}
+              {dateMode === "day" && (
+                <div className="flex-1 space-y-3 w-full">
+                  {/* Time Presets */}
+                  <div className="flex flex-wrap gap-2">
+                    {TIME_PRESETS.map((preset) => (
+                      <Button
+                        key={preset.key}
+                        variant={timePreset === preset.key ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleTimePreset(preset.key)}
+                        className={cn(
+                          "text-xs",
+                          timePreset === preset.key && "bg-blue-500 hover:bg-blue-600 text-white"
+                        )}
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {/* Custom slider */}
+                  {timePreset === "custom" && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          Time Range
+                        </label>
+                        <span className="text-sm font-medium text-foreground">
+                          {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                        </span>
+                      </div>
+                      <Slider
+                        min={0}
+                        max={24}
+                        step={1}
+                        value={timeRange}
+                        onValueChange={setTimeRange}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>12 AM</span>
+                        <span>6 AM</span>
+                        <span>12 PM</span>
+                        <span>6 PM</span>
+                        <span>12 AM</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {timePreset !== "custom" && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                    </p>
+                  )}
                 </div>
-                <Slider
-                  min={0}
-                  max={24}
-                  step={1}
-                  value={timeRange}
-                  onValueChange={setTimeRange}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>12 AM</span>
-                  <span>6 AM</span>
-                  <span>12 PM</span>
-                  <span>6 PM</span>
-                  <span>12 AM</span>
-                </div>
-              </div>
+              )}
 
               {/* Apply */}
               <Button
