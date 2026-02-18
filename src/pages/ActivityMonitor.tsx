@@ -19,6 +19,16 @@ type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "d
 type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls";
 
+interface SqlMeetingRow {
+  id: string;
+  sdr_name: string | null;
+  contact_person: string;
+  company_name: string | null;
+  booking_date: string;
+  meeting_date: string | null;
+  created_at: string | null;
+}
+
 interface SnapshotRow {
   sdr_name: string | null;
   client_id: string | null;
@@ -85,6 +95,7 @@ const ActivityMonitor = () => {
   // Drill-down
   const [drillDown, setDrillDown] = useState<{ sdrName: string; metric: DrillMetric } | null>(null);
   const [drillDownData, setDrillDownData] = useState<ActivityRow[]>([]);
+  const [drillDownSqlData, setDrillDownSqlData] = useState<SqlMeetingRow[]>([]);
   const [loadingDrill, setLoadingDrill] = useState(false);
 
   // Historical filters
@@ -294,29 +305,37 @@ const ActivityMonitor = () => {
   const handleDrillDown = async (sdrName: string, metric: DrillMetric) => {
     setDrillDown({ sdrName, metric });
     setLoadingDrill(true);
+    setDrillDownData([]);
+    setDrillDownSqlData([]);
     try {
       const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
-      const startHour = mode === "historical" ? String(timeRange[0]).padStart(2, "0") : "00";
-      const endTs = mode === "historical"
-        ? (timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`)
-        : "23:59:59";
-
-      let query = supabase
-        .from("activity_log")
-        .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date")
-        .eq("sdr_name", sdrName)
-        .gte("activity_date", `${dateStr}T${startHour}:00:00`)
-        .lte("activity_date", `${dateStr}T${endTs}`)
-        .order("activity_date", { ascending: false });
 
       if (metric === "answered") {
-        query = query.eq("call_outcome", "Connected");
-      } else if (metric === "sqls") {
-        query = query.eq("is_sql", true);
-      }
+        const startHour = mode === "historical" ? String(timeRange[0]).padStart(2, "0") : "00";
+        const endTs = mode === "historical"
+          ? (timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`)
+          : "23:59:59";
 
-      const { data } = await query;
-      setDrillDownData(data || []);
+        const { data } = await supabase
+          .from("activity_log")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date")
+          .eq("sdr_name", sdrName)
+          .ilike("call_outcome", "connected")
+          .gte("activity_date", `${dateStr}T${startHour}:00:00`)
+          .lte("activity_date", `${dateStr}T${endTs}`)
+          .order("activity_date", { ascending: false });
+
+        setDrillDownData(data || []);
+      } else if (metric === "sqls") {
+        const { data } = await supabase
+          .from("sql_meetings")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at")
+          .eq("sdr_name", sdrName)
+          .eq("booking_date", dateStr)
+          .order("created_at", { ascending: false });
+
+        setDrillDownSqlData(data || []);
+      }
     } catch (err) {
       console.error("Drill-down error:", err);
     } finally {
@@ -590,53 +609,72 @@ const ActivityMonitor = () => {
                 <Skeleton key={i} className="h-8 w-full" />
               ))}
             </div>
-          ) : drillDownData.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No records found.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50">
-                    <TableHead>Time</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Company</TableHead>
-                    {drillDown?.metric === "answered" ? (
-                      <>
-                        <TableHead>Outcome</TableHead>
-                        <TableHead className="text-right">Duration</TableHead>
-                      </>
-                    ) : (
-                      <TableHead>Meeting Date</TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {drillDownData.map((a) => (
-                    <TableRow key={a.id} className="border-border/50">
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(a.activity_date), "h:mm a")}
-                      </TableCell>
-                      <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
-                      {drillDown?.metric === "answered" ? (
-                        <>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">{a.call_outcome || "—"}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground">
-                            {a.call_duration ? `${Math.floor(a.call_duration / 60)}:${String(a.call_duration % 60).padStart(2, "0")}` : "—"}
-                          </TableCell>
-                        </>
-                      ) : (
-                        <TableCell className="text-muted-foreground">
-                          {a.meeting_scheduled_date ? format(new Date(a.meeting_scheduled_date), "MMM d, yyyy") : "—"}
-                        </TableCell>
-                      )}
+          ) : drillDown?.metric === "answered" ? (
+            drillDownData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No connected calls found for this SDR in the selected time range.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50">
+                      <TableHead>Time</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead className="text-right">Duration</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {drillDownData.map((a) => (
+                      <TableRow key={a.id} className="border-border/50">
+                        <TableCell className="text-muted-foreground text-sm">
+                          {new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {a.call_duration
+                            ? `${Math.floor(a.call_duration / 60)}m ${a.call_duration % 60}s`
+                            : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )
+          ) : (
+            drillDownSqlData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No SQLs booked for this SDR in the selected time range.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50">
+                      <TableHead>Time Booked</TableHead>
+                      <TableHead>Contact Person</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Meeting Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {drillDownSqlData.map((m) => (
+                      <TableRow key={m.id} className="border-border/50">
+                        <TableCell className="text-muted-foreground text-sm">
+                          {m.created_at
+                            ? new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
+                            : format(new Date(m.booking_date), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{m.company_name || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {m.meeting_date ? format(new Date(m.meeting_date), "MMM d, yyyy") : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )
           )}
         </DialogContent>
       </Dialog>
