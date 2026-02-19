@@ -258,6 +258,7 @@ export type Database = {
           report_content: Json | null
           report_emails: string | null
           report_frequency: string | null
+          report_send_days: Json | null
           send_date: string | null
           send_day: string | null
           send_time: string | null
@@ -271,6 +272,7 @@ export type Database = {
           report_content?: Json | null
           report_emails?: string | null
           report_frequency?: string | null
+          report_send_days?: Json | null
           send_date?: string | null
           send_day?: string | null
           send_time?: string | null
@@ -284,6 +286,7 @@ export type Database = {
           report_content?: Json | null
           report_emails?: string | null
           report_frequency?: string | null
+          report_send_days?: Json | null
           send_date?: string | null
           send_day?: string | null
           send_time?: string | null
