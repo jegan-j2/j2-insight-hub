@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BreakpointIndicator } from "@/components/BreakpointIndicator";
+import { useSlackNotifications } from "@/hooks/useSlackNotifications";
+import { useInactiveSDRAlerts } from "@/hooks/useInactiveSDRAlerts";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -23,6 +25,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const SlackNotificationProvider = ({ children }: { children: React.ReactNode }) => {
+  useSlackNotifications();
+  useInactiveSDRAlerts();
+  return <>{children}</>;
+};
+
 const App = () => (
   <ThemeProvider>
     <QueryClientProvider client={queryClient}>
@@ -31,6 +39,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BreakpointIndicator />
+          <SlackNotificationProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<div className="page-transition"><Index /></div>} />
@@ -52,6 +61,7 @@ const App = () => (
               <Route path="*" element={<div className="page-transition"><NotFound /></div>} />
             </Routes>
           </BrowserRouter>
+          </SlackNotificationProvider>
         </DateFilterProvider>
       </TooltipProvider>
     </QueryClientProvider>

@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { sendSlackNotification, formatTestMessage } from "@/lib/slackNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SDRAvatar } from "@/components/SDRAvatar";
 
@@ -144,11 +145,16 @@ const Settings = () => {
     teamPerformance: true,
     sqlBookedMeetings: true,
     detailedActivityBreakdown: false,
+    sqlNotifications: true,
+    dailySummary: true,
+    inactiveAlerts: true,
+    weeklyReports: false,
   });
 
   // --- Loading states ---
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [isSendingTestSlack, setIsSendingTestSlack] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [notificationSettingsId, setNotificationSettingsId] = useState<string | null>(null);
 
@@ -183,6 +189,10 @@ const Settings = () => {
             teamPerformance: rc.teamPerformance ?? true,
             sqlBookedMeetings: rc.sqlBookedMeetings ?? true,
             detailedActivityBreakdown: rc.detailedActivityBreakdown ?? false,
+            sqlNotifications: rc.sqlNotifications ?? true,
+            dailySummary: rc.dailySummary ?? true,
+            inactiveAlerts: rc.inactiveAlerts ?? true,
+            weeklyReports: rc.weeklyReports ?? false,
           });
         }
       }
@@ -557,6 +567,26 @@ const Settings = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSendingTestEmail(false);
     toast({ title: "Test email sent", description: `A test report has been sent to ${reportEmails}`, className: "border-green-500" });
+  };
+
+  const handleSendTestSlack = async () => {
+    if (!slackWebhook) {
+      toast({ title: "No webhook URL", description: "Please enter a Slack webhook URL first.", variant: "destructive" });
+      return;
+    }
+    setIsSendingTestSlack(true);
+    try {
+      const success = await sendSlackNotification(slackWebhook, formatTestMessage());
+      if (success) {
+        toast({ title: "Test notification sent", description: "Check your Slack channel for the test message.", className: "border-green-500" });
+      } else {
+        toast({ title: "Failed to send", description: "Check that your webhook URL is valid.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Could not send test notification.", variant: "destructive" });
+    } finally {
+      setIsSendingTestSlack(false);
+    }
   };
 
   const TableSkeletonRows = () => (
@@ -1396,16 +1426,29 @@ const Settings = () => {
               <CardTitle>Slack Integration</CardTitle>
               <CardDescription>Connect your Slack workspace for real-time notifications</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="grid gap-2">
                 <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
-                <Input
-                  id="slack-webhook"
-                  placeholder="https://hooks.slack.com/services/..."
-                  value={slackWebhook}
-                  onChange={(e) => setSlackWebhook(e.target.value)}
-                  className="bg-background/50 border-border"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="slack-webhook"
+                    placeholder="https://hooks.slack.com/services/..."
+                    value={slackWebhook}
+                    onChange={(e) => setSlackWebhook(e.target.value)}
+                    className="bg-background/50 border-border flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSendTestSlack}
+                    disabled={!slackWebhook || isSendingTestSlack}
+                    className="gap-1.5 shrink-0"
+                    aria-label="Send test Slack notification"
+                  >
+                    {isSendingTestSlack ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    Send Test
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Get your webhook URL from{" "}
                   <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
@@ -1413,7 +1456,36 @@ const Settings = () => {
                   </a>
                 </p>
               </div>
-              <div className="flex justify-end pt-2">
+
+              {/* Slack Notification Toggles */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Slack Notification Types</Label>
+                <div className="space-y-3">
+                  {[
+                    { key: "sqlNotifications", label: "New SQL Notifications", description: "Get notified when a new SQL meeting is booked" },
+                    { key: "dailySummary", label: "Daily Summary Reports", description: "Receive a daily summary of team activity" },
+                    { key: "inactiveAlerts", label: "Inactive SDR Alerts", description: "Alert when an SDR has no activity for 1+ hour during business hours" },
+                    { key: "weeklyReports", label: "Weekly Summary Reports", description: "Receive a weekly overview of performance metrics" },
+                  ].map(({ key, label, description }) => (
+                    <div key={key} className="flex items-start space-x-3">
+                      <Checkbox
+                        id={`slack-${key}`}
+                        checked={reportContent[key as keyof typeof reportContent]}
+                        onCheckedChange={(checked) =>
+                          setReportContent({ ...reportContent, [key]: checked as boolean })
+                        }
+                        className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      />
+                      <div className="grid gap-0.5">
+                        <Label htmlFor={`slack-${key}`} className="font-normal cursor-pointer">{label}</Label>
+                        <p className="text-xs text-muted-foreground">{description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2 border-t border-border">
                 <Button onClick={handleSaveNotifications} variant="outline" className="gap-2" disabled={isSavingNotifications}>
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />Save Slack Settings</>)}
                 </Button>
