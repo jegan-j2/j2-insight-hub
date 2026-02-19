@@ -1,7 +1,8 @@
-import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, Activity, MonitorDot } from "lucide-react";
+import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, Activity, MonitorDot, Sun, Moon } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import {
   Sidebar,
@@ -26,6 +27,7 @@ interface ClientItem {
 
 export function AppSidebar() {
   const { open } = useSidebar();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<ClientItem[]>([]);
@@ -204,7 +206,21 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              )}
+               )}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={toggleTheme}
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                  aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {resolvedTheme === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                  <span>{resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={handleLogout}
