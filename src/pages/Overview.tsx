@@ -15,6 +15,7 @@ import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/Load
 import { EmptyState } from "@/components/EmptyState";
 import { useOverviewData } from "@/hooks/useOverviewData";
 import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
+import { exportToPDF } from "@/lib/pdfExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
@@ -23,6 +24,7 @@ const Overview = () => {
   const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -98,6 +100,19 @@ const Overview = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      await exportToPDF('overview-content', `j2-overview-${dateStr}.pdf`, 'Campaign Overview');
+      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
+    } catch (err) {
+      toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
   useEffect(() => {
     document.title = "J2 Dashboard - Overview";
   }, []);
@@ -149,7 +164,7 @@ const Overview = () => {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div id="overview-content" className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
@@ -184,8 +199,17 @@ const Overview = () => {
             disabled={loading || exporting || snapshots.length === 0}
             className="gap-2 shrink-0"
           >
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export Data
+           {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            disabled={loading || exportingPDF || snapshots.length === 0}
+            className="gap-2 shrink-0"
+          >
+            {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export PDF
           </Button>
         </div>
       </div>

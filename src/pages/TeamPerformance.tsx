@@ -15,6 +15,7 @@ import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
+import { exportToPDF } from "@/lib/pdfExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const TeamPerformance = () => {
   const [clientFilter, setClientFilter] = useState("all");
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
   const { toast } = useToast();
   const { loading, error, leaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
@@ -64,6 +66,19 @@ const TeamPerformance = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      await exportToPDF('team-performance-content', `j2-team-performance-${dateStr}.pdf`, 'Team Performance Report');
+      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
+    } catch (err) {
+      toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
   useEffect(() => {
     document.title = "J2 Dashboard - Team Performance";
     const fetchClients = async () => {
@@ -78,7 +93,7 @@ const TeamPerformance = () => {
   }, []);
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+    <div id="team-performance-content" className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
@@ -117,7 +132,16 @@ const TeamPerformance = () => {
             className="gap-2 shrink-0"
           >
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export Data
+            Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            disabled={loading || exportingPDF || leaderboard.length === 0}
+            className="gap-2 shrink-0"
+          >
+            {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export PDF
           </Button>
         </div>
       </div>
