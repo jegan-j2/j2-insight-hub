@@ -1,0 +1,1 @@
+ALTER TABLE public.notification_settings ADD COLUMN report_send_days jsonb DEFAULT '["monday","tuesday","wednesday","thursday","friday"]'::jsonb;

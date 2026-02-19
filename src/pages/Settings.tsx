@@ -139,6 +139,7 @@ const Settings = () => {
   const [sendDate, setSendDate] = useState("1st of month");
   const [reportEmails, setReportEmails] = useState("admin@j2group.com.au");
   const [slackWebhook, setSlackWebhook] = useState("");
+  const [sendDays, setSendDays] = useState<string[]>(["monday", "tuesday", "wednesday", "thursday", "friday"]);
   const [reportContent, setReportContent] = useState({
     campaignOverview: true,
     topPerformingClients: true,
@@ -181,6 +182,9 @@ const Settings = () => {
         setSendDate(data.send_date || "1st of month");
         setReportEmails(data.report_emails || "admin@j2group.com.au");
         setSlackWebhook(data.slack_webhook_url || "");
+        if (data.report_send_days && Array.isArray(data.report_send_days)) {
+          setSendDays(data.report_send_days as string[]);
+        }
         if (data.report_content && typeof data.report_content === 'object') {
           const rc = data.report_content as Record<string, boolean>;
           setReportContent({
@@ -532,6 +536,7 @@ const Settings = () => {
         send_date: sendDate,
         report_emails: reportEmails,
         slack_webhook_url: slackWebhook || null,
+        report_send_days: sendDays,
         report_content: reportContent,
         updated_at: new Date().toISOString(),
       };
@@ -1361,6 +1366,40 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground">
                     Automated reports are disabled. You can still export reports manually from the dashboard.
                   </p>
+                </div>
+              )}
+
+              {/* Active Days */}
+              {reportFrequency !== "disabled" && (
+                <div className="grid gap-2 animate-fade-in">
+                  <Label>Active Days</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: "monday", label: "Mon" },
+                      { value: "tuesday", label: "Tue" },
+                      { value: "wednesday", label: "Wed" },
+                      { value: "thursday", label: "Thu" },
+                      { value: "friday", label: "Fri" },
+                      { value: "saturday", label: "Sat" },
+                      { value: "sunday", label: "Sun" },
+                    ].map(({ value, label }) => (
+                      <div key={value} className="flex items-center space-x-1.5">
+                        <Checkbox
+                          id={`day-${value}`}
+                          checked={sendDays.includes(value)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSendDays(prev => [...prev, value]);
+                            } else {
+                              setSendDays(prev => prev.filter(d => d !== value));
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`day-${value}`} className="text-sm cursor-pointer">{label}</Label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Reports will only be sent on selected days</p>
                 </div>
               )}
 
