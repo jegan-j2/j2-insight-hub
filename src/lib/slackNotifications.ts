@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 interface SlackMessage {
   text: string
 }
@@ -7,17 +9,25 @@ export const sendSlackNotification = async (
   message: SlackMessage
 ): Promise<boolean> => {
   try {
-    const response = await fetch(webhookUrl, {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/send-slack-notification`
+
+    const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(message),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ webhookUrl, message }),
     })
 
     if (!response.ok) {
-      console.error('Slack notification failed:', response.status)
+      console.error('Edge function failed:', response.status)
       return false
     }
-    return true
+
+    const result = await response.json()
+    return result.success === true
   } catch (error) {
     console.error('Slack notification error:', error)
     return false
