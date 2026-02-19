@@ -9,7 +9,9 @@ import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2 } from "lucide-react";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, RefreshCw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
@@ -115,6 +117,8 @@ const ActivityMonitor = () => {
   const [loadingDrill, setLoadingDrill] = useState(false);
   const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null);
   const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
+  const { refreshKey, manualRefresh } = useAutoRefresh(300000);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -272,10 +276,15 @@ const ActivityMonitor = () => {
 
   useEffect(() => {
     document.title = "J2 Dashboard - Activity Monitor";
+  }, []);
+
+  // Fetch data on mode change, live fetch, or auto-refresh
+  useEffect(() => {
     if (mode === "live") {
-      fetchLiveData();
+      setIsRefreshing(true);
+      fetchLiveData().finally(() => setIsRefreshing(false));
     }
-  }, [mode, fetchLiveData]);
+  }, [mode, fetchLiveData, refreshKey]);
 
   useEffect(() => {
     if (mode === "historical" && histApplied) {
@@ -525,20 +534,11 @@ const ActivityMonitor = () => {
 
   const answerRateDisplay = totals.dials > 0 ? ((totals.answered / totals.dials) * 100).toFixed(1) + "%" : "0.0%";
 
-  // Calculate avg call duration for connected calls
-  const avgCallDuration = useMemo(() => {
-    const connected = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.call_duration && a.call_duration > 0);
-    if (connected.length === 0) return "0m 0s";
-    const avg = connected.reduce((sum, a) => sum + (a.call_duration || 0), 0) / connected.length;
-    return `${Math.floor(avg / 60)}m ${Math.round(avg % 60)}s`;
-  }, [activities]);
-
   const kpiCards = [
     { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, color: "text-blue-500" },
     { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, color: "text-green-500" },
     { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, color: "text-purple-500" },
     { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, color: "text-secondary" },
-    { label: "Avg Call Duration", value: avgCallDuration, icon: Clock, color: "text-cyan-500" },
   ];
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
@@ -566,6 +566,31 @@ const ActivityMonitor = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setIsRefreshing(true);
+                    if (mode === "live") {
+                      fetchLiveData().finally(() => setIsRefreshing(false));
+                    } else {
+                      setHistApplied(true);
+                      setTimeout(() => setIsRefreshing(false), 1000);
+                    }
+                    manualRefresh();
+                  }}
+                  aria-label="Refresh data"
+                >
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-cyan-500")} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {mode === "live" && (
             <Badge variant="outline" className="gap-2 border-green-500/50 text-green-500 px-3 py-1.5">
               <span className="relative flex h-2 w-2">

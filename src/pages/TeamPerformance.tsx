@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, Users, Download, Loader2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
@@ -15,6 +16,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
 import { useToast } from "@/hooks/use-toast";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
+import { cn } from "@/lib/utils";
 
 interface ClientOption {
   client_id: string;
@@ -28,6 +31,16 @@ const TeamPerformance = () => {
   const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
   const { loading, error, leaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
+  const { refreshKey, manualRefresh } = useAutoRefresh(300000);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (refreshKey > 0) {
+      setIsRefreshing(true);
+      refetch();
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
+  }, [refreshKey, refetch]);
 
   const handleExportCSV = () => {
     setExporting(true);
@@ -75,15 +88,38 @@ const TeamPerformance = () => {
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleExportCSV}
-          disabled={loading || exporting || leaderboard.length === 0}
-          className="gap-2 shrink-0"
-        >
-          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          Export Data
-        </Button>
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setIsRefreshing(true);
+                    refetch();
+                    manualRefresh();
+                    setTimeout(() => setIsRefreshing(false), 1000);
+                  }}
+                  aria-label="Refresh data"
+                >
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-cyan-500")} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            variant="outline"
+            onClick={handleExportCSV}
+            disabled={loading || exporting || leaderboard.length === 0}
+            className="gap-2 shrink-0"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export Data
+          </Button>
+        </div>
       </div>
 
       {/* Date Range Picker with Quick Filters */}
