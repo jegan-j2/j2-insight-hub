@@ -2,17 +2,34 @@ import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Download, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
+import { exportToPDF } from "@/lib/pdfExport";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 const SQLMeetings = () => {
   const { dateRange } = useDateFilter();
   const [isLoading, setIsLoading] = useState(false);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const { toast } = useToast();
 
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      await exportToPDF('sql-meetings-content', `j2-sql-meetings-${dateStr}.pdf`, 'SQL Meetings Report');
+      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
+    } catch (err) {
+      toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
+    } finally {
+      setExportingPDF(false);
+    }
+  };
   useEffect(() => {
     document.title = "J2 Dashboard - SQL Meetings";
   }, []);
@@ -54,9 +71,20 @@ const SQLMeetings = () => {
             <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        <Button
+          variant="outline"
+          onClick={handleExportPDF}
+          disabled={isLoading || exportingPDF}
+          className="gap-2 shrink-0"
+        >
+          {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          Export PDF
+        </Button>
       </div>
       
-      <SQLBookedMeetingsTable dateRange={dateRange} isLoading={isLoading} />
+      <div id="sql-meetings-content">
+        <SQLBookedMeetingsTable dateRange={dateRange} isLoading={isLoading} />
+      </div>
     </div>
   );
 };
