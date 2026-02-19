@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, ArrowDownRight, Phone, CheckCircle, Mail, Target, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -15,12 +16,24 @@ import { EmptyState } from "@/components/EmptyState";
 import { useOverviewData } from "@/hooks/useOverviewData";
 import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
 import { useToast } from "@/hooks/use-toast";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
   const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
+  const { refreshKey, manualRefresh } = useAutoRefresh(300000);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Auto-refresh trigger
+  useEffect(() => {
+    if (refreshKey > 0) {
+      setIsRefreshing(true);
+      refetch();
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
+  }, [refreshKey, refetch]);
 
   const handleExportCSV = () => {
     setExporting(true);
@@ -143,15 +156,38 @@ const Overview = () => {
           <h1 className="text-3xl font-bold text-foreground mb-2">Overview Dashboard</h1>
           <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleExportCSV}
-          disabled={loading || exporting || snapshots.length === 0}
-          className="gap-2 shrink-0"
-        >
-          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          Export Data
-        </Button>
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setIsRefreshing(true);
+                    refetch();
+                    manualRefresh();
+                    setTimeout(() => setIsRefreshing(false), 1000);
+                  }}
+                  aria-label="Refresh data"
+                >
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-cyan-500")} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            variant="outline"
+            onClick={handleExportCSV}
+            disabled={loading || exporting || snapshots.length === 0}
+            className="gap-2 shrink-0"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export Data
+          </Button>
+        </div>
       </div>
 
       {/* Date Range Picker with Quick Filters */}
