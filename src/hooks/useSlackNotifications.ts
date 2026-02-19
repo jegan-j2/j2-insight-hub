@@ -1,9 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { sendSlackNotification, formatSQLNotification } from '@/lib/slackNotifications'
+import { useBrowserNotifications } from './useBrowserNotifications'
 
 export const useSlackNotifications = () => {
   const processedIds = useRef<Set<string>>(new Set())
+  const { showNotification } = useBrowserNotifications()
+  const showNotificationRef = useRef(showNotification)
+  showNotificationRef.current = showNotification
 
   useEffect(() => {
     const channel = supabase
@@ -29,16 +33,39 @@ export const useSlackNotifications = () => {
               .limit(1)
               .maybeSingle()
 
-            if (!settings?.slack_webhook_url) return
+            const content = (settings?.report_content as Record<string, boolean>) || {}
 
-            const content = (settings.report_content as Record<string, boolean>) || {}
-            if (content.sqlNotifications === false) return
+            // Send Slack notification
+            if (settings?.slack_webhook_url && content.sqlNotifications !== false) {
+              const message = formatSQLNotification(newRecord)
+              await sendSlackNotification(settings.slack_webhook_url, message)
+              console.log('✅ Slack SQL notification sent for:', newRecord.contact_person)
+            }
 
-            const message = formatSQLNotification(newRecord)
-            await sendSlackNotification(settings.slack_webhook_url, message)
-            console.log('✅ Slack SQL notification sent for:', newRecord.contact_person)
+            // Show browser notification (check user's own settings)
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              const { data: userSettings } = await supabase
+                .from('notification_settings')
+                .select('report_content')
+                .eq('user_id', user.id)
+                .maybeSingle()
+
+              const userContent = (userSettings?.report_content as Record<string, boolean>) || {}
+              if (userContent.browserNotifications !== false) {
+                const sdrName = newRecord.sdr_name || 'Unknown SDR'
+                const contactPerson = newRecord.contact_person || 'Unknown Contact'
+                const companyName = newRecord.company_name || 'Unknown Company'
+
+                showNotificationRef.current('🎉 New SQL Booked!', {
+                  body: `${sdrName} booked ${contactPerson} (${companyName})`,
+                  tag: `sql-notification-${newRecord.id}`,
+                  icon: '/favicon.png',
+                })
+              }
+            }
           } catch (error) {
-            console.error('Error sending Slack SQL notification:', error)
+            console.error('Error sending SQL notification:', error)
           }
         }
       )

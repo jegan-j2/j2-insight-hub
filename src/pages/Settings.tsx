@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Image, Power } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Image, Power, BellRing } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,7 @@ interface TeamMemberRow {
 
 const Settings = () => {
   const { toast } = useToast();
+  const { permission: browserNotifPermission, supported: browserNotifSupported, requestPermission } = useBrowserNotifications();
 
   useEffect(() => {
     document.title = "J2 Dashboard - Settings";
@@ -150,6 +152,7 @@ const Settings = () => {
     dailySummary: true,
     inactiveAlerts: true,
     weeklyReports: false,
+    browserNotifications: true,
   });
 
   // --- Loading states ---
@@ -197,6 +200,7 @@ const Settings = () => {
             dailySummary: rc.dailySummary ?? true,
             inactiveAlerts: rc.inactiveAlerts ?? true,
             weeklyReports: rc.weeklyReports ?? false,
+            browserNotifications: rc.browserNotifications ?? true,
           });
         }
       }
@@ -1521,6 +1525,64 @@ const Settings = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Browser Notifications */}
+              <div className="space-y-3 pt-4 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <BellRing className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-base font-medium">Browser Notifications</Label>
+                </div>
+
+                {/* Permission Status */}
+                <div className="flex items-center gap-2">
+                  {!browserNotifSupported ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+                      ℹ️ Browser notifications not supported
+                    </span>
+                  ) : browserNotifPermission === 'granted' ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent">
+                      ✅ Browser notifications enabled
+                    </span>
+                  ) : browserNotifPermission === 'denied' ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-destructive/15 text-destructive">
+                      ⚠️ Browser notifications blocked — update in browser settings
+                    </span>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const result = await requestPermission();
+                        if (result === 'granted') {
+                          toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-green-500" });
+                        } else {
+                          toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
+                        }
+                      }}
+                      className="gap-2"
+                    >
+                      <BellRing className="h-4 w-4" />
+                      Enable Browser Notifications
+                    </Button>
+                  )}
+                </div>
+
+                {/* Toggle */}
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="browserNotifications"
+                    checked={reportContent.browserNotifications}
+                    onCheckedChange={(checked) =>
+                      setReportContent({ ...reportContent, browserNotifications: checked as boolean })
+                    }
+                    className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                  />
+                  <div className="grid gap-0.5">
+                    <Label htmlFor="browserNotifications" className="font-normal cursor-pointer">Show desktop notifications for new SQLs</Label>
+                    <p className="text-xs text-muted-foreground">Displays a native browser popup when a new SQL meeting is booked</p>
+                  </div>
                 </div>
               </div>
 
