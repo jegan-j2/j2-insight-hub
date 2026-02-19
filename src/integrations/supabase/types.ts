@@ -362,6 +362,7 @@ export type Database = {
           email: string
           hubspot_owner_id: string | null
           id: string
+          profile_photo_url: string | null
           role: string | null
           sdr_first_name: string | null
           sdr_name: string
@@ -373,6 +374,7 @@ export type Database = {
           email: string
           hubspot_owner_id?: string | null
           id?: string
+          profile_photo_url?: string | null
           role?: string | null
           sdr_first_name?: string | null
           sdr_name: string
@@ -384,6 +386,7 @@ export type Database = {
           email?: string
           hubspot_owner_id?: string | null
           id?: string
+          profile_photo_url?: string | null
           role?: string | null
           sdr_first_name?: string | null
           sdr_name?: string

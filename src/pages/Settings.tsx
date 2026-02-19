@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SDRAvatar } from "@/components/SDRAvatar";
 
 interface ClientRow {
   id: string;
@@ -38,6 +39,7 @@ interface TeamMemberRow {
   role: string | null;
   status: string | null;
   created_at: string | null;
+  profile_photo_url: string | null;
 }
 
 const Settings = () => {
@@ -200,12 +202,18 @@ const Settings = () => {
   const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
   const [clientForm, setClientForm] = useState({ client_name: "", client_id: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
   const [isSavingClient, setIsSavingClient] = useState(false);
+  const [uploadingClientLogo, setUploadingClientLogo] = useState(false);
+  const [uploadingClientBanner, setUploadingClientBanner] = useState(false);
+  const clientLogoInputRef = useRef<HTMLInputElement>(null);
+  const clientBannerInputRef = useRef<HTMLInputElement>(null);
 
   // --- Team dialog ---
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMemberRow | null>(null);
-  const [memberForm, setMemberForm] = useState({ sdr_name: "", email: "", role: "" });
+  const [memberForm, setMemberForm] = useState({ sdr_name: "", email: "", role: "", profile_photo_url: "" });
   const [isSavingMember, setIsSavingMember] = useState(false);
+  const [uploadingMemberPhoto, setUploadingMemberPhoto] = useState(false);
+  const memberPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // --- Client CRUD ---
   const handleAddClient = () => {
@@ -225,6 +233,158 @@ const Settings = () => {
       logo_url: client.logo_url || "",
     });
     setIsClientDialogOpen(true);
+  };
+
+  // Client logo upload
+  const handleClientLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/png", "image/jpeg", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Please upload PNG, JPG, or SVG.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 2MB allowed.", variant: "destructive" });
+      return;
+    }
+    const clientId = clientForm.client_id || editingClient?.client_id;
+    if (!clientId) {
+      toast({ title: "Save client first", description: "Please save the client before uploading.", variant: "destructive" });
+      return;
+    }
+    setUploadingClientLogo(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const filePath = `${clientId}-logo.${ext}`;
+      await supabase.storage.from("client-assets").remove([filePath]);
+      const { error: uploadError } = await supabase.storage.from("client-assets").upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("client-assets").getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+      // Update DB
+      if (editingClient) {
+        await supabase.from("clients").update({ logo_url: publicUrl }).eq("id", editingClient.id);
+      }
+      setClientForm(f => ({ ...f, logo_url: publicUrl }));
+      toast({ title: "Logo uploaded", className: "border-green-500" });
+      fetchClients();
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingClientLogo(false);
+      if (clientLogoInputRef.current) clientLogoInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveClientLogo = async () => {
+    if (editingClient) {
+      await supabase.storage.from("client-assets").remove([`${editingClient.client_id}-logo.png`, `${editingClient.client_id}-logo.jpg`, `${editingClient.client_id}-logo.jpeg`, `${editingClient.client_id}-logo.svg`]);
+      await supabase.from("clients").update({ logo_url: null }).eq("id", editingClient.id);
+    }
+    setClientForm(f => ({ ...f, logo_url: "" }));
+    toast({ title: "Logo removed", className: "border-green-500" });
+    fetchClients();
+  };
+
+  // Client banner upload
+  const handleClientBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/png", "image/jpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Please upload PNG or JPG.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 5MB allowed.", variant: "destructive" });
+      return;
+    }
+    const clientId = clientForm.client_id || editingClient?.client_id;
+    if (!clientId) {
+      toast({ title: "Save client first", description: "Please save the client before uploading.", variant: "destructive" });
+      return;
+    }
+    setUploadingClientBanner(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const filePath = `${clientId}-banner.${ext}`;
+      await supabase.storage.from("client-assets").remove([filePath]);
+      const { error: uploadError } = await supabase.storage.from("client-assets").upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("client-assets").getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+      if (editingClient) {
+        await supabase.from("clients").update({ banner_url: publicUrl }).eq("id", editingClient.id);
+      }
+      setEditingClient(prev => prev ? { ...prev, banner_url: publicUrl } : prev);
+      toast({ title: "Banner uploaded", className: "border-green-500" });
+      fetchClients();
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingClientBanner(false);
+      if (clientBannerInputRef.current) clientBannerInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveClientBanner = async () => {
+    if (editingClient) {
+      await supabase.storage.from("client-assets").remove([`${editingClient.client_id}-banner.png`, `${editingClient.client_id}-banner.jpg`, `${editingClient.client_id}-banner.jpeg`]);
+      await supabase.from("clients").update({ banner_url: null }).eq("id", editingClient.id);
+    }
+    setEditingClient(prev => prev ? { ...prev, banner_url: null } : prev);
+    toast({ title: "Banner removed", className: "border-green-500" });
+    fetchClients();
+  };
+
+  // Member photo upload
+  const handleMemberPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/png", "image/jpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Please upload PNG or JPG.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 2MB allowed.", variant: "destructive" });
+      return;
+    }
+    if (!editingMember) {
+      toast({ title: "Save member first", description: "Please save the member before uploading.", variant: "destructive" });
+      return;
+    }
+    setUploadingMemberPhoto(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const filePath = `${editingMember.email.replace(/[^a-zA-Z0-9]/g, '_')}-photo.${ext}`;
+      await supabase.storage.from("team-photos").remove([filePath]);
+      const { error: uploadError } = await supabase.storage.from("team-photos").upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("team-photos").getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+      await supabase.from("team_members").update({ profile_photo_url: publicUrl }).eq("id", editingMember.id);
+      setMemberForm(f => ({ ...f, profile_photo_url: publicUrl }));
+      toast({ title: "Photo uploaded", className: "border-green-500" });
+      fetchTeamMembers();
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingMemberPhoto(false);
+      if (memberPhotoInputRef.current) memberPhotoInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveMemberPhoto = async () => {
+    if (editingMember) {
+      const emailKey = editingMember.email.replace(/[^a-zA-Z0-9]/g, '_');
+      await supabase.storage.from("team-photos").remove([`${emailKey}-photo.png`, `${emailKey}-photo.jpg`, `${emailKey}-photo.jpeg`]);
+      await supabase.from("team_members").update({ profile_photo_url: null }).eq("id", editingMember.id);
+    }
+    setMemberForm(f => ({ ...f, profile_photo_url: "" }));
+    toast({ title: "Photo removed", className: "border-green-500" });
+    fetchTeamMembers();
   };
 
   const handleSaveClient = async () => {
@@ -287,13 +447,13 @@ const Settings = () => {
   // --- Team CRUD ---
   const handleAddMember = () => {
     setEditingMember(null);
-    setMemberForm({ sdr_name: "", email: "", role: "" });
+    setMemberForm({ sdr_name: "", email: "", role: "", profile_photo_url: "" });
     setIsTeamDialogOpen(true);
   };
 
   const handleEditMember = (member: TeamMemberRow) => {
     setEditingMember(member);
-    setMemberForm({ sdr_name: member.sdr_name, email: member.email, role: member.role || "" });
+    setMemberForm({ sdr_name: member.sdr_name, email: member.email, role: member.role || "", profile_photo_url: member.profile_photo_url || "" });
     setIsTeamDialogOpen(true);
   };
 
@@ -437,7 +597,6 @@ const Settings = () => {
       const ext = file.name.split(".").pop();
       const filePath = `company-logo.${ext}`;
 
-      // Remove old file first (ignore errors)
       await supabase.storage.from("branding").remove([filePath]);
 
       const { error: uploadError } = await supabase.storage
@@ -465,7 +624,6 @@ const Settings = () => {
 
   const handleRemoveLogo = async () => {
     try {
-      // Try to remove all possible logo files from storage
       await supabase.storage.from("branding").remove(["company-logo.png", "company-logo.jpg", "company-logo.jpeg", "company-logo.svg"]);
     } catch (err) {
       console.error("Error removing logo from storage:", err);
@@ -493,7 +651,6 @@ const Settings = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row items-center gap-6">
-            {/* Logo Preview */}
             <div className="h-20 w-20 rounded-full bg-secondary/10 border-2 border-dashed border-border flex items-center justify-center overflow-hidden shrink-0">
               {logoUrl ? (
                 <img src={logoUrl} alt="Company logo" className="h-full w-full object-cover rounded-full" />
@@ -503,23 +660,10 @@ const Settings = () => {
                 </div>
               )}
             </div>
-
-            {/* Upload Controls */}
             <div className="flex flex-col gap-3">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".png,.jpg,.jpeg,.svg"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
+              <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleLogoUpload} className="hidden" />
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                  className="gap-2"
-                >
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo} className="gap-2">
                   {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                   {uploadingLogo ? "Uploading..." : "Upload Logo"}
                 </Button>
@@ -571,7 +715,7 @@ const Settings = () => {
                       Add New Client
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-card border-border sm:max-w-[525px]">
+                  <DialogContent className="bg-card border-border sm:max-w-[525px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
                       <DialogDescription>
@@ -632,16 +776,72 @@ const Settings = () => {
                           className="bg-background/50 border-border"
                         />
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="logo-url">Logo URL (Optional)</Label>
-                        <Input
-                          id="logo-url"
-                          placeholder="https://example.com/logo.png"
-                          value={clientForm.logo_url}
-                          onChange={(e) => setClientForm({ ...clientForm, logo_url: e.target.value })}
-                          className="bg-background/50 border-border"
-                        />
-                      </div>
+
+                      {/* Client Logo Upload */}
+                      {editingClient && (
+                        <div className="grid gap-2 border-t border-border pt-4">
+                          <Label>Client Logo</Label>
+                          <div className="flex items-center gap-4">
+                            <div className="h-[60px] w-[60px] rounded-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden shrink-0">
+                              {clientForm.logo_url ? (
+                                <img src={clientForm.logo_url} alt="Client logo" className="h-full w-full object-cover rounded-full" />
+                              ) : (
+                                <span className="text-lg font-bold text-muted-foreground">
+                                  {clientForm.client_name?.[0]?.toUpperCase() || "?"}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <input ref={clientLogoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleClientLogoUpload} className="hidden" />
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => clientLogoInputRef.current?.click()} disabled={uploadingClientLogo} className="gap-1.5 text-xs border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10">
+                                  {uploadingClientLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                                  Upload Logo
+                                </Button>
+                                {clientForm.logo_url && (
+                                  <Button variant="outline" size="sm" onClick={handleRemoveClientLogo} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                                    <Trash2 className="h-3 w-3" />
+                                    Remove
+                                  </Button>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">PNG, JPG, SVG • Max 2MB</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Client Banner Upload */}
+                      {editingClient && (
+                        <div className="grid gap-2 border-t border-border pt-4">
+                          <Label>Banner Image</Label>
+                          <div className="space-y-3">
+                            <div className="w-full h-[100px] rounded-lg bg-muted/30 border border-border overflow-hidden">
+                              {editingClient.banner_url ? (
+                                <img src={editingClient.banner_url} alt="Client banner" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                                  No banner image
+                                </div>
+                              )}
+                            </div>
+                            <input ref={clientBannerInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleClientBannerUpload} className="hidden" />
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" onClick={() => clientBannerInputRef.current?.click()} disabled={uploadingClientBanner} className="gap-1.5 text-xs border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10">
+                                {uploadingClientBanner ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                                Upload Banner
+                              </Button>
+                              {editingClient.banner_url && (
+                                <Button variant="outline" size="sm" onClick={handleRemoveClientBanner} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                                  <Trash2 className="h-3 w-3" />
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">PNG, JPG • Max 5MB • Recommended: 1200×300px</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsClientDialogOpen(false)}>
@@ -816,6 +1016,31 @@ const Settings = () => {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                      {/* Profile Photo Upload */}
+                      {editingMember && (
+                        <div className="grid gap-2">
+                          <Label>Profile Photo</Label>
+                          <div className="flex items-center gap-4">
+                            <SDRAvatar name={memberForm.sdr_name || "?"} photoUrl={memberForm.profile_photo_url || null} size="lg" />
+                            <div className="flex flex-col gap-2">
+                              <input ref={memberPhotoInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleMemberPhotoUpload} className="hidden" />
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => memberPhotoInputRef.current?.click()} disabled={uploadingMemberPhoto} className="gap-1.5 text-xs border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10">
+                                  {uploadingMemberPhoto ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                                  Upload Photo
+                                </Button>
+                                {memberForm.profile_photo_url && (
+                                  <Button variant="outline" size="sm" onClick={handleRemoveMemberPhoto} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                                    <Trash2 className="h-3 w-3" />
+                                    Remove
+                                  </Button>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">PNG, JPG • Max 2MB</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       <div className="grid gap-2">
                         <Label htmlFor="member-name">Full Name *</Label>
                         <Input
@@ -905,6 +1130,7 @@ const Settings = () => {
                           <TableRow key={member.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
                               <div className="flex items-center gap-2">
+                                <SDRAvatar name={member.sdr_name} photoUrl={member.profile_photo_url} size="sm" />
                                 {member.sdr_name}
                                 {isInactive && (
                                   <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive uppercase">Inactive</span>

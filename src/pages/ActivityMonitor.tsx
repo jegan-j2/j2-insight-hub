@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
+import { SDRAvatar } from "@/components/SDRAvatar";
 
 type Mode = "live" | "historical";
 type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "sqls" | "conversion";
@@ -30,6 +31,8 @@ interface SqlMeetingRow {
   booking_date: string;
   meeting_date: string | null;
   created_at: string | null;
+  recording_url?: string | null;
+  call_duration?: number | null;
 }
 
 interface SnapshotRow {
@@ -110,6 +113,21 @@ const ActivityMonitor = () => {
   const [drillDownSqlData, setDrillDownSqlData] = useState<SqlMeetingRow[]>([]);
   const [loadingDrill, setLoadingDrill] = useState(false);
   const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null);
+  const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      const { data: members } = await supabase
+        .from("team_members")
+        .select("sdr_name, profile_photo_url");
+      if (members) {
+        const map: Record<string, string | null> = {};
+        for (const m of members) map[m.sdr_name] = m.profile_photo_url;
+        setSdrPhotoMap(map);
+      }
+    };
+    fetchPhotos();
+  }, []);
 
   // Historical filters
   const [histDate, setHistDate] = useState<Date>(new Date());
@@ -436,16 +454,43 @@ const ActivityMonitor = () => {
           endTimestamp = `${dates[dates.length - 1]}T${endTs}`;
         }
 
-        let query = supabase
+        const { data: sqlData } = await supabase
           .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email")
           .eq("sdr_name", sdrName)
           .gte("created_at", startTimestamp)
           .lte("created_at", endTimestamp)
           .order("created_at", { ascending: false });
 
-        const { data } = await query;
-        setDrillDownSqlData(data || []);
+        // For each SQL, try to find an associated call recording
+        const enrichedSqlData: SqlMeetingRow[] = [];
+        if (sqlData) {
+          for (const sql of sqlData) {
+            let recording_url: string | null = null;
+            let call_duration: number | null = null;
+            if (sql.contact_email) {
+              const { data: callData } = await supabase
+                .from("activity_log")
+                .select("recording_url, call_duration")
+                .eq("sdr_name", sdrName)
+                .eq("contact_email", sql.contact_email)
+                .ilike("call_outcome", "connected")
+                .not("recording_url", "is", null)
+                .order("call_duration", { ascending: false })
+                .limit(1);
+              if (callData && callData.length > 0) {
+                recording_url = callData[0].recording_url;
+                call_duration = callData[0].call_duration;
+              }
+            }
+            enrichedSqlData.push({
+              ...sql,
+              recording_url,
+              call_duration,
+            });
+          }
+        }
+        setDrillDownSqlData(enrichedSqlData);
       }
     } catch (err) {
       console.error("Drill-down error:", err);
@@ -737,7 +782,12 @@ const ActivityMonitor = () => {
                           recent && "bg-green-500/5 shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]"
                         )}
                       >
-                        <TableCell className="font-medium text-foreground">{row.sdrName}</TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          <div className="flex items-center gap-2">
+                            <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
+                            {row.sdrName}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{row.clientId}</TableCell>
                         <TableCell className="text-center font-semibold text-foreground">{row.dials}</TableCell>
                         <TableCell className="text-center">
@@ -886,22 +936,62 @@ const ActivityMonitor = () => {
                       <TableHead>Contact Person</TableHead>
                       <TableHead>Company</TableHead>
                       <TableHead>Meeting Date</TableHead>
+                      <TableHead className="text-center">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {drillDownSqlData.map((m) => (
-                      <TableRow key={m.id} className="border-border/50">
-                        <TableCell className="text-muted-foreground text-sm">
-                          {m.created_at
-                            ? new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
-                            : format(new Date(m.booking_date), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{m.company_name || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {m.meeting_date ? format(new Date(m.meeting_date), "MMM d, yyyy") : "—"}
-                        </TableCell>
-                      </TableRow>
+                      <>
+                        <TableRow key={m.id} className="border-border/50">
+                          <TableCell className="text-muted-foreground text-sm">
+                            {m.created_at
+                              ? new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
+                              : format(new Date(m.booking_date), "MMM d, yyyy")}
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{m.company_name || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {m.meeting_date ? format(new Date(m.meeting_date), "MMM d, yyyy") : "—"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {m.recording_url ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+                                onClick={() => setPlayingRecordingId(playingRecordingId === m.id ? null : m.id)}
+                              >
+                                {playingRecordingId === m.id ? (
+                                  <><Square className="h-3 w-3 mr-1" /> Stop</>
+                                ) : (
+                                  <><Play className="h-3 w-3 mr-1" /> Play</>
+                                )}
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No recording</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        {playingRecordingId === m.id && m.recording_url && (
+                          <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
+                            <TableCell colSpan={5} className="py-3">
+                              <div className="flex items-center gap-3">
+                                <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
+                                <div className="flex-1">
+                                  <p className="text-xs text-muted-foreground mb-1.5">SQL Call Recording — {m.contact_person || "Unknown"}</p>
+                                  <audio
+                                    controls
+                                    src={m.recording_url}
+                                    className="w-full h-8"
+                                    autoPlay
+                                    onError={() => setPlayingRecordingId(null)}
+                                  />
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     ))}
                   </TableBody>
                 </Table>

@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowUp, ArrowDown, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SDRDetailModal } from "@/components/SDRDetailModal";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { EmptyState } from "@/components/EmptyState";
+import { SDRAvatar } from "@/components/SDRAvatar";
+import { supabase } from "@/lib/supabase";
 
 interface LeaderboardEntry {
   rank: number;
@@ -29,6 +30,21 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
   const data = leaderboardData || [];
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
   const { dateRange } = useDateFilter();
+  const [photoMap, setPhotoMap] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      const { data: members } = await supabase
+        .from("team_members")
+        .select("sdr_name, profile_photo_url");
+      if (members) {
+        const map: Record<string, string | null> = {};
+        for (const m of members) map[m.sdr_name] = m.profile_photo_url;
+        setPhotoMap(map);
+      }
+    };
+    fetchPhotos();
+  }, []);
 
   const getAnswerRateBadge = (rate: string) => {
     const rateNum = parseFloat(rate);
@@ -95,11 +111,7 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                             className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
                             onClick={() => setSelectedSDR(sdr)}
                           >
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                {sdr.initials}
-                              </AvatarFallback>
-                            </Avatar>
+                            <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
                             <span className="font-medium whitespace-nowrap">{sdr.name}</span>
                           </div>
                         </TableCell>
