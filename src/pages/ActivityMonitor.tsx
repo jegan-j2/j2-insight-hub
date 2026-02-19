@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
@@ -524,11 +525,20 @@ const ActivityMonitor = () => {
 
   const answerRateDisplay = totals.dials > 0 ? ((totals.answered / totals.dials) * 100).toFixed(1) + "%" : "0.0%";
 
+  // Calculate avg call duration for connected calls
+  const avgCallDuration = useMemo(() => {
+    const connected = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.call_duration && a.call_duration > 0);
+    if (connected.length === 0) return "0m 0s";
+    const avg = connected.reduce((sum, a) => sum + (a.call_duration || 0), 0) / connected.length;
+    return `${Math.floor(avg / 60)}m ${Math.round(avg % 60)}s`;
+  }, [activities]);
+
   const kpiCards = [
     { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, color: "text-blue-500" },
     { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, color: "text-green-500" },
     { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, color: "text-purple-500" },
     { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, color: "text-secondary" },
+    { label: "Avg Call Duration", value: avgCallDuration, icon: Clock, color: "text-cyan-500" },
   ];
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
@@ -716,7 +726,7 @@ const ActivityMonitor = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {kpiCards.map((kpi) => (
           <Card key={kpi.label} className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -747,15 +757,11 @@ const ActivityMonitor = () => {
               ))}
             </div>
           ) : sdrRows.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Phone className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-lg font-medium">
-                {mode === "live" ? "No activity yet today" : "No activity found for selected time range"}
-              </p>
-              <p className="text-sm">
-                {mode === "live" ? "Activity will appear when calls start." : "Try adjusting the date or time range."}
-              </p>
-            </div>
+            <EmptyState
+              icon={mode === "live" ? Phone : CalendarIcon}
+              title={mode === "live" ? "No activity recorded yet" : "No activity found"}
+              description={mode === "live" ? "Calls will appear here once SDRs start dialing. Check back later!" : "Try adjusting the date or time range to find activity data."}
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -873,10 +879,23 @@ const ActivityMonitor = () => {
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
-                          <TableCell className="text-right text-muted-foreground">
-                            {a.call_duration
-                              ? `${Math.floor(a.call_duration / 60)}m ${a.call_duration % 60}s`
-                              : "—"}
+                          <TableCell className="text-right">
+                            {a.call_duration ? (
+                              <span
+                                className={`font-medium ${
+                                  a.call_duration < 30
+                                    ? "text-muted-foreground"
+                                    : a.call_duration < 120
+                                    ? "text-orange-500"
+                                    : "text-green-500"
+                                }`}
+                                title={`${a.call_duration} seconds`}
+                              >
+                                {Math.floor(a.call_duration / 60)}m {a.call_duration % 60}s
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             {a.recording_url ? (

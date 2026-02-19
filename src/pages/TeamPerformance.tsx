@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
+import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, Users, Download, Loader2 } from "lucide-react";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
@@ -138,11 +138,11 @@ const TeamPerformance = () => {
       {/* Empty State */}
       {!loading && !error && leaderboard.length === 0 && (
         <EmptyState
-          icon={DatabaseZap}
-          title="No team performance data available"
-          description="Data will appear once the backend database is populated. This is expected during initial setup."
-          actionLabel="Refresh"
-          onAction={refetch}
+          icon={Users}
+          title="No team members yet"
+          description="Add team members in Settings to start tracking performance metrics."
+          actionLabel="Go to Settings"
+          onAction={() => window.location.href = "/settings"}
         />
       )}
 

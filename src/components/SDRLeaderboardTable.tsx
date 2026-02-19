@@ -20,6 +20,7 @@ interface LeaderboardEntry {
   answerRate: string;
   conversionRate: string;
   trend: number;
+  avgDuration: number;
 }
 
 interface SDRLeaderboardTableProps {
@@ -89,6 +90,7 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                     <TableHead className="text-right">DMs Reached</TableHead>
                     <TableHead className="text-right">SQLs</TableHead>
                     <TableHead className="text-right">Conv. Rate</TableHead>
+                    <TableHead className="text-right">Avg Duration</TableHead>
                     <TableHead className="text-right">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -124,6 +126,24 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                           <span className="text-lg font-bold">{sdr.totalSQLs}</span>
                         </TableCell>
                         <TableCell className="text-right">{sdr.conversionRate}%</TableCell>
+                        <TableCell className="text-right">
+                          {sdr.avgDuration > 0 ? (
+                            <span
+                              className={`font-medium ${
+                                sdr.avgDuration < 30
+                                  ? "text-muted-foreground"
+                                  : sdr.avgDuration < 120
+                                  ? "text-orange-500"
+                                  : "text-green-500"
+                              }`}
+                              title={`${Math.round(sdr.avgDuration)} seconds avg`}
+                            >
+                              {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {sdr.trend > 0 ? (

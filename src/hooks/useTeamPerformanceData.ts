@@ -16,11 +16,13 @@ interface LeaderboardEntry {
   answerRate: string
   conversionRate: string
   trend: number
+  avgDuration: number
 }
 
 export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientFilter?: string) => {
   const [loading, setLoading] = useState(true)
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([])
+  const [activityLogs, setActivityLogs] = useState<{ sdr_name: string; call_duration: number }[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const startDate = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : ''
@@ -43,11 +45,28 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
         query = query.eq('client_id', clientFilter)
       }
 
-      const { data, error: fetchError } = await query.order('snapshot_date', { ascending: false })
+      let activityQuery = supabase
+        .from('activity_log')
+        .select('sdr_name, call_duration')
+        .ilike('call_outcome', 'connected')
+        .not('call_duration', 'is', null)
+        .gt('call_duration', 0)
+        .gte('activity_date', `${startDate}T00:00:00`)
+        .lte('activity_date', `${endDate}T23:59:59`)
+
+      if (clientFilter && clientFilter !== 'all') {
+        activityQuery = activityQuery.eq('client_id', clientFilter)
+      }
+
+      const [{ data, error: fetchError }, { data: callData }] = await Promise.all([
+        query.order('snapshot_date', { ascending: false }),
+        activityQuery,
+      ])
 
       if (fetchError) throw fetchError
 
       setSnapshots(data || [])
+      setActivityLogs((callData || []).filter(c => c.sdr_name !== null) as { sdr_name: string; call_duration: number }[])
     } catch (err) {
       console.error('Error fetching team performance data:', err)
       setError('Failed to load team performance data')
@@ -92,14 +111,28 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
 
     grouped.sort((a, b) => b.totalSQLs - a.totalSQLs)
 
-    return grouped.map((sdr, index) => ({
-      ...sdr,
-      rank: index + 1,
-      answerRate: sdr.totalDials > 0 ? (sdr.totalAnswered / sdr.totalDials * 100).toFixed(1) : '0',
-      conversionRate: sdr.totalDials > 0 ? (sdr.totalSQLs / sdr.totalDials * 100).toFixed(2) : '0',
-      trend: 0, // Trend calculation requires previous period data
-    }))
-  }, [snapshots])
+    // Calculate avg duration per SDR from activity logs
+    const durationMap = new Map<string, { total: number; count: number }>()
+    for (const log of activityLogs) {
+      const entry = durationMap.get(log.sdr_name) || { total: 0, count: 0 }
+      entry.total += log.call_duration
+      entry.count += 1
+      durationMap.set(log.sdr_name, entry)
+    }
+
+    return grouped.map((sdr, index) => {
+      const durInfo = durationMap.get(sdr.name)
+      const avgDuration = durInfo ? durInfo.total / durInfo.count : 0
+      return {
+        ...sdr,
+        rank: index + 1,
+        answerRate: sdr.totalDials > 0 ? (sdr.totalAnswered / sdr.totalDials * 100).toFixed(1) : '0',
+        conversionRate: sdr.totalDials > 0 ? (sdr.totalSQLs / sdr.totalDials * 100).toFixed(2) : '0',
+        trend: 0,
+        avgDuration,
+      }
+    })
+  }, [snapshots, activityLogs])
 
   // Chart data for SDR Activity Breakdown
   const activityChartData = useMemo(() => {
