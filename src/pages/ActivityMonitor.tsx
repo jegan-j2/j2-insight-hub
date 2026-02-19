@@ -223,8 +223,8 @@ const ActivityMonitor = () => {
         supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id")
-          .gte("booking_date", firstDate)
-          .lte("booking_date", lastDate),
+          .gte("created_at", startTimestamp)
+          .lte("created_at", endTimestamp),
         supabase
           .from("daily_snapshots")
           .select("sdr_name, client_id, dms_reached")
@@ -420,21 +420,27 @@ const ActivityMonitor = () => {
 
         setDrillDownData(data || []);
       } else if (metric === "sqls") {
-        const dates = mode === "live" ? [todayMelbourne] : dateRangeInfo.dates;
-        const firstDate = dates[0];
-        const lastDate = dates[dates.length - 1];
+        let startTimestamp: string;
+        let endTimestamp: string;
+
+        if (mode === "live") {
+          startTimestamp = `${todayMelbourne}T00:00:00`;
+          endTimestamp = `${todayMelbourne}T23:59:59`;
+        } else {
+          const dates = dateRangeInfo.dates;
+          const startHour = String(timeRange[0]).padStart(2, "0");
+          const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
+          startTimestamp = `${dates[0]}T${startHour}:00:00`;
+          endTimestamp = `${dates[dates.length - 1]}T${endTs}`;
+        }
 
         let query = supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at")
           .eq("sdr_name", sdrName)
+          .gte("created_at", startTimestamp)
+          .lte("created_at", endTimestamp)
           .order("created_at", { ascending: false });
-
-        if (firstDate === lastDate) {
-          query = query.eq("booking_date", firstDate);
-        } else {
-          query = query.gte("booking_date", firstDate).lte("booking_date", lastDate);
-        }
 
         const { data } = await query;
         setDrillDownSqlData(data || []);
@@ -714,7 +720,7 @@ const ActivityMonitor = () => {
                     <TableHead className="text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Conversion" sortKeyName="conversion" /></TableHead>
+                    <TableHead className="text-center"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
                     {mode === "live" && <TableHead className="text-right">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
