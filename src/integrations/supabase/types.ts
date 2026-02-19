@@ -30,6 +30,7 @@ export type Database = {
           is_sql: boolean | null
           meeting_held: boolean | null
           meeting_scheduled_date: string | null
+          recording_url: string | null
           remarks: string | null
           sdr_name: string | null
         }
@@ -48,6 +49,7 @@ export type Database = {
           is_sql?: boolean | null
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
+          recording_url?: string | null
           remarks?: string | null
           sdr_name?: string | null
         }
@@ -66,6 +68,7 @@ export type Database = {
           is_sql?: boolean | null
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
+          recording_url?: string | null
           remarks?: string | null
           sdr_name?: string | null
         }

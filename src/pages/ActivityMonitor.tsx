@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
@@ -54,6 +54,7 @@ interface ActivityRow {
   is_sql: boolean | null;
   meeting_scheduled_date: string | null;
   client_id: string | null;
+  recording_url: string | null;
 }
 
 interface SDRRow {
@@ -108,6 +109,7 @@ const ActivityMonitor = () => {
   const [drillDownData, setDrillDownData] = useState<ActivityRow[]>([]);
   const [drillDownSqlData, setDrillDownSqlData] = useState<SqlMeetingRow[]>([]);
   const [loadingDrill, setLoadingDrill] = useState(false);
+  const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null);
 
   // Historical filters
   const [histDate, setHistDate] = useState<Date>(new Date());
@@ -159,7 +161,7 @@ const ActivityMonitor = () => {
           .eq("snapshot_date", todayMelbourne),
         supabase
           .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url")
           .gte("activity_date", todayMelbourne + "T00:00:00")
           .lte("activity_date", todayMelbourne + "T23:59:59")
           .order("activity_date", { ascending: false }),
@@ -213,7 +215,7 @@ const ActivityMonitor = () => {
 
       console.log("📊 Historical query:", { startTimestamp, endTimestamp, dates });
 
-      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id";
+      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url";
 
       const [activityData, sqlRes, snapshotRes] = await Promise.all([
         fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) =>
@@ -411,7 +413,7 @@ const ActivityMonitor = () => {
 
         const { data } = await supabase
           .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url")
           .eq("sdr_name", sdrName)
           .ilike("call_outcome", "connected")
           .gte("activity_date", startTimestamp)
@@ -784,7 +786,7 @@ const ActivityMonitor = () => {
       </Card>
 
       {/* Drill-down Modal */}
-      <Dialog open={!!drillDown} onOpenChange={(open) => !open && setDrillDown(null)}>
+      <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
         <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -809,22 +811,64 @@ const ActivityMonitor = () => {
                       <TableHead>Contact</TableHead>
                       <TableHead>Company</TableHead>
                       <TableHead className="text-right">Duration</TableHead>
+                      <TableHead className="text-center">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {drillDownData.map((a) => (
-                      <TableRow key={a.id} className="border-border/50">
-                        <TableCell className="text-muted-foreground text-sm">
-                          {new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {a.call_duration
-                            ? `${Math.floor(a.call_duration / 60)}m ${a.call_duration % 60}s`
-                            : "—"}
-                        </TableCell>
-                      </TableRow>
+                      <>
+                        <TableRow key={a.id} className="border-border/50">
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {a.call_duration
+                              ? `${Math.floor(a.call_duration / 60)}m ${a.call_duration % 60}s`
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {a.recording_url ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+                                onClick={() => setPlayingRecordingId(playingRecordingId === a.id ? null : a.id)}
+                              >
+                                {playingRecordingId === a.id ? (
+                                  <><Square className="h-3 w-3 mr-1" /> Stop</>
+                                ) : (
+                                  <><Play className="h-3 w-3 mr-1" /> Play</>
+                                )}
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No recording</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                        {playingRecordingId === a.id && a.recording_url && (
+                          <TableRow key={`${a.id}-audio`} className="border-border/50 bg-muted/30">
+                            <TableCell colSpan={5} className="py-3">
+                              <div className="flex items-center gap-3">
+                                <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
+                                <div className="flex-1">
+                                  <p className="text-xs text-muted-foreground mb-1.5">Call Recording — {a.contact_name || "Unknown"}</p>
+                                  <audio
+                                    controls
+                                    src={a.recording_url}
+                                    className="w-full h-8"
+                                    autoPlay
+                                    onError={() => {
+                                      setPlayingRecordingId(null);
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     ))}
                   </TableBody>
                 </Table>
