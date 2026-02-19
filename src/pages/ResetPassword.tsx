@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { PasswordStrengthIndicator, isPasswordStrong } from "@/components/PasswordStrengthIndicator";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -24,12 +25,10 @@ const ResetPassword = () => {
       }
     });
 
-    // Check if already in a recovery session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setValidToken(true);
       } else {
-        // Give onAuthStateChange a moment to fire
         setTimeout(() => {
           setValidToken((prev) => (prev === null ? false : prev));
         }, 1500);
@@ -39,10 +38,12 @@ const ResetPassword = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const canSubmit = isPasswordStrong(password) && password === confirmPassword && !loading;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      toast({ title: "Password too short", description: "Must be at least 8 characters.", variant: "destructive" });
+    if (!isPasswordStrong(password)) {
+      toast({ title: "Password too weak", description: "Please meet all password requirements.", variant: "destructive" });
       return;
     }
     if (password !== confirmPassword) {
@@ -113,11 +114,12 @@ const ResetPassword = () => {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
+            <PasswordStrengthIndicator password={password} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm">Confirm Password</Label>
@@ -135,12 +137,16 @@ const ResetPassword = () => {
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showConfirm ? "Hide password" : "Show password"}
               >
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            {confirmPassword && password !== confirmPassword && (
+              <p className="text-xs text-red-500">Passwords don't match</p>
+            )}
           </div>
-          <Button type="submit" className="w-full" disabled={loading || !password || !confirmPassword}>
+          <Button type="submit" className="w-full" disabled={!canSubmit}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
