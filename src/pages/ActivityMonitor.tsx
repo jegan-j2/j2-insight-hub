@@ -18,6 +18,9 @@ import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SDRAvatar } from "@/components/SDRAvatar";
+import { exportToPDF } from "@/lib/pdfExport";
+import { useToast } from "@/hooks/use-toast";
+import { Download, Loader2 } from "lucide-react";
 
 type Mode = "live" | "historical";
 type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "sqls" | "conversion";
@@ -119,6 +122,22 @@ const ActivityMonitor = () => {
   const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const { toast } = useToast();
+
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
+      const title = mode === "live" ? "Today's Activity Report" : `Activity Report – ${dateRangeInfo.label}`;
+      await exportToPDF('activity-monitor-content', `j2-activity-${dateStr}.pdf`, title);
+      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
+    } catch (err) {
+      toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
+    } finally {
+      setExportingPDF(false);
+    }
+  };
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -554,7 +573,7 @@ const ActivityMonitor = () => {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div id="activity-monitor-content" className="space-y-6 animate-fade-in">
       {/* Header + Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -591,6 +610,15 @@ const ActivityMonitor = () => {
               <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            disabled={loading || exportingPDF}
+            className="gap-2 shrink-0"
+          >
+            {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export PDF
+          </Button>
           {mode === "live" && (
             <Badge variant="outline" className="gap-2 border-green-500/50 text-green-500 px-3 py-1.5">
               <span className="relative flex h-2 w-2">
