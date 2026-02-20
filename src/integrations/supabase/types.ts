@@ -309,6 +309,7 @@ export type Database = {
           created_at: string | null
           edited_in_dashboard: boolean | null
           hubspot_deal_id: string | null
+          hubspot_engagement_id: string | null
           id: string
           last_edited_at: string | null
           last_edited_by: string | null
@@ -326,6 +327,7 @@ export type Database = {
           created_at?: string | null
           edited_in_dashboard?: boolean | null
           hubspot_deal_id?: string | null
+          hubspot_engagement_id?: string | null
           id?: string
           last_edited_at?: string | null
           last_edited_by?: string | null
@@ -343,6 +345,7 @@ export type Database = {
           created_at?: string | null
           edited_in_dashboard?: boolean | null
           hubspot_deal_id?: string | null
+          hubspot_engagement_id?: string | null
           id?: string
           last_edited_at?: string | null
           last_edited_by?: string | null
