@@ -24,6 +24,7 @@ interface ClientRow {
   id: string;
   client_id: string;
   client_name: string;
+  email: string | null;
   logo_url: string | null;
   banner_url: string | null;
   banner_gradient: string | null;
@@ -220,7 +221,7 @@ const Settings = () => {
   // --- Client dialog ---
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
-  const [clientForm, setClientForm] = useState({ client_name: "", client_id: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
+  const [clientForm, setClientForm] = useState({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
   const [isSavingClient, setIsSavingClient] = useState(false);
   const [uploadingClientLogo, setUploadingClientLogo] = useState(false);
   const [uploadingClientBanner, setUploadingClientBanner] = useState(false);
@@ -238,7 +239,7 @@ const Settings = () => {
   // --- Client CRUD ---
   const handleAddClient = () => {
     setEditingClient(null);
-    setClientForm({ client_name: "", client_id: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
+    setClientForm({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
     setIsClientDialogOpen(true);
   };
 
@@ -247,6 +248,7 @@ const Settings = () => {
     setClientForm({
       client_name: client.client_name,
       client_id: client.client_id,
+      email: client.email || "",
       campaign_start: client.campaign_start || "",
       campaign_end: client.campaign_end || "",
       target_sqls: client.target_sqls?.toString() || "",
@@ -407,7 +409,13 @@ const Settings = () => {
     fetchTeamMembers();
   };
 
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const handleSaveClient = async () => {
+    if (clientForm.email && !isValidEmail(clientForm.email)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
     setIsSavingClient(true);
     try {
       const slug = clientForm.client_id || clientForm.client_name.toLowerCase().replace(/\s+/g, '-');
@@ -417,6 +425,7 @@ const Settings = () => {
           .update({
             client_name: clientForm.client_name,
             client_id: slug,
+            email: clientForm.email || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
@@ -431,6 +440,7 @@ const Settings = () => {
           .insert({
             client_name: clientForm.client_name,
             client_id: slug,
+            email: clientForm.email || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
@@ -809,6 +819,18 @@ const Settings = () => {
                           className="bg-background/50 border-border"
                         />
                       </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="client-email">Client Email</Label>
+                        <Input
+                          id="client-email"
+                          type="email"
+                          placeholder="client@company.com"
+                          value={clientForm.email}
+                          onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                          className="bg-background/50 border-border"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Used for sending dashboard login credentials</p>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="campaign-start">Campaign Start</Label>
@@ -945,6 +967,7 @@ const Settings = () => {
                     <TableRow className="border-border hover:bg-transparent">
                       <TableHead className="text-muted-foreground">Client Name</TableHead>
                       <TableHead className="text-muted-foreground">Client ID</TableHead>
+                      <TableHead className="text-muted-foreground">Email</TableHead>
                       <TableHead className="text-muted-foreground">Campaign</TableHead>
                       <TableHead className="text-muted-foreground">Target SQLs</TableHead>
                       <TableHead className="text-muted-foreground">Status</TableHead>
@@ -956,7 +979,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                           No clients found. Add your first client above.
                         </TableCell>
                       </TableRow>
@@ -979,6 +1002,7 @@ const Settings = () => {
                               </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground">{client.client_id}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{client.email || '—'}</TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {client.campaign_start && client.campaign_end
                                 ? `${client.campaign_start} → ${client.campaign_end}`
