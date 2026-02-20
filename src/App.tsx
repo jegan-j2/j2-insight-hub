@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BreakpointIndicator } from "@/components/BreakpointIndicator";
-import { useSlackNotifications } from "@/hooks/useSlackNotifications";
 import { useInactiveSDRAlerts } from "@/hooks/useInactiveSDRAlerts";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -26,7 +25,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const SlackNotificationProvider = ({ children }: { children: React.ReactNode }) => {
-  useSlackNotifications();
+  // SQL notifications now handled by database trigger (server-side)
+  // Only inactive SDR alerts need browser-based checking
   useInactiveSDRAlerts();
   return <>{children}</>;
 };
