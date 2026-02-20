@@ -497,20 +497,28 @@ const ActivityMonitor = () => {
           for (const sql of sqlData) {
             let recording_url: string | null = null;
             let call_duration: number | null = null;
+            
+            // Try matching by email first, then fall back to contact name
+            let query = supabase
+              .from("activity_log")
+              .select("recording_url, call_duration, activity_date")
+              .eq("sdr_name", sdrName)
+              .ilike("call_outcome", "connected")
+              .not("recording_url", "is", null);
+            
             if (sql.contact_email) {
-              const { data: callData } = await supabase
-                .from("activity_log")
-                .select("recording_url, call_duration")
-                .eq("sdr_name", sdrName)
-                .eq("contact_email", sql.contact_email)
-                .ilike("call_outcome", "connected")
-                .not("recording_url", "is", null)
-                .order("call_duration", { ascending: false })
-                .limit(1);
-              if (callData && callData.length > 0) {
-                recording_url = callData[0].recording_url;
-                call_duration = callData[0].call_duration;
-              }
+              query = query.eq("contact_email", sql.contact_email);
+            } else if (sql.contact_person) {
+              query = query.ilike("contact_name", sql.contact_person.trim());
+            }
+            
+            const { data: callData } = await query
+              .order("call_duration", { ascending: false })
+              .limit(1);
+            
+            if (callData && callData.length > 0) {
+              recording_url = callData[0].recording_url;
+              call_duration = callData[0].call_duration;
             }
             enrichedSqlData.push({
               ...sql,
