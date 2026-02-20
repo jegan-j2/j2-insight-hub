@@ -923,7 +923,7 @@ const ActivityMonitor = () => {
 
       {/* Drill-down Modal */}
       <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {drillDown?.sdrName} — {drillDown?.metric === "answered" ? "Connected Calls" : "SQL Meetings"}
@@ -939,9 +939,9 @@ const ActivityMonitor = () => {
             drillDownData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No connected calls found for this SDR in the selected time range.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-auto flex-1">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 z-10 bg-card">
                     <TableRow className="border-border/50">
                       <TableHead>Time</TableHead>
                       <TableHead>Contact</TableHead>
@@ -954,8 +954,10 @@ const ActivityMonitor = () => {
                     {drillDownData.map((a) => (
                       <>
                         <TableRow key={a.id} className="border-border/50">
-                          <TableCell className="text-muted-foreground text-sm">
-                            {new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
+                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                            {mode === "historical" && (dateMode === "week" || dateMode === "month")
+                              ? new Date(a.activity_date).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric" }) + ", " + new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
+                              : new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
@@ -1027,9 +1029,9 @@ const ActivityMonitor = () => {
             drillDownSqlData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No SQLs booked for this SDR in the selected time range.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-auto flex-1">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 z-10 bg-card">
                     <TableRow className="border-border/50">
                       <TableHead>Time Booked</TableHead>
                       <TableHead>Contact Person</TableHead>
@@ -1042,9 +1044,11 @@ const ActivityMonitor = () => {
                     {drillDownSqlData.map((m) => (
                       <>
                         <TableRow key={m.id} className="border-border/50">
-                          <TableCell className="text-muted-foreground text-sm">
+                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {m.created_at
-                              ? new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
+                              ? (mode === "historical" && (dateMode === "week" || dateMode === "month")
+                                ? new Date(m.created_at).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric" }) + ", " + new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
+                                : new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }))
                               : format(new Date(m.booking_date), "MMM d, yyyy")}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
