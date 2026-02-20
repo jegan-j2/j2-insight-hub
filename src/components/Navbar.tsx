@@ -1,6 +1,7 @@
 import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import j2Logo from "@/assets/j2-logo.png";
 import {
@@ -18,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 const Navbar = () => {
   const navigate = useNavigate();
   const lastUpdated = new Date();
+  const { role } = useUserRole();
   const [companyLogo, setCompanyLogo] = useState<string | null>(() => localStorage.getItem("companyLogoUrl"));
 
   useEffect(() => {
@@ -113,6 +115,20 @@ const Navbar = () => {
                 <p className="text-xs text-muted-foreground">admin@j2group.com.au</p>
               </div>
             </DropdownMenuLabel>
+            {role && (
+              <>
+                <DropdownMenuSeparator className="bg-border" />
+                <div className="px-2 py-1.5">
+                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary/10 text-secondary">
+                    {role === 'admin' && '👑 Admin'}
+                    {role === 'manager' && '👔 Manager'}
+                    {role === 'client' && '🏢 Client'}
+                    {role === 'sdr' && '📞 SDR'}
+                    {!['admin', 'manager', 'client', 'sdr'].includes(role) && role}
+                  </span>
+                </div>
+              </>
+            )}
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem
               onClick={handleLogout}

@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
 import { Pencil } from "lucide-react";
+import { usePermissions } from "@/hooks/useUserRole";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
@@ -55,6 +56,7 @@ interface SQLBookedMeetingsTableProps {
 }
 
 export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings }: SQLBookedMeetingsTableProps) => {
+  const { canEditSQL } = usePermissions();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -524,7 +526,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
                     <Checkbox
                       checked={meeting.meetingHeld}
                       onCheckedChange={(checked) => handleMeetingHeldChange(meeting.id, checked as boolean)}
-                      disabled={updating === meeting.id}
+                      disabled={updating === meeting.id || !canEditSQL(meeting.clientName)}
                       className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary"
                     />
                   </TableCell>
@@ -532,8 +534,8 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
                     <Input
                       defaultValue={meeting.remarks || ""}
                       onBlur={(e) => handleRemarksChange(meeting.id, e.target.value)}
-                      placeholder="Add remarks..."
-                      disabled={updating === meeting.id}
+                      placeholder={canEditSQL(meeting.clientName) ? "Add remarks..." : "View only"}
+                      disabled={updating === meeting.id || !canEditSQL(meeting.clientName)}
                       className="bg-transparent border-transparent hover:border-border focus:border-ring h-8 text-sm"
                     />
                   </TableCell>

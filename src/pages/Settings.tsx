@@ -18,6 +18,7 @@ import { supabase } from "@/lib/supabase";
 import { sendSlackNotification, formatTestMessage } from "@/lib/slackNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SDRAvatar } from "@/components/SDRAvatar";
+import { usePermissions } from "@/hooks/useUserRole";
 
 interface ClientRow {
   id: string;
@@ -47,6 +48,7 @@ interface TeamMemberRow {
 const Settings = () => {
   const { toast } = useToast();
   const { permission: browserNotifPermission, supported: browserNotifSupported, requestPermission } = useBrowserNotifications();
+  const { canEditClients, canEditTeamMembers, canEditSettings, isAdmin } = usePermissions();
 
   useEffect(() => {
     document.title = "J2 Dashboard - Settings";
@@ -769,12 +771,16 @@ const Settings = () => {
                   <CardDescription>Add, edit, or remove client accounts</CardDescription>
                 </div>
                 <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={handleAddClient} className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Add New Client
-                    </Button>
-                  </DialogTrigger>
+                  {canEditClients ? (
+                    <DialogTrigger asChild>
+                      <Button onClick={handleAddClient} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add New Client
+                      </Button>
+                    </DialogTrigger>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">👮 Contact your administrator to manage clients</p>
+                  )}
                   <DialogContent className="bg-card border-border sm:max-w-[525px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
@@ -985,6 +991,7 @@ const Settings = () => {
                               </span>
                             </TableCell>
                             <TableCell className="text-right">
+                              {canEditClients ? (
                                 <TooltipProvider>
                                 <div className="flex justify-end gap-2">
                                   <Tooltip>
@@ -1040,6 +1047,9 @@ const Settings = () => {
                                   )}
                                 </div>
                                 </TooltipProvider>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">View only</span>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -1062,12 +1072,16 @@ const Settings = () => {
                   <CardDescription>Manage SDR team members and their roles</CardDescription>
                 </div>
                 <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={handleAddMember} className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Add Team Member
-                    </Button>
-                  </DialogTrigger>
+                  {canEditTeamMembers ? (
+                    <DialogTrigger asChild>
+                      <Button onClick={handleAddMember} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add Team Member
+                      </Button>
+                    </DialogTrigger>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">👮 Contact your administrator to manage team members</p>
+                  )}
                   <DialogContent className="bg-card border-border sm:max-w-[525px]">
                     <DialogHeader>
                       <DialogTitle>{editingMember ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
@@ -1205,6 +1219,7 @@ const Settings = () => {
                               </span>
                             </TableCell>
                             <TableCell className="text-right">
+                              {canEditTeamMembers ? (
                               <TooltipProvider>
                                 <div className="flex justify-end gap-2">
                                   <Tooltip>
@@ -1260,6 +1275,9 @@ const Settings = () => {
                                   )}
                                 </div>
                               </TooltipProvider>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">View only</span>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -1473,10 +1491,10 @@ const Settings = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
-                <Button onClick={handleSaveNotifications} className="gap-2 flex-1 sm:flex-initial" disabled={isSavingNotifications}>
-                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />Save Settings</>)}
+                <Button onClick={handleSaveNotifications} className="gap-2 flex-1 sm:flex-initial" disabled={isSavingNotifications || !canEditSettings}>
+                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
-                <Button variant="outline" onClick={handleSendTestEmail} className="gap-2 flex-1 sm:flex-initial" disabled={reportFrequency === "disabled" || isSendingTestEmail}>
+                <Button variant="outline" onClick={handleSendTestEmail} className="gap-2 flex-1 sm:flex-initial" disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}>
                   {isSendingTestEmail ? (<><Loader2 className="h-4 w-4 animate-spin" />Sending...</>) : (<><Send className="h-4 w-4" />Send Test Email</>)}
                 </Button>
               </div>
@@ -1608,8 +1626,8 @@ const Settings = () => {
               </div>
 
               <div className="flex justify-end pt-2 border-t border-border">
-                <Button onClick={handleSaveNotifications} variant="outline" className="gap-2" disabled={isSavingNotifications}>
-                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />Save Slack Settings</>)}
+                <Button onClick={handleSaveNotifications} variant="outline" className="gap-2" disabled={isSavingNotifications || !canEditSettings}>
+                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Slack Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
             </CardContent>
