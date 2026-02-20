@@ -91,6 +91,7 @@ export type Database = {
           client_id: string
           client_name: string
           created_at: string | null
+          email: string | null
           hubspot_list_pattern: string | null
           id: string
           logo_url: string | null
@@ -106,6 +107,7 @@ export type Database = {
           client_id: string
           client_name: string
           created_at?: string | null
+          email?: string | null
           hubspot_list_pattern?: string | null
           id?: string
           logo_url?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           client_id?: string
           client_name?: string
           created_at?: string | null
+          email?: string | null
           hubspot_list_pattern?: string | null
           id?: string
           logo_url?: string | null
