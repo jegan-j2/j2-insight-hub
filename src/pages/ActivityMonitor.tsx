@@ -37,6 +37,7 @@ interface SqlMeetingRow {
   booking_date: string;
   meeting_date: string | null;
   created_at: string | null;
+  hubspot_engagement_id?: string | null;
   recording_url?: string | null;
   call_duration?: number | null;
 }
@@ -485,7 +486,7 @@ const ActivityMonitor = () => {
 
         const { data: sqlData } = await supabase
           .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id")
           .eq("sdr_name", sdrName)
           .gte("created_at", startTimestamp)
           .lte("created_at", endTimestamp)
@@ -497,29 +498,47 @@ const ActivityMonitor = () => {
           for (const sql of sqlData) {
             let recording_url: string | null = null;
             let call_duration: number | null = null;
-            
-            // Try matching by email first, then fall back to contact name
-            let query = supabase
-              .from("activity_log")
-              .select("recording_url, call_duration, activity_date")
-              .eq("sdr_name", sdrName)
-              .ilike("call_outcome", "connected")
-              .not("recording_url", "is", null);
-            
-            if (sql.contact_email) {
-              query = query.eq("contact_email", sql.contact_email);
-            } else if (sql.contact_person) {
-              query = query.ilike("contact_name", sql.contact_person.trim());
+
+            // 1. Try engagement ID first (most accurate — direct HubSpot link)
+            if (sql.hubspot_engagement_id) {
+              const { data: engData } = await supabase
+                .from("activity_log")
+                .select("recording_url, call_duration, activity_date")
+                .eq("hubspot_engagement_id", sql.hubspot_engagement_id)
+                .not("recording_url", "is", null)
+                .limit(1);
+
+              if (engData && engData.length > 0) {
+                recording_url = engData[0].recording_url;
+                call_duration = engData[0].call_duration;
+              }
             }
-            
-            const { data: callData } = await query
-              .order("call_duration", { ascending: false })
-              .limit(1);
-            
-            if (callData && callData.length > 0) {
-              recording_url = callData[0].recording_url;
-              call_duration = callData[0].call_duration;
+
+            // 2. Fallback to email/name matching (for legacy SQLs without engagement ID)
+            if (!recording_url) {
+              let query = supabase
+                .from("activity_log")
+                .select("recording_url, call_duration, activity_date")
+                .eq("sdr_name", sdrName)
+                .ilike("call_outcome", "connected")
+                .not("recording_url", "is", null);
+
+              if (sql.contact_email) {
+                query = query.eq("contact_email", sql.contact_email);
+              } else if (sql.contact_person) {
+                query = query.ilike("contact_name", sql.contact_person.trim());
+              }
+
+              const { data: callData } = await query
+                .order("call_duration", { ascending: false })
+                .limit(1);
+
+              if (callData && callData.length > 0) {
+                recording_url = callData[0].recording_url;
+                call_duration = callData[0].call_duration;
+              }
             }
+
             enrichedSqlData.push({
               ...sql,
               recording_url,
