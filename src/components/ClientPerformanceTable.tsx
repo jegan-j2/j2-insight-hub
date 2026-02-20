@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Target, ArrowUpDown, Search, DatabaseZap } from "lucide-react";
+import { ArrowUpDown, Search, DatabaseZap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
@@ -16,6 +16,7 @@ type SortOrder = "asc" | "desc";
 interface ClientData {
   name: string;
   slug: string;
+  logoUrl: string | null;
   dials: number;
   answered: number;
   answeredPercent: number;
@@ -64,6 +65,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
       return {
         name: client.client_name,
         slug: client.client_id,
+        logoUrl: client.logo_url || null,
         dials: totalDials,
         answered: totalAnswered,
         answeredPercent: totalDials > 0 ? (totalAnswered / totalDials) * 100 : 0,
@@ -186,9 +188,19 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                   >
                     <TableCell className="sticky left-0 bg-card z-10">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center flex-shrink-0">
-                          <Target className="h-4 w-4 text-secondary" />
-                        </div>
+                        {client.logoUrl ? (
+                          <img 
+                            src={client.logoUrl} 
+                            alt={client.name}
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-secondary-foreground">
+                              {client.name.substring(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                         <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
                       </div>
                     </TableCell>
