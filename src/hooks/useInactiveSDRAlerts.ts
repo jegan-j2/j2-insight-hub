@@ -3,8 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { sendSlackNotification } from '@/lib/slackNotifications'
 
 export const useInactiveSDRAlerts = () => {
-  const alertedSDRs = useRef<Set<string>>(new Set())
-  const batchSent = useRef(false)
+  const stateRef = useRef({ alertedSDRs: new Set<string>(), batchSent: false })
 
   useEffect(() => {
     const checkInactiveSDRs = async () => {
@@ -39,7 +38,6 @@ export const useInactiveSDRAlerts = () => {
 
         const activeNames = new Set(recentActivity?.map((a) => a.sdr_name) || [])
 
-        // Only fetch SDRs (exclude managers/admins)
         const { data: allSDRs } = await supabase
           .from('team_members')
           .select('sdr_name, client_id, role')
@@ -48,29 +46,27 @@ export const useInactiveSDRAlerts = () => {
 
         if (!allSDRs) return
 
-        // Check if any previously inactive SDR became active again
-        for (const name of alertedSDRs.current) {
+        const { alertedSDRs, batchSent } = stateRef.current
+
+        // Reset batch if any alerted SDR became active again
+        for (const name of alertedSDRs) {
           if (activeNames.has(name)) {
-            alertedSDRs.current.delete(name)
-            batchSent.current = false
+            alertedSDRs.delete(name)
+            stateRef.current.batchSent = false
           }
         }
 
-        // Find newly inactive SDRs not yet alerted
         const newlyInactive = allSDRs.filter(
-          (sdr) => !activeNames.has(sdr.sdr_name) && !alertedSDRs.current.has(sdr.sdr_name)
+          (sdr) => !activeNames.has(sdr.sdr_name) && !alertedSDRs.has(sdr.sdr_name)
         )
 
         console.log(`✅ Found ${newlyInactive.length} inactive SDRs (checked ${allSDRs.length} total)`)
 
-        if (newlyInactive.length === 0) return
-        if (batchSent.current) return
+        if (newlyInactive.length === 0 || stateRef.current.batchSent) return
 
-        // Mark all as alerted
-        newlyInactive.forEach((sdr) => alertedSDRs.current.add(sdr.sdr_name))
-        batchSent.current = true
+        newlyInactive.forEach((sdr) => alertedSDRs.add(sdr.sdr_name))
+        stateRef.current.batchSent = true
 
-        // Build batched message
         const sdrList = newlyInactive
           .map((sdr) => `• ${sdr.sdr_name} (${sdr.client_id || 'N/A'})`)
           .join('\n')
@@ -83,7 +79,6 @@ export const useInactiveSDRAlerts = () => {
 
         console.log('📤 Sending batched inactive alert to Slack')
         await sendSlackNotification(settings.slack_webhook_url, message)
-        console.log('⚠️ Batched inactive SDR alert sent for:', newlyInactive.map((s) => s.sdr_name).join(', '))
       } catch (error) {
         console.error('Error checking inactive SDRs:', error)
       }
@@ -91,7 +86,6 @@ export const useInactiveSDRAlerts = () => {
 
     checkInactiveSDRs()
     const interval = setInterval(checkInactiveSDRs, 15 * 60 * 1000)
-
     return () => clearInterval(interval)
   }, [])
 }
