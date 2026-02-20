@@ -1,5 +1,6 @@
 import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import j2Logo from "@/assets/j2-logo.png";
 import {
@@ -12,10 +13,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { format } from "date-fns";
+import { supabase } from "@/lib/supabase";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const lastUpdated = new Date();
+  const [companyLogo, setCompanyLogo] = useState<string | null>(() => localStorage.getItem("companyLogoUrl"));
+
+  useEffect(() => {
+    // Try to fetch from branding bucket if not in localStorage
+    const fetchLogo = async () => {
+      const cached = localStorage.getItem("companyLogoUrl");
+      if (cached) {
+        setCompanyLogo(cached);
+        return;
+      }
+      // Check branding bucket for company-logo files
+      const { data } = await supabase.storage.from("branding").list("", { limit: 10 });
+      if (data) {
+        const logoFile = data.find(f => f.name.startsWith("company-logo"));
+        if (logoFile) {
+          const { data: urlData } = supabase.storage.from("branding").getPublicUrl(logoFile.name);
+          const url = urlData.publicUrl;
+          localStorage.setItem("companyLogoUrl", url);
+          setCompanyLogo(url);
+        }
+      }
+    };
+    fetchLogo();
+
+    // Listen for storage changes (when logo is updated in Settings)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "companyLogoUrl") {
+        setCompanyLogo(e.newValue);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const handleLogout = () => {
     navigate("/login");
@@ -29,11 +64,20 @@ const Navbar = () => {
 
         {/* Logo and Title */}
         <div className="flex items-center gap-3">
-          <img 
-            src={j2Logo} 
-            alt="J2 Group" 
-            className="w-10 h-10 sm:w-10 sm:h-10 rounded-full object-cover"
-          />
+          {companyLogo ? (
+            <img 
+              src={companyLogo} 
+              alt="J2 Group" 
+              className="h-10 w-auto max-w-[120px] object-contain"
+              onError={() => setCompanyLogo(null)}
+            />
+          ) : (
+            <img 
+              src={j2Logo} 
+              alt="J2 Group" 
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          )}
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold text-foreground">J2 Group</h1>
             <p className="text-xs text-muted-foreground">Lead Generation Dashboard</p>

@@ -689,31 +689,52 @@ const Settings = () => {
           <CardDescription>Customize your dashboard with your company logo</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className="h-20 w-20 rounded-full bg-secondary/10 border-2 border-dashed border-border flex items-center justify-center overflow-hidden shrink-0">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Company logo" className="h-full w-full object-cover rounded-full" />
-              ) : (
-                <div className="h-full w-full rounded-full bg-secondary flex items-center justify-center">
-                  <span className="text-2xl font-bold text-secondary-foreground">J2</span>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-3">
-              <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleLogoUpload} className="hidden" />
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo} className="gap-2">
-                  {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {uploadingLogo ? "Uploading..." : "Upload Logo"}
-                </Button>
-                {logoUrl && (
-                  <Button variant="outline" onClick={handleRemoveLogo} className="gap-2 text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                    Remove
-                  </Button>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="h-20 w-20 rounded-full bg-secondary/10 border-2 border-dashed border-border flex items-center justify-center overflow-hidden shrink-0">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Company logo" className="h-full w-full object-cover rounded-full" />
+                ) : (
+                  <div className="h-full w-full rounded-full bg-secondary flex items-center justify-center">
+                    <span className="text-2xl font-bold text-secondary-foreground">J2</span>
+                  </div>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">PNG, JPG, or SVG. Recommended: 256×256px.</p>
+              <div className="flex flex-col gap-3">
+                <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleLogoUpload} className="hidden" />
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo} className="gap-2">
+                    {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                  </Button>
+                  {logoUrl && (
+                    <Button variant="outline" onClick={handleRemoveLogo} className="gap-2 text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">PNG, JPG, or SVG. Recommended: 256×256px.</p>
+                <p className="text-xs text-muted-foreground mt-1">This logo appears in the dashboard header on all pages.</p>
+              </div>
+            </div>
+
+            {/* Live Header Preview */}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <p className="text-xs text-muted-foreground px-3 py-1.5 bg-muted/30 border-b border-border">Header Preview</p>
+              <div className="flex items-center gap-3 px-4 py-3 bg-card">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Preview" className="h-10 w-auto max-w-[120px] object-contain" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                    <span className="text-sm font-bold text-secondary-foreground">J2</span>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-bold text-foreground">J2 Group</p>
+                  <p className="text-[10px] text-muted-foreground">Lead Generation Dashboard</p>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
