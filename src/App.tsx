@@ -7,6 +7,7 @@ import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BreakpointIndicator } from "@/components/BreakpointIndicator";
 import { useInactiveSDRAlerts } from "@/hooks/useInactiveSDRAlerts";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -31,6 +32,11 @@ const SlackNotificationProvider = ({ children }: { children: React.ReactNode }) 
   return <>{children}</>;
 };
 
+const SessionTimeoutProvider = ({ children }: { children: React.ReactNode }) => {
+  useSessionTimeout();
+  return <>{children}</>;
+};
+
 const App = () => (
   <ThemeProvider>
     <QueryClientProvider client={queryClient}>
@@ -48,14 +54,14 @@ const App = () => (
               <Route path="/reset-password" element={<div className="page-transition"><ResetPassword /></div>} />
               <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
               
-              {/* Protected Dashboard Routes */}
-              <Route path="/overview" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><Overview /></div></DashboardLayout></ProtectedRoute>} />
+              {/* Protected Dashboard Routes - with session timeout */}
+              <Route path="/overview" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><Overview /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
               
-              <Route path="/team" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sql-meetings" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout></ProtectedRoute>} />
-              <Route path="/client/:clientSlug" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout></ProtectedRoute>} />
-              <Route path="/activity-monitor" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><ActivityMonitor /></div></DashboardLayout></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><DashboardLayout><div className="page-transition"><Settings /></div></DashboardLayout></ProtectedRoute>} />
+              <Route path="/team" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
+              <Route path="/sql-meetings" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
+              <Route path="/client/:clientSlug" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
+              <Route path="/activity-monitor" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><ActivityMonitor /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><Settings /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<div className="page-transition"><NotFound /></div>} />
