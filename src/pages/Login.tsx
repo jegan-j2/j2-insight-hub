@@ -18,7 +18,7 @@ const Login = () => {
   const { toast } = useToast();
   const redirectBasedOnRole = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log("🔍 Login - getUser result:", user, "Error:", userError);
+    if (import.meta.env.DEV) console.log("🔍 Login - getUser result:", user, "Error:", userError);
 
     if (!user) {
       console.error("No user found after login");
@@ -31,7 +31,7 @@ const Login = () => {
       .eq("user_id", user.id)
       .single();
 
-    console.log("🔍 Login - role data:", roleData, "Error:", roleError);
+    if (import.meta.env.DEV) console.log("🔍 Login - role data:", roleData, "Error:", roleError);
 
     if (roleError || !roleData) {
       console.error("Could not fetch user role:", roleError);
@@ -40,10 +40,10 @@ const Login = () => {
     }
 
     if (roleData.role === "client" && roleData.client_id) {
-      console.log(`🔒 Redirecting client to /client/${roleData.client_id}`);
+      if (import.meta.env.DEV) console.log(`🔒 Redirecting client to /client/${roleData.client_id}`);
       navigate(`/client/${roleData.client_id}`);
     } else {
-      console.log("🔒 Redirecting admin to /overview");
+      if (import.meta.env.DEV) console.log("🔒 Redirecting admin to /overview");
       navigate("/overview");
     }
   };

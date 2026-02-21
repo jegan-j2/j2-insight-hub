@@ -30,14 +30,14 @@ export const useRealtimeSubscription = ({
         ...(filter ? { filter } : {}),
       },
       (payload) => {
-        console.log(`Realtime update on ${table}:`, payload.eventType)
+        if (import.meta.env.DEV) console.log(`Realtime update on ${table}:`, payload.eventType)
         onChangeRef.current?.()
       }
     )
 
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
-        console.log(`✅ Subscribed to ${table} updates`)
+        if (import.meta.env.DEV) console.log(`✅ Subscribed to ${table} updates`)
       }
     })
 

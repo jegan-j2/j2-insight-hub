@@ -29,8 +29,8 @@ const ForgotPassword = () => {
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        console.log('Password reset email sent to:', email);
-        console.log('Redirect URL:', `${window.location.origin}/reset-password`);
+        if (import.meta.env.DEV) console.log('Password reset email sent to:', email);
+        if (import.meta.env.DEV) console.log('Redirect URL:', `${window.location.origin}/reset-password`);
         setSent(true);
       }
     } catch {

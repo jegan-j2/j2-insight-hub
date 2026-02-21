@@ -66,7 +66,7 @@ export const useOverviewData = (dateRange: DateRange | undefined): OverviewData 
       setSnapshots(snapshotData || []);
       setMeetings(meetingData || []);
 
-      console.log("📊 Dashboard data fetched:", {
+      if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
         snapshots: snapshotData?.length || 0,
         meetings: meetingData?.length || 0,
         dateRange: { startDate, endDate },

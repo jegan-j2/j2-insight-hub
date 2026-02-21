@@ -60,7 +60,7 @@ export const useInactiveSDRAlerts = () => {
           (sdr) => !activeNames.has(sdr.sdr_name) && !alertedSDRs.has(sdr.sdr_name)
         )
 
-        console.log(`✅ Found ${newlyInactive.length} inactive SDRs (checked ${allSDRs.length} total)`)
+        if (import.meta.env.DEV) console.log(`✅ Found ${newlyInactive.length} inactive SDRs (checked ${allSDRs.length} total)`)
 
         if (newlyInactive.length === 0 || stateRef.current.batchSent) return
 
@@ -77,7 +77,7 @@ export const useInactiveSDRAlerts = () => {
           text: `⚠️ *Inactive SDR Alert*\n\n*${count} SDR${count > 1 ? 's' : ''} ha${count > 1 ? 've' : 's'} no activity in over 1 hour:*\n\n${sdrList}\n\n⏰ *Last checked:* ${timeStr}`,
         }
 
-        console.log('📤 Sending batched inactive alert to Slack')
+        if (import.meta.env.DEV) console.log('📤 Sending batched inactive alert to Slack')
         await sendSlackNotification(settings.slack_webhook_url, message)
       } catch (error) {
         console.error('Error checking inactive SDRs:', error)
