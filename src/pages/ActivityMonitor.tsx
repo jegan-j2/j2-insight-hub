@@ -762,31 +762,29 @@ const ActivityMonitor = () => {
 
               {/* Time Range (day view only) */}
               {dateMode === "day" && (
-                <div className="flex-1 space-y-2 w-full">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      Time Range
-                    </label>
-                    <span className="text-sm font-medium text-foreground">
-                      {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                    </span>
+                <div className="flex items-center gap-4 flex-1">
+                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">Time Range:</span>
+                  <div className="flex-1 min-w-[200px]">
+                    <Slider
+                      min={0}
+                      max={24}
+                      step={1}
+                      value={timeRange}
+                      onValueChange={setTimeRange}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>12 AM</span>
+                      <span>6 AM</span>
+                      <span>12 PM</span>
+                      <span>6 PM</span>
+                      <span>12 AM</span>
+                    </div>
                   </div>
-                  <Slider
-                    min={0}
-                    max={24}
-                    step={1}
-                    value={timeRange}
-                    onValueChange={setTimeRange}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>12 AM</span>
-                    <span>6 AM</span>
-                    <span>12 PM</span>
-                    <span>6 PM</span>
-                    <span>12 AM</span>
-                  </div>
+                  <span className="text-sm font-medium text-foreground whitespace-nowrap min-w-[140px] text-right">
+                    {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                  </span>
                 </div>
               )}
 
