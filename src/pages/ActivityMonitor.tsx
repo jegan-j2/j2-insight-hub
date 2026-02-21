@@ -27,7 +27,7 @@ type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "s
 type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls";
 type DateMode = "day" | "week" | "month";
-type TimePreset = "fullday" | "morning" | "afternoon" | "custom";
+type WeekDay = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
 
 interface SqlMeetingRow {
   id: string;
@@ -99,12 +99,8 @@ const getMelbourneToday = () => {
   return `${y}-${m}-${d}`;
 };
 
-const TIME_PRESETS: { key: TimePreset; label: string; range: [number, number] }[] = [
-  { key: "fullday", label: "Full Day", range: [0, 24] },
-  { key: "morning", label: "Morning", range: [6, 12] },
-  { key: "afternoon", label: "Afternoon", range: [12, 18] },
-  { key: "custom", label: "Custom", range: [0, 24] },
-];
+const ALL_WEEKDAYS: WeekDay[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const WEEKDAY_MAP: Record<WeekDay, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5 };
 
 const ActivityMonitor = () => {
   const [mode, setMode] = useState<Mode>("live");
@@ -156,8 +152,8 @@ const ActivityMonitor = () => {
 
   // Historical filters
   const [histDate, setHistDate] = useState<Date>(new Date());
-  const [timeRange, setTimeRange] = useState<number[]>([0, 24]);
-  const [timePreset, setTimePreset] = useState<TimePreset>("fullday");
+  const [timeRange, setTimeRange] = useState<number[]>([9, 17]);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<WeekDay[]>([...ALL_WEEKDAYS]);
   const [histApplied, setHistApplied] = useState(false);
   const [histSqlMeetings, setHistSqlMeetings] = useState<SqlMeetingRow[]>([]);
   const [dateMode, setDateMode] = useState<DateMode>("day");
@@ -168,15 +164,24 @@ const ActivityMonitor = () => {
     return format(d, "EEEE, MMMM d, yyyy");
   }, [todayMelbourne]);
 
-  // Compute date range based on dateMode
+  // Compute date range based on dateMode, filtered by selected weekdays
   const dateRangeInfo = useMemo(() => {
+    const filterByWeekdays = (days: Date[]) => {
+      if (dateMode === "day") return days;
+      const selectedDayNumbers = selectedWeekdays.map(d => WEEKDAY_MAP[d]);
+      return days.filter(d => {
+        const dow = d.getDay(); // 0=Sun, 1=Mon...
+        return selectedDayNumbers.includes(dow);
+      });
+    };
+
     if (dateMode === "day") {
       const dateStr = format(histDate, "yyyy-MM-dd");
       return { dates: [dateStr], label: format(histDate, "EEEE, MMMM d, yyyy") };
     } else if (dateMode === "week") {
       const weekStart = startOfWeek(histDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(histDate, { weekStartsOn: 1 });
-      const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+      const days = filterByWeekdays(eachDayOfInterval({ start: weekStart, end: weekEnd }));
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
         label: `${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d, yyyy")}`,
@@ -184,13 +189,13 @@ const ActivityMonitor = () => {
     } else {
       const monthStart = startOfMonth(histDate);
       const monthEnd = endOfMonth(histDate);
-      const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+      const days = filterByWeekdays(eachDayOfInterval({ start: monthStart, end: monthEnd }));
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
         label: format(histDate, "MMMM yyyy"),
       };
     }
-  }, [histDate, dateMode]);
+  }, [histDate, dateMode, selectedWeekdays]);
 
   // LIVE fetch
   const fetchLiveData = useCallback(async () => {
@@ -560,12 +565,14 @@ const ActivityMonitor = () => {
     return Date.now() - lastActivity.getTime() < 5 * 60 * 1000;
   };
 
-  const handleTimePreset = (preset: TimePreset) => {
-    setTimePreset(preset);
-    if (preset !== "custom") {
-      const found = TIME_PRESETS.find(p => p.key === preset);
-      if (found) setTimeRange([...found.range]);
-    }
+  const toggleWeekday = (day: WeekDay) => {
+    setSelectedWeekdays(prev => {
+      if (prev.includes(day)) {
+        if (prev.length === 1) return prev;
+        return prev.filter(d => d !== day);
+      }
+      return [...prev, day];
+    });
   };
 
   const navigateDate = (direction: "prev" | "next") => {
@@ -689,7 +696,7 @@ const ActivityMonitor = () => {
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as DateMode)}>
               <TabsList className="bg-muted/50">
-                <TabsTrigger value="day">Single Day</TabsTrigger>
+                <TabsTrigger value="day">Day</TabsTrigger>
                 <TabsTrigger value="week">Week</TabsTrigger>
                 <TabsTrigger value="month">Month</TabsTrigger>
               </TabsList>
@@ -734,62 +741,61 @@ const ActivityMonitor = () => {
                 </div>
               </div>
 
-              {/* Time Range Section (only for single day) */}
+              {/* Time Range (day view only) */}
               {dateMode === "day" && (
-                <div className="flex-1 space-y-3 w-full">
-                  {/* Time Presets */}
-                  <div className="flex flex-wrap gap-2">
-                    {TIME_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.key}
-                        variant={timePreset === preset.key ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleTimePreset(preset.key)}
-                        className={cn(
-                          "text-xs",
-                          timePreset === preset.key && "bg-blue-500 hover:bg-blue-600 text-white"
-                        )}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-
-                  {/* Custom slider */}
-                  {timePreset === "custom" && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" />
-                          Time Range
-                        </label>
-                        <span className="text-sm font-medium text-foreground">
-                          {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                        </span>
-                      </div>
-                      <Slider
-                        min={0}
-                        max={24}
-                        step={1}
-                        value={timeRange}
-                        onValueChange={setTimeRange}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>12 AM</span>
-                        <span>6 AM</span>
-                        <span>12 PM</span>
-                        <span>6 PM</span>
-                        <span>12 AM</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {timePreset !== "custom" && (
-                    <p className="text-xs text-muted-foreground">
+                <div className="flex-1 space-y-2 w-full">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      Time Range
+                    </label>
+                    <span className="text-sm font-medium text-foreground">
                       {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                    </p>
-                  )}
+                    </span>
+                  </div>
+                  <Slider
+                    min={0}
+                    max={24}
+                    step={1}
+                    value={timeRange}
+                    onValueChange={setTimeRange}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>12 AM</span>
+                    <span>6 AM</span>
+                    <span>12 PM</span>
+                    <span>6 PM</span>
+                    <span>12 AM</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Weekday filter (week/month views) */}
+              {(dateMode === "week" || dateMode === "month") && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Days</label>
+                  <div className="flex gap-1.5">
+                    {ALL_WEEKDAYS.map((day) => {
+                      const isActive = selectedWeekdays.includes(day);
+                      return (
+                        <Button
+                          key={day}
+                          variant={isActive ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleWeekday(day)}
+                          className={cn(
+                            "text-xs px-3 min-w-[48px]",
+                            isActive
+                              ? "bg-blue-500 hover:bg-blue-600 text-white"
+                              : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          {day}
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
