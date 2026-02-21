@@ -803,9 +803,10 @@ const ActivityMonitor = () => {
                           size="sm"
                           onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
                           disabled={!isWeekday}
+                          title={!isWeekday ? "No calls on weekends" : undefined}
                           className={cn(
                             "text-xs px-3 min-w-[48px]",
-                            !isWeekday && "opacity-30 cursor-not-allowed",
+                            !isWeekday && "opacity-[0.35] cursor-not-allowed hover:bg-transparent",
                             isWeekday && isActive && "bg-blue-500 hover:bg-blue-600 text-white",
                             isWeekday && !isActive && "text-muted-foreground hover:text-foreground"
                           )}

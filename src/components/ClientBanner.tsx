@@ -71,7 +71,7 @@ export const ClientBanner = ({ clientSlug, clientName, dateRange }: ClientBanner
           <img 
             src={clientData.logo_url} 
             alt={clientName}
-            className="w-16 h-16 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full border-4 border-white/90 object-cover shadow-lg bg-white"
+            className="w-16 h-16 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full border-4 border-white/90 object-contain shadow-lg bg-white overflow-hidden"
           />
         ) : (
           <div className="w-16 h-16 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full border-4 border-white/90 bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
