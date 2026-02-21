@@ -9,25 +9,24 @@ export const sendSlackNotification = async (
   message: SlackMessage
 ): Promise<boolean> => {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/send-slack-notification`
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
 
-    const response = await fetch(edgeFunctionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify({ webhookUrl, message }),
-    })
-
-    if (!response.ok) {
-      console.error('Edge function failed:', response.status)
+    if (!token) {
+      console.error('Not authenticated for Slack notification')
       return false
     }
 
-    const result = await response.json()
-    return result.success === true
+    const { data, error } = await supabase.functions.invoke('send-slack-notification', {
+      body: { webhookUrl, message },
+    })
+
+    if (error) {
+      console.error('Edge function error:', error)
+      return false
+    }
+
+    return data?.success === true
   } catch (error) {
     console.error('Slack notification error:', error)
     return false
