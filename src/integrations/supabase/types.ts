@@ -27,6 +27,7 @@ export type Database = {
           created_at: string | null
           hubspot_engagement_id: string | null
           id: string
+          is_decision_maker: boolean | null
           is_sql: boolean | null
           meeting_held: boolean | null
           meeting_scheduled_date: string | null
@@ -46,6 +47,7 @@ export type Database = {
           created_at?: string | null
           hubspot_engagement_id?: string | null
           id?: string
+          is_decision_maker?: boolean | null
           is_sql?: boolean | null
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
@@ -65,6 +67,7 @@ export type Database = {
           created_at?: string | null
           hubspot_engagement_id?: string | null
           id?: string
+          is_decision_maker?: boolean | null
           is_sql?: boolean | null
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
