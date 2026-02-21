@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -578,6 +578,33 @@ const ActivityMonitor = () => {
     }
   };
 
+  // Auto-refresh relative timestamps every 60s
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (mode !== "live") return;
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, [mode]);
+
+  const getStatusColor = (lastActivity: Date | null): "green" | "yellow" | "red" => {
+    if (!lastActivity) return "red";
+    const diffMs = Date.now() - lastActivity.getTime();
+    if (diffMs < 30 * 60 * 1000) return "green";
+    if (diffMs < 60 * 60 * 1000) return "yellow";
+    return "red";
+  };
+
+  const formatRelativeTime = (d: Date | null): string => {
+    if (!d) return "—";
+    const diffMs = Date.now() - d.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins} min ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hrs ago`;
+    return format(d, "MMM d");
+  };
+
   const isRecentActivity = (lastActivity: Date | null) => {
     if (!lastActivity) return false;
     return Date.now() - lastActivity.getTime() < 5 * 60 * 1000;
@@ -817,21 +844,12 @@ const ActivityMonitor = () => {
                               onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
                               disabled={isWeekend}
                               title={isWeekend ? "No calls on weekends" : undefined}
-                              className={cn(
-                                "font-semibold transition-colors",
-                                isWeekend && "cursor-not-allowed",
-                                isWeekday && isActive && "bg-[#3b82f6] text-white hover:bg-blue-600",
-                                isWeekday && !isActive && "bg-transparent text-muted-foreground hover:text-foreground"
+                               className={cn(
+                                "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
+                                isWeekend && "cursor-not-allowed border border-slate-300 dark:border-white/10 text-slate-400 dark:text-white/25",
+                                isWeekday && isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
+                                isWeekday && !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
                               )}
-                              style={{
-                                height: 34,
-                                padding: '0 10px',
-                                borderRadius: 8,
-                                fontSize: 12,
-                                fontWeight: 600,
-                                opacity: isWeekend ? 0.35 : 1,
-                                border: isWeekend ? '1px solid rgba(255,255,255,0.1)' : isActive ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                              }}
                             >
                               {day}
                             </button>
@@ -899,19 +917,19 @@ const ActivityMonitor = () => {
               description={mode === "live" ? "Calls will appear here once SDRs start dialing. Check back later!" : "Try adjusting the date or time range to find activity data."}
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="w-full overflow-x-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50">
-                    <TableHead><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
-                    <TableHead><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="text-center"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
-                    {mode === "live" && <TableHead className="text-right">Last Activity</TableHead>}
+                    <TableHead className="px-2 py-2"><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
+                    <TableHead className="px-2 py-2"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
+                    <TableHead className="text-center px-2 py-2"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
+                    <TableHead className="text-center px-2 py-2"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
+                    <TableHead className="text-center px-2 py-2"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
+                    <TableHead className="text-center px-2 py-2"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="text-center px-2 py-2"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
+                    <TableHead className="text-center px-2 py-2"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
+                    {mode === "live" && <TableHead className="text-right px-2 py-2">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -925,15 +943,25 @@ const ActivityMonitor = () => {
                           recent && "bg-green-500/5 shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]"
                         )}
                       >
-                        <TableCell className="font-medium text-foreground">
-                          <div className="flex items-center gap-2">
+                        <TableCell className="font-medium text-foreground px-2 py-2">
+                          <div className="flex items-center gap-1">
+                            {mode === "live" && (
+                              <span
+                                className={cn(
+                                  "shrink-0 rounded-full w-2 h-2 animate-[status-pulse_2s_infinite]",
+                                  getStatusColor(row.lastActivity) === "green" && "bg-green-500",
+                                  getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
+                                  getStatusColor(row.lastActivity) === "red" && "bg-red-500",
+                                )}
+                              />
+                            )}
                             <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{row.clientId}</TableCell>
-                        <TableCell className="text-center font-semibold text-foreground">{row.dials}</TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-muted-foreground px-2 py-2">{row.clientId}</TableCell>
+                        <TableCell className="text-center font-semibold text-foreground px-2 py-2">{row.dials}</TableCell>
+                        <TableCell className="text-center px-2 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -943,7 +971,7 @@ const ActivityMonitor = () => {
                             {row.answered}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-center px-2 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -953,10 +981,10 @@ const ActivityMonitor = () => {
                             {row.conversations}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
+                        <TableCell className="text-center text-muted-foreground px-2 py-2">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-center px-2 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -966,14 +994,14 @@ const ActivityMonitor = () => {
                             {row.sqls}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center text-muted-foreground">
+                        <TableCell className="text-center text-muted-foreground px-2 py-2">
                           {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
-                          <TableCell className="text-right text-muted-foreground text-sm">
+                          <TableCell className="text-right text-muted-foreground text-sm px-2 py-2">
                             {row.lastActivity ? (
                               <span className={recent ? "text-green-500 font-medium" : ""}>
-                                {formatDistanceToNow(row.lastActivity, { addSuffix: true })}
+                                {formatRelativeTime(row.lastActivity)}
                               </span>
                             ) : "—"}
                           </TableCell>

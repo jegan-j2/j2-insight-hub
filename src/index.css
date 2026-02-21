@@ -287,3 +287,17 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* Status pulse animation for activity traffic lights */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Slider track theme-aware styling */
+:root [data-slot="slider"] [data-slot="track"] {
+  background-color: hsl(210 15% 75%);
+}
+.dark [data-slot="slider"] [data-slot="track"] {
+  background-color: rgba(255, 255, 255, 0.15);
+}
