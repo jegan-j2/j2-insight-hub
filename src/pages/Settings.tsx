@@ -478,14 +478,29 @@ const Settings = () => {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  const sanitizeText = (text: string) => text.trim().replace(/[<>]/g, '');
+
   const handleSaveClient = async () => {
+    const name = sanitizeText(clientForm.client_name);
+    if (!name || name.length < 2 || name.length > 100) {
+      toast({ title: "Invalid client name", description: "Name must be 2-100 characters.", variant: "destructive" });
+      return;
+    }
     if (clientForm.email && !isValidEmail(clientForm.email)) {
       toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
       return;
     }
+    if (clientForm.email && clientForm.email.length > 255) {
+      toast({ title: "Email too long", description: "Email must be under 255 characters.", variant: "destructive" });
+      return;
+    }
+    if (clientForm.target_sqls && (isNaN(parseInt(clientForm.target_sqls)) || parseInt(clientForm.target_sqls) < 0 || parseInt(clientForm.target_sqls) > 100000)) {
+      toast({ title: "Invalid target", description: "Target SQLs must be 0-100,000.", variant: "destructive" });
+      return;
+    }
     setIsSavingClient(true);
     try {
-      const slug = clientForm.client_id || clientForm.client_name.toLowerCase().replace(/\s+/g, '-');
+      const slug = clientForm.client_id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
       if (editingClient) {
         const { error } = await supabase
           .from('clients')
@@ -555,6 +570,23 @@ const Settings = () => {
   };
 
   const handleSaveMember = async () => {
+    const name = sanitizeText(memberForm.sdr_name);
+    if (!name || name.length < 2 || name.length > 100) {
+      toast({ title: "Invalid name", description: "Name must be 2-100 characters.", variant: "destructive" });
+      return;
+    }
+    if (!memberForm.email || !isValidEmail(memberForm.email)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+    if (memberForm.email.length > 255) {
+      toast({ title: "Email too long", description: "Email must be under 255 characters.", variant: "destructive" });
+      return;
+    }
+    if (!memberForm.role) {
+      toast({ title: "Role required", description: "Please select a role.", variant: "destructive" });
+      return;
+    }
     setIsSavingMember(true);
     try {
       if (editingMember) {
