@@ -52,6 +52,15 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Message size limit (Slack has a 40KB limit)
+    const messageString = JSON.stringify(message)
+    if (messageString.length > 40000) {
+      return new Response(JSON.stringify({ success: false, error: 'Message too large' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
