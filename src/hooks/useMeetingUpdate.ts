@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase, getCurrentUser } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import { getSafeErrorMessage } from '@/lib/safeError'
 
 export const useMeetingUpdate = () => {
   const [updating, setUpdating] = useState<string | null>(null)
@@ -33,10 +34,10 @@ export const useMeetingUpdate = () => {
 
       return true
     } catch (error) {
-      console.error('Error updating meeting status:', error)
+      if (import.meta.env.DEV) console.error('Error updating meeting status:', error)
       toast({
         title: 'Error',
-        description: 'Failed to update meeting status',
+        description: getSafeErrorMessage(error),
         variant: 'destructive',
         duration: 3000
       })
@@ -73,10 +74,10 @@ export const useMeetingUpdate = () => {
 
       return true
     } catch (error) {
-      console.error('Error updating remarks:', error)
+      if (import.meta.env.DEV) console.error('Error updating remarks:', error)
       toast({
         title: 'Error',
-        description: 'Failed to save remarks',
+        description: getSafeErrorMessage(error),
         variant: 'destructive',
         duration: 3000
       })

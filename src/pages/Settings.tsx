@@ -20,6 +20,7 @@ import { sendSlackNotification, formatTestMessage } from "@/lib/slackNotificatio
 import { Skeleton } from "@/components/ui/skeleton";
 import { SDRAvatar } from "@/components/SDRAvatar";
 import { usePermissions } from "@/hooks/useUserRole";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 interface ClientRow {
   id: string;
@@ -535,7 +536,7 @@ const Settings = () => {
       fetchClients();
     } catch (error: any) {
       console.error('Error saving client:', error);
-      toast({ title: "Error saving client", description: error.message || "Something went wrong.", variant: "destructive" });
+      toast({ title: "Error saving client", description: getSafeErrorMessage(error), variant: "destructive" });
     } finally {
       setIsSavingClient(false);
     }
@@ -552,7 +553,7 @@ const Settings = () => {
       fetchClients();
     } catch (error: any) {
       console.error('Error deactivating client:', error);
-      toast({ title: "Error", description: error.message || "Could not deactivate client.", variant: "destructive" });
+      toast({ title: "Error", description: getSafeErrorMessage(error), variant: "destructive" });
     }
   };
 
@@ -615,7 +616,7 @@ const Settings = () => {
       fetchTeamMembers();
     } catch (error: any) {
       console.error('Error saving team member:', error);
-      toast({ title: "Error saving team member", description: error.message || "Something went wrong.", variant: "destructive" });
+      toast({ title: "Error saving team member", description: getSafeErrorMessage(error), variant: "destructive" });
     } finally {
       setIsSavingMember(false);
     }
@@ -632,7 +633,7 @@ const Settings = () => {
       fetchTeamMembers();
     } catch (error: any) {
       console.error('Error deactivating team member:', error);
-      toast({ title: "Error", description: error.message || "Could not deactivate team member.", variant: "destructive" });
+      toast({ title: "Error", description: getSafeErrorMessage(error), variant: "destructive" });
     }
   };
 
@@ -676,7 +677,7 @@ const Settings = () => {
       toast({ title: "Notification settings saved", description: "Your notification preferences have been updated.", className: "border-green-500" });
     } catch (error: any) {
       console.error('Error saving notification settings:', error);
-      toast({ title: "Error saving settings", description: error.message || "Could not save notification settings.", variant: "destructive" });
+      toast({ title: "Error saving settings", description: getSafeErrorMessage(error), variant: "destructive" });
     } finally {
       setIsSavingNotifications(false);
     }

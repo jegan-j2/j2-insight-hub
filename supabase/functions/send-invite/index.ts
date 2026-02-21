@@ -52,6 +52,23 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Email and role are required' }), { status: 400, headers: corsHeaders })
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (typeof email !== 'string' || !emailRegex.test(email)) {
+      return new Response(JSON.stringify({ error: 'Invalid email format' }), { status: 400, headers: corsHeaders })
+    }
+
+    // Role whitelist
+    const allowedRoles = ['admin', 'manager', 'client']
+    if (!allowedRoles.includes(role)) {
+      return new Response(JSON.stringify({ error: 'Invalid role' }), { status: 400, headers: corsHeaders })
+    }
+
+    // Length limits
+    if (email.length > 255 || (name && typeof name === 'string' && name.length > 255)) {
+      return new Response(JSON.stringify({ error: 'Input too long' }), { status: 400, headers: corsHeaders })
+    }
+
     // Generate invite token
     const inviteToken = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
