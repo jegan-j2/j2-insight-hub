@@ -14,8 +14,8 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { format } from "date-fns";
 
-const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_circular_darkmode.png";
-const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_circular_lightmode.png";
+const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_circular_lightmode.png";
+const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_circular_darkmode.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ const Navbar = () => {
           <img 
             src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} 
             alt="J2 Group" 
-            className="w-12 h-12 rounded-full object-contain"
+            className="w-14 h-14 rounded-full object-contain"
           />
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold text-foreground">J2 Group</h1>

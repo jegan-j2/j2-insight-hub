@@ -721,12 +721,12 @@ const ActivityMonitor = () => {
               </TabsList>
             </Tabs>
 
-            <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
-              {/* Date selector */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">
-                  {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
-                </label>
+            <div className="flex flex-col gap-3">
+              {/* ROW 1 - Date/Week/Month navigator */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                  📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
+                </span>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigateDate("prev")}>
                     <ChevronLeft className="h-4 w-4" />
@@ -760,12 +760,13 @@ const ActivityMonitor = () => {
                 </div>
               </div>
 
-              {/* Time Range (day view only) */}
+              {/* ROW 2 - Time Range (day) or Weekday buttons (week/month) */}
               {dateMode === "day" && (
-                <div className="flex items-center gap-4 flex-1">
-                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">Time Range:</span>
-                  <div className="flex-1 min-w-[200px]">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                    🕐 Time Range
+                  </span>
+                  <div className="flex-1 min-w-[200px] max-w-[400px]">
                     <Slider
                       min={0}
                       max={24}
@@ -782,17 +783,16 @@ const ActivityMonitor = () => {
                       <span>12 AM</span>
                     </div>
                   </div>
-                  <span className="text-sm font-medium text-foreground whitespace-nowrap min-w-[140px] text-right">
+                  <span className="text-sm font-medium text-foreground whitespace-nowrap min-w-[140px]">
                     {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
                   </span>
                 </div>
               )}
 
-              {/* Weekday filter (week/month views) */}
               {(dateMode === "week" || dateMode === "month") && (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Days:</span>
-                  <div className="flex gap-1.5">
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Days</span>
+                  <div className="flex gap-1.5 justify-center flex-1">
                     {ALL_DAYS.map((day) => {
                       const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
                       const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
@@ -819,8 +819,8 @@ const ActivityMonitor = () => {
                 </div>
               )}
 
-              {/* Apply - pushed to the right */}
-              <div className="ml-auto">
+              {/* Apply Filters - right aligned */}
+              <div className="flex justify-end pt-1">
                 <Button
                   onClick={() => setHistApplied(true)}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-6"
