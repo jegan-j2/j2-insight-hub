@@ -1591,67 +1591,90 @@ const Settings = () => {
                 </div>
               </div>
 
-              {/* Browser Notifications */}
-              <div className="space-y-3 pt-4 border-t border-border">
-                <div className="flex items-center gap-2">
-                  <BellRing className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-base font-medium">Browser Notifications</Label>
-                </div>
-
-                {/* Permission Status */}
-                <div className="flex items-center gap-2">
-                  {!browserNotifSupported ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
-                      ℹ️ Browser notifications not supported
-                    </span>
-                  ) : browserNotifPermission === 'granted' ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent">
-                      ✅ Browser notifications enabled
-                    </span>
-                  ) : browserNotifPermission === 'denied' ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-destructive/15 text-destructive">
-                      ⚠️ Browser notifications blocked — update in browser settings
-                    </span>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        const result = await requestPermission();
-                        if (result === 'granted') {
-                          toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-green-500" });
-                        } else {
-                          toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
-                        }
-                      }}
-                      className="gap-2"
-                    >
-                      <BellRing className="h-4 w-4" />
-                      Enable Browser Notifications
-                    </Button>
-                  )}
-                </div>
-
-                {/* Toggle */}
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="browserNotifications"
-                    checked={reportContent.browserNotifications}
-                    onCheckedChange={(checked) =>
-                      setReportContent({ ...reportContent, browserNotifications: checked as boolean })
-                    }
-                    className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
-                  />
-                  <div className="grid gap-0.5">
-                    <Label htmlFor="browserNotifications" className="font-normal cursor-pointer">Show desktop notifications for new SQLs</Label>
-                    <p className="text-xs text-muted-foreground">Displays a native browser popup when a new SQL meeting is booked</p>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex justify-end pt-2 border-t border-border">
                 <Button onClick={handleSaveNotifications} variant="outline" className="gap-2" disabled={isSavingNotifications || !canEditSettings}>
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Slack Settings' : '🔒 Admin Access Required'}</>)}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Browser Notifications - Separate Section */}
+          <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BellRing className="h-5 w-5 text-secondary" />
+                Browser Notifications
+              </CardTitle>
+              <CardDescription>Get desktop notifications even when the dashboard is in the background</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Permission Status */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Browser notification permission</span>
+                {!browserNotifSupported ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+                    ℹ️ Not supported
+                  </span>
+                ) : browserNotifPermission === 'granted' ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-green-500/15 text-green-500">
+                    ✓ Enabled
+                  </span>
+                ) : browserNotifPermission === 'denied' ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-destructive/15 text-destructive">
+                    ✗ Blocked
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-yellow-500/15 text-yellow-500">
+                    ⚠ Not enabled
+                  </span>
+                )}
+              </div>
+
+              {/* Toggle */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-sm font-medium">Show desktop notifications for new SQLs</span>
+                  <p className="text-xs text-muted-foreground">Displays a native browser popup when a new SQL meeting is booked</p>
+                </div>
+                <Checkbox
+                  id="browserNotifications"
+                  checked={reportContent.browserNotifications}
+                  onCheckedChange={(checked) =>
+                    setReportContent({ ...reportContent, browserNotifications: checked as boolean })
+                  }
+                  disabled={browserNotifPermission !== 'granted'}
+                  className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                />
+              </div>
+
+              {browserNotifPermission === 'default' && (
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const result = await requestPermission();
+                    if (result === 'granted') {
+                      toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-green-500" });
+                    } else {
+                      toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
+                    }
+                  }}
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  <BellRing className="h-4 w-4" />
+                  Request Permission
+                </Button>
+              )}
+
+              {browserNotifPermission === 'denied' && (
+                <p className="text-xs text-muted-foreground">
+                  Notifications are blocked. You can enable them in your browser's site settings.
+                </p>
+              )}
+
+              <div className="flex justify-end pt-2 border-t border-border">
+                <Button onClick={handleSaveNotifications} variant="outline" className="gap-2" disabled={isSavingNotifications || !canEditSettings}>
+                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Notification Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
             </CardContent>

@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, RefreshCw } from "lucide-react";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, RefreshCw, Handshake } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
@@ -23,9 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Download, Loader2 } from "lucide-react";
 
 type Mode = "live" | "historical";
-type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "answerRate" | "sqls" | "conversion";
+type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "conversations" | "answerRate" | "sqls" | "conversion";
 type SortDir = "asc" | "desc";
-type DrillMetric = "answered" | "sqls";
+type DrillMetric = "answered" | "sqls" | "conversations";
 type DateMode = "day" | "week" | "month";
 type WeekDay = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
 
@@ -62,6 +62,7 @@ interface ActivityRow {
   call_duration: number | null;
   activity_type: string | null;
   is_sql: boolean | null;
+  is_decision_maker: boolean | null;
   meeting_scheduled_date: string | null;
   client_id: string | null;
   recording_url: string | null;
@@ -72,6 +73,7 @@ interface SDRRow {
   clientId: string;
   dials: number;
   answered: number;
+  conversations: number;
   answerRate: number;
   sqls: number;
   conversion: number;
@@ -209,7 +211,7 @@ const ActivityMonitor = () => {
           .eq("snapshot_date", todayMelbourne),
         supabase
           .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url")
           .gte("activity_date", todayMelbourne + "T00:00:00")
           .lte("activity_date", todayMelbourne + "T23:59:59")
           .order("activity_date", { ascending: false }),
@@ -263,7 +265,7 @@ const ActivityMonitor = () => {
 
       console.log("📊 Historical query:", { startTimestamp, endTimestamp, dates });
 
-      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url";
+      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
 
       const [activityData, sqlRes, snapshotRes] = await Promise.all([
         fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) =>
@@ -340,10 +342,11 @@ const ActivityMonitor = () => {
     if (mode === "historical") {
       const dials = activities.length;
       const answered = activities.filter(a => a.call_outcome?.toLowerCase() === "connected").length;
+      const conversations = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length;
       const sqls = histSqlMeetings.length;
-      return { dials, answered, sqls };
+      return { dials, answered, conversations, sqls };
     }
-    return snapshots.reduce(
+    const base = snapshots.reduce(
       (acc, s) => ({
         dials: acc.dials + (s.dials || 0),
         answered: acc.answered + (s.answered || 0),
@@ -351,6 +354,8 @@ const ActivityMonitor = () => {
       }),
       { dials: 0, answered: 0, sqls: 0 }
     );
+    const conversations = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length;
+    return { ...base, conversations };
   }, [snapshots, activities, histSqlMeetings, mode]);
 
   // SDR rows
@@ -371,6 +376,7 @@ const ActivityMonitor = () => {
             clientId: s.client_id || "",
             dials: s.dials || 0,
             answered: s.answered || 0,
+            conversations: 0,
             answerRate: 0,
             sqls: s.sqls || 0,
             conversion: 0,
@@ -397,6 +403,7 @@ const ActivityMonitor = () => {
           clientId: typeof clientId === "string" ? clientId : "",
           dials: sdrActivities.length,
           answered: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected").length,
+          conversations: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length,
           answerRate: 0,
           sqls: sqlCountBySdr.get(sdrName) || 0,
           conversion: 0,
@@ -406,12 +413,16 @@ const ActivityMonitor = () => {
     }
 
     // Attach last activity
+    // Attach last activity and compute conversations for live mode
     for (const a of activities) {
       if (!a.sdr_name) continue;
       const row = map.get(a.sdr_name);
       if (row) {
         const actDate = new Date(a.activity_date);
         if (!row.lastActivity || actDate > row.lastActivity) row.lastActivity = actDate;
+        if (mode === "live" && a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker) {
+          row.conversations += 1;
+        }
       }
     }
 
@@ -449,7 +460,7 @@ const ActivityMonitor = () => {
     setDrillDownData([]);
     setDrillDownSqlData([]);
     try {
-      if (metric === "answered") {
+      if (metric === "answered" || metric === "conversations") {
         let startTimestamp: string;
         let endTimestamp: string;
 
@@ -464,15 +475,20 @@ const ActivityMonitor = () => {
           endTimestamp = `${dates[dates.length - 1]}T${endTs}`;
         }
 
-        const { data } = await supabase
+        let query = supabase
           .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url")
+          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker")
           .eq("sdr_name", sdrName)
           .ilike("call_outcome", "connected")
           .gte("activity_date", startTimestamp)
           .lte("activity_date", endTimestamp)
           .order("activity_date", { ascending: false });
 
+        if (metric === "conversations") {
+          query = query.eq("is_decision_maker", true);
+        }
+
+        const { data } = await query;
         setDrillDownData(data || []);
       } else if (metric === "sqls") {
         let startTimestamp: string;
@@ -590,6 +606,7 @@ const ActivityMonitor = () => {
   const kpiCards = [
     { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, color: "text-blue-500" },
     { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, color: "text-green-500" },
+    { label: "Total Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, color: "text-teal-500", clickable: true },
     { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, color: "text-purple-500" },
     { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, color: "text-secondary" },
   ];
@@ -691,7 +708,7 @@ const ActivityMonitor = () => {
 
       {/* Historical Filters */}
       {mode === "historical" && (
-        <Card className="bg-card/50 backdrop-blur-sm border-border">
+        <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
           <CardContent className="pt-6 space-y-4">
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as DateMode)}>
@@ -857,6 +874,7 @@ const ActivityMonitor = () => {
                     <TableHead><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
+                    <TableHead className="text-center"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
@@ -890,6 +908,16 @@ const ActivityMonitor = () => {
                             onClick={() => handleDrillDown(row.sdrName, "answered")}
                           >
                             {row.answered}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="font-semibold text-teal-500 hover:text-teal-400"
+                            onClick={() => handleDrillDown(row.sdrName, "conversations")}
+                          >
+                            {row.conversations}
                           </Button>
                         </TableCell>
                         <TableCell className="text-center text-muted-foreground">
@@ -930,9 +958,9 @@ const ActivityMonitor = () => {
       {/* Drill-down Modal */}
       <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
         <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle>
-              {drillDown?.sdrName} — {drillDown?.metric === "answered" ? "Connected Calls" : "SQL Meetings"}
+              {drillDown?.sdrName} — {drillDown?.metric === "answered" ? "Connected Calls" : drillDown?.metric === "conversations" ? "Decision Maker Conversations" : "SQL Meetings"}
             </DialogTitle>
           </DialogHeader>
           {loadingDrill ? (
@@ -941,9 +969,11 @@ const ActivityMonitor = () => {
                 <Skeleton key={i} className="h-8 w-full" />
               ))}
             </div>
-          ) : drillDown?.metric === "answered" ? (
+          ) : (drillDown?.metric === "answered" || drillDown?.metric === "conversations") ? (
             drillDownData.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No connected calls found for this SDR in the selected time range.</p>
+              <p className="text-center text-muted-foreground py-8">
+                {drillDown?.metric === "conversations" ? "No decision maker conversations found in this time range." : "No connected calls found for this SDR in the selected time range."}
+              </p>
             ) : (
               <div className="overflow-auto flex-1">
                 <Table>
