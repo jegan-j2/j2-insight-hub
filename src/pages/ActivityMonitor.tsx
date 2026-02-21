@@ -28,6 +28,7 @@ type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls" | "conversations";
 type DateMode = "day" | "week" | "month";
 type WeekDay = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
+type AllDay = WeekDay | "Sat" | "Sun";
 
 interface SqlMeetingRow {
   id: string;
@@ -102,6 +103,7 @@ const getMelbourneToday = () => {
 };
 
 const ALL_WEEKDAYS: WeekDay[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const ALL_DAYS: AllDay[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const WEEKDAY_MAP: Record<WeekDay, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5 };
 
 const ActivityMonitor = () => {
@@ -790,22 +792,24 @@ const ActivityMonitor = () => {
 
               {/* Weekday filter (week/month views) */}
               {(dateMode === "week" || dateMode === "month") && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Days</label>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Days:</span>
                   <div className="flex gap-1.5">
-                    {ALL_WEEKDAYS.map((day) => {
-                      const isActive = selectedWeekdays.includes(day);
+                    {ALL_DAYS.map((day) => {
+                      const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
+                      const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
                       return (
                         <Button
                           key={day}
                           variant={isActive ? "default" : "outline"}
                           size="sm"
-                          onClick={() => toggleWeekday(day)}
+                          onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
+                          disabled={!isWeekday}
                           className={cn(
                             "text-xs px-3 min-w-[48px]",
-                            isActive
-                              ? "bg-blue-500 hover:bg-blue-600 text-white"
-                              : "text-muted-foreground hover:text-foreground"
+                            !isWeekday && "opacity-30 cursor-not-allowed",
+                            isWeekday && isActive && "bg-blue-500 hover:bg-blue-600 text-white",
+                            isWeekday && !isActive && "text-muted-foreground hover:text-foreground"
                           )}
                         >
                           {day}
@@ -816,13 +820,15 @@ const ActivityMonitor = () => {
                 </div>
               )}
 
-              {/* Apply */}
-              <Button
-                onClick={() => setHistApplied(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                Apply Filters
-              </Button>
+              {/* Apply - pushed to the right */}
+              <div className="ml-auto">
+                <Button
+                  onClick={() => setHistApplied(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6"
+                >
+                  Apply Filters
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
