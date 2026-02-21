@@ -721,22 +721,23 @@ const ActivityMonitor = () => {
               </TabsList>
             </Tabs>
 
-            <div className="flex flex-col gap-3">
-              {/* ROW 1 - Date/Week/Month navigator */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+            {/* Three-column filter layout */}
+            <div className="flex items-center" style={{ minHeight: 80 }}>
+              {/* COLUMN 1 — Navigator */}
+              <div className="flex flex-col justify-center" style={{ width: 180, borderRight: '1px solid rgba(255,255,255,0.08)', paddingRight: 24 }}>
+                <span className="font-medium mb-1.5" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
                   📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
                 </span>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigateDate("prev")}>
-                    <ChevronLeft className="h-4 w-4" />
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateDate("prev")}>
+                    <ChevronLeft className="h-3.5 w-3.5" />
                   </Button>
                   {dateMode === "day" ? (
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(histDate, "MMM d, yyyy")}
+                        <Button variant="outline" className="h-8 text-xs px-2 justify-start text-left font-normal flex-1 min-w-0">
+                          <CalendarIcon className="mr-1 h-3 w-3 shrink-0" />
+                          <span className="truncate">{format(histDate, "MMM d, yyyy")}</span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -750,80 +751,77 @@ const ActivityMonitor = () => {
                       </PopoverContent>
                     </Popover>
                   ) : (
-                    <div className="px-4 py-2 border border-border rounded-md bg-card text-sm font-medium min-w-[200px] text-center">
+                    <div className="h-8 flex items-center px-2 border border-border rounded-md bg-card text-xs font-medium flex-1 min-w-0 justify-center truncate">
                       {dateRangeInfo.label}
                     </div>
                   )}
-                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigateDate("next")}>
-                    <ChevronRight className="h-4 w-4" />
+                  <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateDate("next")}>
+                    <ChevronRight className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
 
-              {/* ROW 2 - Time Range (day) or Weekday buttons (week/month) */}
-              {dateMode === "day" && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                    🕐 Time Range
-                  </span>
-                  <div className="flex-1 min-w-[200px] max-w-[400px]">
-                    <Slider
-                      min={0}
-                      max={24}
-                      step={1}
-                      value={timeRange}
-                      onValueChange={setTimeRange}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>12 AM</span>
-                      <span>6 AM</span>
-                      <span>12 PM</span>
-                      <span>6 PM</span>
-                      <span>12 AM</span>
+              {/* COLUMN 2 — Time Range or Day buttons */}
+              <div className="flex-1 flex flex-col justify-center" style={{ borderRight: '1px solid rgba(255,255,255,0.08)', padding: '0 24px' }}>
+                {dateMode === "day" ? (
+                  <>
+                    <span className="font-medium mb-1.5" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                      🕐 Time Range
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-[160px]">
+                        <Slider
+                          min={0}
+                          max={24}
+                          step={1}
+                          value={timeRange}
+                          onValueChange={setTimeRange}
+                          className="w-full"
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-foreground whitespace-nowrap">
+                        {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                      </span>
                     </div>
-                  </div>
-                  <span className="text-sm font-medium text-foreground whitespace-nowrap min-w-[140px]">
-                    {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                  </span>
-                </div>
-              )}
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium mb-1.5" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                      📅 Days
+                    </span>
+                    <div className="flex gap-1.5 justify-center">
+                      {ALL_DAYS.map((day) => {
+                        const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
+                        const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
+                        return (
+                          <Button
+                            key={day}
+                            variant={isActive ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
+                            disabled={!isWeekday}
+                            title={!isWeekday ? "No calls on weekends" : undefined}
+                            className={cn(
+                              "text-xs px-3 min-w-[48px] h-8",
+                              !isWeekday && "opacity-[0.35] cursor-not-allowed hover:bg-transparent",
+                              isWeekday && isActive && "bg-blue-500 hover:bg-blue-600 text-white",
+                              isWeekday && !isActive && "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            {day}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
 
-              {(dateMode === "week" || dateMode === "month") && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Days</span>
-                  <div className="flex gap-1.5 justify-center flex-1">
-                    {ALL_DAYS.map((day) => {
-                      const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
-                      const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
-                      return (
-                        <Button
-                          key={day}
-                          variant={isActive ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
-                          disabled={!isWeekday}
-                          title={!isWeekday ? "No calls on weekends" : undefined}
-                          className={cn(
-                            "text-xs px-3 min-w-[48px]",
-                            !isWeekday && "opacity-[0.35] cursor-not-allowed hover:bg-transparent",
-                            isWeekday && isActive && "bg-blue-500 hover:bg-blue-600 text-white",
-                            isWeekday && !isActive && "text-muted-foreground hover:text-foreground"
-                          )}
-                        >
-                          {day}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Apply Filters - right aligned */}
-              <div className="flex justify-end pt-1">
+              {/* COLUMN 3 — Apply Filters */}
+              <div className="flex flex-col justify-center items-center" style={{ width: 140 }}>
                 <Button
                   onClick={() => setHistApplied(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-6"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-5 text-sm"
                 >
                   Apply Filters
                 </Button>
