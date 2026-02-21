@@ -192,7 +192,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                           <img 
                             src={client.logoUrl} 
                             alt={client.name}
-                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                            className="w-8 h-8 rounded-full object-contain flex-shrink-0 bg-white"
                           />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center flex-shrink-0">

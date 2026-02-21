@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -7,18 +7,15 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
+const LOGIN_LOGO = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_circular_darkmode.png";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    setLogoUrl(localStorage.getItem("companyLogoUrl"));
-  }, []);
   const redirectBasedOnRole = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     console.log("🔍 Login - getUser result:", user, "Error:", userError);
@@ -92,13 +89,7 @@ const Login = () => {
         {/* Logo & Heading */}
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Company logo" className="h-16 w-16 rounded-full object-cover" />
-            ) : (
-              <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
-                <span className="text-xl font-bold text-secondary-foreground tracking-tight">J2</span>
-              </div>
-            )}
+            <img src={LOGIN_LOGO} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
         </div>
