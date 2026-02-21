@@ -27,7 +27,7 @@ export const DateFilterProvider = ({ children }: { children: ReactNode }) => {
   // Log date changes for testing
   const handleDateChange = (range: DateRange | undefined) => {
     setDateRange(range);
-    console.log("📅 Date filter changed:", {
+    if (import.meta.env.DEV) console.log("📅 Date filter changed:", {
       from: range?.from,
       to: range?.to,
       filterType,
@@ -36,7 +36,7 @@ export const DateFilterProvider = ({ children }: { children: ReactNode }) => {
 
   const handleFilterTypeChange = (type: FilterType) => {
     setFilterType(type);
-    console.log("🔄 Filter type changed:", type);
+    if (import.meta.env.DEV) console.log("🔄 Filter type changed:", type);
   };
 
   return (

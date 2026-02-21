@@ -265,7 +265,7 @@ const ActivityMonitor = () => {
       const startTimestamp = `${firstDate}T${startHour}:00:00`;
       const endTimestamp = `${lastDate}T${endTs}`;
 
-      console.log("📊 Historical query:", { startTimestamp, endTimestamp, dates });
+      if (import.meta.env.DEV) console.log("📊 Historical query:", { startTimestamp, endTimestamp, dates });
 
       const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
 
@@ -286,7 +286,7 @@ const ActivityMonitor = () => {
           .lte("snapshot_date", lastDate),
       ]);
 
-      console.log("📊 Historical results:", {
+      if (import.meta.env.DEV) console.log("📊 Historical results:", {
         activities: activityData.length,
         sqlMeetings: sqlRes.data?.length,
         snapshots: snapshotRes.data?.length,

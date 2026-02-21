@@ -34,7 +34,7 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
           .eq("user_id", session.user.id)
           .single();
 
-        console.log("🔍 ProtectedRoute role:", roleData, "Error:", error);
+        if (import.meta.env.DEV) console.log("🔍 ProtectedRoute role:", roleData, "Error:", error);
 
         // Can't get role → go to login
         if (error || !roleData) {
@@ -47,7 +47,7 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
         if (roleData.role === "client" && roleData.client_id) {
           const clientPath = `/client/${roleData.client_id}`;
           if (!location.pathname.startsWith(clientPath)) {
-            console.log(`🔒 Client redirected to ${clientPath}`);
+            if (import.meta.env.DEV) console.log(`🔒 Client redirected to ${clientPath}`);
             setRedirectPath(clientPath);
             setLoading(false);
             return;
