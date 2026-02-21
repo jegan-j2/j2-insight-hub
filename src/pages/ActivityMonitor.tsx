@@ -727,14 +727,14 @@ const ActivityMonitor = () => {
               <div className="flex items-center" style={{ gap: 0 }}>
                 {/* .col1 — Date navigator */}
                 <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
-                  <span className="font-medium" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                  <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                     📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
                   </span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => navigateDate("prev")}
-                      className="flex items-center justify-center shrink-0 text-foreground hover:opacity-80 transition-opacity"
-                      style={{ width: 30, height: 34, background: '#334155', borderRadius: 6 }}
+                      className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
+                      style={{ width: 30, height: 34 }}
                     >
                       <ChevronLeft className="h-3.5 w-3.5" />
                     </button>
@@ -742,8 +742,8 @@ const ActivityMonitor = () => {
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
-                            className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity"
-                            style={{ background: '#334155', borderRadius: 6, padding: '0 12px', height: 34 }}
+                           className="flex items-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
+                            style={{ padding: '0 12px', height: 34 }}
                           >
                             <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
                             {format(histDate, "MMM d, yyyy")}
@@ -761,16 +761,16 @@ const ActivityMonitor = () => {
                       </Popover>
                     ) : (
                       <div
-                        className="flex items-center justify-center text-xs font-medium text-white whitespace-nowrap"
-                        style={{ background: '#334155', borderRadius: 6, padding: '0 12px', height: 34 }}
+                        className="flex items-center justify-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
+                        style={{ padding: '0 12px', height: 34 }}
                       >
                         {dateRangeInfo.label}
                       </div>
                     )}
                     <button
                       onClick={() => navigateDate("next")}
-                      className="flex items-center justify-center shrink-0 text-foreground hover:opacity-80 transition-opacity"
-                      style={{ width: 30, height: 34, background: '#334155', borderRadius: 6 }}
+                      className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
+                      style={{ width: 30, height: 34 }}
                     >
                       <ChevronRight className="h-3.5 w-3.5" />
                     </button>
@@ -778,15 +778,15 @@ const ActivityMonitor = () => {
                 </div>
 
                 {/* .divider */}
-                <div className="shrink-0 self-center" style={{ width: 1, height: 48, background: 'rgba(255,255,255,0.08)', margin: '0 20px' }} />
+                <div className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]" style={{ width: 1, height: 48, margin: '0 20px' }} />
 
                 {/* .col2 — Time Range / Days */}
                 <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
                   {dateMode === "day" ? (
                     <>
-                      <span className="font-medium" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                       <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                         🕐 Time Range
-                      </span>
+                       </span>
                       <div className="flex items-center gap-3">
                         <Slider
                           min={0}
@@ -803,9 +803,9 @@ const ActivityMonitor = () => {
                     </>
                   ) : (
                     <>
-                      <span className="font-medium" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
-                        📅 Days
-                      </span>
+                       <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                         📅 Days
+                       </span>
                       <div className="flex gap-1.5">
                         {ALL_DAYS.map((day) => {
                           const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
@@ -847,7 +847,7 @@ const ActivityMonitor = () => {
               <div style={{ flex: 1 }} />
 
               {/* .divider-apply */}
-              <div className="shrink-0 self-center" style={{ width: 1, height: 48, background: 'rgba(255,255,255,0.08)', margin: '0 20px' }} />
+              <div className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]" style={{ width: 1, height: 48, margin: '0 20px' }} />
 
               {/* Apply Filters button */}
               <Button
