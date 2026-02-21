@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Image, Power, BellRing } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Image, Power, BellRing, Mail, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +45,16 @@ interface TeamMemberRow {
   status: string | null;
   created_at: string | null;
   profile_photo_url: string | null;
+}
+
+interface InviteRecord {
+  id: string;
+  client_id: string | null;
+  role: string;
+  invite_status: string | null;
+  invite_sent_at: string | null;
+  invite_expires_at: string | null;
+  user_id: string | null;
 }
 
 const Settings = () => {
@@ -97,10 +108,66 @@ const Settings = () => {
     }
   }, [toast]);
 
+  // --- Invite records state ---
+  const [inviteRecords, setInviteRecords] = useState<InviteRecord[]>([]);
+  const [clientInviteStatus, setClientInviteStatus] = useState<Record<string, 'not_sent' | 'sending' | 'sent' | 'error'>>({});
+  const [memberInviteStatus, setMemberInviteStatus] = useState<Record<string, 'not_sent' | 'sending' | 'sent' | 'error'>>({});
+
+  const fetchInviteRecords = useCallback(async () => {
+    try {
+      // Use service role via edge function or just query what admin can see
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('id, client_id, role, invite_status, invite_sent_at, invite_expires_at, user_id');
+      if (!error && data) {
+        setInviteRecords(data);
+      }
+    } catch (err) {
+      console.error('Error fetching invite records:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchClients();
     fetchTeamMembers();
-  }, [fetchClients, fetchTeamMembers]);
+    fetchInviteRecords();
+  }, [fetchClients, fetchTeamMembers, fetchInviteRecords]);
+
+  const getClientInviteInfo = (clientId: string) => {
+    const invite = inviteRecords.find(r => r.client_id === clientId && r.role === 'client');
+    if (!invite) return { status: 'no_invite', label: 'No Invite Sent' };
+    if (invite.user_id) return { status: 'active', label: 'Active' };
+    if (invite.invite_status === 'pending') {
+      const isExpired = invite.invite_expires_at && new Date(invite.invite_expires_at) < new Date();
+      if (isExpired) return { status: 'expired', label: 'Invite Expired' };
+      return { status: 'pending', label: 'Invite Pending' };
+    }
+    return { status: 'no_invite', label: 'No Invite Sent' };
+  };
+
+  const handleSendInvite = async (email: string, role: string, name: string, clientId?: string) => {
+    const key = clientId || email;
+    const setStatus = role === 'client' ? setClientInviteStatus : setMemberInviteStatus;
+    setStatus(prev => ({ ...prev, [key]: 'sending' }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-invite', {
+        body: { email, role, name, clientId }
+      });
+      if (error) throw error;
+      setStatus(prev => ({ ...prev, [key]: 'sent' }));
+      toast({ title: "Invite sent", description: `Invite sent to ${email}`, className: "border-green-500" });
+      fetchInviteRecords();
+    } catch (error: any) {
+      console.error('Error sending invite:', error);
+      setStatus(prev => ({ ...prev, [key]: 'error' }));
+      toast({ title: "Failed to send invite", description: error.message || "Something went wrong.", variant: "destructive" });
+    }
+  };
+
+  const handleResendInvite = async (email: string, role: string, name: string, clientId?: string) => {
+    await handleSendInvite(email, role, name, clientId);
+  };
 
   // --- Show inactive toggles ---
   const [showInactiveClients, setShowInactiveClients] = useState(false);
@@ -821,14 +888,39 @@ const Settings = () => {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="client-email">Client Email</Label>
-                        <Input
-                          id="client-email"
-                          type="email"
-                          placeholder="client@company.com"
-                          value={clientForm.email}
-                          onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                          className="bg-background/50 border-border"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            id="client-email"
+                            type="email"
+                            placeholder="client@company.com"
+                            value={clientForm.email}
+                            onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                            className="bg-background/50 border-border flex-1"
+                          />
+                          {clientForm.email && isValidEmail(clientForm.email) && editingClient && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSendInvite(clientForm.email, 'client', clientForm.client_name, clientForm.client_id || editingClient.client_id)}
+                              disabled={clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sending'}
+                              className="gap-1.5 shrink-0 border-secondary/30 text-secondary hover:bg-secondary/10"
+                            >
+                              {clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sending' ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sent' ? (
+                                <>✓ Invite Sent</>
+                              ) : (
+                                <><Mail className="h-3.5 w-3.5" />Send Invite</>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        {clientInviteStatus[clientForm.client_id || editingClient?.client_id || ''] === 'sent' && (
+                          <p className="text-xs text-green-500">Invite sent successfully!</p>
+                        )}
+                        {clientInviteStatus[clientForm.client_id || editingClient?.client_id || ''] === 'error' && (
+                          <p className="text-xs text-destructive">Failed to send invite. Try again.</p>
+                        )}
                         <p className="text-[10px] text-muted-foreground">Used for sending dashboard login credentials</p>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -968,6 +1060,7 @@ const Settings = () => {
                       <TableHead className="text-muted-foreground">Client Name</TableHead>
                       <TableHead className="text-muted-foreground">Client ID</TableHead>
                       <TableHead className="text-muted-foreground">Email</TableHead>
+                      <TableHead className="text-muted-foreground">Access</TableHead>
                       <TableHead className="text-muted-foreground">Campaign</TableHead>
                       <TableHead className="text-muted-foreground">Target SQLs</TableHead>
                       <TableHead className="text-muted-foreground">Status</TableHead>
@@ -979,13 +1072,14 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                           No clients found. Add your first client above.
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredClients.map((client) => {
                         const isInactive = client.status === 'inactive';
+                        const inviteInfo = getClientInviteInfo(client.client_id);
                         return (
                           <TableRow key={client.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
@@ -1003,6 +1097,16 @@ const Settings = () => {
                             </TableCell>
                             <TableCell className="text-muted-foreground">{client.client_id}</TableCell>
                             <TableCell className="text-muted-foreground text-sm">{client.email || '—'}</TableCell>
+                            <TableCell>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                inviteInfo.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                                inviteInfo.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                                inviteInfo.status === 'expired' ? 'bg-destructive/20 text-destructive' :
+                                'bg-muted/30 text-muted-foreground'
+                              }`}>
+                                {inviteInfo.label}
+                              </span>
+                            </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {client.campaign_start && client.campaign_end
                                 ? `${client.campaign_start} → ${client.campaign_end}`
@@ -1026,6 +1130,22 @@ const Settings = () => {
                                     </TooltipTrigger>
                                     <TooltipContent>Edit</TooltipContent>
                                   </Tooltip>
+                                  {inviteInfo.status === 'pending' && client.email && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleResendInvite(client.email!, 'client', client.client_name, client.client_id)}
+                                          aria-label={`Resend invite to ${client.client_name}`}
+                                          className="text-secondary hover:text-secondary hover:bg-secondary/10"
+                                        >
+                                          <RefreshCw className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Resend Invite</TooltipContent>
+                                    </Tooltip>
+                                  )}
                                   {isInactive ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
@@ -1151,14 +1271,39 @@ const Settings = () => {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="member-email">Email Address *</Label>
-                        <Input
-                          id="member-email"
-                          type="email"
-                          placeholder="john.smith@j2group.com.au"
-                          value={memberForm.email}
-                          onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
-                          className="bg-background/50 border-border"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            id="member-email"
+                            type="email"
+                            placeholder="john.smith@j2group.com.au"
+                            value={memberForm.email}
+                            onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
+                            className="bg-background/50 border-border flex-1"
+                          />
+                          {memberForm.email && isValidEmail(memberForm.email) && editingMember && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSendInvite(memberForm.email, 'sdr', memberForm.sdr_name)}
+                              disabled={memberInviteStatus[memberForm.email] === 'sending'}
+                              className="gap-1.5 shrink-0 border-secondary/30 text-secondary hover:bg-secondary/10"
+                            >
+                              {memberInviteStatus[memberForm.email] === 'sending' ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : memberInviteStatus[memberForm.email] === 'sent' ? (
+                                <>✓ Invite Sent</>
+                              ) : (
+                                <><Mail className="h-3.5 w-3.5" />Send Invite</>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        {memberInviteStatus[memberForm.email] === 'sent' && (
+                          <p className="text-xs text-green-500">Invite sent successfully!</p>
+                        )}
+                        {memberInviteStatus[memberForm.email] === 'error' && (
+                          <p className="text-xs text-destructive">Failed to send invite. Try again.</p>
+                        )}
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="member-role">Role *</Label>
@@ -1208,6 +1353,7 @@ const Settings = () => {
                       <TableHead className="text-muted-foreground">Name</TableHead>
                       <TableHead className="text-muted-foreground">Email</TableHead>
                       <TableHead className="text-muted-foreground">Role</TableHead>
+                      <TableHead className="text-muted-foreground">Invite</TableHead>
                       <TableHead className="text-muted-foreground">Status</TableHead>
                       <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                     </TableRow>
@@ -1217,7 +1363,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
@@ -1237,6 +1383,11 @@ const Settings = () => {
                             </TableCell>
                             <TableCell className="text-muted-foreground">{member.email}</TableCell>
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
+                            <TableCell>
+                              <span className="text-xs px-2 py-1 rounded-full bg-muted/30 text-muted-foreground">
+                                No Invite Sent
+                              </span>
+                            </TableCell>
                             <TableCell>
                               <span className={`text-xs px-2 py-1 rounded-full ${member.status === 'active' || !member.status ? 'bg-green-500/20 text-green-400' : 'bg-muted/30 text-muted-foreground'}`}>
                                 {member.status || "active"}

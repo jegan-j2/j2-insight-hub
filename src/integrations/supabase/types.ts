@@ -411,6 +411,10 @@ export type Database = {
           client_id: string | null
           created_at: string | null
           id: string
+          invite_expires_at: string | null
+          invite_sent_at: string | null
+          invite_status: string | null
+          invite_token: string | null
           role: string
           user_id: string | null
         }
@@ -418,6 +422,10 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           id?: string
+          invite_expires_at?: string | null
+          invite_sent_at?: string | null
+          invite_status?: string | null
+          invite_token?: string | null
           role: string
           user_id?: string | null
         }
@@ -425,6 +433,10 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           id?: string
+          invite_expires_at?: string | null
+          invite_sent_at?: string | null
+          invite_status?: string | null
+          invite_token?: string | null
           role?: string
           user_id?: string | null
         }
