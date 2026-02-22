@@ -99,7 +99,7 @@ export function AppSidebar() {
                     className={({ isActive }) =>
                       isActive
                         ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
-                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150 border-l-2 border-transparent bg-transparent shadow-none"
                     }
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -119,7 +119,7 @@ export function AppSidebar() {
                     className={({ isActive }) =>
                       isActive
                         ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
-                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150 border-l-2 border-transparent bg-transparent shadow-none"
                     }
                   >
                     <MonitorDot className="h-4 w-4" />
@@ -138,7 +138,7 @@ export function AppSidebar() {
                     className={({ isActive }) =>
                       isActive
                         ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
-                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150 border-l-2 border-transparent bg-transparent shadow-none"
                     }
                   >
                     <UserCog className="h-4 w-4" />
@@ -170,7 +170,7 @@ export function AppSidebar() {
                               className={({ isActive }) =>
                                 isActive
                                   ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-150"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-150 border-l-2 border-transparent bg-transparent shadow-none"
                               }
                             >
                               <span>{client.name}</span>
@@ -198,7 +198,7 @@ export function AppSidebar() {
                     className={({ isActive }) =>
                       isActive
                         ? "bg-secondary/20 text-secondary font-medium border-l-2 border-secondary"
-                        : "text-foreground hover:bg-muted/50 transition-all duration-150"
+                        : "text-foreground hover:bg-muted/50 transition-all duration-150 border-l-2 border-transparent bg-transparent shadow-none"
                     }
                   >
                     <Settings className="h-4 w-4" />
