@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const LOGO_URL = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_dark_transparent.png";
-const CIRCLE_LOGO_URL = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_circular_darkmode.png";
+const CIRCLE_LOGO_URL = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 
 const loadImage = async (url: string): Promise<string> => {
   return new Promise((resolve, reject) => {
