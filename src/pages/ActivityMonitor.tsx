@@ -945,17 +945,20 @@ const ActivityMonitor = () => {
                       >
                         <TableCell className="font-medium text-foreground px-4 py-2">
                           <div className="flex items-center gap-2">
-                            {mode === "live" && (
-                              <span
-                                className={cn(
-                                  "shrink-0 rounded-full w-2 h-2 animate-[status-pulse_2s_infinite]",
-                                  getStatusColor(row.lastActivity) === "green" && "bg-green-500",
-                                  getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
-                                  getStatusColor(row.lastActivity) === "red" && "bg-red-500",
-                                )}
-                              />
-                            )}
-                            <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
+                            <div className="relative shrink-0">
+                              <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
+                              {mode === "live" && (
+                                <span
+                                  className={cn(
+                                    "absolute bottom-0 left-0 rounded-full animate-[status-pulse_2s_infinite] border-2 border-white dark:border-white",
+                                    getStatusColor(row.lastActivity) === "green" && "bg-green-500",
+                                    getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
+                                    getStatusColor(row.lastActivity) === "red" && "bg-red-500",
+                                  )}
+                                  style={{ width: 10, height: 10 }}
+                                />
+                              )}
+                            </div>
                             {row.sdrName}
                           </div>
                         </TableCell>
