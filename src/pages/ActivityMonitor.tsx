@@ -921,7 +921,7 @@ const ActivityMonitor = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50">
-                    <TableHead className="px-4 py-2"><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
+                    <TableHead className="px-4 py-2" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-2"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-center px-4 py-2"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
                     <TableHead className="text-center px-4 py-2"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
@@ -943,14 +943,14 @@ const ActivityMonitor = () => {
                           recent && "bg-green-500/5 shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]"
                         )}
                       >
-                        <TableCell className="font-medium text-foreground px-4 py-2">
-                          <div className="flex items-center gap-2">
+                        <TableCell className="font-medium text-foreground px-4 py-2" style={{ minWidth: 180 }}>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
                             <div className="relative shrink-0">
                               <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
                               {mode === "live" && (
                                 <span
                                   className={cn(
-                                    "absolute bottom-0 left-0 rounded-full animate-[status-pulse_2s_infinite] border-2 border-white dark:border-white",
+                                    "absolute bottom-0 left-0 rounded-full border-2 border-white dark:border-white",
                                     getStatusColor(row.lastActivity) === "green" && "bg-green-500",
                                     getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
                                     getStatusColor(row.lastActivity) === "red" && "bg-red-500",
