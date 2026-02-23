@@ -152,25 +152,22 @@ const Settings = () => {
     setStatus(prev => ({ ...prev, [key]: 'sending' }));
 
     try {
-      // Step 1: Generate invite link via edge function
-      const siteUrl = window.location.origin;
-      const { data: linkData, error: linkError } = await supabase.functions.invoke('generate-invite-link', {
-        body: { email, redirectTo: `${siteUrl}/reset-password` }
+      const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+        redirectTo: window.location.origin + '/reset-password'
       });
 
-      if (linkError || !linkData?.inviteUrl) {
-        throw new Error(linkData?.error || linkError?.message || 'Failed to generate invite link');
+      if (error) {
+        toast({
+          title: "Failed to send invite",
+          description: error.message,
+          variant: "destructive"
+        });
+        setStatus(prev => ({ ...prev, [key]: 'error' }));
+        return;
       }
 
-      // Step 2: Send the invite email via send-invite edge function
-      const { data, error } = await supabase.functions.invoke('send-invite', {
-        body: { email, inviteUrl: linkData.inviteUrl }
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
       setStatus(prev => ({ ...prev, [key]: 'sent' }));
-      toast({ title: "Invite sent successfully", description: `Invitation email sent to ${email}`, className: "border-green-500" });
+      toast({ title: "Invite sent successfully", description: `Invitation email sent to ${email}` });
       fetchInviteRecords();
     } catch (error: any) {
       console.error('Error sending invite:', error);
