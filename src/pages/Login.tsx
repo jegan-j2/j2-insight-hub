@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
-const LOGIN_LOGO = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
+const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png";
+const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +18,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { resolvedTheme } = useTheme();
   const redirectBasedOnRole = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (import.meta.env.DEV) console.log("🔍 Login - getUser result:", user, "Error:", userError);
@@ -89,9 +92,9 @@ const Login = () => {
         {/* Logo & Heading */}
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <img src={LOGIN_LOGO} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
+            <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
+          <h1 className="text-3xl font-bold text-foreground">Sign In to J2 Insight Hub</h1>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
