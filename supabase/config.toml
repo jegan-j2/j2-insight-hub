@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.send-invite]
 verify_jwt = false
+
+[functions.generate-invite-link]
+verify_jwt = false
