@@ -25,36 +25,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { data, error } = await adminClient.auth.admin.generateLink({
-      type: 'invite',
+    const { data, error } = await adminClient.auth.admin.inviteUserByEmail(
       email,
-      options: {
+      {
         redirectTo: redirectTo || undefined,
-      },
-    })
+      }
+    )
 
     if (error) {
-      console.error('generateLink error:', error)
+      console.error('Invite error:', error)
       return new Response(
         JSON.stringify({ error: error.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const inviteUrl = data?.properties?.action_link
-    if (!inviteUrl) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate invite URL' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
     return new Response(
-      JSON.stringify({ success: true, inviteUrl }),
+      JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error generating invite link:', error)
+    console.error('Error sending invite:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

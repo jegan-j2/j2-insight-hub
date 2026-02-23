@@ -152,19 +152,12 @@ const Settings = () => {
     setStatus(prev => ({ ...prev, [key]: 'sending' }));
 
     try {
-      const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-        redirectTo: window.location.origin + '/reset-password'
+      const { data, error: fnError } = await supabase.functions.invoke('generate-invite-link', {
+        body: { email, redirectTo: `${window.location.origin}/reset-password` }
       });
 
-      if (error) {
-        toast({
-          title: "Failed to send invite",
-          description: error.message,
-          variant: "destructive"
-        });
-        setStatus(prev => ({ ...prev, [key]: 'error' }));
-        return;
-      }
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
 
       setStatus(prev => ({ ...prev, [key]: 'sent' }));
       toast({ title: "Invite sent successfully", description: `Invitation email sent to ${email}` });
