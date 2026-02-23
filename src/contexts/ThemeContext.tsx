@@ -17,8 +17,8 @@ function getSystemTheme(): "light" | "dark" {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem("theme");
-    return (saved as Theme) || "dark";
+    const saved = localStorage.getItem("j2-theme-preference");
+    return (saved as Theme) || "light";
   });
 
   const resolvedTheme = theme === "system" ? getSystemTheme() : theme;
@@ -27,7 +27,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(resolvedTheme);
-    localStorage.setItem("theme", theme);
+    localStorage.setItem("j2-theme-preference", theme);
   }, [theme, resolvedTheme]);
 
   useEffect(() => {

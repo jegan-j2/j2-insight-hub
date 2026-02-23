@@ -94,7 +94,7 @@ const Login = () => {
           <div className="flex justify-center">
             <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Sign In to J2 Insight Hub</h1>
+          <h1 className="text-3xl font-bold text-foreground">J2 Insight Hub</h1>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
