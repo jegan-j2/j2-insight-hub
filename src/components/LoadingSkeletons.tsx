@@ -1,5 +1,8 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { J2Loader } from "@/components/J2Loader";
+
+export { J2Loader as FullPageLoader };
 
 export const KPICardSkeleton = () => (
   <Card className="bg-card border-border animate-pulse">

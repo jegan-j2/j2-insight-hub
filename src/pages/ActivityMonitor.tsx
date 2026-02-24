@@ -644,7 +644,7 @@ const ActivityMonitor = () => {
     <Button
       variant="ghost"
       size="sm"
-      className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
+      className="h-auto p-0 font-bold text-[#0f172a] dark:text-[#f1f5f9] hover:text-[#0f172a] dark:hover:text-[#f1f5f9]"
       onClick={() => toggleSort(sortKeyName)}
     >
       {label}
@@ -884,14 +884,14 @@ const ActivityMonitor = () => {
         {kpiCards.map((kpi) => (
           <Card key={kpi.label} className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-[#64748b] dark:text-white/45">{kpi.label}</CardTitle>
+              <CardTitle className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.label}</CardTitle>
               <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
             </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
-                <p className={cn("text-3xl font-bold", (kpi as any).tealValue ? "text-[#0d9488] dark:text-[#2dd4bf]" : "text-foreground")}>{kpi.value}</p>
+                <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
               )}
             </CardContent>
           </Card>
@@ -920,16 +920,16 @@ const ActivityMonitor = () => {
             <div className="w-full overflow-x-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border/50">
-                    <TableHead className="px-4 py-2" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
-                    <TableHead className="px-4 py-2"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
-                    <TableHead className="text-center px-4 py-2"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
-                    <TableHead className="text-center px-4 py-2"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="text-center px-4 py-2"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="text-center px-4 py-2"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
-                    <TableHead className="text-center px-4 py-2"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="text-center px-4 py-2"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
-                    {mode === "live" && <TableHead className="text-right px-4 py-2">Last Activity</TableHead>}
+                  <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
+                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
+                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
+                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
+                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
+                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
+                    {mode === "live" && <TableHead className="text-right px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>

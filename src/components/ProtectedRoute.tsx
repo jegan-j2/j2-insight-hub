@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { Loader2 } from "lucide-react";
+import { J2Loader } from "@/components/J2Loader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -82,16 +82,8 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
     return () => subscription.unsubscribe();
   }, [requireAdmin, location.pathname]);
 
-  // Loading spinner
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-secondary" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <J2Loader />;
   }
 
   // Redirect if needed
