@@ -281,7 +281,7 @@ const Overview = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className={cn("text-3xl font-bold", kpi.tealValue ? "text-[#0d9488] dark:text-[#2dd4bf]" : "text-foreground")}>{kpi.value}</p>
+                  <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
                   <p className="text-sm font-medium text-[#64748b] dark:text-white/45">{kpi.title}</p>
                   {kpi.subtitle && (
                     <p className="text-xs text-[#64748b] dark:text-white/45">{kpi.subtitle}</p>

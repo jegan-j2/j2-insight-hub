@@ -6,8 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+
+const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png";
+const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 
 const ForgotPassword = () => {
+  const { resolvedTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -68,8 +73,10 @@ const ForgotPassword = () => {
           </div>
         ) : (
           <>
-            <div className="text-center space-y-2">
-              <Mail className="mx-auto h-10 w-10 text-secondary" />
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
+              </div>
               <h1 className="text-2xl font-bold text-foreground">Forgot Password?</h1>
               <p className="text-muted-foreground">Enter your email and we'll send you reset instructions</p>
             </div>
