@@ -93,7 +93,7 @@ export function AppSidebar() {
   const filteredClients = userRole === "client" ? clients.filter(c => c.slug === userClientId) : clients;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border" aria-label="Main navigation">
+    <Sidebar collapsible="icon" className="border-r border-border top-16 h-[calc(100svh-4rem)]" aria-label="Main navigation">
       <SidebarContent className="bg-card">
         {/* Main Navigation */}
         <SidebarGroup>
@@ -181,11 +181,28 @@ export function AppSidebar() {
                     </CollapsibleContent>
                   </Collapsible>
                 ) : (
-                  /* Collapsed mode: popover flyout */
+                  /* Collapsed mode: stacked client logos + popover flyout */
                   <Popover open={clientsPopoverOpen} onOpenChange={setClientsPopoverOpen}>
                     <PopoverTrigger asChild>
                       <SidebarMenuButton tooltip="Clients" className={inactiveClass}>
-                        <Users className="h-4 w-4" />
+                        {/* Stacked preview of first 3 client logos */}
+                        <div className="relative flex items-center justify-center w-4 h-4">
+                          {filteredClients.slice(0, 3).map((client, i) => (
+                            <Avatar
+                              key={client.slug}
+                              className="absolute h-3.5 w-3.5 border border-card"
+                              style={{
+                                left: `${i * 3}px`,
+                                top: `${i * 2 - 2}px`,
+                                zIndex: 3 - i,
+                              }}
+                            >
+                              <AvatarImage src={client.logo_url || undefined} alt={client.name} />
+                              <AvatarFallback className="text-[6px] bg-muted">{client.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                          ))}
+                          {filteredClients.length === 0 && <Users className="h-4 w-4" />}
+                        </div>
                         <span>Clients</span>
                       </SidebarMenuButton>
                     </PopoverTrigger>
