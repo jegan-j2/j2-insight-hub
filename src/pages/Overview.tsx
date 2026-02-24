@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownRight, Phone, CheckCircle, Mail, Target, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CallActivityChart } from "@/components/CallActivityChart";
@@ -126,40 +126,45 @@ const Overview = () => {
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
-      color: "text-secondary",
-      bgColor: "bg-secondary/10",
+      tealValue: false,
     },
     {
       title: "Total Answered",
       value: kpis.totalAnswered.toLocaleString(),
       subtitle: `${kpis.answerRate}% rate`,
-      icon: CheckCircle,
+      icon: PhoneIncoming,
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
-      color: "text-accent",
-      bgColor: "bg-accent/10",
+      tealValue: false,
     },
     {
-      title: "Total DMs Reached",
+      title: "Avg Answer Rate",
+      value: `${kpis.answerRate}%`,
+      icon: TrendingUp,
+      trend: "--",
+      trendUp: true,
+      trendLabel: "vs previous period",
+      tealValue: false,
+    },
+    {
+      title: "Total Conversations",
       value: kpis.totalDMs.toLocaleString(),
-      icon: Mail,
+      icon: Handshake,
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
-      color: "text-secondary",
-      bgColor: "bg-secondary/10",
+      tealValue: true,
     },
     {
-      title: "Total SQLs Generated",
+      title: "Total SQLs",
       value: kpis.totalSQLs.toLocaleString(),
       subtitle: `${kpis.sqlConversionRate}% conversion`,
       icon: Target,
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
-      color: "text-accent",
-      bgColor: "bg-accent/10",
+      tealValue: true,
     },
   ];
 
@@ -247,13 +252,13 @@ const Overview = () => {
 
       {/* KPI Cards */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          {[...Array(5)].map((_, i) => (
             <KPICardSkeleton key={i} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 animate-fade-in">
           {kpiCards.map((kpi) => (
             <Card
               key={kpi.title}
@@ -261,25 +266,25 @@ const Overview = () => {
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={cn("p-3 rounded-lg", kpi.bgColor)}>
-                    <kpi.icon className={cn("h-5 w-5", kpi.color)} />
+                  <div className="p-3 rounded-lg bg-muted">
+                    <kpi.icon className="h-5 w-5 text-[#0f172a]/70 dark:text-white/60" />
                   </div>
                   <div className="flex items-center gap-1">
                     {kpi.trendUp ? (
-                      <ArrowUpRight className="h-4 w-4 text-secondary" />
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                     ) : (
                       <ArrowDownRight className="h-4 w-4 text-destructive" />
                     )}
-                    <span className={cn("text-sm font-medium", kpi.trendUp ? "text-secondary" : "text-destructive")}>
+                    <span className={cn("text-sm font-medium", kpi.trendUp ? "text-muted-foreground" : "text-destructive")}>
                       {kpi.trend}
                     </span>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
-                  <p className="text-sm font-medium text-muted-foreground">{kpi.title}</p>
+                  <p className={cn("text-3xl font-bold", kpi.tealValue ? "text-[#0d9488] dark:text-[#2dd4bf]" : "text-foreground")}>{kpi.value}</p>
+                  <p className="text-sm font-medium text-[#64748b] dark:text-white/45">{kpi.title}</p>
                   {kpi.subtitle && (
-                    <p className="text-xs text-muted-foreground">{kpi.subtitle}</p>
+                    <p className="text-xs text-[#64748b] dark:text-white/45">{kpi.subtitle}</p>
                   )}
                 </div>
                 <div className="mt-3 pt-3 border-t border-border">

@@ -87,14 +87,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#111827]">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-[#1a2235] rounded-lg border border-[#e2e8f0] dark:border-[rgba(255,255,255,0.08)] shadow-sm">
         {/* Logo & Heading */}
         <div className="text-center space-y-4">
           <div className="flex justify-center">
             <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">J2 Insight Hub</h1>
+          <h1 className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">J2 Insight Hub</h1>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -106,6 +106,7 @@ const Login = () => {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="border-[#e2e8f0] dark:border-[rgba(255,255,255,0.1)] focus-visible:border-[#0f172a] dark:focus-visible:border-[#2dd4bf] focus-visible:ring-[#0f172a]/20 dark:focus-visible:ring-[#2dd4bf]/20"
               required
             />
           </div>
@@ -119,7 +120,7 @@ const Login = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pr-10"
+                className="pr-10 border-[#e2e8f0] dark:border-[rgba(255,255,255,0.1)] focus-visible:border-[#0f172a] dark:focus-visible:border-[#2dd4bf] focus-visible:ring-[#0f172a]/20 dark:focus-visible:ring-[#2dd4bf]/20"
                 required
               />
               <button
@@ -133,7 +134,7 @@ const Login = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#2dd4bf] dark:hover:bg-[#14b8a6] dark:text-[#0d1420]" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -147,14 +148,14 @@ const Login = () => {
           <div className="text-center mt-4">
             <Link
               to="/forgot-password"
-              className="text-sm text-muted-foreground hover:text-secondary transition-colors duration-200"
+              className="text-sm text-[#64748b] dark:text-[rgba(255,255,255,0.35)] hover:text-[#0f172a] dark:hover:text-white transition-colors duration-200"
             >
               Forgot your password?
             </Link>
           </div>
         </form>
 
-        <p className="text-center text-xs text-muted-foreground pt-2">
+        <p className="text-center text-xs text-[#94a3b8] dark:text-[rgba(255,255,255,0.2)] pt-2">
           © 2026 J2 Group • Melbourne, Australia
         </p>
       </div>

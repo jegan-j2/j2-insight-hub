@@ -87,8 +87,8 @@ export function AppSidebar() {
     }
   };
 
-  const activeClass = "bg-sidebar-accent text-sidebar-primary font-medium";
-  const inactiveClass = "text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-150 bg-transparent shadow-none";
+  const activeClass = "bg-[#f1f5f9] dark:bg-[rgba(45,212,191,0.1)] border-l-[3px] border-l-[#0f172a] dark:border-l-[#2dd4bf] text-[#0f172a] dark:text-white font-bold [&_svg]:text-[#0f172a] dark:[&_svg]:text-[#2dd4bf]";
+  const inactiveClass = "bg-transparent border-l-[3px] border-l-transparent text-[#334155] dark:text-[rgba(255,255,255,0.55)] [&_svg]:text-[#64748b] dark:[&_svg]:text-[rgba(255,255,255,0.55)] hover:bg-[#f8fafc] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-[#0f172a] dark:hover:text-white transition-all duration-150 shadow-none";
 
   const filteredClients = userRole === "client" ? clients.filter(c => c.slug === userClientId) : clients;
 
@@ -166,7 +166,7 @@ export function AppSidebar() {
                             <SidebarMenuSubButton asChild>
                               <NavLink
                                 to={`/client/${client.slug}`}
-                                className={({ isActive }) => isActive ? activeClass : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-all duration-150 bg-transparent shadow-none"}
+                                className={({ isActive }) => isActive ? activeClass : inactiveClass}
                               >
                                 <Avatar className="h-5 w-5 mr-1.5">
                                   <AvatarImage src={client.logo_url || undefined} alt={client.name} />
@@ -270,7 +270,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   onClick={handleLogout}
                   tooltip="Logout"
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
+                  className={inactiveClass}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
