@@ -633,11 +633,11 @@ const ActivityMonitor = () => {
   const answerRateDisplay = totals.dials > 0 ? ((totals.answered / totals.dials) * 100).toFixed(1) + "%" : "0.0%";
 
   const kpiCards = [
-    { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, color: "text-blue-500" },
-    { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, color: "text-green-500" },
-    { label: "Total Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, color: "text-teal-500", clickable: true },
-    { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, color: "text-purple-500" },
-    { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, color: "text-secondary" },
+    { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, color: "text-[#0f172a]/70 dark:text-white/60" },
+    { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, color: "text-[#0f172a]/70 dark:text-white/60" },
+    { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, color: "text-[#0f172a]/70 dark:text-white/60" },
+    { label: "Total Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, color: "text-[#0f172a]/70 dark:text-white/60", clickable: true, tealValue: true },
+    { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, color: "text-[#0f172a]/70 dark:text-white/60", tealValue: true },
   ];
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
@@ -884,14 +884,14 @@ const ActivityMonitor = () => {
         {kpiCards.map((kpi) => (
           <Card key={kpi.label} className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.label}</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#64748b] dark:text-white/45">{kpi.label}</CardTitle>
               <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
             </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
-                <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
+                <p className={cn("text-3xl font-bold", (kpi as any).tealValue ? "text-[#0d9488] dark:text-[#2dd4bf]" : "text-foreground")}>{kpi.value}</p>
               )}
             </CardContent>
           </Card>
@@ -925,8 +925,8 @@ const ActivityMonitor = () => {
                     <TableHead className="px-4 py-2"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-center px-4 py-2"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
                     <TableHead className="text-center px-4 py-2"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="text-center px-4 py-2"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
                     <TableHead className="text-center px-4 py-2"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="text-center px-4 py-2"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
                     <TableHead className="text-center px-4 py-2"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
                     <TableHead className="text-center px-4 py-2"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
                     {mode === "live" && <TableHead className="text-right px-4 py-2">Last Activity</TableHead>}
@@ -962,26 +962,16 @@ const ActivityMonitor = () => {
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground px-4 py-2">{row.clientId}</TableCell>
+                        <TableCell className="text-[#64748b] dark:text-white/40 px-4 py-2">{row.clientId}</TableCell>
                         <TableCell className="text-center font-semibold text-foreground px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-center px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-semibold text-foreground hover:text-secondary"
+                            className="font-semibold text-foreground hover:text-foreground/80"
                             onClick={() => handleDrillDown(row.sdrName, "answered")}
                           >
                             {row.answered}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-center px-4 py-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="font-semibold text-teal-500 hover:text-teal-400"
-                            onClick={() => handleDrillDown(row.sdrName, "conversations")}
-                          >
-                            {row.conversations}
                           </Button>
                         </TableCell>
                         <TableCell className="text-center text-muted-foreground px-4 py-2">
@@ -991,7 +981,17 @@ const ActivityMonitor = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-bold text-secondary hover:text-secondary/80"
+                            className="font-semibold text-[#0d9488] dark:text-[#2dd4bf] hover:opacity-80"
+                            onClick={() => handleDrillDown(row.sdrName, "conversations")}
+                          >
+                            {row.conversations}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-center px-4 py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="font-bold text-[#0d9488] dark:text-[#2dd4bf] hover:opacity-80"
                             onClick={() => handleDrillDown(row.sdrName, "sqls")}
                           >
                             {row.sqls}
