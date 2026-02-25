@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'J2 Insight Hub <onboarding@resend.dev>',
+        from: 'J2 Group <admin-support@j2group.com.au>',
         to: [email],
         subject: 'You\'re invited to J2 Insight Hub',
         html: `
