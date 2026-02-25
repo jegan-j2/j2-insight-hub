@@ -135,7 +135,7 @@ const Settings = () => {
   const getClientInviteInfo = (clientEmail: string) => {
     const invite = inviteRecords.find(r => r.email === clientEmail && r.role === 'client');
     if (!invite || invite.invite_status === 'not_sent') return { status: 'no_invite', label: 'No Invite Sent' };
-    if (invite.invite_status === 'accepted') return { status: 'active', label: 'Active' };
+    if (invite.invite_status === 'accepted') return { status: 'active', label: 'User Active' };
     if (invite.invite_status === 'pending') {
       const isExpired = invite.invite_expires_at && new Date(invite.invite_expires_at) < new Date();
       if (isExpired) return { status: 'expired', label: 'Invite Expired' };
@@ -147,7 +147,7 @@ const Settings = () => {
   const getMemberInviteInfo = (email: string) => {
     const invite = inviteRecords.find(r => r.email === email && r.role !== 'client');
     if (!invite || invite.invite_status === 'not_sent') return { status: 'no_invite', label: 'No Invite Sent' };
-    if (invite.invite_status === 'accepted') return { status: 'active', label: 'Active' };
+    if (invite.invite_status === 'accepted') return { status: 'active', label: 'User Active' };
     if (invite.invite_status === 'pending') {
       const isExpired = invite.invite_expires_at && new Date(invite.invite_expires_at) < new Date();
       if (isExpired) return { status: 'expired', label: 'Invite Expired' };
