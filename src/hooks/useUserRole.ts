@@ -7,6 +7,7 @@ interface UserRoleState {
   isAdmin: boolean
   isManager: boolean
   isClient: boolean
+  isSdr: boolean
   loading: boolean
 }
 
@@ -17,6 +18,7 @@ export const useUserRole = (): UserRoleState => {
     isAdmin: false,
     isManager: false,
     isClient: false,
+    isSdr: false,
     loading: true,
   })
 
@@ -40,9 +42,10 @@ export const useUserRole = (): UserRoleState => {
           setState({
             role: userRole.role,
             clientId: userRole.client_id,
-            isAdmin: userRole.role === 'admin',
-            isManager: userRole.role === 'manager',
-            isClient: userRole.role === 'client',
+            isAdmin: userRole.role?.toLowerCase() === 'admin',
+            isManager: userRole.role?.toLowerCase() === 'manager',
+            isClient: userRole.role?.toLowerCase() === 'client',
+            isSdr: userRole.role?.toLowerCase() === 'sdr',
             loading: false,
           })
         } else {
@@ -61,11 +64,12 @@ export const useUserRole = (): UserRoleState => {
 }
 
 export const usePermissions = () => {
-  const { isAdmin, isManager, isClient, clientId } = useUserRole()
+  const { isAdmin, isManager, isClient, isSdr, clientId } = useUserRole()
 
   const canEditClients = isAdmin
   const canEditTeamMembers = isAdmin
   const canEditSettings = isAdmin
+  const canViewOwnData = isSdr
 
   const canEditSQL = (sqlClientId?: string | null) => {
     if (isAdmin || isManager) return true
@@ -78,8 +82,10 @@ export const usePermissions = () => {
     canEditTeamMembers,
     canEditSettings,
     canEditSQL,
+    canViewOwnData,
     isAdmin,
     isManager,
     isClient,
+    isSdr,
   }
 }
