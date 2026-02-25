@@ -124,8 +124,10 @@ Deno.serve(async (req) => {
     console.log('Email sent successfully to:', email, '— updating user_roles...')
 
     try {
-      const { data: userData } = await adminClient.auth.admin.getUserByEmail(email)
-      const userId = userData?.user?.id
+      const { data: usersData } = await adminClient.auth.admin.listUsers()
+      const userId = usersData?.users?.find(
+        (u: any) => u.email === email
+      )?.id
 
       if (userId) {
         const { error: updateError } = await adminClient
