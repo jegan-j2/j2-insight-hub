@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, redirectTo } = await req.json()
+    const { email } = await req.json()
 
     if (!email) {
       return new Response(
@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
     const { data, error } = await adminClient.auth.admin.generateLink({
       type: 'magiclink',
       email,
-      options: { redirectTo: redirectTo || undefined },
+      options: { 
+        redirectTo: `${Deno.env.get('APP_URL')}/reset-password`
+      },
     })
 
     if (error) {
