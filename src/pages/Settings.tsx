@@ -56,6 +56,7 @@ interface InviteRecord {
   invite_sent_at: string | null;
   invite_expires_at: string | null;
   user_id: string | null;
+  email: string | null;
 }
 
 const Settings = () => {
@@ -116,12 +117,9 @@ const Settings = () => {
 
   const fetchInviteRecords = useCallback(async () => {
     try {
-      // Use service role via edge function or just query what admin can see
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('id, client_id, role, invite_status, invite_sent_at, invite_expires_at, user_id');
+      const { data, error } = await supabase.rpc('get_invite_records');
       if (!error && data) {
-        setInviteRecords(data);
+        setInviteRecords(data as InviteRecord[]);
       }
     } catch (err) {
       console.error('Error fetching invite records:', err);
@@ -134,10 +132,10 @@ const Settings = () => {
     fetchInviteRecords();
   }, [fetchClients, fetchTeamMembers, fetchInviteRecords]);
 
-  const getClientInviteInfo = (clientId: string) => {
-    const invite = inviteRecords.find(r => r.client_id === clientId && r.role === 'client');
-    if (!invite) return { status: 'no_invite', label: 'No Invite Sent' };
-    if (invite.user_id) return { status: 'active', label: 'Active' };
+  const getClientInviteInfo = (clientEmail: string) => {
+    const invite = inviteRecords.find(r => r.email === clientEmail && r.role === 'client');
+    if (!invite || invite.invite_status === 'not_sent') return { status: 'no_invite', label: 'No Invite Sent' };
+    if (invite.invite_status === 'accepted') return { status: 'active', label: 'Active' };
     if (invite.invite_status === 'pending') {
       const isExpired = invite.invite_expires_at && new Date(invite.invite_expires_at) < new Date();
       if (isExpired) return { status: 'expired', label: 'Invite Expired' };
@@ -147,15 +145,11 @@ const Settings = () => {
   };
 
   const getMemberInviteInfo = (email: string) => {
-    const invite = inviteRecords.find(r => 
-      r.role !== 'client' && 
-      r.user_id !== null
-    );
-    if (!invite) return { status: 'no_invite', label: 'No Invite Sent' };
-    if (invite.user_id) return { status: 'active', label: 'Active' };
+    const invite = inviteRecords.find(r => r.email === email && r.role !== 'client');
+    if (!invite || invite.invite_status === 'not_sent') return { status: 'no_invite', label: 'No Invite Sent' };
+    if (invite.invite_status === 'accepted') return { status: 'active', label: 'Active' };
     if (invite.invite_status === 'pending') {
-      const isExpired = invite.invite_expires_at && 
-        new Date(invite.invite_expires_at) < new Date();
+      const isExpired = invite.invite_expires_at && new Date(invite.invite_expires_at) < new Date();
       if (isExpired) return { status: 'expired', label: 'Invite Expired' };
       return { status: 'pending', label: 'Invite Pending' };
     }
@@ -1010,7 +1004,7 @@ const Settings = () => {
                     ) : (
                       filteredClients.map((client) => {
                         const isInactive = client.status === 'inactive';
-                        const inviteInfo = getClientInviteInfo(client.client_id);
+                        const inviteInfo = getClientInviteInfo(client.email || '');
                         return (
                           <TableRow key={client.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
