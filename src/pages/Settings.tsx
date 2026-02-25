@@ -146,6 +146,22 @@ const Settings = () => {
     return { status: 'no_invite', label: 'No Invite Sent' };
   };
 
+  const getMemberInviteInfo = (email: string) => {
+    const invite = inviteRecords.find(r => 
+      r.role !== 'client' && 
+      r.user_id !== null
+    );
+    if (!invite) return { status: 'no_invite', label: 'No Invite Sent' };
+    if (invite.user_id) return { status: 'active', label: 'Active' };
+    if (invite.invite_status === 'pending') {
+      const isExpired = invite.invite_expires_at && 
+        new Date(invite.invite_expires_at) < new Date();
+      if (isExpired) return { status: 'expired', label: 'Invite Expired' };
+      return { status: 'pending', label: 'Invite Pending' };
+    }
+    return { status: 'no_invite', label: 'No Invite Sent' };
+  };
+
   const handleSendInvite = async (email: string, role: string, name: string, clientId?: string) => {
     const key = clientId || email;
     const setStatus = role === 'client' ? setClientInviteStatus : setMemberInviteStatus;
@@ -1285,6 +1301,7 @@ const Settings = () => {
                     ) : (
                       filteredMembers.map((member) => {
                         const isInactive = member.status === 'inactive';
+                        const memberInviteInfo = getMemberInviteInfo(member.email);
                         return (
                           <TableRow key={member.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
@@ -1299,8 +1316,16 @@ const Settings = () => {
                             <TableCell className="text-muted-foreground">{member.email}</TableCell>
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
                             <TableCell>
-                              <span className="text-xs px-2 py-1 rounded-full bg-muted/30 text-muted-foreground">
-                                No Invite Sent
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                memberInviteInfo.status === 'active' 
+                                  ? 'bg-green-500/20 text-green-400' :
+                                memberInviteInfo.status === 'pending' 
+                                  ? 'bg-yellow-500/20 text-yellow-400' :
+                                memberInviteInfo.status === 'expired' 
+                                  ? 'bg-destructive/20 text-destructive' :
+                                  'bg-muted/30 text-muted-foreground'
+                              }`}>
+                                {memberInviteInfo.label}
                               </span>
                             </TableCell>
                             <TableCell>
@@ -1320,6 +1345,22 @@ const Settings = () => {
                                     </TooltipTrigger>
                                     <TooltipContent>Edit</TooltipContent>
                                   </Tooltip>
+                                  {memberInviteInfo.status === 'pending' && member.email && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleResendInvite(member.email, 'member', member.sdr_name)}
+                                          aria-label={`Resend invite to ${member.sdr_name}`}
+                                          className="text-secondary hover:text-secondary hover:bg-secondary/10"
+                                        >
+                                          <RefreshCw className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Resend Invite</TooltipContent>
+                                    </Tooltip>
+                                  )}
                                   {isInactive ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
