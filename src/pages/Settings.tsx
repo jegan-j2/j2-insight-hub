@@ -988,7 +988,6 @@ const Settings = () => {
                       <TableHead className="text-muted-foreground">Access</TableHead>
                       <TableHead className="text-muted-foreground">Campaign</TableHead>
                       <TableHead className="text-muted-foreground">Target SQLs</TableHead>
-                      <TableHead className="text-muted-foreground">Status</TableHead>
                       <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -997,7 +996,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                           No clients found. Add your first client above.
                         </TableCell>
                       </TableRow>
@@ -1038,11 +1037,6 @@ const Settings = () => {
                                 : client.campaign_start || "—"}
                             </TableCell>
                             <TableCell className="text-muted-foreground">{client.target_sqls ?? "—"}</TableCell>
-                            <TableCell>
-                              <span className={`text-xs px-2 py-1 rounded-full ${client.status === 'active' || !client.status ? 'bg-green-500/20 text-green-400' : 'bg-muted/30 text-muted-foreground'}`}>
-                                {client.status || "active"}
-                              </span>
-                            </TableCell>
                             <TableCell className="text-right">
                               {canEditClients ? (
                                 <TooltipProvider>
@@ -1279,7 +1273,6 @@ const Settings = () => {
                       <TableHead className="text-muted-foreground">Email</TableHead>
                       <TableHead className="text-muted-foreground">Role</TableHead>
                       <TableHead className="text-muted-foreground">Invite</TableHead>
-                      <TableHead className="text-muted-foreground">Status</TableHead>
                       <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1288,7 +1281,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
@@ -1320,11 +1313,6 @@ const Settings = () => {
                                   'bg-muted/30 text-muted-foreground'
                               }`}>
                                 {memberInviteInfo.label}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <span className={`text-xs px-2 py-1 rounded-full ${member.status === 'active' || !member.status ? 'bg-green-500/20 text-green-400' : 'bg-muted/30 text-muted-foreground'}`}>
-                                {member.status || "active"}
                               </span>
                             </TableCell>
                             <TableCell className="text-right">

@@ -73,8 +73,14 @@ const ResetPassword = () => {
 
   if (validToken === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#111827]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#0f172a] dark:text-[#2dd4bf]" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] dark:bg-[#111827]">
+        <img
+          src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT}
+          alt="J2 Group"
+          className="w-[72px] h-[72px] rounded-full object-contain border-2 border-[#0f172a] dark:border-white"
+          style={{ animation: 'spin 2s linear infinite' }}
+        />
+        <p className="mt-4 text-sm text-[#64748b] dark:text-[rgba(255,255,255,0.5)]">Loading...</p>
       </div>
     );
   }
