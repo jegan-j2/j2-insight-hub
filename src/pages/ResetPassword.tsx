@@ -7,6 +7,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { PasswordStrengthIndicator, isPasswordStrong } from "@/components/PasswordStrengthIndicator";
+import { useTheme } from "@/contexts/ThemeContext";
+
+const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png";
+const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -17,6 +21,7 @@ const ResetPassword = () => {
   const [validToken, setValidToken] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -68,21 +73,24 @@ const ResetPassword = () => {
 
   if (validToken === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-secondary" />
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#111827]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0f172a] dark:text-[#2dd4bf]" />
       </div>
     );
   }
 
   if (!validToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm text-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#111827]">
+        <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-[#1a2235] rounded-lg border border-[#e2e8f0] dark:border-[rgba(255,255,255,0.08)] shadow-sm text-center">
+          <div className="flex justify-center">
+            <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
+          </div>
           <Lock className="mx-auto h-10 w-10 text-destructive" />
-          <h1 className="text-2xl font-bold text-foreground">Invalid Reset Link</h1>
-          <p className="text-muted-foreground">This link has expired or is invalid.</p>
+          <h1 className="text-2xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">Invalid Reset Link</h1>
+          <p className="text-[#64748b] dark:text-[rgba(255,255,255,0.35)]">This link has expired or is invalid.</p>
           <Link to="/forgot-password">
-            <Button className="w-full">Request New Link</Button>
+            <Button className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#2dd4bf] dark:hover:bg-[#14b8a6] dark:text-[#0d1420]">Request New Link</Button>
           </Link>
         </div>
       </div>
@@ -90,12 +98,14 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
-        <div className="text-center space-y-2">
-          <Lock className="mx-auto h-10 w-10 text-secondary" />
-          <h1 className="text-2xl font-bold text-foreground">Set New Password</h1>
-          <p className="text-muted-foreground">Enter your new password below</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#111827]">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-[#1a2235] rounded-lg border border-[#e2e8f0] dark:border-[rgba(255,255,255,0.08)] shadow-sm">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
+          </div>
+          <h1 className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">Set New Password</h1>
+          <p className="text-[#64748b] dark:text-[rgba(255,255,255,0.35)]">Enter your new password below</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -108,7 +118,7 @@ const ResetPassword = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="pr-10"
+                className="pr-10 border-[#e2e8f0] dark:border-[rgba(255,255,255,0.1)] focus-visible:border-[#0f172a] dark:focus-visible:border-[#2dd4bf] focus-visible:ring-[#0f172a]/20 dark:focus-visible:ring-[#2dd4bf]/20"
               />
               <button
                 type="button"
@@ -131,7 +141,7 @@ const ResetPassword = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="pr-10"
+                className="pr-10 border-[#e2e8f0] dark:border-[rgba(255,255,255,0.1)] focus-visible:border-[#0f172a] dark:focus-visible:border-[#2dd4bf] focus-visible:ring-[#0f172a]/20 dark:focus-visible:ring-[#2dd4bf]/20"
               />
               <button
                 type="button"
@@ -146,7 +156,7 @@ const ResetPassword = () => {
               <p className="text-xs text-red-500">Passwords don't match</p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={!canSubmit}>
+          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#2dd4bf] dark:hover:bg-[#14b8a6] dark:text-[#0d1420]" disabled={!canSubmit}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -157,6 +167,9 @@ const ResetPassword = () => {
             )}
           </Button>
         </form>
+        <p className="text-center text-xs text-[#94a3b8] dark:text-[rgba(255,255,255,0.2)] pt-2">
+          © 2026 J2 Group • Melbourne, Australia
+        </p>
       </div>
     </div>
   );

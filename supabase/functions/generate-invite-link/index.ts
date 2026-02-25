@@ -120,8 +120,36 @@ Deno.serve(async (req) => {
       )
     }
 
-    // STEP 3: Return success
-    console.log('Email sent successfully to:', email)
+    // STEP 3: Update user_roles to track the invite
+    console.log('Email sent successfully to:', email, '— updating user_roles...')
+
+    try {
+      const { data: userData } = await adminClient.auth.admin.getUserByEmail(email)
+      const userId = userData?.user?.id
+
+      if (userId) {
+        const { error: updateError } = await adminClient
+          .from('user_roles')
+          .update({
+            invite_status: 'pending',
+            invite_sent_at: new Date().toISOString(),
+            invite_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+          })
+          .eq('user_id', userId)
+
+        if (updateError) {
+          console.warn('user_roles update failed (non-blocking):', updateError.message)
+        } else {
+          console.log('user_roles updated for user:', userId)
+        }
+      } else {
+        console.warn('No auth user found for email, skipping user_roles update')
+      }
+    } catch (trackErr) {
+      console.warn('Invite tracking error (non-blocking):', trackErr)
+    }
+
+    // STEP 4: Return success
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
