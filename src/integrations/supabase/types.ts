@@ -455,6 +455,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_invite_records: {
+        Args: never
+        Returns: {
+          client_id: string
+          email: string
+          id: string
+          invite_expires_at: string
+          invite_sent_at: string
+          invite_status: string
+          role: string
+          user_id: string
+        }[]
+      }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
     }
     Enums: {
