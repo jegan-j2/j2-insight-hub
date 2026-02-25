@@ -14,7 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { format } from "date-fns";
+import { formatInTimeZone } from 'date-fns-tz';
+import { SDRAvatar } from "@/components/SDRAvatar";
 
 const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png";
@@ -27,6 +28,7 @@ const Navbar = () => {
   const [userEmail, setUserEmail] = useState<string>('')
   const [userName, setUserName] = useState<string>('')
   const [userInitials, setUserInitials] = useState<string>('?')
+  const [userPhoto, setUserPhoto] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
@@ -47,10 +49,11 @@ const Navbar = () => {
               ? parts[0][0] + parts[parts.length-1][0] 
               : parts[0][0]
           )
-        } else {
-          setUserName(user.email.split('@')[0])
-          setUserInitials(user.email[0].toUpperCase())
-        }
+        setUserPhoto(member?.profile_photo_url || null)
+      } else {
+        setUserName(user.email.split('@')[0])
+        setUserInitials(user.email[0].toUpperCase())
+      }
       }
     }
     getUser()
@@ -104,7 +107,11 @@ const Navbar = () => {
           <p className="text-xs text-muted-foreground">Last Updated</p>
           <p className="text-xs font-medium text-foreground">
             {lastUpdated 
-              ? format(lastUpdated, "MMMM dd, yyyy, h:mm a") + ' AEDT'
+              ? formatInTimeZone(
+                  lastUpdated, 
+                  'Australia/Melbourne', 
+                  'MMMM dd, yyyy, h:mm a'
+                ) + ' AEDT'
               : '—'
             }
           </p>
@@ -118,7 +125,11 @@ const Navbar = () => {
               className="relative h-10 w-10 rounded-full border-2 border-secondary hover:border-secondary/80 transition-colors"
               aria-label="User menu"
             >
-              <span className="text-sm font-bold text-foreground">{userInitials}</span>
+              <SDRAvatar 
+                name={userName || userEmail} 
+                photoUrl={userPhoto} 
+                size="sm" 
+              />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-card border-border z-[100]" align="end">
