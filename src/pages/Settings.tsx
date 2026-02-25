@@ -1226,13 +1226,16 @@ const Settings = () => {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="member-role">Role *</Label>
-                        <Input
-                          id="member-role"
-                          placeholder="e.g., Senior SDR, SDR, Team Lead"
-                          value={memberForm.role}
-                          onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
-                          className="bg-background/50 border-border"
-                        />
+                        <Select value={memberForm.role} onValueChange={(value) => setMemberForm({ ...memberForm, role: value })}>
+                          <SelectTrigger className="bg-background/50 border-border">
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Admin">Admin</SelectItem>
+                            <SelectItem value="Manager">Manager</SelectItem>
+                            <SelectItem value="SDR">SDR</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     <DialogFooter>
