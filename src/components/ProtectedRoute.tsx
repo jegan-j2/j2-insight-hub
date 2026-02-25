@@ -61,6 +61,24 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
           return;
         }
 
+        // Update invite_status to accepted if still pending
+        try {
+          const { data: inviteData } = await supabase
+            .from('user_roles')
+            .select('invite_status')
+            .eq('user_id', session.user.id)
+            .single()
+
+          if (inviteData?.invite_status === 'pending') {
+            await supabase
+              .from('user_roles')
+              .update({ invite_status: 'accepted' })
+              .eq('user_id', session.user.id)
+          }
+        } catch (inviteErr) {
+          console.warn('Invite status update failed:', inviteErr)
+        }
+
         // All good!
         setRedirectPath("");
       } catch (error) {
