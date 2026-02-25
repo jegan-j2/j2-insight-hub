@@ -5,34 +5,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-const buildEmailHtml = (actionLink: string) => `
+const buildEmailHtml = (inviteLink: string) => `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 0;">
-    <tr><td align="center">
-      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-        <!-- Header -->
-        <tr><td style="background:#0f172a;padding:32px;text-align:center;">
-          <img src="https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/logos/j2-logo-light.png" alt="J2 Group" style="width:64px;height:64px;border-radius:50%;border:3px solid #ffffff;margin:0 auto 12px;display:block;" />
-          <h1 style="color:#ffffff;font-size:20px;font-weight:700;margin:0;">J2 Insight Hub</h1>
-        </td></tr>
-        <!-- Body -->
-        <tr><td style="padding:32px;">
-          <h2 style="color:#0f172a;font-size:22px;font-weight:700;margin:0 0 16px;">Welcome</h2>
-          <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 28px;">Use the button below to sign in to your J2 Insight Hub dashboard.</p>
-          <table cellpadding="0" cellspacing="0" width="100%"><tr><td align="center">
-            <a href="${actionLink}" style="display:inline-block;padding:14px 32px;background:#0f172a;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Sign In to Dashboard</a>
-          </td></tr></table>
-        </td></tr>
-        <!-- Footer -->
-        <tr><td style="background:#f8fafc;padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0;">
-          <p style="color:#94a3b8;font-size:12px;margin:0;">&copy; 2026 J2 Group &middot; Melbourne, Australia</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
+<body style="font-family: sans-serif; background: #f8fafc; padding: 40px;">
+  <div style="max-width: 500px; margin: 0 auto; background: white; 
+       border-radius: 12px; padding: 40px; 
+       box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <img src="https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png" 
+         width="80" style="display:block; margin: 0 auto 24px;" />
+    <h2 style="text-align:center; color:#0f172a; margin-bottom:8px;">
+      Welcome to J2 Insight Hub
+    </h2>
+    <p style="color:#64748b; text-align:center; margin-bottom:32px;">
+      You've been invited to access the J2 Group Lead Generation Dashboard.
+    </p>
+    <a href="${inviteLink}" 
+       style="display:block; background:#3b82f6; color:white; text-align:center;
+              padding:14px; border-radius:8px; text-decoration:none; 
+              font-weight:600; font-size:15px;">
+      Accept Invitation
+    </a>
+    <p style="color:#94a3b8; font-size:12px; text-align:center; margin-top:24px;">
+      This link expires in 48 hours. If you didn't expect this email, ignore it.
+    </p>
+    <hr style="border:none; border-top:1px solid #e2e8f0; margin:24px 0;" />
+    <p style="color:#94a3b8; font-size:12px; text-align:center;">
+      © 2026 J2 Group · Melbourne, Australia
+    </p>
+  </div>
 </body>
 </html>`;
 
@@ -103,7 +104,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'J2 Group <admin-support@j2group.com.au>',
         to: [email],
-        subject: 'Your J2 Insight Hub Login Link',
+        subject: "You've been invited to J2 Insight Hub",
         html: buildEmailHtml(actionLink),
       }),
     })
