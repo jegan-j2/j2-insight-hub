@@ -15,7 +15,7 @@ const buildEmailHtml = (inviteLink: string) => `
     <img src="https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png" 
          width="80" style="display:block; margin: 0 auto 24px;" />
     <h2 style="text-align:center; color:#0f172a; margin-bottom:8px;">
-      Welcome to J2 Insight Hub
+      Welcome to J2 Insights Dashboard
     </h2>
     <p style="color:#64748b; text-align:center; margin-bottom:32px;">
       You've been invited to access the J2 Group Lead Generation Dashboard.
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'J2 Group <admin-support@j2group.com.au>',
         to: [email],
-        subject: "You've been invited to J2 Insight Hub",
+        subject: "You've been invited to J2 Insights Dashboard",
         html: buildEmailHtml(actionLink),
       }),
     })

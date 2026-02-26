@@ -94,7 +94,7 @@ const Login = () => {
           <div className="flex justify-center">
             <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">J2 Insight Hub</h1>
+          <h1 className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">J2 Insights Dashboard</h1>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -134,7 +134,7 @@ const Login = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#2dd4bf] dark:hover:bg-[#14b8a6] dark:text-[#0d1420]" disabled={loading}>
+          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
