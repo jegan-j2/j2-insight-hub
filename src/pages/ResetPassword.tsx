@@ -97,7 +97,7 @@ const ResetPassword = () => {
           <h1 className="text-2xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">Invalid Reset Link</h1>
           <p className="text-[#64748b] dark:text-[rgba(255,255,255,0.35)]">This link has expired or is invalid.</p>
           <Link to="/forgot-password">
-            <Button className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#2dd4bf] dark:hover:bg-[#14b8a6] dark:text-[#0d1420]">Request New Link</Button>
+            <Button className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white">Request New Link</Button>
           </Link>
         </div>
       </div>
@@ -163,7 +163,7 @@ const ResetPassword = () => {
               <p className="text-xs text-red-500">Passwords don't match</p>
             )}
           </div>
-          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#2dd4bf] dark:hover:bg-[#14b8a6] dark:text-[#0d1420]" disabled={!canSubmit}>
+          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white" disabled={!canSubmit}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

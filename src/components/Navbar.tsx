@@ -95,7 +95,7 @@ const Navbar = () => {
           />
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold text-foreground">J2 Group</h1>
-            <p className="text-xs text-muted-foreground">Lead Generation Dashboard</p>
+            <p className="text-xs text-muted-foreground">Predictable Growth For B2B</p>
           </div>
         </div>
 
