@@ -11,11 +11,11 @@ interface ConversionFunnelChartProps {
 }
 
 const chartConfig = {
-  dials: { label: "Dials", color: "#3b82f6" },
-  answered: { label: "Answered", color: "#6366f1" },
-  dms: { label: "DMs Reached", color: "#10b981" },
-  mqls: { label: "MQLs", color: "#f59e0b" },
-  sqls: { label: "SQLs", color: "#22c55e" },
+  dials: { label: "Dials", color: "#f59e0b" },
+  answered: { label: "Answered", color: "#10b981" },
+  dms: { label: "DMs Reached", color: "#6366f1" },
+  mqls: { label: "MQLs", color: "#f97316" },
+  sqls: { label: "SQLs", color: "#f43f5e" },
 };
 
 export const ConversionFunnelChart = ({ snapshots }: ConversionFunnelChartProps) => {
@@ -23,11 +23,11 @@ export const ConversionFunnelChart = ({ snapshots }: ConversionFunnelChartProps)
     if (!snapshots || snapshots.length === 0) return [];
 
     return [
-      { name: "Dials", value: snapshots.reduce((sum, s) => sum + (s.dials || 0), 0), color: "#3b82f6" },
-      { name: "Answered", value: snapshots.reduce((sum, s) => sum + (s.answered || 0), 0), color: "#6366f1" },
-      { name: "DMs Reached", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "#10b981" },
-      { name: "MQLs", value: snapshots.reduce((sum, s) => sum + (s.mqls || 0), 0), color: "#f59e0b" },
-      { name: "SQLs", value: snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0), color: "#22c55e" },
+      { name: "Dials", value: snapshots.reduce((sum, s) => sum + (s.dials || 0), 0), color: "#f59e0b" },
+      { name: "Answered", value: snapshots.reduce((sum, s) => sum + (s.answered || 0), 0), color: "#10b981" },
+      { name: "DMs Reached", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "#6366f1" },
+      { name: "MQLs", value: snapshots.reduce((sum, s) => sum + (s.mqls || 0), 0), color: "#f97316" },
+      { name: "SQLs", value: snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0), color: "#f43f5e" },
     ];
   }, [snapshots]);
 

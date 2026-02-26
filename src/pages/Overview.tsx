@@ -123,6 +123,8 @@ const Overview = () => {
       title: "Total Dials",
       value: kpis.totalDials.toLocaleString(),
       icon: Phone,
+      iconColor: "text-amber-500",
+      iconBg: "bg-amber-500/10",
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
@@ -133,6 +135,8 @@ const Overview = () => {
       value: kpis.totalAnswered.toLocaleString(),
       subtitle: `${kpis.answerRate}% rate`,
       icon: PhoneIncoming,
+      iconColor: "text-emerald-500",
+      iconBg: "bg-emerald-500/10",
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
@@ -142,6 +146,8 @@ const Overview = () => {
       title: "Avg Answer Rate",
       value: `${kpis.answerRate}%`,
       icon: TrendingUp,
+      iconColor: "text-blue-500",
+      iconBg: "bg-blue-500/10",
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
@@ -151,6 +157,8 @@ const Overview = () => {
       title: "Total Conversations",
       value: kpis.totalDMs.toLocaleString(),
       icon: Handshake,
+      iconColor: "text-indigo-500",
+      iconBg: "bg-indigo-500/10",
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
@@ -161,6 +169,8 @@ const Overview = () => {
       value: kpis.totalSQLs.toLocaleString(),
       subtitle: `${kpis.sqlConversionRate}% conversion`,
       icon: Target,
+      iconColor: "text-rose-500",
+      iconBg: "bg-rose-500/10",
       trend: "--",
       trendUp: true,
       trendLabel: "vs previous period",
@@ -266,8 +276,8 @@ const Overview = () => {
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-lg bg-muted">
-                    <kpi.icon className="h-5 w-5 text-[#0f172a]/70 dark:text-white/60" />
+                  <div className={cn("p-3 rounded-lg", kpi.iconBg)}>
+                    <kpi.icon className={cn("h-5 w-5", kpi.iconColor)} />
                   </div>
                   <div className="flex items-center gap-1">
                     {kpi.trendUp ? (
@@ -282,7 +292,7 @@ const Overview = () => {
                 </div>
                 <div className="space-y-1">
                   <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
-                  <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.title}</p>
+                  <p className="text-sm font-normal text-[#64748b] dark:text-white/60">{kpi.title}</p>
                   {kpi.subtitle && (
                     <p className="text-xs text-[#64748b] dark:text-white/45">{kpi.subtitle}</p>
                   )}

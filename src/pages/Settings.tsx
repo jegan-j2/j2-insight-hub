@@ -828,7 +828,7 @@ const Settings = () => {
                               size="sm"
                               onClick={() => handleSendInvite(clientForm.email, 'client', clientForm.client_name, clientForm.client_id || editingClient.client_id)}
                               disabled={clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sending'}
-                              className="gap-1.5 shrink-0 border-secondary/30 text-secondary hover:bg-secondary/10"
+                              className="gap-1.5 shrink-0 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white"
                             >
                               {clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sending' ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -899,7 +899,7 @@ const Settings = () => {
                             <div className="flex flex-col gap-2">
                               <input ref={clientLogoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleClientLogoUpload} className="hidden" />
                               <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => clientLogoInputRef.current?.click()} disabled={uploadingClientLogo} className="gap-1.5 text-xs border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10">
+                                <Button variant="outline" size="sm" onClick={() => clientLogoInputRef.current?.click()} disabled={uploadingClientLogo} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
                                   {uploadingClientLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
                                   Upload Logo
                                 </Button>
@@ -932,7 +932,7 @@ const Settings = () => {
                             </div>
                             <input ref={clientBannerInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleClientBannerUpload} className="hidden" />
                             <div className="flex gap-2">
-                              <Button variant="outline" size="sm" onClick={() => clientBannerInputRef.current?.click()} disabled={uploadingClientBanner} className="gap-1.5 text-xs border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10">
+                              <Button variant="outline" size="sm" onClick={() => clientBannerInputRef.current?.click()} disabled={uploadingClientBanner} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
                                 {uploadingClientBanner ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
                                 Upload Banner
                               </Button>
@@ -1044,7 +1044,7 @@ const Settings = () => {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)} aria-label={`Edit ${client.client_name}`}>
-                                        <Pencil className="h-4 w-4 text-secondary" />
+                                        <Pencil className="h-4 w-4 text-blue-500" />
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Edit</TooltipContent>
@@ -1057,7 +1057,7 @@ const Settings = () => {
                                           size="icon"
                                           onClick={() => handleResendInvite(client.email!, 'client', client.client_name, client.client_id)}
                                           aria-label={`Resend invite to ${client.client_name}`}
-                                          className="text-secondary hover:text-secondary hover:bg-secondary/10"
+                                          className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
                                         >
                                           <RefreshCw className="h-4 w-4" />
                                         </Button>
@@ -1162,7 +1162,7 @@ const Settings = () => {
                             <div className="flex flex-col gap-2">
                               <input ref={memberPhotoInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleMemberPhotoUpload} className="hidden" />
                               <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => memberPhotoInputRef.current?.click()} disabled={uploadingMemberPhoto} className="gap-1.5 text-xs border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/10">
+                                <Button variant="outline" size="sm" onClick={() => memberPhotoInputRef.current?.click()} disabled={uploadingMemberPhoto} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
                                   {uploadingMemberPhoto ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
                                   Upload Photo
                                 </Button>
@@ -1205,7 +1205,7 @@ const Settings = () => {
                               size="sm"
                               onClick={() => handleSendInvite(memberForm.email, 'sdr', memberForm.sdr_name)}
                               disabled={memberInviteStatus[memberForm.email] === 'sending'}
-                              className="gap-1.5 shrink-0 border-secondary/30 text-secondary hover:bg-secondary/10"
+                              className="gap-1.5 shrink-0 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white"
                             >
                               {memberInviteStatus[memberForm.email] === 'sending' ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1325,7 +1325,7 @@ const Settings = () => {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)} aria-label={`Edit ${member.sdr_name}`}>
-                                        <Pencil className="h-4 w-4 text-secondary" />
+                                        <Pencil className="h-4 w-4 text-blue-500" />
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Edit</TooltipContent>
@@ -1338,7 +1338,7 @@ const Settings = () => {
                                           size="icon"
                                           onClick={() => handleResendInvite(member.email, 'member', member.sdr_name)}
                                           aria-label={`Resend invite to ${member.sdr_name}`}
-                                          className="text-secondary hover:text-secondary hover:bg-secondary/10"
+                                          className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
                                         >
                                           <RefreshCw className="h-4 w-4" />
                                         </Button>
@@ -1695,7 +1695,7 @@ const Settings = () => {
           <Card className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BellRing className="h-5 w-5 text-secondary" />
+                <BellRing className="h-5 w-5 text-blue-500" />
                 Browser Notifications
               </CardTitle>
               <CardDescription>Get desktop notifications even when the dashboard is in the background</CardDescription>
