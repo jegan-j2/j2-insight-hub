@@ -633,11 +633,11 @@ const ActivityMonitor = () => {
   const answerRateDisplay = totals.dials > 0 ? ((totals.answered / totals.dials) * 100).toFixed(1) + "%" : "0.0%";
 
   const kpiCards = [
-    { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, color: "text-[#0f172a]/70 dark:text-white/60" },
-    { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, color: "text-[#0f172a]/70 dark:text-white/60" },
-    { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, color: "text-[#0f172a]/70 dark:text-white/60" },
-    { label: "Total Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, color: "text-[#0f172a]/70 dark:text-white/60", clickable: true, tealValue: true },
-    { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, color: "text-[#0f172a]/70 dark:text-white/60", tealValue: true },
+    { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, iconColor: "#f59e0b", iconBg: "rgba(245,158,11,0.1)" },
+    { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, iconColor: "#10b981", iconBg: "rgba(16,185,129,0.1)" },
+    { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, iconColor: "#3b82f6", iconBg: "rgba(59,130,246,0.1)" },
+    { label: "Total Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, iconColor: "#6366f1", iconBg: "rgba(99,102,241,0.1)", clickable: true },
+    { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, iconColor: "#f43f5e", iconBg: "rgba(244,63,94,0.1)" },
   ];
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
@@ -684,7 +684,7 @@ const ActivityMonitor = () => {
                   }}
                   aria-label="Refresh data"
                 >
-                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-cyan-500")} />
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-blue-500")} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
@@ -885,7 +885,12 @@ const ActivityMonitor = () => {
           <Card key={kpi.label} className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.label}</CardTitle>
-              <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
+              <div
+                className="p-2 rounded-lg"
+                style={{ backgroundColor: kpi.iconBg }}
+              >
+                <kpi.icon className="h-4 w-4" style={{ color: kpi.iconColor }} />
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -981,7 +986,7 @@ const ActivityMonitor = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-semibold text-[#0d9488] dark:text-[#2dd4bf] hover:opacity-80"
+                            className="font-semibold text-indigo-500 hover:text-indigo-400"
                             onClick={() => handleDrillDown(row.sdrName, "conversations")}
                           >
                             {row.conversations}
@@ -991,7 +996,7 @@ const ActivityMonitor = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-bold text-[#0d9488] dark:text-[#2dd4bf] hover:opacity-80"
+                            className="font-bold text-rose-500 hover:text-rose-400"
                             onClick={() => handleDrillDown(row.sdrName, "sqls")}
                           >
                             {row.sqls}
