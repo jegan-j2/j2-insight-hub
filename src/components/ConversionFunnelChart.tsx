@@ -11,11 +11,11 @@ interface ConversionFunnelChartProps {
 }
 
 const chartConfig = {
-  dials: { label: "Dials", color: "hsl(var(--secondary))" },
-  answered: { label: "Answered", color: "hsl(var(--accent))" },
-  dms: { label: "DMs Reached", color: "hsl(var(--primary))" },
-  mqls: { label: "MQLs", color: "hsl(var(--chart-1))" },
-  sqls: { label: "SQLs", color: "hsl(var(--chart-2))" },
+  dials: { label: "Dials", color: "#3b82f6" },
+  answered: { label: "Answered", color: "#6366f1" },
+  dms: { label: "DMs Reached", color: "#10b981" },
+  mqls: { label: "MQLs", color: "#f59e0b" },
+  sqls: { label: "SQLs", color: "#22c55e" },
 };
 
 export const ConversionFunnelChart = ({ snapshots }: ConversionFunnelChartProps) => {
@@ -23,11 +23,11 @@ export const ConversionFunnelChart = ({ snapshots }: ConversionFunnelChartProps)
     if (!snapshots || snapshots.length === 0) return [];
 
     return [
-      { name: "Dials", value: snapshots.reduce((sum, s) => sum + (s.dials || 0), 0), color: "hsl(var(--secondary))" },
-      { name: "Answered", value: snapshots.reduce((sum, s) => sum + (s.answered || 0), 0), color: "hsl(var(--accent))" },
-      { name: "DMs Reached", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "hsl(var(--primary))" },
-      { name: "MQLs", value: snapshots.reduce((sum, s) => sum + (s.mqls || 0), 0), color: "hsl(var(--chart-1))" },
-      { name: "SQLs", value: snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0), color: "hsl(var(--chart-2))" },
+      { name: "Dials", value: snapshots.reduce((sum, s) => sum + (s.dials || 0), 0), color: "#3b82f6" },
+      { name: "Answered", value: snapshots.reduce((sum, s) => sum + (s.answered || 0), 0), color: "#6366f1" },
+      { name: "DMs Reached", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "#10b981" },
+      { name: "MQLs", value: snapshots.reduce((sum, s) => sum + (s.mqls || 0), 0), color: "#f59e0b" },
+      { name: "SQLs", value: snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0), color: "#22c55e" },
     ];
   }, [snapshots]);
 
