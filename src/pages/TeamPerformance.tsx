@@ -119,7 +119,7 @@ const TeamPerformance = () => {
                   }}
                   aria-label="Refresh data"
                 >
-                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-cyan-500")} />
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-blue-500")} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>

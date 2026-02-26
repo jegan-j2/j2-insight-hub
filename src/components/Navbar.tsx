@@ -53,6 +53,7 @@ const Navbar = () => {
       } else {
         setUserName(user.email.split('@')[0])
         setUserInitials(user.email[0].toUpperCase())
+        setUserPhoto(null)
       }
       }
     }

@@ -12,9 +12,9 @@ interface CallActivityChartProps {
 }
 
 const chartConfig = {
-  dials: { label: "Dials", color: "#3b82f6" },
-  answered: { label: "Answered", color: "#6366f1" },
-  dms: { label: "DMs Reached", color: "#10b981" },
+  dials: { label: "Dials", color: "#f59e0b" },
+  answered: { label: "Answered", color: "#10b981" },
+  dms: { label: "DMs Reached", color: "#6366f1" },
 };
 
 export const CallActivityChart = ({ snapshots }: CallActivityChartProps) => {
@@ -62,9 +62,9 @@ export const CallActivityChart = ({ snapshots }: CallActivityChartProps) => {
                   <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} iconType="line" />
-                  <Line type="monotone" dataKey="dials" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", r: 4 }} activeDot={{ r: 6 }} name="Dials" />
-                  <Line type="monotone" dataKey="answered" stroke="#6366f1" strokeWidth={2} dot={{ fill: "#6366f1", r: 4 }} activeDot={{ r: 6 }} name="Answered" />
-                  <Line type="monotone" dataKey="dms" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981", r: 4 }} activeDot={{ r: 6 }} name="DMs Reached" />
+                  <Line type="monotone" dataKey="dials" stroke="#f59e0b" strokeWidth={2} dot={{ fill: "#f59e0b", r: 4 }} activeDot={{ r: 6 }} name="Dials" />
+                  <Line type="monotone" dataKey="answered" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981", r: 4 }} activeDot={{ r: 6 }} name="Answered" />
+                  <Line type="monotone" dataKey="dms" stroke="#6366f1" strokeWidth={2} dot={{ fill: "#6366f1", r: 4 }} activeDot={{ r: 6 }} name="DMs Reached" />
                 </LineChart>
               </ResponsiveContainer>
             </ChartContainer>
