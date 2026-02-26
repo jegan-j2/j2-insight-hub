@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 220 40% 8%;
 
-    --primary: 220 40% 10%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 15% 93%;
@@ -34,25 +34,25 @@ All colors MUST be HSL.
 
     --border: 210 20% 88%;
     --input: 210 20% 92%;
-    --ring: 220 40% 10%;
+    --ring: 221 83% 53%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 40% 8%;
-    --sidebar-primary: 220 40% 10%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 15% 92%;
     --sidebar-accent-foreground: 220 40% 8%;
     --sidebar-border: 210 20% 88%;
-    --sidebar-ring: 220 40% 10%;
+    --sidebar-ring: 221 83% 53%;
 
     /* Chart colors */
-    --chart-1: 220 40% 20%;
-    --chart-2: 210 30% 40%;
-    --chart-3: 210 20% 55%;
-    --chart-4: 210 15% 65%;
-    --chart-5: 210 10% 75%;
+    --chart-1: 221 83% 53%;
+    --chart-2: 215 70% 45%;
+    --chart-3: 243 75% 59%;
+    --chart-4: 142 71% 45%;
+    --chart-5: 38 92% 50%;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(210, 20%, 96%), hsl(210, 15%, 92%));
@@ -80,7 +80,7 @@ All colors MUST be HSL.
     --popover: 220 35% 14%;
     --popover-foreground: 210 35% 95%;
 
-    --primary: 190 85% 45%;
+    --primary: 217 91% 65%;
     --primary-foreground: 220 40% 10%;
 
     --secondary: 220 30% 20%;
@@ -97,23 +97,23 @@ All colors MUST be HSL.
 
     --border: 220 25% 22%;
     --input: 220 30% 18%;
-    --ring: 190 85% 45%;
+    --ring: 217 91% 65%;
 
     --sidebar-background: 220 40% 10%;
     --sidebar-foreground: 210 35% 92%;
-    --sidebar-primary: 190 85% 45%;
+    --sidebar-primary: 217 91% 65%;
     --sidebar-primary-foreground: 220 40% 10%;
     --sidebar-accent: 220 30% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 30% 18%;
-    --sidebar-ring: 190 85% 45%;
+    --sidebar-ring: 217 91% 65%;
 
     /* Chart colors */
-    --chart-1: 190 85% 50%;
-    --chart-2: 190 60% 65%;
-    --chart-3: 210 50% 60%;
-    --chart-4: 190 40% 70%;
-    --chart-5: 210 30% 55%;
+    --chart-1: 217 91% 65%;
+    --chart-2: 215 75% 58%;
+    --chart-3: 243 75% 70%;
+    --chart-4: 142 69% 58%;
+    --chart-5: 38 92% 60%;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(220, 40%, 10%), hsl(220, 35%, 14%));

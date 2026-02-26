@@ -195,8 +195,8 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                             className="w-8 h-8 rounded-full object-contain flex-shrink-0 bg-white"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-secondary-foreground">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-white">
                               {client.name.substring(0, 2).toUpperCase()}
                             </span>
                           </div>
@@ -230,7 +230,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-secondary hover:text-secondary/80"
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/client/${client.slug}`);
