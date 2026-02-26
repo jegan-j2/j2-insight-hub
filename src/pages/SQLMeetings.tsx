@@ -31,7 +31,7 @@ const SQLMeetings = () => {
     }
   };
   useEffect(() => {
-    document.title = "J2 Dashboard - SQL Meetings";
+    document.title = "J2 Insights Dashboard - SQL Meetings";
   }, []);
 
   useEffect(() => {

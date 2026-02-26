@@ -114,7 +114,7 @@ const Overview = () => {
   };
 
   useEffect(() => {
-    document.title = "J2 Dashboard - Overview";
+    document.title = "J2 Insights Dashboard - Overview";
   }, []);
 
   // KPI Cards driven by Supabase data

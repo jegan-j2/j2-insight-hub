@@ -35,7 +35,7 @@ const ClientView = () => {
   const clientName = client?.client_name || clientSlug?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || "Unknown Client";
 
   useEffect(() => {
-    document.title = `J2 Dashboard - ${clientName}`;
+    document.title = `J2 Insights Dashboard - ${clientName}`;
   }, [clientName]);
 
   const campaignStart = campaignProgress?.campaignStart ? new Date(campaignProgress.campaignStart) : null;
