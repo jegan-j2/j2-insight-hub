@@ -135,24 +135,16 @@ const Navbar = () => {
           <DropdownMenuContent className="w-56 bg-card border-border z-[100]" align="end">
             <DropdownMenuLabel className="text-foreground">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{userName || userEmail}</p>
+                <p className="text-sm font-medium">
+                  {userName || userEmail}{' '}
+                  {role === 'admin' && '👑'}
+                  {role === 'manager' && '👔'}
+                  {role === 'client' && '🏢'}
+                  {role === 'sdr' && '📞'}
+                </p>
                 <p className="text-xs text-muted-foreground">{userEmail}</p>
               </div>
             </DropdownMenuLabel>
-            {role && (
-              <>
-                <DropdownMenuSeparator className="bg-border" />
-                <div className="px-2 py-1.5">
-                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary/10 text-secondary">
-                    {role === 'admin' && '👑 Admin'}
-                    {role === 'manager' && '👔 Manager'}
-                    {role === 'client' && '🏢 Client'}
-                    {role === 'sdr' && '📞 SDR'}
-                    {!['admin', 'manager', 'client', 'sdr'].includes(role) && role}
-                  </span>
-                </div>
-              </>
-            )}
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem
               onClick={handleLogout}
