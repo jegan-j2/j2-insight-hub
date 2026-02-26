@@ -80,7 +80,7 @@ const TeamPerformance = () => {
   };
 
   useEffect(() => {
-    document.title = "J2 Dashboard - Team Performance";
+    document.title = "J2 Insights Dashboard - Team Performance";
     const fetchClients = async () => {
       const { data } = await supabase
         .from("clients")

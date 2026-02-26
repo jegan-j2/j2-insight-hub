@@ -304,7 +304,7 @@ const ActivityMonitor = () => {
   }, [dateRangeInfo, timeRange, mode]);
 
   useEffect(() => {
-    document.title = "J2 Dashboard - Activity Monitor";
+    document.title = "J2 Insights Dashboard - Activity Monitor";
   }, []);
 
   // Fetch data on mode change, live fetch, or auto-refresh

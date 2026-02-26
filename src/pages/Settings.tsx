@@ -65,7 +65,7 @@ const Settings = () => {
   const { canEditClients, canEditTeamMembers, canEditSettings, isAdmin } = usePermissions();
 
   useEffect(() => {
-    document.title = "J2 Dashboard - Settings";
+    document.title = "J2 Insights Dashboard - Settings";
   }, []);
 
   // --- Clients state ---
