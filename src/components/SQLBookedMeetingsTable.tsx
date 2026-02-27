@@ -2,61 +2,76 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
-import { Pencil } from "lucide-react";
 import { usePermissions } from "@/hooks/useUserRole";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays } from "lucide-react";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileSpreadsheet } from "lucide-react";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { TableSkeleton } from "@/components/LoadingSkeletons";
 import type { DateRange } from "react-day-picker";
-import { CalendarX, Search as SearchIcon } from "lucide-react";
-import type { SQLMeeting } from "@/lib/supabase-types";
+import type { SQLMeeting, Client } from "@/lib/supabase-types";
+import * as XLSX from "xlsx";
 
 interface MeetingData {
   id: string;
   sqlDate: Date;
+  clientId: string;
   clientName: string;
+  clientLogo: string | null;
   contactPerson: string;
   companyName: string;
   sdr: string;
   meetingDate: Date;
-  meetingHeld: boolean;
-  remarks: string;
+  meetingStatus: string;
+  clientNotes: string;
 }
 
-const mapSQLMeetingsToDisplay = (meetings: SQLMeeting[]): MeetingData[] =>
-  meetings.map(m => ({
-    id: m.id,
-    sqlDate: parseISO(m.booking_date),
-    clientName: m.client_id || "",
-    contactPerson: m.contact_person,
-    companyName: m.company_name || "",
-    sdr: m.sdr_name || "",
-    meetingDate: m.meeting_date ? parseISO(m.meeting_date) : parseISO(m.booking_date),
-    meetingHeld: m.meeting_held ?? false,
-    remarks: m.remarks || "",
-  }));
+const STATUS_OPTIONS: { value: string; label: string; color: string; icon?: typeof Check }[] = [
+  { value: "pending", label: "Pending", color: "#f59e0b" },
+  { value: "held", label: "Held", color: "#10b981", icon: Check },
+  { value: "no_show", label: "No Show", color: "#f43f5e" },
+  { value: "reschedule", label: "Reschedule", color: "#3b82f6" },
+];
 
-type SortField = "sqlDate" | "clientName" | "contactPerson" | "companyName" | "sdr" | "meetingDate" | "meetingHeld";
+const getStatusConfig = (status: string) =>
+  STATUS_OPTIONS.find(s => s.value === status) ?? STATUS_OPTIONS[0];
+
+const mapMeetings = (meetings: SQLMeeting[], clients?: Client[]): MeetingData[] =>
+  meetings.map(m => {
+    const client = clients?.find(c => c.client_id === m.client_id);
+    return {
+      id: m.id,
+      sqlDate: parseISO(m.booking_date),
+      clientId: m.client_id || "",
+      clientName: client?.client_name || m.client_id || "",
+      clientLogo: client?.logo_url || null,
+      contactPerson: m.contact_person,
+      companyName: m.company_name || "",
+      sdr: m.sdr_name || "",
+      meetingDate: m.meeting_date ? parseISO(m.meeting_date) : parseISO(m.booking_date),
+      meetingStatus: m.meeting_status ?? "pending",
+      clientNotes: m.client_notes ?? "",
+    };
+  });
+
+type SortField = "sqlDate" | "clientName" | "contactPerson" | "companyName" | "sdr" | "meetingDate" | "meetingStatus";
 type SortOrder = "asc" | "desc";
 
 interface SQLBookedMeetingsTableProps {
   dateRange?: DateRange;
   isLoading?: boolean;
   meetings?: SQLMeeting[];
+  clients?: Client[];
 }
 
-export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings }: SQLBookedMeetingsTableProps) => {
-  const { canEditSQL } = usePermissions();
+export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients }: SQLBookedMeetingsTableProps) => {
+  const { canEditSQL, isSdr } = usePermissions();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -66,187 +81,186 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
   const [searchQuery, setSearchQuery] = useState("");
   const [bookingDateFilter, setBookingDateFilter] = useState<Date | undefined>();
   const [meetingDateFilter, setMeetingDateFilter] = useState<Date | undefined>();
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const displayMeetings = useMemo(() => {
-    if (meetings && meetings.length > 0) return mapSQLMeetingsToDisplay(meetings);
+    if (meetings && meetings.length > 0) return mapMeetings(meetings, clients);
     return [];
-  }, [meetings]);
+  }, [meetings, clients]);
 
   const [localMeetings, setLocalMeetings] = useState<MeetingData[]>([]);
+  useEffect(() => { setLocalMeetings(displayMeetings); }, [displayMeetings]);
 
-  useEffect(() => {
-    setLocalMeetings(displayMeetings);
-  }, [displayMeetings]);
-  const { updateMeetingHeld, updateClientNotes, updating } = useMeetingUpdate();
+  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, updating } = useMeetingUpdate();
 
-  const handleMeetingHeldChange = useCallback(async (meetingId: string, newValue: boolean) => {
-    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: newValue } : m));
-    const success = await updateMeetingHeld(meetingId, newValue);
+  const handleStatusChange = useCallback(async (meeting: MeetingData, newStatus: string) => {
+    const oldStatus = meeting.meetingStatus;
+    setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: newStatus } : m));
+    const success = await updateMeetingStatus(meeting.id, newStatus);
     if (!success) {
-      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: !newValue } : m));
+      setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: oldStatus } : m));
+      return;
     }
-  }, [updateMeetingHeld]);
+    if (newStatus === "reschedule") {
+      const newRow = await createRescheduleRow({
+        client_id: meeting.clientId,
+        contact_person: meeting.contactPerson,
+        company_name: meeting.companyName,
+        sdr_name: meeting.sdr,
+      });
+      if (newRow) {
+        const client = clients?.find(c => c.client_id === newRow.client_id);
+        setLocalMeetings(prev => [{
+          id: newRow.id,
+          sqlDate: parseISO(newRow.booking_date),
+          clientId: newRow.client_id || "",
+          clientName: client?.client_name || newRow.client_id || "",
+          clientLogo: client?.logo_url || null,
+          contactPerson: newRow.contact_person,
+          companyName: newRow.company_name || "",
+          sdr: newRow.sdr_name || "",
+          meetingDate: newRow.meeting_date ? parseISO(newRow.meeting_date) : parseISO(newRow.booking_date),
+          meetingStatus: newRow.meeting_status ?? "pending",
+          clientNotes: newRow.client_notes ?? "",
+        }, ...prev]);
+      }
+    }
+  }, [updateMeetingStatus, createRescheduleRow, clients]);
 
-  const handleRemarksChange = useCallback(async (meetingId: string, newRemarks: string) => {
-    const original = localMeetings.find(m => m.id === meetingId)?.remarks || "";
-    if (newRemarks === original) return;
-    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: newRemarks } : m));
-    const success = await updateClientNotes(meetingId, newRemarks);
+  const handleNotesChange = useCallback(async (meetingId: string, newNotes: string) => {
+    const original = localMeetings.find(m => m.id === meetingId)?.clientNotes || "";
+    if (newNotes === original) return;
+    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, clientNotes: newNotes } : m));
+    const success = await updateClientNotes(meetingId, newNotes);
     if (!success) {
-      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: original } : m));
+      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, clientNotes: original } : m));
     }
   }, [updateClientNotes, localMeetings]);
-  
-  const rowsPerPage = 10;
+
+  const rowsPerPage = 15;
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
+    if (sortField === field) setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortOrder("asc"); }
   };
 
-  const handleExportCSV = () => {
-    const headers = ["SQL Date", "Client", "Contact Person", "Company", "SDR", "Meeting Date", "Meeting Held", "Remarks"];
-    const csvData = filteredMeetings.map(meeting => [
-      format(meeting.sqlDate, "MMM dd, yyyy"),
-      meeting.clientName,
-      meeting.contactPerson,
-      meeting.companyName,
-      meeting.sdr,
-      format(meeting.meetingDate, "MMM dd, yyyy"),
-      meeting.meetingHeld ? "Yes" : "No",
-      meeting.remarks,
+  const exportData = (type: "csv" | "excel") => {
+    const headers = ["SQL Date", "Client", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
+    const rows = filteredMeetings.map(m => [
+      format(m.sqlDate, "MMM dd, yyyy"),
+      m.clientName,
+      m.contactPerson,
+      m.companyName,
+      m.sdr,
+      format(m.meetingDate, "MMM dd, yyyy"),
+      getStatusConfig(m.meetingStatus).label,
+      m.clientNotes,
     ]);
 
-    const csv = [
-      headers.join(","),
-      ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
-    ].join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `sql-meetings-${format(new Date(), "yyyy-MM-dd")}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    if (type === "csv") {
+      const csv = [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sql-meetings-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } else {
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws["!cols"] = headers.map(() => ({ wch: 18 }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "SQL Meetings");
+      XLSX.writeFile(wb, `sql-meetings-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    }
   };
 
   const clearAllFilters = () => {
-    setClientFilter("all");
-    setStatusFilter("all");
-    setSdrFilter("all");
-    setSearchQuery("");
-    setBookingDateFilter(undefined);
-    setMeetingDateFilter(undefined);
+    setClientFilter("all"); setStatusFilter("all"); setSdrFilter("all");
+    setSearchQuery(""); setBookingDateFilter(undefined); setMeetingDateFilter(undefined);
     setCurrentPage(1);
   };
 
-  const activeFiltersCount = [
-    clientFilter !== "all",
-    statusFilter !== "all",
-    sdrFilter !== "all",
-    searchQuery !== "",
+  const hiddenFiltersCount = [
     bookingDateFilter !== undefined,
     meetingDateFilter !== undefined,
+    sdrFilter !== "all",
+  ].filter(Boolean).length;
+
+  const activeFiltersCount = [
+    clientFilter !== "all", statusFilter !== "all", sdrFilter !== "all",
+    searchQuery !== "", bookingDateFilter !== undefined, meetingDateFilter !== undefined,
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
     let filtered = [...localMeetings];
-
-    // Apply date range filter from context
     if (dateRange?.from && dateRange?.to) {
-      filtered = filtered.filter(m => 
-        isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! })
-      );
+      filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
-
-    if (clientFilter !== "all") {
-      filtered = filtered.filter(m => m.clientName === clientFilter);
-    }
-
-    if (statusFilter === "held") {
-      filtered = filtered.filter(m => m.meetingHeld);
-    } else if (statusFilter === "not-held") {
-      filtered = filtered.filter(m => !m.meetingHeld);
-    }
-
-    if (sdrFilter !== "all") {
-      filtered = filtered.filter(m => m.sdr === sdrFilter);
-    }
-
-    if (bookingDateFilter) {
-      filtered = filtered.filter(m => 
-        format(m.sqlDate, "yyyy-MM-dd") === format(bookingDateFilter, "yyyy-MM-dd")
-      );
-    }
-
-    if (meetingDateFilter) {
-      filtered = filtered.filter(m => 
-        format(m.meetingDate, "yyyy-MM-dd") === format(meetingDateFilter, "yyyy-MM-dd")
-      );
-    }
-
+    if (clientFilter !== "all") filtered = filtered.filter(m => m.clientId === clientFilter);
+    if (statusFilter !== "all") filtered = filtered.filter(m => m.meetingStatus === statusFilter);
+    if (sdrFilter !== "all") filtered = filtered.filter(m => m.sdr === sdrFilter);
+    if (bookingDateFilter) filtered = filtered.filter(m => format(m.sqlDate, "yyyy-MM-dd") === format(bookingDateFilter, "yyyy-MM-dd"));
+    if (meetingDateFilter) filtered = filtered.filter(m => format(m.meetingDate, "yyyy-MM-dd") === format(meetingDateFilter, "yyyy-MM-dd"));
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(m =>
-        m.contactPerson.toLowerCase().includes(query) ||
-        m.companyName.toLowerCase().includes(query) ||
-        m.sdr.toLowerCase().includes(query)
-      );
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(m => m.contactPerson.toLowerCase().includes(q) || m.companyName.toLowerCase().includes(q) || m.sdr.toLowerCase().includes(q));
     }
-
     filtered.sort((a, b) => {
-      let aVal: any = a[sortField];
-      let bVal: any = b[sortField];
-
-      if (sortField === "sqlDate" || sortField === "meetingDate") {
-        aVal = aVal.getTime();
-        bVal = bVal.getTime();
-      } else if (sortField === "meetingHeld") {
-        aVal = aVal ? 1 : 0;
-        bVal = bVal ? 1 : 0;
-      } else if (typeof aVal === "string") {
-        return sortOrder === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-
+      let aVal: any = a[sortField]; let bVal: any = b[sortField];
+      if (sortField === "sqlDate" || sortField === "meetingDate") { aVal = aVal.getTime(); bVal = bVal.getTime(); }
+      else if (typeof aVal === "string") return sortOrder === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
     });
-
     return filtered;
   }, [localMeetings, dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateFilter, meetingDateFilter, sortField, sortOrder]);
 
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
-  const paginatedMeetings = filteredMeetings.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
-  const clients = Array.from(new Set(localMeetings.map(m => m.clientName))).sort();
-  const sdrs = Array.from(new Set(localMeetings.map(m => m.sdr))).sort();
+  const paginatedMeetings = filteredMeetings.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const uniqueClients = Array.from(new Set(localMeetings.map(m => m.clientId))).sort();
+  const uniqueSdrs = Array.from(new Set(localMeetings.map(m => m.sdr))).sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
-    <button
-      onClick={() => handleSort(field)}
-      className="flex items-center gap-1 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-2 py-1"
-      aria-label={`Sort by ${label}`}
-    >
-      {label}
-      <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
+    <button onClick={() => handleSort(field)} className="flex items-center gap-1 hover:text-foreground transition-colors">
+      {label} <ArrowUpDown className="h-3 w-3" />
     </button>
   );
 
-  if (isLoading) {
-    return <TableSkeleton />;
-  }
+  const StatusBadge = ({ meeting }: { meeting: MeetingData }) => {
+    const config = getStatusConfig(meeting.meetingStatus);
+    const canEdit = !isSdr && canEditSQL(meeting.clientId);
+    const badge = (
+      <Badge className="gap-1 text-white text-xs cursor-default" style={{ backgroundColor: config.color }}>
+        {config.icon && <config.icon className="h-3 w-3" />}
+        {config.label}
+      </Badge>
+    );
 
-  const hasActiveFilters = activeFiltersCount > 0;
-  const showEmptyState = filteredMeetings.length === 0;
+    if (!canEdit || updating === meeting.id) return badge;
+
+    return (
+      <Select value={meeting.meetingStatus} onValueChange={(v) => handleStatusChange(meeting, v)}>
+        <SelectTrigger className="border-0 bg-transparent p-0 h-auto w-auto shadow-none focus:ring-0 [&>svg]:hidden">
+          <Badge className="gap-1 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity" style={{ backgroundColor: config.color }}>
+            {config.icon && <config.icon className="h-3 w-3" />}
+            {config.label}
+          </Badge>
+        </SelectTrigger>
+        <SelectContent className="bg-popover border-border z-50">
+          {STATUS_OPTIONS.map(opt => (
+            <SelectItem key={opt.value} value={opt.value}>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.color }} />
+                {opt.label}
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
+  if (isLoading) return <TableSkeleton />;
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "600ms" }}>
@@ -254,215 +268,113 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle className="text-foreground">SQL Booked Meetings - All Clients</CardTitle>
+              <CardTitle className="text-foreground">SQL Meetings</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 Showing {filteredMeetings.length} of {localMeetings.length} meetings
               </p>
             </div>
             <div className="flex gap-2">
               {activeFiltersCount > 0 && (
-                <Button
-                  onClick={clearAllFilters}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  Clear Filters ({activeFiltersCount})
+                <Button onClick={clearAllFilters} variant="outline" size="sm" className="gap-2">
+                  <X className="h-4 w-4" /> Clear ({activeFiltersCount})
                 </Button>
               )}
-              <Button
-                onClick={handleExportCSV}
-                variant="outline"
-                size="sm"
-                className="gap-2 border-secondary text-secondary hover:bg-secondary/10"
-              >
-                <Download className="h-4 w-4" />
-                Export CSV
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button size="sm" className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm">
+                    <Download className="h-4 w-4" /> Export
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-40 p-1 bg-popover border-border z-50" align="end">
+                  <button onClick={() => exportData("csv")} className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors">
+                    <Download className="h-4 w-4" /> CSV
+                  </button>
+                  <button onClick={() => exportData("excel")} className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors">
+                    <FileSpreadsheet className="h-4 w-4" /> Excel
+                  </button>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            <Input
-              placeholder="Search contact, company..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-background/50 border-border min-h-[44px]"
-              aria-label="Search meetings"
-            />
-            
-            {/* Booking Date Filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal min-h-[44px]",
-                    !bookingDateFilter && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {bookingDateFilter ? format(bookingDateFilter, "MMM dd, yyyy") : "Booking Date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                <Calendar
-                  mode="single"
-                  selected={bookingDateFilter}
-                  onSelect={(date) => {
-                    setBookingDateFilter(date);
-                    setCurrentPage(1);
-                  }}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-
-            {/* Meeting Date Filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal min-h-[44px]",
-                    !meetingDateFilter && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarDays className="mr-2 h-4 w-4" />
-                  {meetingDateFilter ? format(meetingDateFilter, "MMM dd, yyyy") : "Meeting Date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                <Calendar
-                  mode="single"
-                  selected={meetingDateFilter}
-                  onSelect={(date) => {
-                    setMeetingDateFilter(date);
-                    setCurrentPage(1);
-                  }}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-
+          {/* Always-visible filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Input placeholder="Search contact, company..." value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="bg-background/50 border-border min-h-[40px] w-[220px]" />
             <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="bg-background/50 border-border min-h-[44px]" aria-label="Filter by client">
+              <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
                 <SelectValue placeholder="All Clients" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border z-50">
                 <SelectItem value="all">All Clients</SelectItem>
-                {clients.map(client => (
-                  <SelectItem key={client} value={client}>{client}</SelectItem>
-                ))}
+                {uniqueClients.map(cid => {
+                  const c = clients?.find(cl => cl.client_id === cid);
+                  return <SelectItem key={cid} value={cid}>{c?.client_name || cid}</SelectItem>;
+                })}
               </SelectContent>
             </Select>
-
-            <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="bg-background/50 border-border min-h-[44px]" aria-label="Filter by SDR">
-                <SelectValue placeholder="All SDRs" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border z-50">
-                <SelectItem value="all">All SDRs</SelectItem>
-                {sdrs.map(sdr => (
-                  <SelectItem key={sdr} value={sdr}>{sdr}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="bg-background/50 border-border min-h-[44px]" aria-label="Filter by meeting status">
+              <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[160px]">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border z-50">
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="held">Meeting Held</SelectItem>
-                <SelectItem value="not-held">Not Held</SelectItem>
+                {STATUS_OPTIONS.map(s => (
+                  <SelectItem key={s.value} value={s.value}>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                      {s.label}
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            <Button variant="outline" size="sm" onClick={() => setShowMoreFilters(!showMoreFilters)}
+              className={cn("gap-2 min-h-[40px]", showMoreFilters && "bg-muted")}>
+              <Filter className="h-4 w-4" /> More Filters
+              {hiddenFiltersCount > 0 && (
+                <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
+                  {hiddenFiltersCount}
+                </Badge>
+              )}
+            </Button>
           </div>
 
-          {/* Active Filter Badges */}
-          {activeFiltersCount > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {clientFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  Client: {clientFilter}
-                  <button
-                    onClick={() => setClientFilter("all")}
-                    className="ml-1 hover:text-destructive"
-                    aria-label="Remove client filter"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {statusFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  Status: {statusFilter === "held" ? "Held" : "Not Held"}
-                  <button
-                    onClick={() => setStatusFilter("all")}
-                    className="ml-1 hover:text-destructive"
-                    aria-label="Remove status filter"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {sdrFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  SDR: {sdrFilter}
-                  <button
-                    onClick={() => setSdrFilter("all")}
-                    className="ml-1 hover:text-destructive"
-                    aria-label="Remove SDR filter"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {bookingDateFilter && (
-                <Badge variant="secondary" className="gap-1">
-                  Booked: {format(bookingDateFilter, "MMM dd, yyyy")}
-                  <button
-                    onClick={() => setBookingDateFilter(undefined)}
-                    className="ml-1 hover:text-destructive"
-                    aria-label="Remove booking date filter"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {meetingDateFilter && (
-                <Badge variant="secondary" className="gap-1">
-                  Meeting: {format(meetingDateFilter, "MMM dd, yyyy")}
-                  <button
-                    onClick={() => setMeetingDateFilter(undefined)}
-                    className="ml-1 hover:text-destructive"
-                    aria-label="Remove meeting date filter"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
-              {searchQuery && (
-                <Badge variant="secondary" className="gap-1">
-                  Search: "{searchQuery}"
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="ml-1 hover:text-destructive"
-                    aria-label="Remove search filter"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              )}
+          {/* Expandable hidden filters */}
+          {showMoreFilters && (
+            <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[180px]", !bookingDateFilter && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {bookingDateFilter ? format(bookingDateFilter, "MMM dd, yyyy") : "Booking Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                  <Calendar mode="single" selected={bookingDateFilter} onSelect={(d) => { setBookingDateFilter(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[180px]", !meetingDateFilter && "text-muted-foreground")}>
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {meetingDateFilter ? format(meetingDateFilter, "MMM dd, yyyy") : "Meeting Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                  <Calendar mode="single" selected={meetingDateFilter} onSelect={(d) => { setMeetingDateFilter(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
+                  <SelectValue placeholder="All SDRs" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">All SDRs</SelectItem>
+                  {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>
@@ -471,71 +383,58 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
         <div className="overflow-x-auto scrollbar-thin scroll-gradient">
           <Table>
             <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground sticky left-0 bg-card z-20">
+              <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 z-20 bg-[#f1f5f9] dark:bg-[#1e293b]">
                   <SortButton field="sqlDate" label="SQL Date" />
                 </TableHead>
-                <TableHead className="text-muted-foreground">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                   <SortButton field="clientName" label="Client" />
                 </TableHead>
-                <TableHead className="text-muted-foreground">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                   <SortButton field="contactPerson" label="Contact Person" />
                 </TableHead>
-                <TableHead className="text-muted-foreground">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                   <SortButton field="companyName" label="Company" />
                 </TableHead>
-                <TableHead className="text-muted-foreground">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                   <SortButton field="sdr" label="SDR" />
                 </TableHead>
-                <TableHead className="text-muted-foreground">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                   <SortButton field="meetingDate" label="Meeting Date" />
                 </TableHead>
-                <TableHead className="text-muted-foreground">
-                  <SortButton field="meetingHeld" label="Meeting Held" />
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                  <SortButton field="meetingStatus" label="Status" />
                 </TableHead>
-                <TableHead className="text-muted-foreground">Remarks</TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 200 }}>Notes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedMeetings.map((meeting, index) => (
-                <TableRow
-                  key={meeting.id}
-                  className={`border-border/50 hover:bg-muted/20 transition-colors ${
-                    index % 2 === 0 ? "bg-muted/5" : ""
-                  } ${updating === meeting.id ? "opacity-60" : ""}`}
-                >
-                  <TableCell className="text-foreground whitespace-nowrap sticky left-0 bg-card z-10">
-                    {format(meeting.sqlDate, "MMM dd, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-foreground font-medium whitespace-nowrap">
-                    {meeting.clientName}
-                  </TableCell>
+                <TableRow key={meeting.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${index % 2 === 0 ? "bg-muted/5" : ""} ${updating === meeting.id ? "opacity-60" : ""}`}>
+                  <TableCell className="text-foreground whitespace-nowrap sticky left-0 bg-card z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">
-                    {meeting.contactPerson}
+                    <div className="flex items-center gap-2">
+                      {meeting.clientLogo ? (
+                        <img src={meeting.clientLogo} alt="" className="h-6 w-6 rounded-full object-cover" />
+                      ) : (
+                        <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                          {meeting.clientName.charAt(0)}
+                        </div>
+                      )}
+                      <span className="font-medium">{meeting.clientName}</span>
+                    </div>
                   </TableCell>
-                  <TableCell className="text-foreground">
-                    {meeting.companyName}
-                  </TableCell>
-                  <TableCell className="text-foreground whitespace-nowrap">
-                    {meeting.sdr}
-                  </TableCell>
-                  <TableCell className="text-foreground whitespace-nowrap">
-                    {format(meeting.meetingDate, "MMM dd, yyyy")}
-                  </TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={meeting.meetingHeld}
-                      onCheckedChange={(checked) => handleMeetingHeldChange(meeting.id, checked as boolean)}
-                      disabled={updating === meeting.id || !canEditSQL(meeting.clientName)}
-                      className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary"
-                    />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground max-w-xs">
+                  <TableCell className="text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
+                  <TableCell className="text-foreground">{meeting.companyName}</TableCell>
+                  <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
+                  <TableCell className="text-foreground whitespace-nowrap">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
+                  <TableCell><StatusBadge meeting={meeting} /></TableCell>
+                  <TableCell style={{ minWidth: 200 }}>
                     <Input
-                      defaultValue={meeting.remarks || ""}
-                      onBlur={(e) => handleRemarksChange(meeting.id, e.target.value)}
-                      placeholder={canEditSQL(meeting.clientName) ? "Add remarks..." : "View only"}
-                      disabled={updating === meeting.id || !canEditSQL(meeting.clientName)}
+                      defaultValue={meeting.clientNotes}
+                      onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
+                      placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
+                      disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
                       className="bg-transparent border-transparent hover:border-border focus:border-ring h-8 text-sm"
                     />
                   </TableCell>
@@ -544,26 +443,10 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
               {paginatedMeetings.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="py-12">
-                    {hasActiveFilters ? (
-                      <EmptyState 
-                        icon={SearchIcon}
-                        title="No results found"
-                        description="Try adjusting your search terms or filters"
-                        actionLabel="Clear Filters"
-                        onAction={clearAllFilters}
-                      />
-                    ) : localMeetings.length === 0 ? (
-                      <EmptyState 
-                        icon={CalendarX}
-                        title="No meetings booked yet"
-                        description="SQL meetings will appear here once leads are generated"
-                      />
+                    {activeFiltersCount > 0 ? (
+                      <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
                     ) : (
-                      <EmptyState 
-                        icon={CalendarX}
-                        title="No meetings in this period"
-                        description="No SQL booked meetings found for the selected date range"
-                      />
+                      <EmptyState icon={CalendarX} title="No meetings booked yet" description="SQL meetings will appear here once leads are generated" />
                     )}
                   </TableCell>
                 </TableRow>
@@ -571,33 +454,15 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
             </TableBody>
           </Table>
         </div>
-
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </p>
+            <p className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</p>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="border-border"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="border-border">
+                <ChevronLeft className="h-4 w-4" /> Previous
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="border-border"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="border-border">
+                Next <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>

@@ -10,7 +10,6 @@ export const useMeetingUpdate = () => {
   const updateMeetingHeld = async (meetingId: string, newValue: boolean) => {
     try {
       setUpdating(meetingId)
-
       const user = await getCurrentUser()
       if (!user) throw new Error('Not authenticated')
 
@@ -25,22 +24,11 @@ export const useMeetingUpdate = () => {
         .eq('id', meetingId)
 
       if (error) throw error
-
-      toast({
-        title: 'Success',
-        description: 'Meeting status updated',
-        duration: 2000
-      })
-
+      toast({ title: 'Success', description: 'Meeting status updated', duration: 2000 })
       return true
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating meeting status:', error)
-      toast({
-        title: 'Error',
-        description: getSafeErrorMessage(error),
-        variant: 'destructive',
-        duration: 3000
-      })
+      toast({ title: 'Error', description: getSafeErrorMessage(error), variant: 'destructive', duration: 3000 })
       return false
     } finally {
       setUpdating(null)
@@ -50,34 +38,26 @@ export const useMeetingUpdate = () => {
   const updateMeetingStatus = async (meetingId: string, status: string) => {
     try {
       setUpdating(meetingId)
-
       const user = await getCurrentUser()
       if (!user) throw new Error('Not authenticated')
 
       const { error } = await supabase
-        .from('activity_log')
+        .from('sql_meetings')
         .update({
-          meeting_status: status
+          meeting_status: status,
+          meeting_held: status === 'held',
+          edited_in_dashboard: true,
+          last_edited_by: user.email,
+          last_edited_at: new Date().toISOString()
         })
         .eq('id', meetingId)
 
       if (error) throw error
-
-      toast({
-        title: 'Success',
-        description: 'Meeting status updated',
-        duration: 2000
-      })
-
+      toast({ title: 'Success', description: 'Status updated', duration: 2000 })
       return true
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating meeting status:', error)
-      toast({
-        title: 'Error',
-        description: getSafeErrorMessage(error),
-        variant: 'destructive',
-        duration: 3000
-      })
+      toast({ title: 'Error', description: getSafeErrorMessage(error), variant: 'destructive', duration: 3000 })
       return false
     } finally {
       setUpdating(null)
@@ -89,45 +69,36 @@ export const useMeetingUpdate = () => {
     contact_person: string
     company_name: string
     sdr_name: string
-    booking_date: string
   }) => {
     try {
       setUpdating('reschedule')
-
       const user = await getCurrentUser()
       if (!user) throw new Error('Not authenticated')
 
-      const { error } = await supabase
-        .from('activity_log')
+      const { data, error } = await supabase
+        .from('sql_meetings')
         .insert({
           client_id: meeting.client_id,
-          contact_name: meeting.contact_person,
+          contact_person: meeting.contact_person,
           company_name: meeting.company_name,
           sdr_name: meeting.sdr_name,
-          activity_date: new Date().toISOString(),
+          booking_date: new Date().toISOString().split('T')[0],
           meeting_status: 'pending',
-          activity_type: 'reschedule',
-          is_sql: true
+          meeting_held: false,
+          edited_in_dashboard: true,
+          last_edited_by: user.email,
+          last_edited_at: new Date().toISOString()
         })
+        .select()
+        .single()
 
       if (error) throw error
-
-      toast({
-        title: 'Success',
-        description: 'Reschedule row created',
-        duration: 2000
-      })
-
-      return true
+      toast({ title: 'Success', description: 'Reschedule created', duration: 2000 })
+      return data
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error creating reschedule row:', error)
-      toast({
-        title: 'Error',
-        description: getSafeErrorMessage(error),
-        variant: 'destructive',
-        duration: 3000
-      })
-      return false
+      toast({ title: 'Error', description: getSafeErrorMessage(error), variant: 'destructive', duration: 3000 })
+      return null
     } finally {
       setUpdating(null)
     }
@@ -136,34 +107,25 @@ export const useMeetingUpdate = () => {
   const updateClientNotes = async (meetingId: string, newNotes: string) => {
     try {
       setUpdating(meetingId)
-
       const user = await getCurrentUser()
       if (!user) throw new Error('Not authenticated')
 
       const { error } = await supabase
-        .from('activity_log')
+        .from('sql_meetings')
         .update({
-          client_notes: newNotes
+          client_notes: newNotes,
+          edited_in_dashboard: true,
+          last_edited_by: user.email,
+          last_edited_at: new Date().toISOString()
         })
         .eq('id', meetingId)
 
       if (error) throw error
-
-      toast({
-        title: 'Success',
-        description: 'Notes saved',
-        duration: 2000
-      })
-
+      toast({ title: 'Success', description: 'Notes saved', duration: 2000 })
       return true
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating notes:', error)
-      toast({
-        title: 'Error',
-        description: getSafeErrorMessage(error),
-        variant: 'destructive',
-        duration: 3000
-      })
+      toast({ title: 'Error', description: getSafeErrorMessage(error), variant: 'destructive', duration: 3000 })
       return false
     } finally {
       setUpdating(null)

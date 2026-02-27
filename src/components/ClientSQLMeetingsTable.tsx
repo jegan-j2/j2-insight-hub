@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight, CalendarX } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, CalendarX, Check } from "lucide-react";
 import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
+import { usePermissions } from "@/hooks/useUserRole";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import type { SQLMeeting } from "@/lib/supabase-types";
@@ -15,16 +16,26 @@ import { EmptyState } from "@/components/EmptyState";
 interface MeetingData {
   id: string;
   sqlDate: Date;
+  clientId: string;
   contactPerson: string;
   companyName: string;
   sdr: string;
   meetingDate: Date;
-  meetingHeld: boolean;
-  remarks: string;
+  meetingStatus: string;
+  clientNotes: string;
 }
 
+const STATUS_OPTIONS: { value: string; label: string; color: string; icon?: typeof Check }[] = [
+  { value: "pending", label: "Pending", color: "#f59e0b" },
+  { value: "held", label: "Held", color: "#10b981", icon: Check },
+  { value: "no_show", label: "No Show", color: "#f43f5e" },
+  { value: "reschedule", label: "Reschedule", color: "#3b82f6" },
+];
 
-type SortField = "sqlDate" | "contactPerson" | "companyName" | "sdr" | "meetingDate" | "meetingHeld";
+const getStatusConfig = (status: string) =>
+  STATUS_OPTIONS.find(s => s.value === status) ?? STATUS_OPTIONS[0];
+
+type SortField = "sqlDate" | "contactPerson" | "companyName" | "sdr" | "meetingDate" | "meetingStatus";
 type SortOrder = "asc" | "desc";
 
 interface ClientSQLMeetingsTableProps {
@@ -33,16 +44,17 @@ interface ClientSQLMeetingsTableProps {
   meetings?: SQLMeeting[];
 }
 
-const mapMeetingsToDisplay = (meetings: SQLMeeting[]): MeetingData[] =>
+const mapMeetings = (meetings: SQLMeeting[]): MeetingData[] =>
   meetings.map(m => ({
     id: m.id,
     sqlDate: parseISO(m.booking_date),
+    clientId: m.client_id || "",
     contactPerson: m.contact_person,
-    companyName: m.company_name,
-    sdr: m.sdr_name,
+    companyName: m.company_name || "",
+    sdr: m.sdr_name || "",
     meetingDate: m.meeting_date ? parseISO(m.meeting_date) : parseISO(m.booking_date),
-    meetingHeld: m.meeting_held,
-    remarks: m.remarks || "",
+    meetingStatus: m.meeting_status ?? "pending",
+    clientNotes: m.client_notes ?? "",
   }));
 
 export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: ClientSQLMeetingsTableProps) => {
@@ -50,57 +62,72 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [dateFilterType, setDateFilterType] = useState<string>("booking");
-  const { updateMeetingHeld, updateClientNotes, updating } = useMeetingUpdate();
-  
-  const rowsPerPage = 10;
+  const { canEditSQL, isSdr } = usePermissions();
+  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, updating } = useMeetingUpdate();
+
+  const rowsPerPage = 15;
 
   const displayMeetings = useMemo(() => {
-    if (meetings && meetings.length > 0) return mapMeetingsToDisplay(meetings);
+    if (meetings && meetings.length > 0) return mapMeetings(meetings);
     return [];
   }, [meetings]);
 
   const [localMeetings, setLocalMeetings] = useState<MeetingData[]>(displayMeetings);
   useEffect(() => { setLocalMeetings(displayMeetings); }, [displayMeetings]);
 
-  const handleMeetingHeldChange = useCallback(async (meetingId: string, newValue: boolean) => {
-    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: newValue } : m));
-    const success = await updateMeetingHeld(meetingId, newValue);
+  const handleStatusChange = useCallback(async (meeting: MeetingData, newStatus: string) => {
+    const oldStatus = meeting.meetingStatus;
+    setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: newStatus } : m));
+    const success = await updateMeetingStatus(meeting.id, newStatus);
     if (!success) {
-      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: !newValue } : m));
+      setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: oldStatus } : m));
+      return;
     }
-  }, [updateMeetingHeld]);
+    if (newStatus === "reschedule") {
+      const newRow = await createRescheduleRow({
+        client_id: meeting.clientId,
+        contact_person: meeting.contactPerson,
+        company_name: meeting.companyName,
+        sdr_name: meeting.sdr,
+      });
+      if (newRow) {
+        setLocalMeetings(prev => [{
+          id: newRow.id,
+          sqlDate: parseISO(newRow.booking_date),
+          clientId: newRow.client_id || "",
+          contactPerson: newRow.contact_person,
+          companyName: newRow.company_name || "",
+          sdr: newRow.sdr_name || "",
+          meetingDate: newRow.meeting_date ? parseISO(newRow.meeting_date) : parseISO(newRow.booking_date),
+          meetingStatus: newRow.meeting_status ?? "pending",
+          clientNotes: newRow.client_notes ?? "",
+        }, ...prev]);
+      }
+    }
+  }, [updateMeetingStatus, createRescheduleRow]);
 
-  const handleRemarksChange = useCallback(async (meetingId: string, newRemarks: string) => {
-    const original = localMeetings.find(m => m.id === meetingId)?.remarks || "";
-    if (newRemarks === original) return;
-    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: newRemarks } : m));
-    const success = await updateClientNotes(meetingId, newRemarks);
+  const handleNotesChange = useCallback(async (meetingId: string, newNotes: string) => {
+    const original = localMeetings.find(m => m.id === meetingId)?.clientNotes || "";
+    if (newNotes === original) return;
+    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, clientNotes: newNotes } : m));
+    const success = await updateClientNotes(meetingId, newNotes);
     if (!success) {
-      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: original } : m));
+      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, clientNotes: original } : m));
     }
   }, [updateClientNotes, localMeetings]);
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
+    if (sortField === field) setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortOrder("asc"); }
   };
 
   const handleExportCSV = () => {
-    const headers = ["SQL Date", "Contact Person", "Company", "SDR", "Meeting Date", "Meeting Held", "Remarks"];
-    const csvData = sortedMeetings.map(meeting => [
-      format(meeting.sqlDate, "MMM dd, yyyy"),
-      meeting.contactPerson,
-      meeting.companyName,
-      meeting.sdr,
-      format(meeting.meetingDate, "MMM dd, yyyy"),
-      meeting.meetingHeld ? "Yes" : "No",
-      meeting.remarks,
+    const headers = ["SQL Date", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
+    const csvData = sortedMeetings.map(m => [
+      format(m.sqlDate, "MMM dd, yyyy"), m.contactPerson, m.companyName, m.sdr,
+      format(m.meetingDate, "MMM dd, yyyy"), getStatusConfig(m.meetingStatus).label, m.clientNotes,
     ]);
-    const csv = [headers.join(","), ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))].join("\n");
+    const csv = [headers.join(","), ...csvData.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -116,15 +143,9 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
       filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
     filtered.sort((a, b) => {
-      let aVal: any = a[sortField];
-      let bVal: any = b[sortField];
-      if (sortField === "sqlDate" || sortField === "meetingDate") {
-        aVal = aVal.getTime(); bVal = bVal.getTime();
-      } else if (sortField === "meetingHeld") {
-        aVal = aVal ? 1 : 0; bVal = bVal ? 1 : 0;
-      } else if (typeof aVal === "string") {
-        return sortOrder === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
+      let aVal: any = a[sortField]; let bVal: any = b[sortField];
+      if (sortField === "sqlDate" || sortField === "meetingDate") { aVal = aVal.getTime(); bVal = bVal.getTime(); }
+      else if (typeof aVal === "string") return sortOrder === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
     });
     return filtered;
@@ -135,10 +156,41 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button onClick={() => handleSort(field)} className="flex items-center gap-1 hover:text-foreground transition-colors">
-      {label}
-      <ArrowUpDown className="h-3 w-3" />
+      {label} <ArrowUpDown className="h-3 w-3" />
     </button>
   );
+
+  const StatusBadge = ({ meeting }: { meeting: MeetingData }) => {
+    const config = getStatusConfig(meeting.meetingStatus);
+    const canEdit = !isSdr && canEditSQL(meeting.clientId);
+    const badge = (
+      <Badge className="gap-1 text-white text-xs cursor-default" style={{ backgroundColor: config.color }}>
+        {config.icon && <config.icon className="h-3 w-3" />}
+        {config.label}
+      </Badge>
+    );
+    if (!canEdit || updating === meeting.id) return badge;
+    return (
+      <Select value={meeting.meetingStatus} onValueChange={(v) => handleStatusChange(meeting, v)}>
+        <SelectTrigger className="border-0 bg-transparent p-0 h-auto w-auto shadow-none focus:ring-0 [&>svg]:hidden">
+          <Badge className="gap-1 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity" style={{ backgroundColor: config.color }}>
+            {config.icon && <config.icon className="h-3 w-3" />}
+            {config.label}
+          </Badge>
+        </SelectTrigger>
+        <SelectContent className="bg-popover border-border z-50">
+          {STATUS_OPTIONS.map(opt => (
+            <SelectItem key={opt.value} value={opt.value}>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.color }} />
+                {opt.label}
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "400ms" }}>
@@ -152,8 +204,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
               </p>
             </div>
             <Button onClick={handleExportCSV} variant="outline" size="sm" className="gap-2 border-secondary text-secondary hover:bg-secondary/10">
-              <Download className="h-4 w-4" />
-              Export CSV
+              <Download className="h-4 w-4" /> Export CSV
             </Button>
           </div>
           <div className="flex items-center gap-3">
@@ -174,14 +225,26 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
         <div className="overflow-x-auto scrollbar-thin scroll-gradient">
           <Table>
             <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground sticky left-0 bg-card z-20"><SortButton field="sqlDate" label="SQL Date" /></TableHead>
-                <TableHead className="text-muted-foreground"><SortButton field="contactPerson" label="Contact Person" /></TableHead>
-                <TableHead className="text-muted-foreground"><SortButton field="companyName" label="Company" /></TableHead>
-                <TableHead className="text-muted-foreground"><SortButton field="sdr" label="SDR" /></TableHead>
-                <TableHead className="text-muted-foreground"><SortButton field="meetingDate" label="Meeting Date" /></TableHead>
-                <TableHead className="text-muted-foreground"><SortButton field="meetingHeld" label="Meeting Held" /></TableHead>
-                <TableHead className="text-muted-foreground">Remarks</TableHead>
+              <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 z-20 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                  <SortButton field="sqlDate" label="SQL Date" />
+                </TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                  <SortButton field="contactPerson" label="Contact Person" />
+                </TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                  <SortButton field="companyName" label="Company" />
+                </TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                  <SortButton field="sdr" label="SDR" />
+                </TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                  <SortButton field="meetingDate" label="Meeting Date" />
+                </TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                  <SortButton field="meetingStatus" label="Status" />
+                </TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 200 }}>Notes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -192,20 +255,13 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
                   <TableCell className="text-foreground">{meeting.companyName}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={meeting.meetingHeld}
-                      onCheckedChange={(checked) => handleMeetingHeldChange(meeting.id, checked as boolean)}
-                      disabled={updating === meeting.id}
-                      className="border-border data-[state=checked]:bg-secondary data-[state=checked]:border-secondary"
-                    />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground max-w-xs">
+                  <TableCell><StatusBadge meeting={meeting} /></TableCell>
+                  <TableCell style={{ minWidth: 200 }}>
                     <Input
-                      defaultValue={meeting.remarks || ""}
-                      onBlur={(e) => handleRemarksChange(meeting.id, e.target.value)}
-                      placeholder="Add remarks..."
-                      disabled={updating === meeting.id}
+                      defaultValue={meeting.clientNotes}
+                      onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
+                      placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
+                      disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
                       className="bg-transparent border-transparent hover:border-border focus:border-ring h-8 text-sm"
                     />
                   </TableCell>
