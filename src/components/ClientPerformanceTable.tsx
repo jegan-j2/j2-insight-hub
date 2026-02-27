@@ -185,32 +185,30 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
           <div className="overflow-x-auto scrollbar-thin scroll-gradient">
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
-                <TableRow className="border-border hover:bg-transparent">
+                <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
                   <TableHead className="text-muted-foreground sticky left-0 bg-card z-20">
                     <SortButton field="name" label="Client" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground">
-                    <SortButton field="campaignPeriod" label="Campaign Period" />
-                  </TableHead>
-                  <TableHead className="text-muted-foreground">
+                  <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
+                  <TableHead className="text-muted-foreground text-left">
                     <SortButton field="daysLeft" label="Days Left" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground">
+                  <TableHead className="text-muted-foreground text-center">
                     <SortButton field="dials" label="Dials" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground">
+                  <TableHead className="text-muted-foreground text-center">
                     <SortButton field="answered" label="Answered" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground">
+                  <TableHead className="text-muted-foreground text-center">
                     <SortButton field="answeredPercent" label="Answer Rate" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground">
+                  <TableHead className="text-muted-foreground text-center">
                     <SortButton field="dms" label="DM Conversations" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground">
+                  <TableHead className="text-muted-foreground text-center">
                     <SortButton field="sqls" label="SQLs" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground">
+                  <TableHead className="text-muted-foreground text-center">
                     <SortButton field="progress" label="Progress" />
                   </TableHead>
                   <TableHead className="text-right text-muted-foreground">Action</TableHead>
@@ -266,20 +264,13 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                         </TableCell>
                       );
                     })()}
-                    <TableCell className="text-foreground font-medium">{client.dials.toLocaleString()}</TableCell>
-                    <TableCell className="text-foreground font-medium">{client.answered.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <span className="text-foreground font-medium">{client.answeredPercent.toFixed(2)}%</span>
-                    </TableCell>
-                    <TableCell className="text-foreground font-medium">{client.dms.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-foreground font-medium">{client.sqls.toLocaleString()}</span>
-                        <span className="text-xs text-muted-foreground">{client.sqlsPercent.toFixed(2)}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 min-w-[120px]">
+                    <TableCell className="text-sm font-medium text-foreground text-center">{client.dials.toLocaleString()}</TableCell>
+                    <TableCell className="text-sm font-medium text-foreground text-center">{client.answered.toLocaleString()}</TableCell>
+                    <TableCell className="text-sm font-medium text-foreground text-center">{client.answeredPercent.toFixed(2)}%</TableCell>
+                    <TableCell className="text-sm font-medium text-foreground text-center">{client.dms.toLocaleString()}</TableCell>
+                    <TableCell className="text-sm font-medium text-foreground text-center">{client.sqls.toLocaleString()}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col gap-1 min-w-[120px] items-center">
                         <Progress value={client.progress} className="h-2" />
                         <span className="text-xs text-muted-foreground">{client.progress.toFixed(1)}%</span>
                       </div>
