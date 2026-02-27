@@ -176,8 +176,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
 
   const filteredAndSortedClients = useMemo(() => {
     let filtered = clientsData.filter((client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (client.daysLeft === null || client.daysLeft > 0)
+      client.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     filtered.sort((a, b) => {
@@ -240,7 +239,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
               <Table>
                 <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
                   <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20">
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20" style={{ minWidth: "200px" }}>
                       <SortButton field="name" label="Client" />
                     </TableHead>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
@@ -276,7 +275,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                       style={{ animationDelay: `${600 + index * 50}ms` }}
                       onClick={() => navigate(`/client/${client.slug}`)}
                     >
-                      <TableCell className="sticky left-0 bg-card z-10">
+                      <TableCell className="sticky left-0 bg-card z-10" style={{ minWidth: "200px" }}>
                         <div className="flex items-center gap-3">
                           <div className="relative flex-shrink-0">
                             {client.logoUrl ? (
@@ -293,10 +292,10 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                               </div>
                             )}
                             {client.signal === "red" && (
-                              <span className="absolute -top-0.5 -right-0.5 block h-3 w-3 rounded-full bg-rose-500 border-2 border-card" />
+                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#0f172a]" />
                             )}
                             {client.signal === "amber" && (
-                              <span className="absolute -top-0.5 -right-0.5 block h-3 w-3 rounded-full bg-amber-500 border-2 border-card" />
+                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-white dark:border-[#0f172a]" />
                             )}
                           </div>
                           <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
@@ -308,12 +307,17 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-muted-foreground text-center px-4 py-2">—</TableCell>
+                          <TableCell className="text-center px-4 py-2 text-muted-foreground">—</TableCell>
                         );
+                        const isBold = days <= 10;
                         return (
                           <TableCell className="text-center px-4 py-2">
-                            <span className="text-sm font-medium text-foreground">{days}</span>
-                            <span className="text-xs text-muted-foreground ml-1">days</span>
+                            <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
+                              {days}
+                            </span>
+                            <span className={`text-xs ml-1 ${isBold ? "font-bold text-foreground" : "text-muted-foreground"}`}>
+                              days
+                            </span>
                           </TableCell>
                         );
                       })()}
@@ -322,21 +326,40 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                       <TableCell className="text-sm font-medium text-foreground text-center">{client.answeredPercent.toFixed(1)}%</TableCell>
                       <TableCell className="text-sm font-medium text-foreground text-center">{client.dms.toLocaleString()}</TableCell>
                       <TableCell className="text-sm font-medium text-foreground text-center">{client.sqls.toLocaleString()}</TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center px-4 py-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex flex-col gap-1 min-w-[140px] items-center cursor-help">
-                              <Progress value={client.progress} className="h-2" />
-                              <span className="text-xs text-muted-foreground">
-                                {client.sqls} / {client.target} SQLs achieved
+                            <div className="flex flex-col gap-1.5 min-w-[130px] cursor-default mx-auto">
+                              <Progress value={client.elapsedPercent} className="h-2" />
+                              <span className="text-xs text-muted-foreground text-center">
+                                {client.elapsedPercent.toFixed(0)}% of campaign
                               </span>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="flex items-center gap-1.5">
-                              <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-                              <span>{client.elapsedPercent.toFixed(0)}% of campaign</span>
-                            </div>
+                          <TooltipContent side="top">
+                            {(() => {
+                              const signal = client.signal;
+                              const color = signal === "red"
+                                ? "text-rose-500"
+                                : signal === "amber"
+                                ? "text-amber-500"
+                                : "text-emerald-500";
+                              const message = signal === "red"
+                                ? "At risk — behind pace"
+                                : signal === "amber"
+                                ? "Needs attention — slightly behind"
+                                : "On track";
+                              return (
+                                <div className="flex flex-col gap-1 text-xs">
+                                  <span className={`font-semibold ${color}`}>
+                                    {message}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {client.sqls} / {client.target} SQLs achieved
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
