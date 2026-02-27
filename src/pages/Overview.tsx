@@ -522,7 +522,12 @@ const Overview = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
           <CallActivityChart snapshots={snapshots} />
-          <ConversionFunnelChart snapshots={snapshots} />
+          <ConversionFunnelChart
+            dials={kpis.totalDials}
+            answered={kpis.totalAnswered}
+            dmConversations={kpis.totalConversations}
+            sqls={kpis.totalSQLs}
+          />
         </div>
       )}
 

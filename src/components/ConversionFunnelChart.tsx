@@ -1,79 +1,167 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
-import { EmptyState } from "@/components/EmptyState";
-import { PieChart as PieChartIcon } from "lucide-react";
-import type { DailySnapshot } from "@/lib/supabase-types";
 
 interface ConversionFunnelChartProps {
-  snapshots?: DailySnapshot[];
+  dials: number;
+  answered: number;
+  dmConversations: number;
+  sqls: number;
 }
 
-const chartConfig = {
-  dials: { label: "Dials", color: "#f59e0b" },
-  answered: { label: "Answered", color: "#10b981" },
-  dms: { label: "DM Conversations", color: "#6366f1" },
-  sqls: { label: "SQLs", color: "#f43f5e" },
-};
+const TIERS = [
+  { key: "dials", label: "Dials", color: "#d97706", widthPx: 440 },
+  { key: "answered", label: "Answered", color: "#059669", widthPx: 361 },
+  { key: "dmConversations", label: "DM Conversations", color: "#4338ca", widthPx: 255 },
+  { key: "sqls", label: "SQLs", color: "#e11d48", widthPx: 167 },
+] as const;
 
-export const ConversionFunnelChart = ({ snapshots }: ConversionFunnelChartProps) => {
-  const chartData = useMemo(() => {
-    if (!snapshots || snapshots.length === 0) return [];
+const SVG_WIDTH = 500;
+const TIER_HEIGHT = 72;
+const GAP = 4;
 
+export const ConversionFunnelChart = ({
+  dials,
+  answered,
+  dmConversations,
+  sqls,
+}: ConversionFunnelChartProps) => {
+  const [tooltip, setTooltip] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    label: string;
+    value: number;
+    pct?: string;
+  }>({ visible: false, x: 0, y: 0, label: "", value: 0 });
+
+  const values = useMemo(() => [dials, answered, dmConversations, sqls], [dials, answered, dmConversations, sqls]);
+
+  const conversionLabels = useMemo(() => {
+    const safe = (n: number, d: number) => (d > 0 ? ((n / d) * 100).toFixed(1) : "0.0");
     return [
-      { name: "Dials", value: snapshots.reduce((sum, s) => sum + (s.dials || 0), 0), color: "#f59e0b" },
-      { name: "Answered", value: snapshots.reduce((sum, s) => sum + (s.answered || 0), 0), color: "#10b981" },
-      { name: "DM Conversations", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "#6366f1" },
-      { name: "SQLs", value: snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0), color: "#f43f5e" },
-    ].filter(d => d.value > 0);
-  }, [snapshots]);
+      null,
+      `${safe(answered, dials)}% answer rate`,
+      `${safe(dmConversations, answered)}% of answered`,
+      `${safe(sqls, dmConversations)}% of DM conv`,
+    ];
+  }, [dials, answered, dmConversations, sqls]);
+
+  const tiers = useMemo(() => {
+    return TIERS.map((tier, i) => {
+      const topWidth = tier.widthPx;
+      const bottomWidth = TIERS[i + 1]?.widthPx ?? tier.widthPx * 0.75;
+      const topLeft = (SVG_WIDTH - topWidth) / 2;
+      const topRight = topLeft + topWidth;
+      const y = i * (TIER_HEIGHT + GAP);
+      const bottomLeft = (SVG_WIDTH - bottomWidth) / 2;
+      const bottomRight = bottomLeft + bottomWidth;
+      const points = `${topLeft},${y} ${topRight},${y} ${bottomRight},${y + TIER_HEIGHT} ${bottomLeft},${y + TIER_HEIGHT}`;
+      const textY = y + TIER_HEIGHT / 2;
+      return { ...tier, points, y, textY, topLeft, topRight, bottomLeft, bottomRight };
+    });
+  }, []);
+
+  const svgHeight = TIERS.length * TIER_HEIGHT + (TIERS.length - 1) * GAP;
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border">
       <CardHeader>
-        <CardTitle className="text-foreground">Conversion Funnel</CardTitle>
+        <CardTitle className="text-foreground">Funnel Breakdown</CardTitle>
       </CardHeader>
       <CardContent>
-        {chartData.length === 0 ? (
-          <EmptyState
-            icon={PieChartIcon}
-            title="No conversion data"
-            description="Conversion funnel will appear once data is available"
-          />
-        ) : (
-          <div role="img" aria-label="Pie chart showing conversion funnel distribution">
-            <ChartContainer config={chartConfig} className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                    labelLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1 }}
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip
-                    content={<ChartTooltipContent />}
-                    formatter={(value: number) => value.toLocaleString()}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    wrapperStyle={{ color: "hsl(var(--muted-foreground))" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </div>
-        )}
+        <div className="w-full overflow-x-auto">
+          <svg
+            viewBox={`0 0 ${SVG_WIDTH} ${svgHeight}`}
+            className="w-full h-auto"
+            role="img"
+            aria-label="Conversion funnel chart"
+          >
+            {tiers.map((tier, i) => (
+              <g
+                key={tier.key}
+                onMouseEnter={(e) => {
+                  const rect = (e.currentTarget.closest("svg") as SVGSVGElement)?.getBoundingClientRect();
+                  if (!rect) return;
+                  setTooltip({
+                    visible: true,
+                    x: SVG_WIDTH / 2,
+                    y: tier.y + TIER_HEIGHT / 2,
+                    label: tier.label,
+                    value: values[i],
+                    pct: conversionLabels[i] ?? undefined,
+                  });
+                }}
+                onMouseLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
+                className="cursor-pointer"
+              >
+                <polygon
+                  points={tier.points}
+                  fill={tier.color}
+                  className="transition-opacity hover:opacity-90"
+                />
+                {/* Label */}
+                <text
+                  x={SVG_WIDTH / 2}
+                  y={tier.textY - 10}
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize={13}
+                  fontWeight={400}
+                  opacity={0.85}
+                >
+                  {tier.label}
+                </text>
+                {/* Value */}
+                <text
+                  x={SVG_WIDTH / 2}
+                  y={tier.textY + 14}
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize={22}
+                  fontWeight={700}
+                >
+                  {values[i].toLocaleString()}
+                </text>
+              </g>
+            ))}
+
+            {/* Conversion % labels on right */}
+            {tiers.map((tier, i) => {
+              if (i === 0 || !conversionLabels[i]) return null;
+              return (
+                <text
+                  key={`pct-${tier.key}`}
+                  x={SVG_WIDTH - 10}
+                  y={tier.textY + 4}
+                  textAnchor="end"
+                  fontSize={11}
+                  className="fill-muted-foreground"
+                >
+                  {conversionLabels[i]}
+                </text>
+              );
+            })}
+
+            {/* Tooltip */}
+            {tooltip.visible && (
+              <foreignObject
+                x={tooltip.x - 90}
+                y={tooltip.y - 45}
+                width={180}
+                height={70}
+                style={{ pointerEvents: "none" }}
+              >
+                <div className="bg-[#0f172a] text-white rounded-lg px-3 py-2 text-center shadow-lg">
+                  <div className="font-bold text-sm">{tooltip.label}</div>
+                  <div className="text-base">{tooltip.value.toLocaleString()}</div>
+                  {tooltip.pct && (
+                    <div className="text-xs opacity-75">{tooltip.pct}</div>
+                  )}
+                </div>
+              </foreignObject>
+            )}
+          </svg>
+        </div>
       </CardContent>
     </Card>
   );
