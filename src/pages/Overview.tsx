@@ -145,7 +145,6 @@ const Overview = () => {
     {
       title: "Total Answered",
       value: kpis.totalAnswered.toLocaleString(),
-      subtitle: `${kpis.answerRate}% rate`,
       icon: PhoneIncoming,
       iconColor: "text-emerald-500",
       iconBg: "bg-emerald-500/10",
@@ -191,27 +190,6 @@ const Overview = () => {
           <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
         </div>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    setIsRefreshing(true);
-                    refetch();
-                    manualRefresh();
-                    setTimeout(() => setIsRefreshing(false), 1000);
-                  }}
-                  aria-label="Refresh data"
-                >
-                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-cyan-500")} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           <Button
             variant="outline"
             onClick={handleExportCSV}
@@ -246,7 +224,7 @@ const Overview = () => {
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2 transition-all duration-200">
             <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
             <span>
-              Showing data from {format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}
+              {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}
             </span>
           </div>
         )}
