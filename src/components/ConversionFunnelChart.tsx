@@ -9,13 +9,13 @@ interface ConversionFunnelChartProps {
 }
 
 const TIERS = [
-  { key: "dials", label: "Dials", color: "#d97706", widthPx: 440 },
+  { key: "dials", label: "Dials", color: "#b45309", widthPx: 440 },
   { key: "answered", label: "Answered", color: "#059669", widthPx: 361 },
   { key: "dmConversations", label: "DM Conversations", color: "#4338ca", widthPx: 255 },
   { key: "sqls", label: "SQLs", color: "#e11d48", widthPx: 167 },
 ] as const;
 
-const SVG_WIDTH = 500;
+const SVG_WIDTH = 520;
 const TIER_HEIGHT = 72;
 const GAP = 4;
 
@@ -40,7 +40,7 @@ export const ConversionFunnelChart = ({
     const safe = (n: number, d: number) => (d > 0 ? ((n / d) * 100).toFixed(1) : "0.0");
     return [
       null,
-      `${safe(answered, dials)}% answer rate`,
+      `${safe(answered, dials)}% answered`,
       `${safe(dmConversations, answered)}% of answered`,
       `${safe(sqls, dmConversations)}% of DM conv`,
     ];
@@ -131,7 +131,7 @@ export const ConversionFunnelChart = ({
               return (
                 <text
                   key={`pct-${tier.key}`}
-                  x={SVG_WIDTH - 10}
+                  x={SVG_WIDTH - 15}
                   y={tier.textY + 4}
                   textAnchor="end"
                   fontSize={11}

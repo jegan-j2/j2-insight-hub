@@ -27,6 +27,7 @@ interface OverviewData {
   meetings: SQLMeeting[];
   kpis: OverviewKPIs;
   dmsByClient: Record<string, number>;
+  dmsByDate: Record<string, number>;
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -41,6 +42,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   const [prevSnapshotsData, setPrevSnapshotsData] = useState<{dials:number,answered:number,sqls:number}[]>([]);
   const [prevConversations, setPrevConversations] = useState(0);
   const [dmsByClient, setDmsByClient] = useState<Record<string, number>>({});
+  const [dmsByDate, setDmsByDate] = useState<Record<string, number>>({});
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
   const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
@@ -121,7 +123,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       // Fetch DM Conversations grouped by client_id
       let dmQuery = supabase
         .from("activity_log")
-        .select("client_id")
+        .select("client_id, activity_date")
         .eq("is_decision_maker", true);
       if (startDate) dmQuery = dmQuery.gte("activity_date", startDate + "T00:00:00");
       if (endDate) dmQuery = dmQuery.lte("activity_date", endDate + "T23:59:59");
@@ -132,6 +134,16 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         for (const row of dmData) {
           if (row.client_id) {
             dmMap[row.client_id] = (dmMap[row.client_id] || 0) + 1;
+          }
+        }
+      }
+
+      const dmDateMap: Record<string, number> = {};
+      if (dmData) {
+        for (const row of dmData) {
+          if (row.activity_date) {
+            const date = row.activity_date.split("T")[0];
+            dmDateMap[date] = (dmDateMap[date] || 0) + 1;
           }
         }
       }
@@ -165,6 +177,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setPrevSnapshotsData(prevSnapshots);
       setPrevConversations(prevConversationsCount);
       setDmsByClient(dmMap);
+      setDmsByDate(dmDateMap);
 
       if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
         snapshots: snapshotData?.length || 0,
@@ -222,5 +235,5 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     };
   }, [snapshots, conversations, prevSnapshotsData, prevConversations]);
 
-  return { snapshots, meetings, kpis, dmsByClient, loading, error, refetch: fetchDashboardData };
+  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, loading, error, refetch: fetchDashboardData };
 };
