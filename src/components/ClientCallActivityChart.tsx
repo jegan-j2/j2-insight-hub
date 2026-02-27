@@ -19,7 +19,7 @@ interface ClientCallActivityChartProps {
 const chartConfig = {
   dials: { label: "Dials", color: "hsl(var(--chart-1))" },
   answered: { label: "Answered", color: "hsl(var(--chart-2))" },
-  dms: { label: "DMs Reached", color: "hsl(var(--chart-3))" },
+  dms: { label: "DM Conversations", color: "hsl(var(--chart-3))" },
   sqls: { label: "SQLs", color: "hsl(var(--chart-4))" },
 };
 

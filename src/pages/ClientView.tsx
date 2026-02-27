@@ -48,7 +48,7 @@ const ClientView = () => {
   const kpiCards = [
     { label: "Dials", value: kpis.totalDials, icon: Phone, color: "text-secondary", bgColor: "bg-secondary/10" },
     { label: "Answered", value: kpis.totalAnswered, subtitle: `${kpis.answerRate}%`, icon: CheckCircle, color: "text-accent", bgColor: "bg-accent/10" },
-    { label: "DMs Reached", value: kpis.totalDMs, icon: Mail, color: "text-secondary", bgColor: "bg-secondary/10" },
+    { label: "DM Conversations", value: kpis.totalDMs, icon: Mail, color: "text-secondary", bgColor: "bg-secondary/10" },
     { label: "MQLs on DMs Reached", value: kpis.totalMQLs, subtitle: `${kpis.mqlsOnDmsRate}%`, icon: TrendingUp, color: "text-accent", bgColor: "bg-accent/10" },
     { label: "MQLs on Dials", value: kpis.totalMQLs, subtitle: `${kpis.mqlsOnDialsRate}%`, icon: TrendingUp, color: "text-secondary", bgColor: "bg-secondary/10" },
     { label: "SQLs on DMs Reached", value: kpis.totalSQLs, subtitle: `${kpis.sqlsOnDmsRate}%`, icon: Target, color: "text-accent", bgColor: "bg-accent/10" },

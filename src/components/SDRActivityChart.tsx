@@ -54,7 +54,7 @@ export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
             />
             <Bar dataKey="dials" stackId="a" fill="#3B82F6" name="Dials" radius={[0, 0, 0, 0]} />
             <Bar dataKey="answered" stackId="a" fill="#10B981" name="Answered" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="dms" stackId="a" fill="#06B6D4" name="DMs Reached" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="dms" stackId="a" fill="#06B6D4" name="DM Conversations" radius={[0, 0, 0, 0]} />
             <Bar dataKey="sqls" stackId="a" fill="#8B5CF6" name="SQLs Generated" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>

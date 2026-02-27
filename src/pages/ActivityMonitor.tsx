@@ -931,7 +931,7 @@ const ActivityMonitor = () => {
                     <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
                     <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
                     <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Conversations" sortKeyName="conversations" /></TableHead>
+                    <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
                     <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
                     <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
                     {mode === "live" && <TableHead className="text-right px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Last Activity</TableHead>}

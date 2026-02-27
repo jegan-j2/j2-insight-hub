@@ -82,7 +82,7 @@ const Overview = () => {
         clientMap.set(s.client_id, existing);
       });
 
-      const clientHeaders = ["Client", "Dials", "Answered", "DMs Reached", "SQLs"];
+      const clientHeaders = ["Client", "Dials", "Answered", "DM Conversations", "SQLs"];
       const clientRows = Array.from(clientMap.entries()).map(([client, data]) => [
         client, data.dials, data.answered, data.dms, data.sqls,
       ]);
@@ -173,7 +173,7 @@ const Overview = () => {
         ["Total Dials", kpis.totalDials],
         ["Total Answered", kpis.totalAnswered],
         ["Avg Answer Rate", `${kpis.answerRate}%`],
-        ["Total Conversations", kpis.totalConversations],
+        ["DM Conversations", kpis.totalConversations],
         ["Total SQLs", kpis.totalSQLs],
       ];
       const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
@@ -297,7 +297,7 @@ const Overview = () => {
       tealValue: false,
     },
     {
-      title: "Total Conversations",
+      title: "DM Conversations",
       value: kpis.totalConversations.toLocaleString(),
       icon: Handshake,
       iconColor: "text-indigo-500",

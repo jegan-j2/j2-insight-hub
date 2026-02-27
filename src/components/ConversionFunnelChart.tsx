@@ -13,8 +13,7 @@ interface ConversionFunnelChartProps {
 const chartConfig = {
   dials: { label: "Dials", color: "#f59e0b" },
   answered: { label: "Answered", color: "#10b981" },
-  dms: { label: "DMs Reached", color: "#6366f1" },
-  mqls: { label: "MQLs", color: "#f97316" },
+  dms: { label: "DM Conversations", color: "#6366f1" },
   sqls: { label: "SQLs", color: "#f43f5e" },
 };
 
@@ -25,8 +24,7 @@ export const ConversionFunnelChart = ({ snapshots }: ConversionFunnelChartProps)
     return [
       { name: "Dials", value: snapshots.reduce((sum, s) => sum + (s.dials || 0), 0), color: "#f59e0b" },
       { name: "Answered", value: snapshots.reduce((sum, s) => sum + (s.answered || 0), 0), color: "#10b981" },
-      { name: "DMs Reached", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "#6366f1" },
-      { name: "MQLs", value: snapshots.reduce((sum, s) => sum + (s.mqls || 0), 0), color: "#f97316" },
+      { name: "DM Conversations", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "#6366f1" },
       { name: "SQLs", value: snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0), color: "#f43f5e" },
     ];
   }, [snapshots]);
