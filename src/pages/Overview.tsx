@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
@@ -225,13 +226,27 @@ const Overview = () => {
           {kpiCards.map((kpi) => (
             <Card
               key={kpi.title}
-              className="bg-card border-border hover:shadow-lg transition-all duration-300 hover:scale-[1.02] overflow-hidden group"
+              className="bg-card border-border hover:shadow-md transition-all duration-300 overflow-hidden group"
             >
               <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={cn("p-3 rounded-lg", kpi.iconBg)}>
-                    <kpi.icon className={cn("h-5 w-5", kpi.iconColor)} />
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm font-normal text-muted-foreground">{kpi.title}</p>
+                  <div className={cn("p-2 rounded-lg", kpi.iconBg)}>
+                    <kpi.icon className={cn("h-4 w-4", kpi.iconColor)} />
                   </div>
+                </div>
+
+                <div className="flex items-end justify-between">
+                  <div>
+                    {loading ? (
+                      <Skeleton className="h-9 w-24" />
+                    ) : (
+                      <p className="text-3xl font-extrabold text-foreground">
+                        {kpi.value}
+                      </p>
+                    )}
+                  </div>
+
                   {kpi.delta !== null ? (
                     <TooltipProvider>
                       <Tooltip>
@@ -258,10 +273,6 @@ const Overview = () => {
                   ) : (
                     <div className="h-6" />
                   )}
-                </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
-                  <p className="text-sm font-normal text-[#64748b] dark:text-white/60">{kpi.title}</p>
                 </div>
               </CardContent>
             </Card>
