@@ -77,7 +77,7 @@ export const DateRangePicker = ({
               className={cn(
                 "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                 isActive
-                  ? "bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:text-[#0f172a]"
+                  ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
                   : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
               )}
               aria-label={filter.label}
