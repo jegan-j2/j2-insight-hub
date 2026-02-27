@@ -82,7 +82,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
     if (!start || !end) return "—";
     const s = new Date(start);
     const e = new Date(end);
-    return `${format(s, "MMM d")} – ${format(e, "MMM d, yyyy")}`;
+    return `${format(s, "MMM d")} – ${format(e, "MMM d")}`;
   };
 
   const clientsData: ClientData[] = useMemo(() => {
@@ -186,32 +186,32 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
                 <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
-                  <TableHead className="text-muted-foreground sticky left-0 bg-card z-20">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20">
                     <SortButton field="name" label="Client" />
                   </TableHead>
-                  <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
-                  <TableHead className="text-muted-foreground text-left">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
                     <SortButton field="daysLeft" label="Days Left" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground text-center">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
                     <SortButton field="dials" label="Dials" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground text-center">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
                     <SortButton field="answered" label="Answered" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground text-center">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
                     <SortButton field="answeredPercent" label="Answer Rate" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground text-center">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
                     <SortButton field="dms" label="DM Conversations" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground text-center">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
                     <SortButton field="sqls" label="SQLs" />
                   </TableHead>
-                  <TableHead className="text-muted-foreground text-center">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
                     <SortButton field="progress" label="Progress" />
                   </TableHead>
-                  <TableHead className="text-right text-muted-foreground">Action</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
