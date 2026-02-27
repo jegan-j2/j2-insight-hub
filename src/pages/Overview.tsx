@@ -23,7 +23,7 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, snapshots, meetings, dmsByClient, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
   
@@ -473,7 +473,7 @@ const Overview = () => {
         </>
       ) : (
         <>
-          <ClientPerformanceTable snapshots={snapshots} meetings={meetings} />
+          <ClientPerformanceTable snapshots={snapshots} meetings={meetings} dmsByClient={dmsByClient} />
           <SQLBookedMeetingsTable dateRange={dateRange} meetings={meetings} />
         </>
       )}

@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
 
 type SortField = "name" | "dials" | "answered" | "answeredPercent" | "dms" | "sqls" | "progress" | "daysLeft" | "campaignPeriod";
@@ -29,14 +30,16 @@ interface ClientData {
   campaignStart: string | null;
   campaignEnd: string | null;
   daysLeft: number | null;
+  elapsedPercent: number;
 }
 
 interface ClientPerformanceTableProps {
   snapshots?: DailySnapshot[];
   meetings?: SQLMeeting[];
+  dmsByClient?: Record<string, number>;
 }
 
-export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanceTableProps) => {
+export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -78,6 +81,33 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
     return count;
   };
 
+  const getCampaignElapsed = (start: string | null, end: string | null): number => {
+    if (!start || !end) return 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(start);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(end);
+    endDate.setHours(0, 0, 0, 0);
+    if (today <= startDate) return 0;
+    if (today > endDate) return 100;
+
+    const countWorkingDays = (from: Date, to: Date) => {
+      let count = 0;
+      const curr = new Date(from);
+      while (curr <= to) {
+        const dow = curr.getDay();
+        if (dow !== 0 && dow !== 6) count++;
+        curr.setDate(curr.getDate() + 1);
+      }
+      return count;
+    };
+
+    const total = countWorkingDays(startDate, endDate);
+    const elapsed = countWorkingDays(startDate, new Date(today.getTime() - 86400000));
+    return total > 0 ? (elapsed / total) * 100 : 0;
+  };
+
   const formatCampaignPeriod = (start: string | null, end: string | null): string => {
     if (!start || !end) return "—";
     const s = new Date(start);
@@ -90,7 +120,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
       const clientSnapshots = (snapshots || []).filter((s) => s.client_id === client.client_id);
       const totalDials = clientSnapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
       const totalAnswered = clientSnapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
-      const totalDMs = clientSnapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0);
+      const totalDMs = (dmsByClient || {})[client.client_id] || 0;
       const totalSQLs = clientSnapshots.reduce((sum, s) => sum + (s.sqls || 0), 0);
       const target = client.target_sqls || 0;
 
@@ -109,9 +139,10 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
         campaignStart: client.campaign_start,
         campaignEnd: client.campaign_end,
         daysLeft: getWorkingDaysLeft(client.campaign_end),
+        elapsedPercent: getCampaignElapsed(client.campaign_start, client.campaign_end),
       };
     });
-  }, [clients, snapshots]);
+  }, [clients, snapshots, dmsByClient]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -124,7 +155,8 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
 
   const filteredAndSortedClients = useMemo(() => {
     let filtered = clientsData.filter((client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase())
+      client.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (client.daysLeft === null || client.daysLeft > 0)
     );
 
     filtered.sort((a, b) => {
@@ -215,81 +247,96 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAndSortedClients.map((client, index) => (
-                  <TableRow
-                    key={client.slug}
-                    className="border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
-                    style={{ animationDelay: `${600 + index * 50}ms` }}
-                    onClick={() => navigate(`/client/${client.slug}`)}
-                  >
-                    <TableCell className="sticky left-0 bg-card z-10">
-                      <div className="flex items-center gap-3">
-                        {client.logoUrl ? (
-                          <img
-                            src={client.logoUrl}
-                            alt={client.name}
-                            className="w-8 h-8 rounded-full object-contain flex-shrink-0 bg-white"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-white">
-                              {client.name.substring(0, 2).toUpperCase()}
+                {filteredAndSortedClients.map((client, index) => {
+                  const behind = client.elapsedPercent > 50 &&
+                    client.target > 0 &&
+                    (client.sqls / client.target * 100) < (client.elapsedPercent * 0.7);
+                  const critical = client.elapsedPercent > 70 &&
+                    client.target > 0 &&
+                    (client.sqls / client.target * 100) < (client.elapsedPercent * 0.5);
+                  return (
+                    <TableRow
+                      key={client.slug}
+                      className={cn(
+                        "border-border/50 hover:bg-muted/20 transition-colors cursor-pointer",
+                        critical && "bg-rose-500/5 dark:bg-rose-500/10",
+                        !critical && behind && "bg-amber-500/5 dark:bg-amber-500/10",
+                      )}
+                      style={{ animationDelay: `${600 + index * 50}ms` }}
+                      onClick={() => navigate(`/client/${client.slug}`)}
+                    >
+                      <TableCell className="sticky left-0 bg-card z-10">
+                        <div className="flex items-center gap-3">
+                          {client.logoUrl ? (
+                            <img
+                              src={client.logoUrl}
+                              alt={client.name}
+                              className="w-8 h-8 rounded-full object-contain flex-shrink-0 bg-white"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-bold text-white">
+                                {client.name.substring(0, 2).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {formatCampaignPeriod(client.campaignStart, client.campaignEnd)}
+                      </TableCell>
+                      {(() => {
+                        const days = client.daysLeft;
+                        if (days === null) return (
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                        );
+                        const color = days <= 4
+                          ? "text-rose-500"
+                          : days <= 10
+                          ? "text-amber-500"
+                          : "text-emerald-500";
+                        return (
+                          <TableCell>
+                            <span className={`font-semibold text-sm ${color}`}>
+                              {days}
                             </span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              days
+                            </span>
+                          </TableCell>
+                        );
+                      })()}
+                      <TableCell className="text-sm font-medium text-foreground text-center">{client.dials.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center">{client.answered.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center">{client.answeredPercent.toFixed(1)}%</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center">{client.dms.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center">{client.sqls.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col gap-1 min-w-[140px] items-center">
+                          <div className="flex justify-between w-full text-xs">
+                            <span className="text-muted-foreground">{client.elapsedPercent.toFixed(0)}% elapsed</span>
+                            <span className="font-medium text-foreground">{client.sqls} / {client.target} SQLs</span>
                           </div>
-                        )}
-                        <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                      {formatCampaignPeriod(client.campaignStart, client.campaignEnd)}
-                    </TableCell>
-                    {(() => {
-                      const days = client.daysLeft;
-                      if (days === null) return (
-                        <TableCell className="text-muted-foreground">—</TableCell>
-                      );
-                      const color = days <= 4
-                        ? "text-rose-500"
-                        : days <= 10
-                        ? "text-amber-500"
-                        : "text-emerald-500";
-                      return (
-                        <TableCell>
-                          <span className={`font-semibold text-sm ${color}`}>
-                            {days}
-                          </span>
-                          <span className="text-xs text-muted-foreground ml-1">
-                            days
-                          </span>
-                        </TableCell>
-                      );
-                    })()}
-                    <TableCell className="text-sm font-medium text-foreground text-center">{client.dials.toLocaleString()}</TableCell>
-                    <TableCell className="text-sm font-medium text-foreground text-center">{client.answered.toLocaleString()}</TableCell>
-                    <TableCell className="text-sm font-medium text-foreground text-center">{client.answeredPercent.toFixed(2)}%</TableCell>
-                    <TableCell className="text-sm font-medium text-foreground text-center">{client.dms.toLocaleString()}</TableCell>
-                    <TableCell className="text-sm font-medium text-foreground text-center">{client.sqls.toLocaleString()}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex flex-col gap-1 min-w-[120px] items-center">
-                        <Progress value={client.progress} className="h-2" />
-                        <span className="text-xs text-muted-foreground">{client.progress.toFixed(1)}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/client/${client.slug}`);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          <Progress value={client.progress} className="h-2" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/client/${client.slug}`);
+                          }}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {filteredAndSortedClients.length === 0 && clients.length > 0 && (
                   <TableRow>
                     <TableCell colSpan={10} className="py-12">
