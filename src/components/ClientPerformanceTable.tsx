@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowUpDown, Search, DatabaseZap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
@@ -31,6 +32,7 @@ interface ClientData {
   campaignEnd: string | null;
   daysLeft: number | null;
   elapsedPercent: number;
+  signal: "red" | "amber" | null;
 }
 
 interface ClientPerformanceTableProps {
@@ -108,6 +110,20 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
     return total > 0 ? (elapsed / total) * 100 : 0;
   };
 
+  const getHealthSignal = (
+    elapsedPercent: number,
+    sqls: number,
+    target: number
+  ): "red" | "amber" | null => {
+    if (target === 0 || elapsedPercent === 0) return null;
+    const expectedSQLs = target * (elapsedPercent / 100);
+    if (expectedSQLs === 0) return null;
+    const achievementPercent = (sqls / expectedSQLs) * 100;
+    if (elapsedPercent > 70 && achievementPercent < 50) return "red";
+    if (elapsedPercent > 50 && achievementPercent < 70) return "amber";
+    return null;
+  };
+
   const formatCampaignPeriod = (start: string | null, end: string | null): string => {
     if (!start || !end) return "—";
     const s = new Date(start);
@@ -140,6 +156,11 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
         campaignEnd: client.campaign_end,
         daysLeft: getWorkingDaysLeft(client.campaign_end),
         elapsedPercent: getCampaignElapsed(client.campaign_start, client.campaign_end),
+        signal: getHealthSignal(
+          getCampaignElapsed(client.campaign_start, client.campaign_end),
+          totalSQLs,
+          target
+        ),
       };
     });
   }, [clients, snapshots, dmsByClient]);
@@ -215,71 +236,69 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
           />
         ) : (
           <div className="overflow-x-auto scrollbar-thin scroll-gradient">
-            <Table>
-              <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
-                <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20">
-                    <SortButton field="name" label="Client" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
-                    <SortButton field="daysLeft" label="Days Left" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
-                    <SortButton field="dials" label="Dials" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
-                    <SortButton field="answered" label="Answered" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
-                    <SortButton field="answeredPercent" label="Answer Rate" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
-                    <SortButton field="dms" label="DM Conversations" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
-                    <SortButton field="sqls" label="SQLs" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
-                    <SortButton field="progress" label="Progress" />
-                  </TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedClients.map((client, index) => {
-                  const behind = client.elapsedPercent > 50 &&
-                    client.target > 0 &&
-                    (client.sqls / client.target * 100) < (client.elapsedPercent * 0.7);
-                  const critical = client.elapsedPercent > 70 &&
-                    client.target > 0 &&
-                    (client.sqls / client.target * 100) < (client.elapsedPercent * 0.5);
-                  return (
+            <TooltipProvider>
+              <Table>
+                <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
+                  <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20">
+                      <SortButton field="name" label="Client" />
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                      <SortButton field="daysLeft" label="Days Left" />
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                      <SortButton field="dials" label="Dials" />
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                      <SortButton field="answered" label="Answered" />
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                      <SortButton field="answeredPercent" label="Answer Rate" />
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                      <SortButton field="dms" label="DM Conversations" />
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                      <SortButton field="sqls" label="SQLs" />
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                      Campaign Progress
+                    </TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAndSortedClients.map((client, index) => (
                     <TableRow
                       key={client.slug}
-                      className={cn(
-                        "border-border/50 hover:bg-muted/20 transition-colors cursor-pointer",
-                        critical && "bg-rose-500/5 dark:bg-rose-500/10",
-                        !critical && behind && "bg-amber-500/5 dark:bg-amber-500/10",
-                      )}
+                      className="border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
                       style={{ animationDelay: `${600 + index * 50}ms` }}
                       onClick={() => navigate(`/client/${client.slug}`)}
                     >
                       <TableCell className="sticky left-0 bg-card z-10">
                         <div className="flex items-center gap-3">
-                          {client.logoUrl ? (
-                            <img
-                              src={client.logoUrl}
-                              alt={client.name}
-                              className="w-8 h-8 rounded-full object-contain flex-shrink-0 bg-white"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                              <span className="text-xs font-bold text-white">
-                                {client.name.substring(0, 2).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
+                          <div className="relative flex-shrink-0">
+                            {client.logoUrl ? (
+                              <img
+                                src={client.logoUrl}
+                                alt={client.name}
+                                className="w-8 h-8 rounded-full object-contain bg-white"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                                <span className="text-xs font-bold text-white">
+                                  {client.name.substring(0, 2).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            {client.signal === "red" && (
+                              <span className="absolute -top-0.5 -right-0.5 block h-3 w-3 rounded-full bg-rose-500 border-2 border-card" />
+                            )}
+                            {client.signal === "amber" && (
+                              <span className="absolute -top-0.5 -right-0.5 block h-3 w-3 rounded-full bg-amber-500 border-2 border-card" />
+                            )}
+                          </div>
                           <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
                         </div>
                       </TableCell>
@@ -289,21 +308,12 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-muted-foreground">—</TableCell>
+                          <TableCell className="text-muted-foreground text-center px-4 py-2">—</TableCell>
                         );
-                        const color = days <= 4
-                          ? "text-rose-500"
-                          : days <= 10
-                          ? "text-amber-500"
-                          : "text-emerald-500";
                         return (
-                          <TableCell>
-                            <span className={`font-semibold text-sm ${color}`}>
-                              {days}
-                            </span>
-                            <span className="text-xs text-muted-foreground ml-1">
-                              days
-                            </span>
+                          <TableCell className="text-center px-4 py-2">
+                            <span className="text-sm font-medium text-foreground">{days}</span>
+                            <span className="text-xs text-muted-foreground ml-1">days</span>
                           </TableCell>
                         );
                       })()}
@@ -313,13 +323,22 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                       <TableCell className="text-sm font-medium text-foreground text-center">{client.dms.toLocaleString()}</TableCell>
                       <TableCell className="text-sm font-medium text-foreground text-center">{client.sqls.toLocaleString()}</TableCell>
                       <TableCell className="text-center">
-                        <div className="flex flex-col gap-1 min-w-[140px] items-center">
-                          <div className="flex justify-between w-full text-xs">
-                            <span className="text-muted-foreground">{client.elapsedPercent.toFixed(0)}% elapsed</span>
-                            <span className="font-medium text-foreground">{client.sqls} / {client.target} SQLs</span>
-                          </div>
-                          <Progress value={client.progress} className="h-2" />
-                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex flex-col gap-1 min-w-[140px] items-center cursor-help">
+                              <Progress value={client.progress} className="h-2" />
+                              <span className="text-xs text-muted-foreground">
+                                {client.sqls} / {client.target} SQLs achieved
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                              <span>{client.elapsedPercent.toFixed(0)}% of campaign</span>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -335,21 +354,21 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                         </Button>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-                {filteredAndSortedClients.length === 0 && clients.length > 0 && (
-                  <TableRow>
-                    <TableCell colSpan={10} className="py-12">
-                      <EmptyState
-                        icon={Search}
-                        title="No clients found"
-                        description={`No clients match "${searchQuery}". Try adjusting your search.`}
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                  {filteredAndSortedClients.length === 0 && clients.length > 0 && (
+                    <TableRow>
+                      <TableCell colSpan={10} className="py-12">
+                        <EmptyState
+                          icon={Search}
+                          title="No clients found"
+                          description={`No clients match "${searchQuery}". Try adjusting your search.`}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           </div>
         )}
       </CardContent>
