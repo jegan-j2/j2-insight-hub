@@ -35,8 +35,7 @@ export const ClientWeeklyComparisonChart = ({ snapshots }: ClientWeeklyCompariso
     const metrics = [
       { metric: "Dials", key: "dials" as const },
       { metric: "Answered", key: "answered" as const },
-      { metric: "DMs", key: "dms_reached" as const },
-      { metric: "MQLs", key: "mqls" as const },
+      { metric: "DM Conversations", key: "dms_reached" as const },
       { metric: "SQLs", key: "sqls" as const },
     ];
 

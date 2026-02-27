@@ -92,8 +92,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
     return [
       { stage: "Dials", count: totals.dials, percentage: 100 },
       { stage: "Answered", count: totals.answered, percentage: pct(totals.answered) },
-      { stage: "DMs", count: totals.dms, percentage: pct(totals.dms) },
-      { stage: "MQLs", count: totals.mqls, percentage: pct(totals.mqls) },
+      { stage: "DM Conversations", count: totals.dms, percentage: pct(totals.dms) },
       { stage: "SQLs", count: totals.sqls, percentage: pct(totals.sqls) },
     ];
   }, [snapshots]);
@@ -147,7 +146,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
               <span className="text-sm font-medium text-cyan-600">{dmRate}%</span>
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.dms}</p>
-            <p className="text-sm text-muted-foreground">DMs Reached</p>
+            <p className="text-sm text-muted-foreground">DM Conversations</p>
           </CardContent>
         </Card>
 

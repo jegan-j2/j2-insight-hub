@@ -8,9 +8,10 @@ import { ArrowUpDown, Search, DatabaseZap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
+import { format } from "date-fns";
 import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
 
-type SortField = "name" | "dials" | "answered" | "dms" | "mqls" | "sqls" | "target" | "progress";
+type SortField = "name" | "dials" | "answered" | "answeredPercent" | "dms" | "sqls" | "progress" | "daysLeft" | "campaignPeriod";
 type SortOrder = "asc" | "desc";
 
 interface ClientData {
@@ -21,11 +22,13 @@ interface ClientData {
   answered: number;
   answeredPercent: number;
   dms: number;
-  mqls: number;
   sqls: number;
   sqlsPercent: number;
   target: number;
   progress: number;
+  campaignStart: string | null;
+  campaignEnd: string | null;
+  daysLeft: number | null;
 }
 
 interface ClientPerformanceTableProps {
@@ -37,20 +40,50 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Array<{
+    client_id: string;
+    client_name: string;
+    campaign_start: string | null;
+    campaign_end: string | null;
+    target_sqls: number | null;
+    logo_url: string | null;
+  }>>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchClients = async () => {
       const { data } = await supabase
         .from("clients")
-        .select("*")
-        .eq("status", "active")
-        .order("client_name");
+        .select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url")
+        .eq("status", "active");
       if (data) setClients(data);
     };
     fetchClients();
   }, []);
+
+  const getWorkingDaysLeft = (endDate: string | null): number | null => {
+    if (!endDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+    if (end < today) return 0;
+    let count = 0;
+    const current = new Date(today);
+    while (current <= end) {
+      const dow = current.getDay();
+      if (dow !== 0 && dow !== 6) count++;
+      current.setDate(current.getDate() + 1);
+    }
+    return count;
+  };
+
+  const formatCampaignPeriod = (start: string | null, end: string | null): string => {
+    if (!start || !end) return "—";
+    const s = new Date(start);
+    const e = new Date(end);
+    return `${format(s, "MMM d")} – ${format(e, "MMM d, yyyy")}`;
+  };
 
   const clientsData: ClientData[] = useMemo(() => {
     return clients.map((client) => {
@@ -58,7 +91,6 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
       const totalDials = clientSnapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
       const totalAnswered = clientSnapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
       const totalDMs = clientSnapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0);
-      const totalMQLs = clientSnapshots.reduce((sum, s) => sum + (s.mqls || 0), 0);
       const totalSQLs = clientSnapshots.reduce((sum, s) => sum + (s.sqls || 0), 0);
       const target = client.target_sqls || 0;
 
@@ -70,11 +102,13 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
         answered: totalAnswered,
         answeredPercent: totalDials > 0 ? (totalAnswered / totalDials) * 100 : 0,
         dms: totalDMs,
-        mqls: totalMQLs,
         sqls: totalSQLs,
         sqlsPercent: totalDMs > 0 ? (totalSQLs / totalDMs) * 100 : 0,
         target,
         progress: target > 0 ? (totalSQLs / target) * 100 : 0,
+        campaignStart: client.campaign_start,
+        campaignEnd: client.campaign_end,
+        daysLeft: getWorkingDaysLeft(client.campaign_end),
       };
     });
   }, [clients, snapshots]);
@@ -94,18 +128,19 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
     );
 
     filtered.sort((a, b) => {
-      let aVal: number | string = a[sortField];
-      let bVal: number | string = b[sortField];
-
-      if (sortField === "name") {
-        aVal = a.name;
-        bVal = b.name;
-        return sortOrder === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
+      if (sortField === "name" || sortField === "campaignPeriod") {
+        const aVal = sortField === "name" ? a.name : (a.campaignStart || "");
+        const bVal = sortField === "name" ? b.name : (b.campaignStart || "");
+        return sortOrder === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       }
-
-      return sortOrder === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+      if (sortField === "daysLeft") {
+        const aVal = a.daysLeft ?? -1;
+        const bVal = b.daysLeft ?? -1;
+        return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      }
+      const aVal = a[sortField] as number;
+      const bVal = b[sortField] as number;
+      return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
     });
 
     return filtered;
@@ -155,22 +190,25 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                     <SortButton field="name" label="Client" />
                   </TableHead>
                   <TableHead className="text-muted-foreground">
+                    <SortButton field="campaignPeriod" label="Campaign Period" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    <SortButton field="daysLeft" label="Days Left" />
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
                     <SortButton field="dials" label="Dials" />
                   </TableHead>
                   <TableHead className="text-muted-foreground">
                     <SortButton field="answered" label="Answered" />
                   </TableHead>
                   <TableHead className="text-muted-foreground">
-                    <SortButton field="dms" label="DMs" />
+                    <SortButton field="answeredPercent" label="Answer Rate" />
                   </TableHead>
                   <TableHead className="text-muted-foreground">
-                    <SortButton field="mqls" label="MQLs" />
+                    <SortButton field="dms" label="DM Conversations" />
                   </TableHead>
                   <TableHead className="text-muted-foreground">
                     <SortButton field="sqls" label="SQLs" />
-                  </TableHead>
-                  <TableHead className="text-muted-foreground">
-                    <SortButton field="target" label="Target" />
                   </TableHead>
                   <TableHead className="text-muted-foreground">
                     <SortButton field="progress" label="Progress" />
@@ -189,13 +227,13 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                     <TableCell className="sticky left-0 bg-card z-10">
                       <div className="flex items-center gap-3">
                         {client.logoUrl ? (
-                          <img 
-                            src={client.logoUrl} 
+                          <img
+                            src={client.logoUrl}
                             alt={client.name}
                             className="w-8 h-8 rounded-full object-contain flex-shrink-0 bg-white"
                           />
                         ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
                             <span className="text-xs font-bold text-white">
                               {client.name.substring(0, 2).toUpperCase()}
                             </span>
@@ -204,22 +242,42 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                         <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
                       </div>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                      {formatCampaignPeriod(client.campaignStart, client.campaignEnd)}
+                    </TableCell>
+                    {(() => {
+                      const days = client.daysLeft;
+                      if (days === null) return (
+                        <TableCell className="text-muted-foreground">—</TableCell>
+                      );
+                      const color = days <= 4
+                        ? "text-rose-500"
+                        : days <= 10
+                        ? "text-amber-500"
+                        : "text-emerald-500";
+                      return (
+                        <TableCell>
+                          <span className={`font-semibold text-sm ${color}`}>
+                            {days}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            days
+                          </span>
+                        </TableCell>
+                      );
+                    })()}
                     <TableCell className="text-foreground font-medium">{client.dials.toLocaleString()}</TableCell>
+                    <TableCell className="text-foreground font-medium">{client.answered.toLocaleString()}</TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-foreground font-medium">{client.answered.toLocaleString()}</span>
-                        <span className="text-xs text-muted-foreground">{client.answeredPercent.toFixed(2)}%</span>
-                      </div>
+                      <span className="text-foreground font-medium">{client.answeredPercent.toFixed(2)}%</span>
                     </TableCell>
                     <TableCell className="text-foreground font-medium">{client.dms.toLocaleString()}</TableCell>
-                    <TableCell className="text-foreground font-medium">{client.mqls.toLocaleString()}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-foreground font-medium">{client.sqls.toLocaleString()}</span>
                         <span className="text-xs text-muted-foreground">{client.sqlsPercent.toFixed(2)}%</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-foreground font-medium">{client.target.toLocaleString()}</TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1 min-w-[120px]">
                         <Progress value={client.progress} className="h-2" />
@@ -243,8 +301,8 @@ export const ClientPerformanceTable = ({ snapshots, meetings }: ClientPerformanc
                 ))}
                 {filteredAndSortedClients.length === 0 && clients.length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-12">
-                      <EmptyState 
+                    <TableCell colSpan={10} className="py-12">
+                      <EmptyState
                         icon={Search}
                         title="No clients found"
                         description={`No clients match "${searchQuery}". Try adjusting your search.`}
