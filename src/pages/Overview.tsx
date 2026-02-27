@@ -23,7 +23,7 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const { kpis, snapshots, meetings, dmsByClient, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
   
@@ -521,7 +521,7 @@ const Overview = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          <CallActivityChart snapshots={snapshots} />
+          <CallActivityChart snapshots={snapshots} dmsByDate={dmsByDate} />
           <ConversionFunnelChart
             dials={kpis.totalDials}
             answered={kpis.totalAnswered}

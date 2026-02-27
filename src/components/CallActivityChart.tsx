@@ -9,6 +9,7 @@ import { format, parseISO } from "date-fns";
 
 interface CallActivityChartProps {
   snapshots?: DailySnapshot[];
+  dmsByDate?: Record<string, number>;
 }
 
 const chartConfig = {
@@ -17,7 +18,7 @@ const chartConfig = {
   dms: { label: "DM Conversations", color: "#6366f1" },
 };
 
-export const CallActivityChart = ({ snapshots }: CallActivityChartProps) => {
+export const CallActivityChart = ({ snapshots, dmsByDate }: CallActivityChartProps) => {
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return [];
 
@@ -29,7 +30,7 @@ export const CallActivityChart = ({ snapshots }: CallActivityChartProps) => {
       }
       grouped[date].dials += s.dials || 0;
       grouped[date].answered += s.answered || 0;
-      grouped[date].dms += s.dms_reached || 0;
+      grouped[date].dms += (dmsByDate || {})[date] || 0;
     }
 
     return Object.values(grouped)
@@ -38,7 +39,7 @@ export const CallActivityChart = ({ snapshots }: CallActivityChartProps) => {
         ...d,
         date: format(parseISO(d.date), "MMM d"),
       }));
-  }, [snapshots]);
+  }, [snapshots, dmsByDate]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border">
