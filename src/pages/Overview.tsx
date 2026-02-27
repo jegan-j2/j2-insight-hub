@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CallActivityChart } from "@/components/CallActivityChart";
@@ -30,8 +31,9 @@ const Overview = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const getDelta = (current: number, previous: number) => {
-    if (!kpis.previousPeriod || previous === 0) return null;
+    if (!kpis.previousPeriod || previous === 0 || previous < 1) return null;
     const delta = ((current - previous) / previous) * 100;
+    if (Math.abs(delta) > 999) return null;
     return delta;
   };
 
@@ -115,6 +117,116 @@ const Overview = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    setExporting(true);
+    try {
+      const XLSX = await import("xlsx");
+      
+      const startStr = dateRange?.from 
+        ? format(dateRange.from, "MMM dd, yyyy") : "";
+      const endStr = dateRange?.to 
+        ? format(dateRange.to, "MMM dd, yyyy") : "";
+      const reportTitle = `Overview Report — ${startStr} to ${endStr}`;
+      const exportDate = format(new Date(), "MMM dd, yyyy h:mm a");
+
+      const wb = XLSX.utils.book_new();
+
+      // ── SHEET 1: KPI Summary ──
+      const kpiData = [
+        ["J2 Insights Dashboard", "", `Exported: ${exportDate}`],
+        [],
+        [reportTitle],
+        [],
+        ["Metric", "Value"],
+        ["Total Dials", kpis.totalDials],
+        ["Total Answered", kpis.totalAnswered],
+        ["Avg Answer Rate", `${kpis.answerRate}%`],
+        ["Total Conversations", kpis.totalConversations],
+        ["Total SQLs", kpis.totalSQLs],
+      ];
+      const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
+      kpiSheet["!cols"] = [{ wch: 25 }, { wch: 20 }, { wch: 30 }];
+      XLSX.utils.book_append_sheet(wb, kpiSheet, "KPI Summary");
+
+      // ── SHEET 2: Client Performance ──
+      const excelClientMap = new Map<string, { 
+        dials: number; answered: number; sqls: number 
+      }>();
+      snapshots.forEach(s => {
+        const ex = excelClientMap.get(s.client_id) || 
+          { dials: 0, answered: 0, sqls: 0 };
+        ex.dials += s.dials || 0;
+        ex.answered += s.answered || 0;
+        ex.sqls += s.sqls || 0;
+        excelClientMap.set(s.client_id, ex);
+      });
+
+      const clientData = [
+        ["J2 Insights Dashboard", "", `Exported: ${exportDate}`],
+        [],
+        [reportTitle],
+        [],
+        ["Client", "Dials", "Answered", "SQLs", "Answer Rate"],
+        ...Array.from(excelClientMap.entries()).map(([client, d]) => [
+          client,
+          d.dials,
+          d.answered,
+          d.sqls,
+          d.dials > 0 
+            ? `${((d.answered / d.dials) * 100).toFixed(1)}%` 
+            : "0%",
+        ]),
+      ];
+      const clientSheet = XLSX.utils.aoa_to_sheet(clientData);
+      clientSheet["!cols"] = [
+        { wch: 25 }, { wch: 12 }, { wch: 12 }, 
+        { wch: 12 }, { wch: 15 }
+      ];
+      XLSX.utils.book_append_sheet(wb, clientSheet, "Client Performance");
+
+      // ── SHEET 3: SQL Meetings ──
+      const meetingData = [
+        ["J2 Insights Dashboard", "", `Exported: ${exportDate}`],
+        [],
+        [reportTitle],
+        [],
+        ["Booking Date", "Client", "SDR", 
+         "Contact Person", "Company", "Meeting Date"],
+        ...meetings.map(m => [
+          m.booking_date 
+            ? format(new Date(m.booking_date), "MMM dd, yyyy") : "",
+          m.client_id || "",
+          m.sdr_name || "",
+          m.contact_person || "",
+          m.company_name || "",
+          m.meeting_date 
+            ? format(new Date(m.meeting_date), "MMM dd, yyyy") : "",
+        ]),
+      ];
+      const meetingSheet = XLSX.utils.aoa_to_sheet(meetingData);
+      meetingSheet["!cols"] = [
+        { wch: 15 }, { wch: 20 }, { wch: 20 },
+        { wch: 25 }, { wch: 25 }, { wch: 15 }
+      ];
+      XLSX.utils.book_append_sheet(wb, meetingSheet, "SQL Meetings");
+
+      const fileName = `j2-overview-${format(new Date(), "yyyy-MM-dd")}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast({ 
+        title: "Excel downloaded successfully", 
+        className: "border-green-500" 
+      });
+    } catch (err) {
+      toast({ 
+        title: "Excel export failed", 
+        description: String(err), 
+        variant: "destructive" 
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "J2 Insights Dashboard - Overview";
@@ -179,15 +291,29 @@ const Overview = () => {
           <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExportCSV}
-            disabled={loading || exporting || snapshots.length === 0}
-            className="gap-2 shrink-0"
-          >
-           {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export CSV
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={loading || snapshots.length === 0}
+                className="gap-2 shrink-0"
+              >
+                <Download className="h-4 w-4" />
+                Export
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportCSV}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
