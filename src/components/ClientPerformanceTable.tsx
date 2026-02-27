@@ -119,13 +119,13 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
     const expectedSQLs = target * (elapsedPercent / 100);
     if (expectedSQLs === 0) return null;
     const achievementPercent = (sqls / expectedSQLs) * 100;
-    if (elapsedPercent > 70 && achievementPercent < 50) return "red";
-    if (elapsedPercent > 50 && achievementPercent < 70) return "amber";
+    if (elapsedPercent > 60 && achievementPercent < 60) return "red";
+    if (elapsedPercent > 40 && achievementPercent < 80) return "amber";
     return null;
   };
 
   const formatCampaignPeriod = (start: string | null, end: string | null): string => {
-    if (!start || !end) return "—";
+    if (!start || !end) return "-";
     const s = new Date(start);
     const e = new Date(end);
     return `${format(s, "MMM d")} – ${format(e, "MMM d")}`;
@@ -292,10 +292,10 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                               </div>
                             )}
                             {client.signal === "red" && (
-                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#0f172a]" />
+                              <span className="absolute bottom-0 left-0 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#0f172a]" />
                             )}
                             {client.signal === "amber" && (
-                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-white dark:border-[#0f172a]" />
+                              <span className="absolute bottom-0 left-0 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-white dark:border-[#0f172a]" />
                             )}
                           </div>
                           <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
@@ -307,7 +307,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-center px-4 py-2 text-muted-foreground">—</TableCell>
+                          <TableCell className="text-center px-4 py-2 text-muted-foreground">-</TableCell>
                         );
                         const isBold = days <= 10;
                         return (
@@ -315,8 +315,8 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                             <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
                               {days}
                             </span>
-                            <span className={`text-xs ml-1 ${isBold ? "font-bold text-foreground" : "text-muted-foreground"}`}>
-                              days
+                            <span className={`text-sm ml-1 ${isBold ? "font-bold text-foreground" : "text-muted-foreground"}`}>
+                              {days === 1 ? "day" : "days"}
                             </span>
                           </TableCell>
                         );
@@ -345,9 +345,9 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                                 ? "text-amber-500"
                                 : "text-emerald-500";
                               const message = signal === "red"
-                                ? "At risk — behind pace"
+                                ? "At risk - behind pace"
                                 : signal === "amber"
-                                ? "Needs attention — slightly behind"
+                                ? "Needs attention - slightly behind"
                                 : "On track";
                               return (
                                 <div className="flex flex-col gap-1 text-xs">
