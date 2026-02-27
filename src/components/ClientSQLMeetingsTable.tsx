@@ -50,7 +50,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [dateFilterType, setDateFilterType] = useState<string>("booking");
-  const { updateMeetingHeld, updateRemarks, updating } = useMeetingUpdate();
+  const { updateMeetingHeld, updateClientNotes, updating } = useMeetingUpdate();
   
   const rowsPerPage = 10;
 
@@ -74,11 +74,11 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
     const original = localMeetings.find(m => m.id === meetingId)?.remarks || "";
     if (newRemarks === original) return;
     setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: newRemarks } : m));
-    const success = await updateRemarks(meetingId, newRemarks);
+    const success = await updateClientNotes(meetingId, newRemarks);
     if (!success) {
       setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: original } : m));
     }
-  }, [updateRemarks, localMeetings]);
+  }, [updateClientNotes, localMeetings]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

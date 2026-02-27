@@ -77,7 +77,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
   useEffect(() => {
     setLocalMeetings(displayMeetings);
   }, [displayMeetings]);
-  const { updateMeetingHeld, updateRemarks, updating } = useMeetingUpdate();
+  const { updateMeetingHeld, updateClientNotes, updating } = useMeetingUpdate();
 
   const handleMeetingHeldChange = useCallback(async (meetingId: string, newValue: boolean) => {
     setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, meetingHeld: newValue } : m));
@@ -91,11 +91,11 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings 
     const original = localMeetings.find(m => m.id === meetingId)?.remarks || "";
     if (newRemarks === original) return;
     setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: newRemarks } : m));
-    const success = await updateRemarks(meetingId, newRemarks);
+    const success = await updateClientNotes(meetingId, newRemarks);
     if (!success) {
       setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, remarks: original } : m));
     }
-  }, [updateRemarks, localMeetings]);
+  }, [updateClientNotes, localMeetings]);
   
   const rowsPerPage = 10;
 

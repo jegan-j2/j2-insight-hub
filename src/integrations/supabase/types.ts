@@ -21,6 +21,7 @@ export type Database = {
           call_duration: number | null
           call_outcome: string | null
           client_id: string | null
+          client_notes: string | null
           company_name: string | null
           contact_email: string | null
           contact_name: string | null
@@ -31,6 +32,7 @@ export type Database = {
           is_sql: boolean | null
           meeting_held: boolean | null
           meeting_scheduled_date: string | null
+          meeting_status: string | null
           recording_url: string | null
           remarks: string | null
           sdr_name: string | null
@@ -41,6 +43,7 @@ export type Database = {
           call_duration?: number | null
           call_outcome?: string | null
           client_id?: string | null
+          client_notes?: string | null
           company_name?: string | null
           contact_email?: string | null
           contact_name?: string | null
@@ -51,6 +54,7 @@ export type Database = {
           is_sql?: boolean | null
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
+          meeting_status?: string | null
           recording_url?: string | null
           remarks?: string | null
           sdr_name?: string | null
@@ -61,6 +65,7 @@ export type Database = {
           call_duration?: number | null
           call_outcome?: string | null
           client_id?: string | null
+          client_notes?: string | null
           company_name?: string | null
           contact_email?: string | null
           contact_name?: string | null
@@ -71,6 +76,7 @@ export type Database = {
           is_sql?: boolean | null
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
+          meeting_status?: string | null
           recording_url?: string | null
           remarks?: string | null
           sdr_name?: string | null

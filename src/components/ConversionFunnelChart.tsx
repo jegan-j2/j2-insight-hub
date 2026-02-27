@@ -9,7 +9,7 @@ interface ConversionFunnelChartProps {
 }
 
 const TIERS = [
-  { key: "dials", label: "Dials", color: "#b45309", widthPx: 440 },
+  { key: "dials", label: "Dials", color: "#c2610a", widthPx: 440 },
   { key: "answered", label: "Answered", color: "#059669", widthPx: 361 },
   { key: "dmConversations", label: "DM Conversations", color: "#4338ca", widthPx: 255 },
   { key: "sqls", label: "SQLs", color: "#e11d48", widthPx: 167 },
