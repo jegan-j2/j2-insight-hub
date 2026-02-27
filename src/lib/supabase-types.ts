@@ -39,7 +39,9 @@ export interface SQLMeeting {
   booking_date: string
   meeting_date?: string
   meeting_held: boolean
+  meeting_status?: string
   remarks?: string
+  client_notes?: string
   edited_in_dashboard: boolean
   last_edited_by?: string
   last_edited_at?: string

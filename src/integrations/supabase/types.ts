@@ -312,6 +312,7 @@ export type Database = {
         Row: {
           booking_date: string
           client_id: string | null
+          client_notes: string | null
           company_name: string | null
           contact_email: string | null
           contact_person: string
@@ -324,12 +325,14 @@ export type Database = {
           last_edited_by: string | null
           meeting_date: string | null
           meeting_held: boolean | null
+          meeting_status: string | null
           remarks: string | null
           sdr_name: string | null
         }
         Insert: {
           booking_date: string
           client_id?: string | null
+          client_notes?: string | null
           company_name?: string | null
           contact_email?: string | null
           contact_person: string
@@ -342,12 +345,14 @@ export type Database = {
           last_edited_by?: string | null
           meeting_date?: string | null
           meeting_held?: boolean | null
+          meeting_status?: string | null
           remarks?: string | null
           sdr_name?: string | null
         }
         Update: {
           booking_date?: string
           client_id?: string | null
+          client_notes?: string | null
           company_name?: string | null
           contact_email?: string | null
           contact_person?: string
@@ -360,6 +365,7 @@ export type Database = {
           last_edited_by?: string | null
           meeting_date?: string | null
           meeting_held?: boolean | null
+          meeting_status?: string | null
           remarks?: string | null
           sdr_name?: string | null
         }

@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/lib/supabase";
+import type { Client } from "@/lib/supabase-types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,9 +28,18 @@ const Overview = () => {
   const { kpis, snapshots, meetings, dmsByClient, dmsByDate, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
+  const [overviewClients, setOverviewClients] = useState<Client[]>([]);
   
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data } = await supabase.from("clients").select("*").eq("status", "active");
+      if (data) setOverviewClients(data as unknown as Client[]);
+    };
+    fetchClients();
+  }, []);
 
   const activeClientCount = useMemo(() =>
     new Set(snapshots?.map(s => s.client_id) ?? []).size, [snapshots]);
@@ -535,7 +546,7 @@ const Overview = () => {
       {loading ? (
         <TableSkeleton />
       ) : (
-        <SQLBookedMeetingsTable dateRange={dateRange} meetings={meetings} />
+        <SQLBookedMeetingsTable dateRange={dateRange} meetings={meetings} clients={overviewClients} />
       )}
     </div>
   );
