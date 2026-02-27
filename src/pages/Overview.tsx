@@ -131,6 +131,38 @@ const Overview = () => {
 
       const wb = XLSX.utils.book_new();
 
+      const styleSheet = (ws: any, numCols: number) => {
+        const navyFill = { patternType: "solid", fgColor: { rgb: "0F172A" } };
+        const whiteBold = { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 12 };
+        const whiteLarge = { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 14 };
+        const whiteNormal = { color: { rgb: "FFFFFF" }, name: "Arial", sz: 10 };
+        const headerFill = { patternType: "solid", fgColor: { rgb: "1E293B" } };
+        const headerFont = { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 11 };
+
+        for (let c = 0; c < numCols; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r: 0, c });
+          if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+          ws[cellRef].s = { fill: navyFill, font: c === 0 ? whiteLarge : (c === numCols - 1 ? whiteNormal : whiteBold), alignment: { horizontal: c === 0 ? "left" : c === numCols - 1 ? "right" : "center", vertical: "center" } };
+        }
+        for (let c = 0; c < numCols; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r: 2, c });
+          if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+          ws[cellRef].s = { fill: { patternType: "solid", fgColor: { rgb: "1E3A5F" } }, font: whiteBold, alignment: { horizontal: "left", vertical: "center" } };
+        }
+        for (let c = 0; c < numCols; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r: 4, c });
+          if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+          ws[cellRef].s = { fill: headerFill, font: headerFont, alignment: { horizontal: "left", vertical: "center" } };
+        }
+        ws["!rows"] = [
+          { hpt: 30 }, // Row 1 — title
+          { hpt: 6 },  // Row 2 — spacer
+          { hpt: 22 }, // Row 3 — report title
+          { hpt: 6 },  // Row 4 — spacer
+          { hpt: 20 }, // Row 5 — column headers
+        ];
+      };
+
       // ── SHEET 1: KPI Summary ──
       const kpiData = [
         ["J2 Insights Dashboard", "", `Exported: ${exportDate}`],
@@ -146,6 +178,7 @@ const Overview = () => {
       ];
       const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
       kpiSheet["!cols"] = [{ wch: 25 }, { wch: 20 }, { wch: 30 }];
+      styleSheet(kpiSheet, 3);
       XLSX.utils.book_append_sheet(wb, kpiSheet, "KPI Summary");
 
       // ── SHEET 2: Client Performance ──
@@ -182,6 +215,7 @@ const Overview = () => {
         { wch: 25 }, { wch: 12 }, { wch: 12 }, 
         { wch: 12 }, { wch: 15 }
       ];
+      styleSheet(clientSheet, 5);
       XLSX.utils.book_append_sheet(wb, clientSheet, "Client Performance");
 
       // ── SHEET 3: SQL Meetings ──
@@ -208,10 +242,11 @@ const Overview = () => {
         { wch: 15 }, { wch: 20 }, { wch: 20 },
         { wch: 25 }, { wch: 25 }, { wch: 15 }
       ];
+      styleSheet(meetingSheet, 6);
       XLSX.utils.book_append_sheet(wb, meetingSheet, "SQL Meetings");
 
       const fileName = `j2-overview-${format(new Date(), "yyyy-MM-dd")}.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      XLSX.writeFile(wb, fileName, { bookSST: false, type: "binary", cellStyles: true });
 
       toast({ 
         title: "Excel downloaded successfully", 
