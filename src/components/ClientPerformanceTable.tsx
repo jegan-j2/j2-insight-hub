@@ -264,7 +264,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
                       Campaign Progress
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Action</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right" style={{ textAlign: "right" }}>Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -29,6 +29,16 @@ const Overview = () => {
   
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const activeClientCount = useMemo(() =>
+    new Set(snapshots?.map(s => s.client_id) ?? []).size, [snapshots]);
+  
+  const avgAnswerRate = useMemo(() => {
+    if (!snapshots || snapshots.length === 0) return 0;
+    const totalDials = snapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
+    const totalAnswered = snapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
+    return totalDials > 0 ? (totalAnswered / totalDials) * 100 : 0;
+  }, [snapshots]);
 
   const getDelta = (current: number, previous: number) => {
     if (!kpis.previousPeriod || previous === 0 || previous < 1) return null;
@@ -322,21 +332,20 @@ const Overview = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Overview Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Campaign Overview</h1>
           <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
+              <button
                 disabled={loading || snapshots.length === 0}
-                className="gap-2 shrink-0"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50"
               >
                 <Download className="h-4 w-4" />
                 Export
                 <ChevronDown className="h-4 w-4 ml-1" />
-              </Button>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportCSV}>
@@ -452,6 +461,58 @@ const Overview = () => {
         />
       )}
 
+      {/* Insight Banner */}
+      {kpis && !loading && snapshots.length > 0 && (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
+          <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+          <span>
+            {filterType === "last7days"
+              ? "This week"
+              : filterType === "last30days"
+              ? "Last 30 days"
+              : filterType === "thisMonth"
+              ? "This month"
+              : "Last month"}
+            : <span className="font-semibold text-foreground">
+              {kpis.totalDials.toLocaleString()} dials
+            </span> across <span className="font-semibold text-foreground">
+              {activeClientCount} clients
+            </span>.
+            {kpis.previousPeriod &&
+              avgAnswerRate < kpis.previousPeriod.answerRate ? (
+              <span className="ml-1">
+                Answer rate down{" "}
+                <span className="text-rose-500 font-semibold">
+                  {Math.abs(
+                    ((avgAnswerRate - kpis.previousPeriod.answerRate) /
+                      kpis.previousPeriod.answerRate) * 100
+                  ).toFixed(1)}%
+                </span>{" "}
+                vs previous period.
+              </span>
+            ) : kpis.previousPeriod ? (
+              <span className="ml-1">
+                Answer rate up{" "}
+                <span className="text-emerald-500 font-semibold">
+                  {Math.abs(
+                    ((avgAnswerRate - kpis.previousPeriod.answerRate) /
+                      kpis.previousPeriod.answerRate) * 100
+                  ).toFixed(1)}%
+                </span>{" "}
+                vs previous period.
+              </span>
+            ) : null}
+          </span>
+        </div>
+      )}
+
+      {/* Client Performance Table */}
+      {loading ? (
+        <TableSkeleton />
+      ) : (
+        <ClientPerformanceTable snapshots={snapshots} meetings={meetings} dmsByClient={dmsByClient} />
+      )}
+
       {/* Charts Section */}
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -465,17 +526,11 @@ const Overview = () => {
         </div>
       )}
 
-      {/* Tables */}
+      {/* SQL Meetings Table */}
       {loading ? (
-        <>
-          <TableSkeleton />
-          <TableSkeleton />
-        </>
+        <TableSkeleton />
       ) : (
-        <>
-          <ClientPerformanceTable snapshots={snapshots} meetings={meetings} dmsByClient={dmsByClient} />
-          <SQLBookedMeetingsTable dateRange={dateRange} meetings={meetings} />
-        </>
+        <SQLBookedMeetingsTable dateRange={dateRange} meetings={meetings} />
       )}
     </div>
   );

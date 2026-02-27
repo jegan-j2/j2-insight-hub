@@ -26,7 +26,7 @@ export const ConversionFunnelChart = ({ snapshots }: ConversionFunnelChartProps)
       { name: "Answered", value: snapshots.reduce((sum, s) => sum + (s.answered || 0), 0), color: "#10b981" },
       { name: "DM Conversations", value: snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0), color: "#6366f1" },
       { name: "SQLs", value: snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0), color: "#f43f5e" },
-    ];
+    ].filter(d => d.value > 0);
   }, [snapshots]);
 
   return (
