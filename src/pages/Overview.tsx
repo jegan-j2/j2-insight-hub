@@ -21,12 +21,26 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange);
+  const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const getDelta = (current: number, previous: number) => {
+    if (!kpis.previousPeriod || previous === 0) return null;
+    const delta = ((current - previous) / previous) * 100;
+    return delta;
+  };
+
+  const getPeriodLabel = () => {
+    if (filterType === "last7days") return "vs previous 7 days";
+    if (filterType === "last30days") return "vs previous 30 days";
+    if (filterType === "thisMonth") return "vs last month";
+    if (filterType === "lastMonth") return "vs 2 months ago";
+    return "vs previous period";
+  };
 
   // Auto-refresh trigger
   useEffect(() => {
@@ -125,9 +139,7 @@ const Overview = () => {
       icon: Phone,
       iconColor: "text-amber-500",
       iconBg: "bg-amber-500/10",
-      trend: "--",
-      trendUp: true,
-      trendLabel: "vs previous period",
+      delta: kpis.previousPeriod ? getDelta(kpis.totalDials, kpis.previousPeriod.totalDials) : null,
       tealValue: false,
     },
     {
@@ -137,9 +149,7 @@ const Overview = () => {
       icon: PhoneIncoming,
       iconColor: "text-emerald-500",
       iconBg: "bg-emerald-500/10",
-      trend: "--",
-      trendUp: true,
-      trendLabel: "vs previous period",
+      delta: kpis.previousPeriod ? getDelta(kpis.totalAnswered, kpis.previousPeriod.totalAnswered) : null,
       tealValue: false,
     },
     {
@@ -148,20 +158,16 @@ const Overview = () => {
       icon: TrendingUp,
       iconColor: "text-blue-500",
       iconBg: "bg-blue-500/10",
-      trend: "--",
-      trendUp: true,
-      trendLabel: "vs previous period",
+      delta: kpis.previousPeriod ? getDelta(parseFloat(kpis.answerRate), kpis.previousPeriod.answerRate) : null,
       tealValue: false,
     },
     {
       title: "Total Conversations",
-      value: kpis.totalDMs.toLocaleString(),
+      value: kpis.totalConversations.toLocaleString(),
       icon: Handshake,
       iconColor: "text-indigo-500",
       iconBg: "bg-indigo-500/10",
-      trend: "--",
-      trendUp: true,
-      trendLabel: "vs previous period",
+      delta: kpis.previousPeriod ? getDelta(kpis.totalConversations, kpis.previousPeriod.totalConversations) : null,
       tealValue: true,
     },
     {
@@ -171,9 +177,7 @@ const Overview = () => {
       icon: Target,
       iconColor: "text-rose-500",
       iconBg: "bg-rose-500/10",
-      trend: "--",
-      trendUp: true,
-      trendLabel: "vs previous period",
+      delta: kpis.previousPeriod ? getDelta(kpis.totalSQLs, kpis.previousPeriod.totalSQLs) : null,
       tealValue: true,
     },
   ];
@@ -279,16 +283,32 @@ const Overview = () => {
                   <div className={cn("p-3 rounded-lg", kpi.iconBg)}>
                     <kpi.icon className={cn("h-5 w-5", kpi.iconColor)} />
                   </div>
-                  <div className="flex items-center gap-1">
-                    {kpi.trendUp ? (
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 text-destructive" />
-                    )}
-                    <span className={cn("text-sm font-medium", kpi.trendUp ? "text-muted-foreground" : "text-destructive")}>
-                      {kpi.trend}
-                    </span>
-                  </div>
+                  {kpi.delta !== null ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 cursor-default">
+                            {kpi.delta >= 0 ? (
+                              <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <ArrowDownRight className="h-4 w-4 text-destructive" />
+                            )}
+                            <span className={cn(
+                              "text-sm font-medium",
+                              kpi.delta >= 0 ? "text-emerald-500" : "text-destructive"
+                            )}>
+                              {kpi.delta >= 0 ? "+" : ""}{kpi.delta.toFixed(1)}%
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          {getPeriodLabel()}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <div className="h-6" />
+                  )}
                 </div>
                 <div className="space-y-1">
                   <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
@@ -296,9 +316,6 @@ const Overview = () => {
                   {kpi.subtitle && (
                     <p className="text-xs text-[#64748b] dark:text-white/45">{kpi.subtitle}</p>
                   )}
-                </div>
-                <div className="mt-3 pt-3 border-t border-border">
-                  <p className="text-xs text-muted-foreground">{kpi.trendLabel}</p>
                 </div>
               </CardContent>
             </Card>
