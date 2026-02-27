@@ -15,7 +15,7 @@ import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/Load
 import { EmptyState } from "@/components/EmptyState";
 import { useOverviewData } from "@/hooks/useOverviewData";
 import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
-import { exportToPDF } from "@/lib/pdfExport";
+
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
@@ -24,7 +24,7 @@ const Overview = () => {
   const { kpis, snapshots, meetings, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
-  const [exportingPDF, setExportingPDF] = useState(false);
+  
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -114,18 +114,6 @@ const Overview = () => {
     }
   };
 
-  const handleExportPDF = async () => {
-    setExportingPDF(true);
-    try {
-      const dateStr = format(new Date(), "yyyy-MM-dd");
-      await exportToPDF('overview-content', `j2-overview-${dateStr}.pdf`, 'Campaign Overview');
-      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
-    } catch (err) {
-      toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
-    } finally {
-      setExportingPDF(false);
-    }
-  };
 
   useEffect(() => {
     document.title = "J2 Insights Dashboard - Overview";
@@ -172,7 +160,7 @@ const Overview = () => {
     {
       title: "Total SQLs",
       value: kpis.totalSQLs.toLocaleString(),
-      subtitle: `${kpis.sqlConversionRate}% conversion`,
+      
       icon: Target,
       iconColor: "text-rose-500",
       iconBg: "bg-rose-500/10",
@@ -198,15 +186,6 @@ const Overview = () => {
           >
            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Export CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportPDF}
-            disabled={loading || exportingPDF || snapshots.length === 0}
-            className="gap-2 shrink-0"
-          >
-            {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export PDF
           </Button>
         </div>
       </div>
@@ -291,9 +270,6 @@ const Overview = () => {
                 <div className="space-y-1">
                   <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
                   <p className="text-sm font-normal text-[#64748b] dark:text-white/60">{kpi.title}</p>
-                  {kpi.subtitle && (
-                    <p className="text-xs text-[#64748b] dark:text-white/45">{kpi.subtitle}</p>
-                  )}
                 </div>
               </CardContent>
             </Card>
