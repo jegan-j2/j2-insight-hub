@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Client } from "@/lib/supabase-types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +26,32 @@ import type { FilterType } from "@/contexts/DateFilterContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour <= 11) return "Good morning";
+  if (hour >= 12 && hour <= 16) return "Good afternoon";
+  if (hour >= 17 && hour <= 20) return "Good evening";
+  return "Welcome back";
+};
+
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
+  const [firstName, setFirstName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const fullName = user.user_metadata?.full_name;
+      if (fullName && typeof fullName === "string") {
+        setFirstName(fullName.split(" ")[0]);
+      } else if (user.email) {
+        const local = user.email.split("@")[0];
+        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
+      }
+    };
+    getUser();
+  }, []);
   const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
@@ -347,8 +371,13 @@ const Overview = () => {
     <div id="overview-content" className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Campaign Overview</h1>
+         <div>
+           {firstName && (
+             <p className="font-medium text-base text-muted-foreground mb-1">
+               {getGreeting()}, {firstName}!
+             </p>
+           )}
+           <h1 className="text-3xl font-bold text-foreground mb-2">Campaign Overview</h1>
           <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
         </div>
         <div className="flex items-center gap-2">
