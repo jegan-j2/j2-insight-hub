@@ -5,20 +5,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2, ChevronDown } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2, ChevronDown, CalendarIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CallActivityChart } from "@/components/CallActivityChart";
 import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
 import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
 import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
-import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 import { EmptyState } from "@/components/EmptyState";
 import { useOverviewData } from "@/hooks/useOverviewData";
 import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
+import type { DateRange } from "react-day-picker";
+import type { FilterType } from "@/contexts/DateFilterContext";
 
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
@@ -372,15 +375,71 @@ const Overview = () => {
         </div>
       </div>
 
-      {/* Date Range Picker with Quick Filters */}
-      <div className="space-y-3">
-        <DateRangePicker
-          date={dateRange}
-          onDateChange={setDateRange}
-          filterType={filterType}
-          onFilterTypeChange={setFilterType}
-          className="w-full"
-        />
+      {/* Date Filter Buttons */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          {([
+            { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },
+            { label: "Last 30 Days", type: "last30days" as FilterType, range: { from: subDays(new Date(), 30), to: new Date() } },
+            { label: "This Month", type: "thisMonth" as FilterType, range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) } },
+            { label: "Last Month", type: "lastMonth" as FilterType, range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
+          ]).map((filter) => {
+            const isActive = filterType === filter.type && dateRange?.from && dateRange?.to && isSameDay(dateRange.from, filter.range.from) && isSameDay(dateRange.to, filter.range.to);
+            return (
+              <Button
+                key={filter.type}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setDateRange(filter.range); setFilterType(filter.type); }}
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  isActive
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                {filter.label}
+              </Button>
+            );
+          })}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={filterType === "custom" ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  filterType === "custom"
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                Custom <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="start" sideOffset={8}>
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={(range) => {
+                  setDateRange(range);
+                  setFilterType("custom");
+                }}
+                numberOfMonths={2}
+                className="pointer-events-auto p-3"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        {/* Read-only filtered period display */}
+        {dateRange?.from && dateRange?.to && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+          </div>
+        )}
       </div>
 
       {/* Error State */}
@@ -486,7 +545,7 @@ const Overview = () => {
                : filterType === "lastMonth"
                ? "Last month"
                : dateRange?.from && dateRange?.to
-               ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d")}`
+               ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d, yyyy")}`
                : "Selected period"}
             : <span className="font-semibold text-foreground">
               {kpis.totalDials.toLocaleString()} dials
@@ -525,7 +584,7 @@ const Overview = () => {
       {loading ? (
         <TableSkeleton />
       ) : (
-        <ClientPerformanceTable snapshots={snapshots} meetings={meetings} dmsByClient={dmsByClient} />
+        <ClientPerformanceTable />
       )}
 
       {/* Charts Section */}

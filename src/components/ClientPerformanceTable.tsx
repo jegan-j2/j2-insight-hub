@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
+import type { DailySnapshot } from "@/lib/supabase-types";
 
 type SortField = "name" | "dials" | "answered" | "answeredPercent" | "dms" | "sqls" | "progress" | "daysLeft" | "campaignPeriod";
 type SortOrder = "asc" | "desc";
@@ -35,13 +35,7 @@ interface ClientData {
   signal: "red" | "amber" | null;
 }
 
-interface ClientPerformanceTableProps {
-  snapshots?: DailySnapshot[];
-  meetings?: SQLMeeting[];
-  dmsByClient?: Record<string, number>;
-}
-
-export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: ClientPerformanceTableProps) => {
+export const ClientPerformanceTable = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -53,17 +47,28 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
     target_sqls: number | null;
     logo_url: string | null;
   }>>([]);
+  const [snapshots, setSnapshots] = useState<DailySnapshot[]>([]);
+  const [dmsByClient, setDmsByClient] = useState<Record<string, number>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchClients = async () => {
-      const { data } = await supabase
-        .from("clients")
-        .select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url")
-        .eq("status", "active");
-      if (data) setClients(data);
+    const fetchData = async () => {
+      const [clientsRes, snapshotsRes, dmsRes] = await Promise.all([
+        supabase.from("clients").select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url").eq("status", "active"),
+        supabase.from("daily_snapshots").select("*").order("snapshot_date", { ascending: false }),
+        supabase.from("activity_log").select("client_id").eq("is_decision_maker", true),
+      ]);
+      if (clientsRes.data) setClients(clientsRes.data);
+      if (snapshotsRes.data) setSnapshots(snapshotsRes.data as unknown as DailySnapshot[]);
+      if (dmsRes.data) {
+        const dmMap: Record<string, number> = {};
+        for (const row of dmsRes.data) {
+          if (row.client_id) dmMap[row.client_id] = (dmMap[row.client_id] || 0) + 1;
+        }
+        setDmsByClient(dmMap);
+      }
     };
-    fetchClients();
+    fetchData();
   }, []);
 
   const getWorkingDaysLeft = (endDate: string | null): number | null => {
