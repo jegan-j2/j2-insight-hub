@@ -184,7 +184,6 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const hiddenFiltersCount = [
     bookingDateFilter !== undefined,
     meetingDateFilter !== undefined,
-    sdrFilter !== "all",
   ].filter(Boolean).length;
 
   const activeFiltersCount = [
@@ -281,9 +280,9 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
               )}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button size="sm" className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm">
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
                     <Download className="h-4 w-4" /> Export
-                  </Button>
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-40 p-1 bg-popover border-border z-50" align="end">
                   <button onClick={() => exportData("csv")} className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors">
@@ -301,7 +300,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
           <div className="flex flex-wrap items-center gap-3">
             <Input placeholder="Search contact, company..." value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="bg-background/50 border-border min-h-[40px] w-[220px]" />
+              className="bg-background/50 border-border min-h-[40px] min-w-[280px] flex-1" />
             <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
               <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
                 <SelectValue placeholder="All Clients" />
@@ -328,6 +327,15 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                     </div>
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+              <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
+                <SelectValue placeholder="All SDRs" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="all">All SDRs</SelectItem>
+                {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button variant="outline" size="sm" onClick={() => setShowMoreFilters(!showMoreFilters)}
@@ -366,15 +374,6 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   <Calendar mode="single" selected={meetingDateFilter} onSelect={(d) => { setMeetingDateFilter(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" />
                 </PopoverContent>
               </Popover>
-              <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
-                <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
-                  <SelectValue placeholder="All SDRs" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  <SelectItem value="all">All SDRs</SelectItem>
-                  {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
             </div>
           )}
         </div>
