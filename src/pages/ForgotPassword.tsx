@@ -30,7 +30,7 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://id-preview--b3e23100-6714-4004-bbb7-0821ce920e3c.lovable.app/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
