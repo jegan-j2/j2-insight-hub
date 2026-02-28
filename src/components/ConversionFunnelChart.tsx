@@ -41,8 +41,8 @@ export const ConversionFunnelChart = ({
     return [
       null,
       `${safe(answered, dials)}% answered`,
-      `${safe(dmConversations, answered)}% of answered`,
-      `${safe(sqls, dmConversations)}% of DM conv`,
+      answered > 0 ? `${safe(dmConversations, answered)}% of answered` : "0.0% of answered",
+      dmConversations > 0 ? `${safe(sqls, dmConversations)}% of DM conv` : "0.0% of DM conv",
     ];
   }, [dials, answered, dmConversations, sqls]);
 
@@ -69,10 +69,12 @@ export const ConversionFunnelChart = ({
         <CardTitle className="text-foreground">Funnel Breakdown</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="w-full overflow-x-auto">
+        <div className="w-full h-[320px] relative">
           <svg
+            width="100%"
+            height="100%"
             viewBox={`0 0 ${SVG_WIDTH} ${svgHeight}`}
-            className="w-full h-auto"
+            preserveAspectRatio="xMidYMid meet"
             role="img"
             aria-label="Conversion funnel chart"
           >
