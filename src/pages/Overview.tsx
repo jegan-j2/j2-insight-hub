@@ -309,7 +309,7 @@ const Overview = () => {
       tealValue: false,
     },
     {
-      title: "Avg Answer Rate",
+      title: "Answer Rate",
       value: `${kpis.answerRate}%`,
       icon: TrendingUp,
       iconColor: "text-blue-500",
@@ -474,16 +474,20 @@ const Overview = () => {
 
       {/* Insight Banner */}
       {kpis && !loading && snapshots.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
-          <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-          <span>
-            {filterType === "last7days"
-              ? "This week"
-              : filterType === "last30days"
-              ? "Last 30 days"
-              : filterType === "thisMonth"
-              ? "This month"
-              : "Last month"}
+         <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
+           <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+           <span>
+             {filterType === "last7days"
+               ? "This week"
+               : filterType === "last30days"
+               ? "Last 30 days"
+               : filterType === "thisMonth"
+               ? "This month"
+               : filterType === "lastMonth"
+               ? "Last month"
+               : dateRange?.from && dateRange?.to
+               ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d")}`
+               : "Selected period"}
             : <span className="font-semibold text-foreground">
               {kpis.totalDials.toLocaleString()} dials
             </span> across <span className="font-semibold text-foreground">

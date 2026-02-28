@@ -80,8 +80,8 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sdrFilter, setSdrFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [bookingDateFilter, setBookingDateFilter] = useState<Date | undefined>();
-  const [meetingDateFilter, setMeetingDateFilter] = useState<Date | undefined>();
+  const [bookingDateRange, setBookingDateRange] = useState<DateRange | undefined>();
+  const [meetingDateRange, setMeetingDateRange] = useState<DateRange | undefined>();
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const displayMeetings = useMemo(() => {
@@ -178,18 +178,18 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
 
   const clearAllFilters = () => {
     setClientFilter("all"); setStatusFilter("all"); setSdrFilter("all");
-    setSearchQuery(""); setBookingDateFilter(undefined); setMeetingDateFilter(undefined);
+    setSearchQuery(""); setBookingDateRange(undefined); setMeetingDateRange(undefined);
     setCurrentPage(1);
   };
 
   const hiddenFiltersCount = [
-    bookingDateFilter !== undefined,
-    meetingDateFilter !== undefined,
+    bookingDateRange !== undefined,
+    meetingDateRange !== undefined,
   ].filter(Boolean).length;
 
   const activeFiltersCount = [
     clientFilter !== "all", statusFilter !== "all", sdrFilter !== "all",
-    searchQuery !== "", bookingDateFilter !== undefined, meetingDateFilter !== undefined,
+    searchQuery !== "", bookingDateRange !== undefined, meetingDateRange !== undefined,
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
@@ -200,8 +200,8 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     if (clientFilter !== "all") filtered = filtered.filter(m => m.clientId === clientFilter);
     if (statusFilter !== "all") filtered = filtered.filter(m => m.meetingStatus === statusFilter);
     if (sdrFilter !== "all") filtered = filtered.filter(m => m.sdr === sdrFilter);
-    if (bookingDateFilter) filtered = filtered.filter(m => format(m.sqlDate, "yyyy-MM-dd") === format(bookingDateFilter, "yyyy-MM-dd"));
-    if (meetingDateFilter) filtered = filtered.filter(m => format(m.meetingDate, "yyyy-MM-dd") === format(meetingDateFilter, "yyyy-MM-dd"));
+    if (bookingDateRange?.from && bookingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: bookingDateRange.from!, end: bookingDateRange.to! }));
+    if (meetingDateRange?.from && meetingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.meetingDate, { start: meetingDateRange.from!, end: meetingDateRange.to! }));
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(m => m.contactPerson.toLowerCase().includes(q) || m.companyName.toLowerCase().includes(q) || m.sdr.toLowerCase().includes(q));
@@ -213,7 +213,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
       return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
     });
     return filtered;
-  }, [localMeetings, dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateFilter, meetingDateFilter, sortField, sortOrder]);
+  }, [localMeetings, dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateRange, meetingDateRange, sortField, sortOrder]);
 
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
   const paginatedMeetings = filteredMeetings.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
@@ -352,30 +352,38 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
 
           {/* Expandable hidden filters */}
           {showMoreFilters && (
-            <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[180px]", !bookingDateFilter && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {bookingDateFilter ? format(bookingDateFilter, "MMM dd, yyyy") : "Booking Date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                  <Calendar mode="single" selected={bookingDateFilter} onSelect={(d) => { setBookingDateFilter(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[180px]", !meetingDateFilter && "text-muted-foreground")}>
-                    <CalendarDays className="mr-2 h-4 w-4" />
-                    {meetingDateFilter ? format(meetingDateFilter, "MMM dd, yyyy") : "Meeting Date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                  <Calendar mode="single" selected={meetingDateFilter} onSelect={(d) => { setMeetingDateFilter(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </div>
+             <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50">
+               <Popover>
+                 <PopoverTrigger asChild>
+                   <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !bookingDateRange && "text-muted-foreground")}>
+                     <CalendarIcon className="mr-2 h-4 w-4" />
+                     {bookingDateRange?.from ? (
+                       bookingDateRange.to ? (
+                         `${format(bookingDateRange.from, "MMM dd")} – ${format(bookingDateRange.to, "MMM dd, yyyy")}`
+                       ) : format(bookingDateRange.from, "MMM dd, yyyy")
+                     ) : "Booking Date Range"}
+                   </Button>
+                 </PopoverTrigger>
+                 <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                   <Calendar mode="range" selected={bookingDateRange} onSelect={(d) => { setBookingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
+                 </PopoverContent>
+               </Popover>
+               <Popover>
+                 <PopoverTrigger asChild>
+                   <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !meetingDateRange && "text-muted-foreground")}>
+                     <CalendarDays className="mr-2 h-4 w-4" />
+                     {meetingDateRange?.from ? (
+                       meetingDateRange.to ? (
+                         `${format(meetingDateRange.from, "MMM dd")} – ${format(meetingDateRange.to, "MMM dd, yyyy")}`
+                       ) : format(meetingDateRange.from, "MMM dd, yyyy")
+                     ) : "Meeting Date Range"}
+                   </Button>
+                 </PopoverTrigger>
+                 <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                   <Calendar mode="range" selected={meetingDateRange} onSelect={(d) => { setMeetingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
+                 </PopoverContent>
+               </Popover>
+             </div>
           )}
         </div>
       </CardHeader>
@@ -385,7 +393,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
                 <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 z-20 bg-[#f1f5f9] dark:bg-[#1e293b]">
-                  <SortButton field="sqlDate" label="SQL Date" />
+                  <SortButton field="sqlDate" label="Booking Date" />
                 </TableHead>
                 <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                   <SortButton field="clientName" label="Client" />
@@ -435,7 +443,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                       onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
                       placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
                       disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
-                      className="bg-transparent border-transparent hover:border-border focus:border-ring h-8 text-sm"
+                      className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
                     />
                   </TableCell>
                 </TableRow>
