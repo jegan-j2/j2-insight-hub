@@ -58,20 +58,21 @@ const ForgotPassword = () => {
             <div className="flex justify-center">
               <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
             </div>
-            <CheckCircle2 className="mx-auto h-12 w-12 text-[#10b981]" />
             <h1 className="text-2xl font-bold text-foreground">Check Your Email</h1>
+            <CheckCircle2 className="mx-auto h-12 w-12 text-[#10b981]" />
             <p className="text-muted-foreground">
               We've sent reset instructions to <span className="font-medium text-foreground">{email}</span>
             </p>
             <div className="flex flex-col gap-3 pt-2">
-              <Button onClick={handleResend} className="w-full bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-200">
+              <Button onClick={handleResend} className="w-full bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                 Resend Email
               </Button>
-              <Link to="/login">
-                <Button variant="ghost" className="w-full text-muted-foreground hover:text-foreground">
-                   <ArrowLeft className="mr-2 h-4 w-4" />
-                   Back to Login
-                 </Button>
+              <Link
+                to="/login"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 inline-flex items-center gap-1 justify-center"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Back to Login
               </Link>
             </div>
           </div>

@@ -134,7 +134,7 @@ const Login = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white" disabled={loading}>
+          <Button type="submit" className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
