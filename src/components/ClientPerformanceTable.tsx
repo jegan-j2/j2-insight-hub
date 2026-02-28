@@ -213,7 +213,7 @@ export const ClientPerformanceTable = ({ snapshots, meetings, dmsByClient }: Cli
     <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "500ms" }}>
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle className="text-foreground">Client Performance Overview</CardTitle>
+          <CardTitle className="text-foreground">Client Performance</CardTitle>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input

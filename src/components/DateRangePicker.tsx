@@ -105,8 +105,8 @@ export const DateRangePicker = ({
               {date?.from ? (
                 date.to ? (
                   <>
-                    <span className="hidden sm:inline">{format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}</span>
-                    <span className="sm:hidden">{format(date.from, "MMM dd")} - {format(date.to, "MMM dd")}</span>
+                     <span className="hidden sm:inline">{format(date.from, "MMM dd, yyyy")} – {format(date.to, "MMM dd, yyyy")}</span>
+                     <span className="sm:hidden">{format(date.from, "MMM dd")} – {format(date.to, "MMM dd")}</span>
                   </>
                 ) : (
                   format(date.from, "MMM dd, yyyy")

@@ -262,7 +262,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
                       onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
                       placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
                       disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
-                      className="bg-transparent border-transparent hover:border-border focus:border-ring h-8 text-sm"
+                      className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
                     />
                   </TableCell>
                 </TableRow>
