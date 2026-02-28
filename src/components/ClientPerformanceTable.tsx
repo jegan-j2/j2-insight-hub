@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ArrowUpDown, Search, DatabaseZap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
-import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DailySnapshot } from "@/lib/supabase-types";
@@ -35,41 +34,24 @@ interface ClientData {
   signal: "red" | "amber" | null;
 }
 
-export const ClientPerformanceTable = () => {
+interface ClientPerformanceTableProps {
+  snapshots: DailySnapshot[];
+  dmsByClient: Record<string, number>;
+  clients: Array<{
+    client_id: string;
+    client_name: string;
+    campaign_start?: string | null;
+    campaign_end?: string | null;
+    target_sqls?: number | null;
+    logo_url?: string | null;
+  }>;
+}
+
+export const ClientPerformanceTable = ({ snapshots, dmsByClient, clients }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [clients, setClients] = useState<Array<{
-    client_id: string;
-    client_name: string;
-    campaign_start: string | null;
-    campaign_end: string | null;
-    target_sqls: number | null;
-    logo_url: string | null;
-  }>>([]);
-  const [snapshots, setSnapshots] = useState<DailySnapshot[]>([]);
-  const [dmsByClient, setDmsByClient] = useState<Record<string, number>>({});
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const [clientsRes, snapshotsRes, dmsRes] = await Promise.all([
-        supabase.from("clients").select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url").eq("status", "active"),
-        supabase.from("daily_snapshots").select("*").order("snapshot_date", { ascending: false }),
-        supabase.from("activity_log").select("client_id").eq("is_decision_maker", true),
-      ]);
-      if (clientsRes.data) setClients(clientsRes.data);
-      if (snapshotsRes.data) setSnapshots(snapshotsRes.data as unknown as DailySnapshot[]);
-      if (dmsRes.data) {
-        const dmMap: Record<string, number> = {};
-        for (const row of dmsRes.data) {
-          if (row.client_id) dmMap[row.client_id] = (dmMap[row.client_id] || 0) + 1;
-        }
-        setDmsByClient(dmMap);
-      }
-    };
-    fetchData();
-  }, []);
 
   const getWorkingDaysLeft = (endDate: string | null): number | null => {
     if (!endDate) return null;
@@ -157,12 +139,12 @@ export const ClientPerformanceTable = () => {
         sqlsPercent: totalDMs > 0 ? (totalSQLs / totalDMs) * 100 : 0,
         target,
         progress: target > 0 ? (totalSQLs / target) * 100 : 0,
-        campaignStart: client.campaign_start,
-        campaignEnd: client.campaign_end,
-        daysLeft: getWorkingDaysLeft(client.campaign_end),
-        elapsedPercent: getCampaignElapsed(client.campaign_start, client.campaign_end),
+        campaignStart: client.campaign_start || null,
+        campaignEnd: client.campaign_end || null,
+        daysLeft: getWorkingDaysLeft(client.campaign_end || null),
+        elapsedPercent: getCampaignElapsed(client.campaign_start || null, client.campaign_end || null),
         signal: getHealthSignal(
-          getCampaignElapsed(client.campaign_start, client.campaign_end),
+          getCampaignElapsed(client.campaign_start || null, client.campaign_end || null),
           totalSQLs,
           target
         ),
@@ -378,22 +360,11 @@ export const ClientPerformanceTable = () => {
                             navigate(`/client/${client.slug}`);
                           }}
                         >
-                          View Details
+                          View →
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {filteredAndSortedClients.length === 0 && clients.length > 0 && (
-                    <TableRow>
-                      <TableCell colSpan={10} className="py-12">
-                        <EmptyState
-                          icon={Search}
-                          title="No clients found"
-                          description={`No clients match "${searchQuery}". Try adjusting your search.`}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </TooltipProvider>

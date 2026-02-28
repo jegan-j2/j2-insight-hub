@@ -28,7 +28,7 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
   const [overviewClients, setOverviewClients] = useState<Client[]>([]);
@@ -584,7 +584,7 @@ const Overview = () => {
       {loading ? (
         <TableSkeleton />
       ) : (
-        <ClientPerformanceTable />
+        <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} clients={overviewClients} />
       )}
 
       {/* Charts Section */}
@@ -609,7 +609,7 @@ const Overview = () => {
       {loading ? (
         <TableSkeleton />
       ) : (
-        <SQLBookedMeetingsTable dateRange={dateRange} meetings={meetings} clients={overviewClients} />
+        <SQLBookedMeetingsTable meetings={meetings} clients={overviewClients} />
       )}
     </div>
   );
