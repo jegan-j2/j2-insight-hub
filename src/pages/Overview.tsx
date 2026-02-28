@@ -35,6 +35,8 @@ const Overview = () => {
   
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
+  const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -390,7 +392,7 @@ const Overview = () => {
                 key={filter.type}
                 variant={isActive ? "default" : "outline"}
                 size="sm"
-                onClick={() => { setDateRange(filter.range); setFilterType(filter.type); }}
+                onClick={() => { setDateRange(filter.range); setFilterType(filter.type); setCustomRange(undefined); }}
                 className={cn(
                   "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                   isActive
@@ -402,7 +404,7 @@ const Overview = () => {
               </Button>
             );
           })}
-          <Popover>
+          <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant={filterType === "custom" ? "default" : "outline"}
@@ -421,11 +423,15 @@ const Overview = () => {
               <Calendar
                 initialFocus
                 mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
+                defaultMonth={new Date()}
+                selected={customRange}
                 onSelect={(range) => {
-                  setDateRange(range);
-                  setFilterType("custom");
+                  setCustomRange(range);
+                  if (range?.from && range?.to) {
+                    setDateRange(range);
+                    setFilterType("custom");
+                    setCustomPopoverOpen(false);
+                  }
                 }}
                 numberOfMonths={2}
                 className="pointer-events-auto p-3"
