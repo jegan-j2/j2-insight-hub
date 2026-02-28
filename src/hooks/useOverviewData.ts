@@ -28,6 +28,8 @@ interface OverviewData {
   kpis: OverviewKPIs;
   dmsByClient: Record<string, number>;
   dmsByDate: Record<string, number>;
+  allSnapshots: DailySnapshot[];
+  allDmsByClient: Record<string, number>;
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -39,10 +41,14 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [conversations, setConversations] = useState(0);
-  const [prevSnapshotsData, setPrevSnapshotsData] = useState<{dials:number,answered:number,sqls:number}[]>([]);
+  const [sqlCount, setSqlCount] = useState(0);
+  const [prevSnapshotsData, setPrevSnapshotsData] = useState<{dials:number,answered:number}[]>([]);
   const [prevConversations, setPrevConversations] = useState(0);
+  const [prevSQLs, setPrevSQLs] = useState(0);
   const [dmsByClient, setDmsByClient] = useState<Record<string, number>>({});
   const [dmsByDate, setDmsByDate] = useState<Record<string, number>>({});
+  const [allSnapshots, setAllSnapshots] = useState<DailySnapshot[]>([]);
+  const [allDmsByClient, setAllDmsByClient] = useState<Record<string, number>>({});
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
   const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
@@ -93,7 +99,6 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       if (endDate) snapshotQuery = snapshotQuery.lte("snapshot_date", endDate);
 
       const { data: snapshotData, error: snapshotError } = await snapshotQuery;
-
       if (snapshotError) throw snapshotError;
 
       // Fetch SQL meetings for date range
@@ -106,8 +111,17 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       if (endDate) meetingQuery = meetingQuery.lte("booking_date", endDate);
 
       const { data: meetingData, error: meetingError } = await meetingQuery;
-
       if (meetingError) throw meetingError;
+
+      // Count SQLs from sql_meetings table
+      let sqlCountQuery = supabase
+        .from("sql_meetings")
+        .select("id", { count: "exact" });
+
+      if (startDate) sqlCountQuery = sqlCountQuery.gte("booking_date", startDate);
+      if (endDate) sqlCountQuery = sqlCountQuery.lte("booking_date", endDate);
+
+      const { count: sqlsCount } = await sqlCountQuery;
 
       // Fetch conversations (Decision Maker calls) for current period
       let conversationsQuery = supabase
@@ -148,16 +162,32 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         }
       }
 
-      // Fetch previous period snapshots and conversations
+      // Fetch ALL snapshots and DMs (unfiltered) for Client Performance table
+      const [allSnapshotRes, allDmRes] = await Promise.all([
+        supabase.from("daily_snapshots").select("*"),
+        supabase.from("activity_log").select("client_id").eq("is_decision_maker", true),
+      ]);
+
+      const allDmsMap: Record<string, number> = {};
+      if (allDmRes.data) {
+        for (const row of allDmRes.data) {
+          if (row.client_id) {
+            allDmsMap[row.client_id] = (allDmsMap[row.client_id] || 0) + 1;
+          }
+        }
+      }
+
+      // Fetch previous period data
       const prevDates = getPreviousPeriodDates();
-      let prevSnapshots: {dials:number,answered:number,sqls:number}[] = [];
+      let prevSnapshots: {dials:number,answered:number}[] = [];
       let prevConversationsCount = 0;
+      let prevSQLsCount = 0;
 
       if (prevDates) {
-        const [prevSnapshotRes, prevConvRes] = await Promise.all([
+        const [prevSnapshotRes, prevConvRes, prevSqlRes] = await Promise.all([
           supabase
             .from("daily_snapshots")
-            .select("dials, answered, sqls")
+            .select("dials, answered")
             .gte("snapshot_date", prevDates.from)
             .lte("snapshot_date", prevDates.to),
           supabase
@@ -166,18 +196,28 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
             .eq("is_decision_maker", true)
             .gte("activity_date", prevDates.from + "T00:00:00")
             .lte("activity_date", prevDates.to + "T23:59:59"),
+          supabase
+            .from("sql_meetings")
+            .select("id", { count: "exact" })
+            .gte("booking_date", prevDates.from)
+            .lte("booking_date", prevDates.to),
         ]);
         prevSnapshots = prevSnapshotRes.data || [];
         prevConversationsCount = prevConvRes.count || 0;
+        prevSQLsCount = prevSqlRes.count || 0;
       }
 
       setSnapshots(snapshotData || []);
       setMeetings(meetingData || []);
       setConversations(conversationsCount || 0);
+      setSqlCount(sqlsCount || 0);
       setPrevSnapshotsData(prevSnapshots);
       setPrevConversations(prevConversationsCount);
+      setPrevSQLs(prevSQLsCount);
       setDmsByClient(dmMap);
       setDmsByDate(dmDateMap);
+      setAllSnapshots((allSnapshotRes.data || []) as unknown as DailySnapshot[]);
+      setAllDmsByClient(allDmsMap);
 
       if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
         snapshots: snapshotData?.length || 0,
@@ -210,11 +250,10 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     const totalDials = snapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
     const totalAnswered = snapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
     const totalDMs = snapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0);
-    const totalSQLs = snapshots.reduce((sum, s) => sum + (s.sqls || 0), 0);
+    const totalSQLs = sqlCount;
 
     const prevDials = prevSnapshotsData.reduce((sum, s) => sum + (s.dials || 0), 0);
     const prevAnswered = prevSnapshotsData.reduce((sum, s) => sum + (s.answered || 0), 0);
-    const prevSQLs = prevSnapshotsData.reduce((sum, s) => sum + (s.sqls || 0), 0);
     const prevAnswerRate = prevDials > 0 ? (prevAnswered / prevDials) * 100 : 0;
 
     return {
@@ -225,7 +264,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       totalDMs,
       totalSQLs,
       sqlConversionRate: totalDMs > 0 ? ((totalSQLs / totalDMs) * 100).toFixed(1) : "0",
-      previousPeriod: prevSnapshotsData.length > 0 || prevConversations > 0 ? {
+      previousPeriod: prevSnapshotsData.length > 0 || prevConversations > 0 || prevSQLs > 0 ? {
         totalDials: prevDials,
         totalAnswered: prevAnswered,
         answerRate: prevAnswerRate,
@@ -233,7 +272,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         totalSQLs: prevSQLs,
       } : null,
     };
-  }, [snapshots, conversations, prevSnapshotsData, prevConversations]);
+  }, [snapshots, conversations, sqlCount, prevSnapshotsData, prevConversations, prevSQLs]);
 
-  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, loading, error, refetch: fetchDashboardData };
+  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, loading, error, refetch: fetchDashboardData };
 };
