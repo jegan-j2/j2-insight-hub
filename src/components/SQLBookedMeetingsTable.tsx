@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileSpreadsheet } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ArrowUpDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileSpreadsheet } from "lucide-react";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
@@ -278,21 +279,21 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   <X className="h-4 w-4" /> Clear ({activeFiltersCount})
                 </Button>
               )}
-              <Popover>
-                <PopoverTrigger asChild>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
-                    <Download className="h-4 w-4" /> Export
+                    <Download className="h-4 w-4" /> Export <ChevronDown className="h-4 w-4" />
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-40 p-1 bg-popover border-border z-50" align="end">
-                  <button onClick={() => exportData("csv")} className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors">
-                    <Download className="h-4 w-4" /> CSV
-                  </button>
-                  <button onClick={() => exportData("excel")} className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors">
-                    <FileSpreadsheet className="h-4 w-4" /> Excel
-                  </button>
-                </PopoverContent>
-              </Popover>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+                  <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
+                    <Download className="h-4 w-4 mr-2" /> Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
+                    <FileSpreadsheet className="h-4 w-4 mr-2" /> Export as Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

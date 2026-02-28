@@ -9,10 +9,10 @@ interface ConversionFunnelChartProps {
 }
 
 const TIERS = [
-  { key: "dials", label: "Dials", color: "#c2610a", widthPx: 440 },
-  { key: "answered", label: "Answered", color: "#059669", widthPx: 361 },
-  { key: "dmConversations", label: "DM Conversations", color: "#4338ca", widthPx: 255 },
-  { key: "sqls", label: "SQLs", color: "#e11d48", widthPx: 167 },
+  { key: "dials", label: "Dials", color: "#f59e0b", widthPx: 440 },
+  { key: "answered", label: "Answered", color: "#10b981", widthPx: 361 },
+  { key: "dmConversations", label: "DM Conversations", color: "#6366f1", widthPx: 255 },
+  { key: "sqls", label: "SQLs", color: "#f43f5e", widthPx: 167 },
 ] as const;
 
 const SVG_WIDTH = 520;
