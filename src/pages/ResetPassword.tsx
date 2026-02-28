@@ -24,6 +24,13 @@ const ResetPassword = () => {
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
+    const savedTheme = localStorage.getItem('j2-theme-preference');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || 
           event === "SIGNED_IN") {
@@ -173,6 +180,11 @@ const ResetPassword = () => {
               "Reset Password"
             )}
           </Button>
+          {!canSubmit && (
+            <p className="text-xs text-muted-foreground text-center">
+              Complete all password requirements above to continue
+            </p>
+          )}
         </form>
         <p className="text-center text-xs text-[#94a3b8] dark:text-[rgba(255,255,255,0.2)] pt-2">
           © 2026 J2 Group • Melbourne, Australia
