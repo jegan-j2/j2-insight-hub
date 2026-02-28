@@ -373,7 +373,7 @@ const Overview = () => {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
          <div>
            {firstName && (
-             <p className="font-medium text-base text-muted-foreground mb-1">
+             <p className="font-medium text-base text-muted-foreground mb-3">
                {getGreeting()}, {firstName}!
              </p>
            )}
