@@ -5,20 +5,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-const buildEmailHtml = (inviteLink: string) => `
+const buildEmailHtml = (inviteLink: string, email: string) => {
+  const name = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const greeting = name ? `Welcome, ${name}!` : 'Hi there, welcome!';
+  return `
 <!DOCTYPE html>
 <html>
-<body style="font-family: sans-serif; background: #f8fafc; padding: 40px;">
+<body style="font-family: sans-serif; background: #f8fafc; padding: 40px; margin: 0;">
   <div style="max-width: 500px; margin: 0 auto; background: white; 
        border-radius: 12px; padding: 40px; 
        box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <img src="https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png" 
-         width="80" style="display:block; margin: 0 auto 24px;" />
+         width="80" style="display:block; margin: 0 auto 24px; border-radius: 50%;" />
     <h2 style="text-align:center; color:#0f172a; margin-bottom:8px;">
-      Welcome to J2 Insights Dashboard
+      ${greeting}
     </h2>
+    <p style="color:#64748b; text-align:center; margin-bottom:12px;">
+      You've been invited to access the J2 Insights Dashboard — your real-time view of campaign performance and results.
+    </p>
     <p style="color:#64748b; text-align:center; margin-bottom:32px;">
-      You've been invited to access the J2 Group Lead Generation Dashboard.
+      Click below to set your password and get started.
     </p>
     <a href="${inviteLink}" 
        style="display:block; background:#3b82f6; color:white; text-align:center;
@@ -36,6 +42,7 @@ const buildEmailHtml = (inviteLink: string) => `
   </div>
 </body>
 </html>`;
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -145,7 +152,7 @@ Deno.serve(async (req) => {
         from: 'J2 Group <admin-support@j2group.com.au>',
         to: [email],
         subject: "You've been invited to J2 Insights Dashboard",
-        html: buildEmailHtml(actionLink),
+        html: buildEmailHtml(actionLink, email),
       }),
     })
 

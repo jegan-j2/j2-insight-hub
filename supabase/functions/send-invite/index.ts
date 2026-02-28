@@ -83,15 +83,27 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'J2 Group <admin-support@j2group.com.au>',
         to: [email],
-        subject: 'You\'re invited to J2 Insight Hub',
-        html: `
-          <h2>You've been invited to J2 Insight Hub</h2>
-          <p>Click the link below to accept your invitation and set up your account:</p>
-          <p><a href="${inviteUrl}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">Accept Invitation</a></p>
-          <p>If the button doesn't work, copy and paste this link into your browser:</p>
-          <p>${inviteUrl}</p>
-          <p>This invitation will expire in 7 days.</p>
-        `,
+        subject: "You've been invited to J2 Insights Dashboard",
+        html: (() => {
+          const name = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+          const greeting = name ? `Welcome, ${name}!` : 'Hi there, welcome!';
+          return `
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; background: #f8fafc; padding: 40px; margin: 0;">
+  <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <img src="https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png" width="80" style="display:block; margin: 0 auto 24px; border-radius: 50%;" />
+    <h2 style="text-align:center; color:#0f172a; margin-bottom:8px;">${greeting}</h2>
+    <p style="color:#64748b; text-align:center; margin-bottom:12px;">You've been invited to access the J2 Insights Dashboard — your real-time view of campaign performance and results.</p>
+    <p style="color:#64748b; text-align:center; margin-bottom:32px;">Click below to set your password and get started.</p>
+    <a href="${inviteUrl}" style="display:block; background:#3b82f6; color:white; text-align:center; padding:14px; border-radius:8px; text-decoration:none; font-weight:600; font-size:15px;">Accept Invitation</a>
+    <p style="color:#94a3b8; font-size:12px; text-align:center; margin-top:24px;">This link expires in 48 hours. If you didn't expect this email, ignore it.</p>
+    <hr style="border:none; border-top:1px solid #e2e8f0; margin:24px 0;" />
+    <p style="color:#94a3b8; font-size:12px; text-align:center;">© 2026 J2 Group · Melbourne, Australia</p>
+  </div>
+</body>
+</html>`;
+        })(),
       }),
     })
 

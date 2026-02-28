@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -54,13 +55,16 @@ const ForgotPassword = () => {
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border shadow-sm">
         {sent ? (
           <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
+            </div>
             <CheckCircle2 className="mx-auto h-12 w-12 text-secondary" />
             <h1 className="text-2xl font-bold text-foreground">Check Your Email</h1>
             <p className="text-muted-foreground">
               We've sent reset instructions to <span className="font-medium text-foreground">{email}</span>
             </p>
             <div className="flex flex-col gap-3 pt-2">
-              <Button variant="outline" onClick={handleResend} className="w-full">
+              <Button onClick={handleResend} className="w-full bg-[#0f172a] text-white hover:bg-[#1e293b]">
                 Resend Email
               </Button>
               <Link to="/login">
@@ -92,7 +96,16 @@ const ForgotPassword = () => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading || !email.trim()}>
+              <Button
+                type="submit"
+                className={cn(
+                  "w-full transition-colors",
+                  !email.trim() || loading
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#0f172a] text-white hover:bg-[#1e293b]"
+                )}
+                disabled={loading || !email.trim()}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
