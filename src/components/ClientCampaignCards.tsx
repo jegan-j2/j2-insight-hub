@@ -7,9 +7,10 @@ interface ClientCampaignCardsProps {
   campaign: NonNullable<ClientViewData["campaign"]>;
   meetingOutcomes?: ClientViewData["meetingOutcomes"];
   nextMeeting?: ClientViewData["nextMeeting"];
+  weekActivity?: ClientViewData["weekActivity"];
 }
 
-export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting }: ClientCampaignCardsProps) => {
+export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting, weekActivity }: ClientCampaignCardsProps) => {
   const sqlPct = Math.min(campaign.sqlPercentage, 100);
   const timePct = Math.min(campaign.timePercentage, 100);
   const daysLabel = campaign.daysRemaining === 1 ? "day" : "days";
@@ -89,16 +90,19 @@ export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting }: 
           <CardTitle className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Time Progress</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* ROW 1: Progress bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Progress</span>
-              <span className="text-sm font-semibold text-indigo-500">{Math.round(campaign.timePercentage)}%</span>
+              <span className="text-sm font-semibold text-[#3b82f6]">{Math.round(campaign.timePercentage)}%</span>
             </div>
-            <Progress value={timePct} className="h-3 [&>div]:bg-indigo-500" />
+            <Progress value={timePct} className="h-3 [&>div]:bg-[#3b82f6]" />
             <p className="text-sm text-muted-foreground">
               {campaign.elapsedWorkingDays} of {campaign.totalWorkingDays} days elapsed
             </p>
           </div>
+
+          {/* ROW 2: Campaign Start / End */}
           <div className="grid grid-cols-2 gap-4">
             <div className="p-3 rounded-lg bg-muted/20 border border-border">
               <p className="text-xs text-muted-foreground mb-1">Campaign Start</p>
@@ -113,12 +117,35 @@ export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting }: 
               </p>
             </div>
           </div>
+
+          {/* ROW 3: Days Remaining */}
           <div className="p-3 rounded-lg bg-muted/20 border border-border">
             <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
             <p className={`text-lg text-foreground ${campaign.daysRemaining <= 10 ? "font-bold" : "font-bold"}`}>
               {campaign.daysRemaining} {daysLabel}
             </p>
           </div>
+
+          {/* ROW 4: SQLs Booked */}
+          {weekActivity && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-2 mt-4">SQLs Booked</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="p-3 rounded-lg bg-muted/20 border border-border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">This Month</p>
+                  <p className="text-lg font-bold text-foreground">{weekActivity.thisMonth}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/20 border border-border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">This Week</p>
+                  <p className="text-lg font-bold text-foreground">{weekActivity.thisWeek}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/20 border border-border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Last Week</p>
+                  <p className="text-lg font-bold text-foreground">{weekActivity.lastWeek}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
