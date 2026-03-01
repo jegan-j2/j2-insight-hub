@@ -17,7 +17,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { TableSkeleton } from "@/components/LoadingSkeletons";
 import type { DateRange } from "react-day-picker";
 import type { SQLMeeting, Client } from "@/lib/supabase-types";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 interface MeetingData {
   id: string;

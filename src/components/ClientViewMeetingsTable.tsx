@@ -187,7 +187,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
   };
 
   const handleExportExcel = async () => {
-    const XLSX = await import("xlsx");
+    const XLSX = await import("xlsx-js-style");
     const headers = ["Booking Date", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
     const rows = filteredMeetings.map(m => [
       format(m.bookingDate, "MMM dd, yyyy"),

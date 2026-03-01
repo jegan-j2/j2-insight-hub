@@ -170,7 +170,7 @@ const Overview = () => {
   const handleExportExcel = async () => {
     setExporting(true);
     try {
-      const XLSX = await import("xlsx");
+      const XLSX = await import("xlsx-js-style");
       
       const startStr = dateRange?.from 
         ? format(dateRange.from, "MMM dd, yyyy") : "";
