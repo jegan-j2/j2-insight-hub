@@ -233,7 +233,19 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   }, [startDate, endDate, filterType]);
 
   useEffect(() => {
-    fetchDashboardData();
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await fetchDashboardData();
+      } catch {
+        if (!cancelled) {
+          await new Promise(r => setTimeout(r, 2000));
+          if (!cancelled) fetchDashboardData();
+        }
+      }
+    };
+    run();
+    return () => { cancelled = true; };
   }, [fetchDashboardData]);
 
   useRealtimeSubscription({

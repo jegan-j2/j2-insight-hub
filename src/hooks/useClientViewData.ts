@@ -169,7 +169,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       // Meeting outcomes for full campaign period
       let outcomesQuery = supabase
         .from("sql_meetings")
-        .select("meeting_status")
+        .select("meeting_status, meeting_held")
         .eq("client_id", clientId);
       if (clientData?.campaign_start) outcomesQuery = outcomesQuery.gte("booking_date", clientData.campaign_start);
       if (clientData?.campaign_end) outcomesQuery = outcomesQuery.lte("booking_date", clientData.campaign_end);
@@ -177,9 +177,10 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
 
       const outcomes: MeetingOutcomes = { held: 0, pending: 0, noShow: 0 };
       (outcomesData || []).forEach((m: any) => {
-        if (m.meeting_status === "held") outcomes.held++;
-        else if (m.meeting_status === "pending") outcomes.pending++;
-        else if (m.meeting_status === "no_show") outcomes.noShow++;
+        const status = (m.meeting_status || "").toLowerCase().trim();
+        if (status === "held" || m.meeting_held === true) outcomes.held++;
+        else if (status === "pending") outcomes.pending++;
+        else if (["no_show", "no show", "no-show", "noshow"].includes(status)) outcomes.noShow++;
       });
 
       // Next/Last meeting
@@ -249,7 +250,19 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
   }, [clientId, startDate, endDate]);
 
   useEffect(() => {
-    fetchData();
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await fetchData();
+      } catch {
+        if (!cancelled) {
+          await new Promise(r => setTimeout(r, 2000));
+          if (!cancelled) fetchData();
+        }
+      }
+    };
+    run();
+    return () => { cancelled = true; };
   }, [fetchData]);
 
   useRealtimeSubscription({

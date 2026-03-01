@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ActivityRecord {
   id: string;
@@ -36,7 +35,13 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 15;
 
-  const sorted = useMemo(() => [...records].sort((a, b) => b.activity_date.localeCompare(a.activity_date)), [records]);
+  // Sort by duration DESC, nulls last
+  const sorted = useMemo(() => [...records].sort((a, b) => {
+    const aDur = a.call_duration ?? -1;
+    const bDur = b.call_duration ?? -1;
+    return bDur - aDur;
+  }), [records]);
+
   const totalPages = Math.ceil(sorted.length / rowsPerPage);
   const paginated = sorted.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
   const startIdx = (currentPage - 1) * rowsPerPage + 1;
@@ -47,12 +52,12 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] p-0">
-        <DialogHeader className="px-6 pt-6 pb-2">
+      <DialogContent className="max-w-2xl max-h-[80vh] p-0 flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="text-foreground">{title}</DialogTitle>
           <p className="text-sm text-muted-foreground">{sorted.length} record{sorted.length !== 1 ? "s" : ""}</p>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh] px-6 pb-2">
+        <div className="flex-1 overflow-auto px-6">
           {sorted.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
               No records in this period
@@ -84,9 +89,9 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
               </TableBody>
             </Table>
           )}
-        </ScrollArea>
+        </div>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 pb-4 pt-2">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-border shrink-0">
             <p className="text-sm text-muted-foreground">Showing {startIdx}–{endIdx} of {sorted.length} records</p>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="border-border">
