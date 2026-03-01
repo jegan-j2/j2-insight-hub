@@ -150,7 +150,7 @@ const Overview = () => {
       ];
 
       downloadCSV(sections.join("\n"), `j2-overview-${startStr}-${endStr}.csv`);
-      toast({ title: "CSV downloaded successfully", className: "border-green-500" });
+      toast({ title: "CSV downloaded successfully", className: "border-[#10b981] text-[#10b981]" });
     } finally {
       setExporting(false);
     }
@@ -170,7 +170,7 @@ const Overview = () => {
 
       const wb = XLSX.utils.book_new();
 
-      const styleSheet = (ws: any, numCols: number) => {
+      const styleSheet = (ws: any, numCols: number, dataRowCount: number) => {
         const navyFill = { patternType: "solid", fgColor: { rgb: "0F172A" } };
         const whiteBold = { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 12 };
         const whiteLarge = { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 14 };
@@ -178,20 +178,33 @@ const Overview = () => {
         const headerFill = { patternType: "solid", fgColor: { rgb: "1E293B" } };
         const headerFont = { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 11 };
 
+        // Row 1 — title bar
         for (let c = 0; c < numCols; c++) {
           const cellRef = XLSX.utils.encode_cell({ r: 0, c });
           if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
           ws[cellRef].s = { fill: navyFill, font: c === 0 ? whiteLarge : (c === numCols - 1 ? whiteNormal : whiteBold), alignment: { horizontal: c === 0 ? "left" : c === numCols - 1 ? "right" : "center", vertical: "center" } };
         }
+        // Row 3 — report title
         for (let c = 0; c < numCols; c++) {
           const cellRef = XLSX.utils.encode_cell({ r: 2, c });
           if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
           ws[cellRef].s = { fill: { patternType: "solid", fgColor: { rgb: "1E3A5F" } }, font: whiteBold, alignment: { horizontal: "left", vertical: "center" } };
         }
+        // Row 5 — column headers
         for (let c = 0; c < numCols; c++) {
           const cellRef = XLSX.utils.encode_cell({ r: 4, c });
           if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
           ws[cellRef].s = { fill: headerFill, font: headerFont, alignment: { horizontal: "left", vertical: "center" } };
+        }
+        // Alternating data rows starting from row 6 (index 5)
+        const evenRowStyle = { fill: { fgColor: { rgb: "F1F5F9" } }, font: { name: "Arial" } };
+        const oddRowStyle = { fill: { fgColor: { rgb: "FFFFFF" } }, font: { name: "Arial" } };
+        for (let r = 0; r < dataRowCount; r++) {
+          const style = r % 2 === 0 ? evenRowStyle : oddRowStyle;
+          for (let c = 0; c < numCols; c++) {
+            const cellRef = XLSX.utils.encode_cell({ r: r + 5, c });
+            if (ws[cellRef]) ws[cellRef].s = style;
+          }
         }
         ws["!rows"] = [
           { hpt: 30 }, // Row 1 — title
@@ -217,7 +230,7 @@ const Overview = () => {
       ];
       const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
       kpiSheet["!cols"] = [{ wch: 25 }, { wch: 20 }, { wch: 30 }];
-      styleSheet(kpiSheet, 3);
+      styleSheet(kpiSheet, 3, kpiData.length - 5);
       XLSX.utils.book_append_sheet(wb, kpiSheet, "KPI Summary");
 
       // ── SHEET 2: Client Performance ──
@@ -254,7 +267,7 @@ const Overview = () => {
         { wch: 25 }, { wch: 12 }, { wch: 12 }, 
         { wch: 12 }, { wch: 15 }
       ];
-      styleSheet(clientSheet, 5);
+      styleSheet(clientSheet, 5, clientData.length - 5);
       XLSX.utils.book_append_sheet(wb, clientSheet, "Client Performance");
 
       // ── SHEET 3: SQL Meetings ──
@@ -281,7 +294,7 @@ const Overview = () => {
         { wch: 15 }, { wch: 20 }, { wch: 20 },
         { wch: 25 }, { wch: 25 }, { wch: 15 }
       ];
-      styleSheet(meetingSheet, 6);
+      styleSheet(meetingSheet, 6, meetingData.length - 5);
       XLSX.utils.book_append_sheet(wb, meetingSheet, "SQL Meetings");
 
       const fileName = `j2-overview-${format(new Date(), "yyyy-MM-dd")}.xlsx`;
@@ -289,7 +302,7 @@ const Overview = () => {
 
       toast({ 
         title: "Excel downloaded successfully", 
-        className: "border-green-500" 
+        className: "border-[#10b981] text-[#10b981]" 
       });
     } catch (err) {
       toast({ 

@@ -23,7 +23,7 @@ const SQLMeetings = () => {
     try {
       const dateStr = format(new Date(), "yyyy-MM-dd");
       await exportToPDF('sql-meetings-content', `j2-sql-meetings-${dateStr}.pdf`, 'SQL Meetings Report');
-      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
+      toast({ title: "PDF downloaded successfully", className: "border-[#10b981] text-[#10b981]" });
     } catch (err) {
       toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
     } finally {

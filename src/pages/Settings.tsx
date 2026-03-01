@@ -170,7 +170,7 @@ const Settings = () => {
       if (data?.error) throw new Error(data.error);
 
       setStatus(prev => ({ ...prev, [key]: 'sent' }));
-      toast({ title: "Invite sent successfully", description: `Invitation email sent to ${email}` });
+      toast({ title: "Invite sent successfully", description: `Invitation email sent to ${email}`, className: "border-[#10b981] text-[#10b981]" });
       fetchInviteRecords();
     } catch (error: any) {
       console.error('Error sending invite:', error);
@@ -197,7 +197,7 @@ const Settings = () => {
         .update({ status: 'active' })
         .eq('id', client.id);
       if (error) throw error;
-      toast({ title: "Client reactivated", description: `${client.client_name} is now active.`, className: "border-green-500" });
+      toast({ title: "Client reactivated", description: `${client.client_name} is now active.`, className: "border-[#10b981] text-[#10b981]" });
       fetchClients();
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Could not reactivate client.", variant: "destructive" });
@@ -211,7 +211,7 @@ const Settings = () => {
         .update({ status: 'active' })
         .eq('id', member.id);
       if (error) throw error;
-      toast({ title: "Team member reactivated", description: `${member.sdr_name} is now active.`, className: "border-green-500" });
+      toast({ title: "Team member reactivated", description: `${member.sdr_name} is now active.`, className: "border-[#10b981] text-[#10b981]" });
       fetchTeamMembers();
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Could not reactivate member.", variant: "destructive" });
@@ -370,7 +370,7 @@ const Settings = () => {
         await supabase.from("clients").update({ logo_url: publicUrl }).eq("id", editingClient.id);
       }
       setClientForm(f => ({ ...f, logo_url: publicUrl }));
-      toast({ title: "Logo uploaded", className: "border-green-500" });
+      toast({ title: "Logo uploaded", className: "border-[#10b981] text-[#10b981]" });
       fetchClients();
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -386,7 +386,7 @@ const Settings = () => {
       await supabase.from("clients").update({ logo_url: null }).eq("id", editingClient.id);
     }
     setClientForm(f => ({ ...f, logo_url: "" }));
-    toast({ title: "Logo removed", className: "border-green-500" });
+    toast({ title: "Logo removed", className: "border-[#10b981] text-[#10b981]" });
     fetchClients();
   };
 
@@ -421,7 +421,7 @@ const Settings = () => {
         await supabase.from("clients").update({ banner_url: publicUrl }).eq("id", editingClient.id);
       }
       setEditingClient(prev => prev ? { ...prev, banner_url: publicUrl } : prev);
-      toast({ title: "Banner uploaded", className: "border-green-500" });
+      toast({ title: "Banner uploaded", className: "border-[#10b981] text-[#10b981]" });
       fetchClients();
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -437,7 +437,7 @@ const Settings = () => {
       await supabase.from("clients").update({ banner_url: null }).eq("id", editingClient.id);
     }
     setEditingClient(prev => prev ? { ...prev, banner_url: null } : prev);
-    toast({ title: "Banner removed", className: "border-green-500" });
+    toast({ title: "Banner removed", className: "border-[#10b981] text-[#10b981]" });
     fetchClients();
   };
 
@@ -469,7 +469,7 @@ const Settings = () => {
       const publicUrl = urlData.publicUrl + "?t=" + Date.now();
       await supabase.from("team_members").update({ profile_photo_url: publicUrl }).eq("id", editingMember.id);
       setMemberForm(f => ({ ...f, profile_photo_url: publicUrl }));
-      toast({ title: "Photo uploaded", className: "border-green-500" });
+      toast({ title: "Photo uploaded", className: "border-[#10b981] text-[#10b981]" });
       fetchTeamMembers();
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -486,7 +486,7 @@ const Settings = () => {
       await supabase.from("team_members").update({ profile_photo_url: null }).eq("id", editingMember.id);
     }
     setMemberForm(f => ({ ...f, profile_photo_url: "" }));
-    toast({ title: "Photo removed", className: "border-green-500" });
+    toast({ title: "Photo removed", className: "border-[#10b981] text-[#10b981]" });
     fetchTeamMembers();
   };
 
@@ -529,7 +529,7 @@ const Settings = () => {
           })
           .eq('id', editingClient.id);
         if (error) throw error;
-        toast({ title: "Client updated", description: `${clientForm.client_name} has been updated.`, className: "border-green-500" });
+        toast({ title: "Client updated", description: `${clientForm.client_name} has been updated.`, className: "border-[#10b981] text-[#10b981]" });
       } else {
         const { error } = await supabase
           .from('clients')
@@ -543,7 +543,7 @@ const Settings = () => {
             logo_url: clientForm.logo_url || null,
           });
         if (error) throw error;
-        toast({ title: "Client added", description: `${clientForm.client_name} has been added.`, className: "border-green-500" });
+        toast({ title: "Client added", description: `${clientForm.client_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
       }
       setIsClientDialogOpen(false);
       fetchClients();
@@ -613,7 +613,7 @@ const Settings = () => {
           })
           .eq('id', editingMember.id);
         if (error) throw error;
-        toast({ title: "Team member updated", description: `${memberForm.sdr_name} has been updated.`, className: "border-green-500" });
+        toast({ title: "Team member updated", description: `${memberForm.sdr_name} has been updated.`, className: "border-[#10b981] text-[#10b981]" });
       } else {
         const { error } = await supabase
           .from('team_members')
@@ -623,7 +623,7 @@ const Settings = () => {
             role: memberForm.role,
           });
         if (error) throw error;
-        toast({ title: "Team member added", description: `${memberForm.sdr_name} has been added.`, className: "border-green-500" });
+        toast({ title: "Team member added", description: `${memberForm.sdr_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
       }
       setIsTeamDialogOpen(false);
       fetchTeamMembers();
@@ -687,7 +687,7 @@ const Settings = () => {
       }
 
       if (error) throw error;
-      toast({ title: "Notification settings saved", description: "Your notification preferences have been updated.", className: "border-green-500" });
+      toast({ title: "Notification settings saved", description: "Your notification preferences have been updated.", className: "border-[#10b981] text-[#10b981]" });
     } catch (error: any) {
       console.error('Error saving notification settings:', error);
       toast({ title: "Error saving settings", description: getSafeErrorMessage(error), variant: "destructive" });
@@ -700,7 +700,7 @@ const Settings = () => {
     setIsSendingTestEmail(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSendingTestEmail(false);
-    toast({ title: "Test email sent", description: `A test report has been sent to ${reportEmails}`, className: "border-green-500" });
+    toast({ title: "Test email sent", description: `A test report has been sent to ${reportEmails}`, className: "border-[#10b981] text-[#10b981]" });
   };
 
   const handleSendTestSlack = async () => {
@@ -712,7 +712,7 @@ const Settings = () => {
     try {
       const success = await sendSlackNotification(slackWebhook, formatTestMessage());
       if (success) {
-        toast({ title: "Test notification sent", description: "Check your Slack channel for the test message.", className: "border-green-500" });
+        toast({ title: "Test notification sent", description: "Check your Slack channel for the test message.", className: "border-[#10b981] text-[#10b981]" });
       } else {
         toast({ title: "Failed to send", description: "Check that your webhook URL is valid.", variant: "destructive" });
       }
@@ -1746,7 +1746,7 @@ const Settings = () => {
                   onClick={async () => {
                     const result = await requestPermission();
                     if (result === 'granted') {
-                      toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-green-500" });
+                      toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-[#10b981] text-[#10b981]" });
                     } else {
                       toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
                     }

@@ -133,7 +133,7 @@ const ActivityMonitor = () => {
       const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
       const title = mode === "live" ? "Today's Activity Report" : `Activity Report – ${dateRangeInfo.label}`;
       await exportToPDF('activity-monitor-content', `j2-activity-${dateStr}.pdf`, title);
-      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
+      toast({ title: "PDF downloaded successfully", className: "border-[#10b981] text-[#10b981]" });
     } catch (err) {
       toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
     } finally {

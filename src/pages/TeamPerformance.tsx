@@ -60,7 +60,7 @@ const TeamPerformance = () => {
         sdr.conversionRate,
       ]);
       downloadCSV(toCSV(headers, rows), `j2-team-performance-${dateStr}.csv`);
-      toast({ title: "CSV downloaded successfully", className: "border-green-500" });
+      toast({ title: "CSV downloaded successfully", className: "border-[#10b981] text-[#10b981]" });
     } finally {
       setExporting(false);
     }
@@ -71,7 +71,7 @@ const TeamPerformance = () => {
     try {
       const dateStr = format(new Date(), "yyyy-MM-dd");
       await exportToPDF('team-performance-content', `j2-team-performance-${dateStr}.pdf`, 'Team Performance Report');
-      toast({ title: "PDF downloaded successfully", className: "border-green-500" });
+      toast({ title: "PDF downloaded successfully", className: "border-[#10b981] text-[#10b981]" });
     } catch (err) {
       toast({ title: "PDF export failed", description: String(err), variant: "destructive" });
     } finally {

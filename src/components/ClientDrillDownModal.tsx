@@ -37,8 +37,8 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
 
   // Sort by date DESC, then duration DESC within each date
   const sorted = useMemo(() => [...records].sort((a, b) => {
-    const dateA = new Date(a.activity_date).getTime();
-    const dateB = new Date(b.activity_date).getTime();
+    const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
+    const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
     if (dateB !== dateA) return dateB - dateA;
     return (b.call_duration || 0) - (a.call_duration || 0);
   }), [records]);
@@ -66,11 +66,11 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
+              <TableRow className="bg-[#f1f5f9] dark:bg-[#1e293b]">
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Duration</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -169,10 +169,42 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
       window.URL.revokeObjectURL(url);
     } else {
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      ws["!cols"] = headers.map(() => ({ wch: 18 }));
+      ws["!cols"] = [
+        { wch: 15 }, // Booking Date
+        { wch: 20 }, // Client
+        { wch: 25 }, // Contact Person
+        { wch: 25 }, // Company
+        { wch: 20 }, // SDR
+        { wch: 15 }, // Meeting Date
+        { wch: 12 }, // Status
+        { wch: 30 }, // Notes
+      ];
+
+      // Header row styling — navy background, white bold Arial
+      const headerStyle = {
+        fill: { fgColor: { rgb: "0F172A" } },
+        font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial" },
+        alignment: { horizontal: "center" as const },
+      };
+      for (let c = 0; c < headers.length; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c });
+        if (ws[cellRef]) ws[cellRef].s = headerStyle;
+      }
+
+      // Alternating row fills
+      const evenRowStyle = { fill: { fgColor: { rgb: "F1F5F9" } }, font: { name: "Arial" } };
+      const oddRowStyle = { fill: { fgColor: { rgb: "FFFFFF" } }, font: { name: "Arial" } };
+      for (let r = 0; r < rows.length; r++) {
+        const style = r % 2 === 0 ? evenRowStyle : oddRowStyle;
+        for (let c = 0; c < headers.length; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r: r + 1, c });
+          if (ws[cellRef]) ws[cellRef].s = style;
+        }
+      }
+
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "SQL Meetings");
-      XLSX.writeFile(wb, `sql-meetings-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      XLSX.writeFile(wb, `sql-meetings-${format(new Date(), "yyyy-MM-dd")}.xlsx`, { cellStyles: true });
     }
   };
 
