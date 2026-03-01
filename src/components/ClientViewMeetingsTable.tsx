@@ -6,13 +6,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight, ChevronDown, CalendarX, Check, Search } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, ChevronDown, CalendarX, Check, Search, CalendarIcon, X } from "lucide-react";
 import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
 import { usePermissions } from "@/hooks/useUserRole";
 import { format, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 import type { SQLMeeting } from "@/lib/supabase-types";
 import { EmptyState } from "@/components/EmptyState";
-import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
+import { toCSV, downloadCSV } from "@/lib/csvExport";
 
 interface MeetingData {
   id: string;
@@ -62,6 +66,10 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [bookingDateRange, setBookingDateRange] = useState<DateRange | undefined>(undefined);
+  const [meetingDateRange, setMeetingDateRange] = useState<DateRange | undefined>(undefined);
+  const [bookingPopoverOpen, setBookingPopoverOpen] = useState(false);
+  const [meetingPopoverOpen, setMeetingPopoverOpen] = useState(false);
   const { canEditSQL, isSdr } = usePermissions();
   const { updateMeetingStatus, updateClientNotes, createRescheduleRow, updating } = useMeetingUpdate();
 
@@ -128,6 +136,22 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
     if (statusFilter !== "all") {
       result = result.filter(m => m.meetingStatus === statusFilter);
     }
+    if (bookingDateRange?.from) {
+      result = result.filter(m => m.bookingDate >= bookingDateRange.from!);
+      if (bookingDateRange.to) {
+        const endOfDay = new Date(bookingDateRange.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        result = result.filter(m => m.bookingDate <= endOfDay);
+      }
+    }
+    if (meetingDateRange?.from) {
+      result = result.filter(m => m.meetingDate && m.meetingDate >= meetingDateRange.from!);
+      if (meetingDateRange.to) {
+        const endOfDay = new Date(meetingDateRange.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        result = result.filter(m => m.meetingDate && m.meetingDate <= endOfDay);
+      }
+    }
     result.sort((a, b) => {
       let aVal: any = a[sortField];
       let bVal: any = b[sortField];
@@ -140,12 +164,12 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
       return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
     });
     return result;
-  }, [localMeetings, search, statusFilter, sortField, sortOrder]);
+  }, [localMeetings, search, statusFilter, bookingDateRange, meetingDateRange, sortField, sortOrder]);
 
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
   const paginatedMeetings = filteredMeetings.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, bookingDateRange, meetingDateRange]);
 
   const handleExportCSV = () => {
     const headers = ["Booking Date", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
@@ -154,7 +178,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
       m.contactPerson,
       m.companyName,
       m.sdr,
-      m.meetingDate ? format(m.meetingDate, "MMM dd, yyyy") : "",
+      m.meetingDate ? format(m.meetingDate, "MMM dd, yyyy") : "TBC",
       getStatusConfig(m.meetingStatus).label,
       m.clientNotes,
     ]);
@@ -171,7 +195,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
         m.contactPerson,
         m.companyName,
         m.sdr,
-        m.meetingDate ? format(m.meetingDate, "MMM dd, yyyy") : "",
+        m.meetingDate ? format(m.meetingDate, "MMM dd, yyyy") : "TBC",
         getStatusConfig(m.meetingStatus).label,
         m.clientNotes,
       ]),
@@ -220,6 +244,68 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
     );
   };
 
+  const DateRangeFilter = ({
+    label,
+    range,
+    setRange,
+    popoverOpen,
+    setPopoverOpen,
+  }: {
+    label: string;
+    range: DateRange | undefined;
+    setRange: (r: DateRange | undefined) => void;
+    popoverOpen: boolean;
+    setPopoverOpen: (o: boolean) => void;
+  }) => {
+    const hasRange = range?.from && range?.to;
+    const buttonLabel = hasRange
+      ? `${label}: ${format(range!.from!, "MMM dd")} – ${format(range!.to!, "MMM dd")}`
+      : `${label}`;
+
+    return (
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "text-xs sm:text-sm whitespace-nowrap gap-1",
+              hasRange ? "bg-muted/50 border-primary/30" : "bg-background/50 border-border"
+            )}
+          >
+            <CalendarIcon className="h-3 w-3" />
+            {buttonLabel}
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="start" sideOffset={8}>
+          <div className="p-2 flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-7 gap-1 text-muted-foreground"
+              onClick={() => { setRange(undefined); setPopoverOpen(false); }}
+            >
+              <X className="h-3 w-3" /> Clear
+            </Button>
+          </div>
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={range?.from || new Date()}
+            selected={range}
+            onSelect={(r) => {
+              setRange(r);
+              if (r?.from && r?.to) setPopoverOpen(false);
+            }}
+            numberOfMonths={2}
+            className="pointer-events-auto p-3"
+          />
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in">
       <CardHeader>
@@ -230,7 +316,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
               {filteredMeetings.length} meeting{filteredMeetings.length !== 1 ? "s" : ""} booked
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[280px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -256,6 +342,20 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
                 ))}
               </SelectContent>
             </Select>
+            <DateRangeFilter
+              label="Booking Date"
+              range={bookingDateRange}
+              setRange={setBookingDateRange}
+              popoverOpen={bookingPopoverOpen}
+              setPopoverOpen={setBookingPopoverOpen}
+            />
+            <DateRangeFilter
+              label="Meeting Date"
+              range={meetingDateRange}
+              setRange={setMeetingDateRange}
+              popoverOpen={meetingPopoverOpen}
+              setPopoverOpen={setMeetingPopoverOpen}
+            />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors whitespace-nowrap">
@@ -312,7 +412,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
                   <TableCell className="px-4 py-2 text-foreground">{meeting.companyName}</TableCell>
                   <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
                   <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
-                    {meeting.meetingDate ? format(meeting.meetingDate, "MMM dd, yyyy") : "—"}
+                    {meeting.meetingDate ? format(meeting.meetingDate, "MMM dd, yyyy") : "TBC"}
                   </TableCell>
                   <TableCell className="px-4 py-2 text-center">
                     <StatusBadge meeting={meeting} />
