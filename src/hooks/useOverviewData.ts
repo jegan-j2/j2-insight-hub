@@ -22,6 +22,16 @@ interface OverviewKPIs {
   } | null;
 }
 
+interface ClientInfo {
+  client_id: string;
+  client_name: string;
+  campaign_start?: string | null;
+  campaign_end?: string | null;
+  target_sqls?: number | null;
+  logo_url?: string | null;
+  status?: string | null;
+}
+
 interface OverviewData {
   snapshots: DailySnapshot[];
   meetings: SQLMeeting[];
@@ -30,6 +40,7 @@ interface OverviewData {
   dmsByDate: Record<string, number>;
   allSnapshots: DailySnapshot[];
   allDmsByClient: Record<string, number>;
+  clients: ClientInfo[];
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -49,6 +60,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   const [dmsByDate, setDmsByDate] = useState<Record<string, number>>({});
   const [allSnapshots, setAllSnapshots] = useState<DailySnapshot[]>([]);
   const [allDmsByClient, setAllDmsByClient] = useState<Record<string, number>>({});
+  const [clients, setClients] = useState<ClientInfo[]>([]);
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
   const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
@@ -162,10 +174,16 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         }
       }
 
-      // Fetch ALL snapshots and DMs (unfiltered) for Client Performance table
-      const [allSnapshotRes, allDmRes] = await Promise.all([
+      // Fetch ALL snapshots, DMs, and clients (unfiltered) for Client Performance table
+      const [allSnapshotRes, allDmRes, clientsRes] = await Promise.all([
         supabase.from("daily_snapshots").select("*"),
         supabase.from("activity_log").select("client_id").eq("is_decision_maker", true),
+        supabase
+          .from("clients")
+          .select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url, status")
+          .eq("status", "active")
+          .neq("client_id", "admin")
+          .order("client_name", { ascending: true }),
       ]);
 
       const allDmsMap: Record<string, number> = {};
@@ -218,6 +236,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setDmsByDate(dmDateMap);
       setAllSnapshots((allSnapshotRes.data || []) as unknown as DailySnapshot[]);
       setAllDmsByClient(allDmsMap);
+      setClients((clientsRes.data || []) as ClientInfo[]);
 
       if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
         snapshots: snapshotData?.length || 0,
@@ -286,5 +305,5 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     };
   }, [snapshots, conversations, sqlCount, prevSnapshotsData, prevConversations, prevSQLs]);
 
-  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, loading, error, refetch: fetchDashboardData };
+  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, clients, loading, error, refetch: fetchDashboardData };
 };
