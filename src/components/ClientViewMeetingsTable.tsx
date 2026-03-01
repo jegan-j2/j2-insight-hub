@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight, ChevronDown, CalendarX, Check, Search, CalendarIcon, X } from "lucide-react";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, ChevronDown, CalendarX, Check, Search, CalendarIcon, X, FileText, Table2 } from "lucide-react";
 import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
 import { usePermissions } from "@/hooks/useUserRole";
 import { format, parseISO } from "date-fns";
@@ -399,11 +399,11 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleExportCSV}>
-                  <Download className="h-4 w-4 mr-2" />
+                  <FileText className="h-4 w-4 mr-2" />
                   Export as CSV
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportExcel}>
-                  <Download className="h-4 w-4 mr-2" />
+                  <Table2 className="h-4 w-4 mr-2" />
                   Export as Excel
                 </DropdownMenuItem>
               </DropdownMenuContent>
