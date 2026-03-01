@@ -1,254 +1,222 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Phone, CheckCircle, Mail, Target, TrendingUp, Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, DatabaseZap } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AlertCircle, RefreshCw, DatabaseZap, ChevronDown, CalendarIcon } from "lucide-react";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
-import { ClientSQLMeetingsTable } from "@/components/ClientSQLMeetingsTable";
-import { DateRangePicker } from "@/components/DateRangePicker";
-import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
-import { ClientCallActivityChart } from "@/components/ClientCallActivityChart";
-import { ClientWeeklyComparisonChart } from "@/components/ClientWeeklyComparisonChart";
 import { ClientBanner } from "@/components/ClientBanner";
+import { ClientKPICards } from "@/components/ClientKPICards";
+import { ClientCampaignCards } from "@/components/ClientCampaignCards";
+import { ClientViewMeetingsTable } from "@/components/ClientViewMeetingsTable";
+import { ClientDrillDownModal } from "@/components/ClientDrillDownModal";
 import { EmptyState } from "@/components/EmptyState";
-import { useClientDashboardData } from "@/hooks/useClientDashboardData";
+import { KPICardSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
+import { useClientViewData } from "@/hooks/useClientViewData";
+import { supabase } from "@/lib/supabase";
+
+type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "custom";
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour <= 11) return "Good morning";
+  if (hour >= 12 && hour <= 16) return "Good afternoon";
+  if (hour >= 17 && hour <= 20) return "Good evening";
+  return "Welcome back";
+};
 
 const ClientView = () => {
   const { clientSlug } = useParams();
-  const navigate = useNavigate();
-  
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date(),
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<FilterType>("thisMonth");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
   });
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
+  const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
+  const [answeredModalOpen, setAnsweredModalOpen] = useState(false);
+  const [dmsModalOpen, setDmsModalOpen] = useState(false);
 
-  const startDate = date?.from ? format(date.from, "yyyy-MM-dd") : "";
-  const endDate = date?.to ? format(date.to, "yyyy-MM-dd") : "";
+  const { loading, error, client, kpis, campaign, meetings, answeredCalls, dmConversations, refetch } =
+    useClientViewData(clientSlug || "", dateRange);
 
-  const { loading, error, client, kpis, campaignProgress, snapshots, meetings, chartData, refetch } = 
-    useClientDashboardData(clientSlug || "", startDate, endDate);
-
-  const clientName = client?.client_name || clientSlug?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || "Unknown Client";
+  const clientName = client?.client_name || clientSlug?.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "Unknown Client";
 
   useEffect(() => {
     document.title = `J2 Insights Dashboard - ${clientName}`;
   }, [clientName]);
 
-  const campaignStart = campaignProgress?.campaignStart ? new Date(campaignProgress.campaignStart) : null;
-  const campaignEnd = campaignProgress?.campaignEnd ? new Date(campaignProgress.campaignEnd) : null;
-  const daysRemaining = campaignEnd ? Math.max(0, differenceInDays(campaignEnd, new Date())) : 0;
-  const avgDailyLeadsRequired = daysRemaining > 0 && campaignProgress
-    ? (campaignProgress.remaining / daysRemaining).toFixed(2) 
-    : "0.00";
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
+      if (fullName && typeof fullName === "string") {
+        setFirstName(fullName.split(" ")[0]);
+      } else if (user.email) {
+        const local = user.email.split("@")[0];
+        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
+      }
+    };
+    getUser();
+  }, []);
 
-  const kpiCards = [
-    { label: "Dials", value: kpis.totalDials, icon: Phone, color: "text-secondary", bgColor: "bg-secondary/10" },
-    { label: "Answered", value: kpis.totalAnswered, subtitle: `${kpis.answerRate}%`, icon: CheckCircle, color: "text-accent", bgColor: "bg-accent/10" },
-    { label: "DM Conversations", value: kpis.totalDMs, icon: Mail, color: "text-secondary", bgColor: "bg-secondary/10" },
-    { label: "MQLs on DMs Reached", value: kpis.totalMQLs, subtitle: `${kpis.mqlsOnDmsRate}%`, icon: TrendingUp, color: "text-accent", bgColor: "bg-accent/10" },
-    { label: "MQLs on Dials", value: kpis.totalMQLs, subtitle: `${kpis.mqlsOnDialsRate}%`, icon: TrendingUp, color: "text-secondary", bgColor: "bg-secondary/10" },
-    { label: "SQLs on DMs Reached", value: kpis.totalSQLs, subtitle: `${kpis.sqlsOnDmsRate}%`, icon: Target, color: "text-accent", bgColor: "bg-accent/10" },
-    { label: "SQLs on Dials", value: kpis.totalSQLs, subtitle: `${kpis.sqlsOnDialsRate}%`, icon: Target, color: "text-secondary", bgColor: "bg-secondary/10" },
+  const filters = [
+    { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },
+    { label: "Last 30 Days", type: "last30days" as FilterType, range: { from: subDays(new Date(), 30), to: new Date() } },
+    { label: "This Month", type: "thisMonth" as FilterType, range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) } },
+    { label: "Last Month", type: "lastMonth" as FilterType, range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <ClientBanner 
+      {/* Section 1: Banner */}
+      <ClientBanner
         clientSlug={clientSlug || ""}
         clientName={clientName}
-        dateRange={date}
+        dateRange={dateRange}
       />
-      
-      {/* Header with Back Button */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/overview")}
-          className="text-secondary hover:text-secondary/80"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Overview
-        </Button>
-        <div className="border-l border-border h-6" />
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Last Updated: {format(new Date(), "MMMM dd, yyyy, h:mm a")} AEDT
+
+      {/* Section 2: Personalised Greeting */}
+      <div>
+        {firstName && (
+          <p className="font-medium text-base text-muted-foreground mb-1">
+            {getGreeting()}, {firstName}!
           </p>
-        </div>
+        )}
+        <h1 className="text-3xl font-bold text-foreground">Campaign Overview</h1>
       </div>
 
-      {/* Error State */}
-      {error && (
-        <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>{error}</span>
-            <Button variant="outline" size="sm" onClick={refetch} className="ml-4 gap-2">
-              <RefreshCw className="h-3 w-3" />
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Date Range Picker */}
-      <div className="space-y-3">
-        <DateRangePicker 
-          date={date} 
-          onDateChange={setDate}
-          className="w-full"
-        />
-        
-        {date?.from && date?.to && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-4 py-2 transition-all duration-200">
-            <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
-            <span>
-              Campaign Period: {format(date.from, "MMM dd, yyyy")} - {format(date.to, "MMM dd, yyyy")}
-            </span>
+      {/* Section 3: Date Filters */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          {filters.map((filter) => {
+            const isActive = filterType === filter.type && dateRange?.from && dateRange?.to && isSameDay(dateRange.from, filter.range.from) && isSameDay(dateRange.to, filter.range.to);
+            return (
+              <Button
+                key={filter.type}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setDateRange(filter.range); setFilterType(filter.type); setCustomRange(undefined); }}
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  isActive
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                {filter.label}
+              </Button>
+            );
+          })}
+          <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={filterType === "custom" ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  filterType === "custom"
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                Custom <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="start" sideOffset={8}>
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={new Date()}
+                selected={customRange}
+                onSelect={(range) => {
+                  setCustomRange(range);
+                  if (range?.from && range?.to) {
+                    setDateRange(range);
+                    setFilterType("custom");
+                    setCustomPopoverOpen(false);
+                  }
+                }}
+                numberOfMonths={2}
+                className="pointer-events-auto p-3"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        {dateRange?.from && dateRange?.to && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+          </div>
+        )}
+        {client?.campaign_start && client?.campaign_end && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Campaign Period: {format(new Date(client.campaign_start), "MMM dd")} – {format(new Date(client.campaign_end), "MMM dd, yyyy")}</span>
           </div>
         )}
       </div>
 
-      {/* Section 1: KPIs */}
-      {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <KPICardSkeleton />
-          <KPICardSkeleton />
+      {/* Error State */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/50 bg-destructive/10 text-destructive animate-fade-in">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <span className="text-sm flex-1">{error}</span>
+          <Button variant="outline" size="sm" onClick={refetch} className="gap-2 shrink-0">
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
-      ) : !error && snapshots.length === 0 ? (
+      )}
+
+      {/* Section 4: KPI Cards */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => <KPICardSkeleton key={i} />)}
+        </div>
+      ) : !error && kpis.totalDials === 0 && kpis.totalAnswered === 0 ? (
         <EmptyState
           icon={DatabaseZap}
-          title="No campaign data available yet"
+          title="No activity data available yet"
           description="Data will appear once HubSpot sync is active for this client"
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          {/* Left Column - KPIs */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground">Key Performance Indicators</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {kpiCards.map((kpi, index) => (
-                <div
-                  key={kpi.label}
-                  className="flex items-center justify-between p-4 rounded-lg bg-muted/20 border border-border hover:shadow-md transition-all duration-300"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn("p-2 rounded-lg", kpi.bgColor)}>
-                      <kpi.icon className={cn("h-4 w-4", kpi.color)} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                      <p className="text-2xl font-bold text-foreground">{kpi.value.toLocaleString()}</p>
-                      {kpi.subtitle && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{kpi.subtitle}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+        <>
+          <ClientKPICards
+            kpis={kpis}
+            onAnsweredClick={() => setAnsweredModalOpen(true)}
+            onDMsClick={() => setDmsModalOpen(true)}
+          />
 
-          {/* Right Column - Campaign Target */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground">Campaign Target</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {campaignProgress ? (
-                <>
-                  {campaignStart && campaignEnd && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CalendarDaysIcon className="h-4 w-4 text-secondary" />
-                          <p className="text-sm text-muted-foreground">Start Date</p>
-                        </div>
-                        <p className="text-lg font-bold text-foreground">
-                          {format(campaignStart, "MMM d")}
-                        </p>
-                      </div>
-                      <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CalendarDaysIcon className="h-4 w-4 text-accent" />
-                          <p className="text-sm text-muted-foreground">End Date</p>
-                        </div>
-                        <p className="text-lg font-bold text-foreground">
-                          {format(campaignEnd, "MMM d")}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">Target SQLs</p>
-                      <p className="text-2xl font-bold text-foreground">{campaignProgress.target}</p>
-                    </div>
-                    <Progress value={parseFloat(campaignProgress.percentage)} className="h-3" />
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium text-foreground">{campaignProgress.percentage}%</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-lg bg-secondary/10 border border-border">
-                      <p className="text-xs text-muted-foreground mb-1">SQLs Generated</p>
-                      <p className="text-2xl font-bold text-secondary">{campaignProgress.achieved}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-accent/10 border border-border">
-                      <p className="text-xs text-muted-foreground mb-1">Leads Remaining</p>
-                      <p className="text-2xl font-bold text-accent">{campaignProgress.remaining}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                      <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
-                      <p className="text-2xl font-bold text-foreground">{daysRemaining}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/20 border border-border">
-                      <p className="text-xs text-muted-foreground mb-1">Avg Daily Required</p>
-                      <p className="text-2xl font-bold text-foreground">{avgDailyLeadsRequired}</p>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No campaign target configured</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+          {/* Section 6: Campaign Cards */}
+          {campaign && <ClientCampaignCards campaign={campaign} />}
+        </>
       )}
 
-      {/* Section 2: Charts */}
-      {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartSkeleton />
-          <ChartSkeleton />
-        </div>
-      ) : snapshots.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          <ClientCallActivityChart data={chartData} />
-          <ClientWeeklyComparisonChart snapshots={snapshots} />
-        </div>
-      )}
-
-      {/* Section 3: SQL Booked Meetings Table */}
+      {/* Section 7: SQL Meetings Table */}
       {loading ? (
         <TableSkeleton />
       ) : (
-        <ClientSQLMeetingsTable clientSlug={clientSlug || ""} dateRange={date} meetings={meetings} />
+        <ClientViewMeetingsTable clientSlug={clientSlug || ""} meetings={meetings} />
       )}
+
+      {/* Drill-down Modals */}
+      <ClientDrillDownModal
+        open={answeredModalOpen}
+        onOpenChange={setAnsweredModalOpen}
+        title="Answered Calls"
+        records={answeredCalls}
+      />
+      <ClientDrillDownModal
+        open={dmsModalOpen}
+        onOpenChange={setDmsModalOpen}
+        title="Decision Maker Conversations"
+        records={dmConversations}
+      />
     </div>
   );
 };
