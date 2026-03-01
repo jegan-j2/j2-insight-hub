@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileSpreadsheet } from "lucide-react";
+import { ArrowUpDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2 } from "lucide-react";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
@@ -319,10 +319,10 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover border-border z-50">
                   <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
-                    <Download className="h-4 w-4 mr-2" /> Export as CSV
+                    <FileText className="h-4 w-4 mr-2" /> Export as CSV
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
-                    <FileSpreadsheet className="h-4 w-4 mr-2" /> Export as Excel
+                    <Table2 className="h-4 w-4 mr-2" /> Export as Excel
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

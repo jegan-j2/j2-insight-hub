@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2, ChevronDown, CalendarIcon } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2, ChevronDown, CalendarIcon, FileText, Table2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -150,7 +150,7 @@ const Overview = () => {
       ];
 
       downloadCSV(sections.join("\n"), `j2-overview-${startStr}-${endStr}.csv`);
-      toast({ title: "CSV downloaded successfully", className: "border-[#10b981] text-[#10b981]" });
+      toast({ title: "CSV exported successfully", className: "border-[#10b981]" });
     } finally {
       setExporting(false);
     }
@@ -301,12 +301,12 @@ const Overview = () => {
       XLSX.writeFile(wb, fileName, { bookSST: false, type: "binary", cellStyles: true });
 
       toast({ 
-        title: "Excel downloaded successfully", 
-        className: "border-[#10b981] text-[#10b981]" 
+        title: "Excel exported successfully", 
+        className: "border-[#10b981]" 
       });
     } catch (err) {
       toast({ 
-        title: "Excel export failed", 
+        title: "Export failed", 
         description: String(err), 
         variant: "destructive" 
       });
@@ -398,11 +398,11 @@ const Overview = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportCSV}>
-                <Download className="h-4 w-4 mr-2" />
+                <FileText className="h-4 w-4 mr-2" />
                 Export as CSV
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportExcel}>
-                <Download className="h-4 w-4 mr-2" />
+                <Table2 className="h-4 w-4 mr-2" />
                 Export as Excel
               </DropdownMenuItem>
             </DropdownMenuContent>
