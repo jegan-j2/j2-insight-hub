@@ -20,13 +20,13 @@ export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting, we
     : "Coming soon";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch animate-fade-in">
       {/* SQL Progress */}
-      <Card className="bg-card/50 backdrop-blur-sm border-border">
+      <Card className="bg-card/50 backdrop-blur-sm border-border h-full flex flex-col">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">SQL Progress</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 flex-1">
           {/* ROW 1: Progress bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -85,11 +85,11 @@ export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting, we
       </Card>
 
       {/* Time Progress */}
-      <Card className="bg-card/50 backdrop-blur-sm border-border">
+      <Card className="bg-card/50 backdrop-blur-sm border-border h-full flex flex-col">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Time Progress</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 flex-1">
           {/* ROW 1: Progress bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">

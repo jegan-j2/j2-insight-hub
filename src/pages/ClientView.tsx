@@ -13,7 +13,7 @@ import { ClientCampaignCards } from "@/components/ClientCampaignCards";
 import { ClientViewMeetingsTable } from "@/components/ClientViewMeetingsTable";
 import { ClientDrillDownModal } from "@/components/ClientDrillDownModal";
 import { EmptyState } from "@/components/EmptyState";
-import { KPICardSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
+import { J2Loader } from "@/components/J2Loader";
 import { useClientViewData } from "@/hooks/useClientViewData";
 import { supabase } from "@/lib/supabase";
 
@@ -80,6 +80,10 @@ const ClientView = () => {
     { label: "This Month", type: "thisMonth" as FilterType, range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) } },
     { label: "Last Month", type: "lastMonth" as FilterType, range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
   ];
+
+  if (loading) {
+    return <J2Loader />;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -178,11 +182,7 @@ const ClientView = () => {
       )}
 
       {/* Section 4: KPI Cards */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => <KPICardSkeleton key={i} />)}
-        </div>
-      ) : !error && kpis.totalDials === 0 && kpis.totalAnswered === 0 ? (
+      {!error && kpis.totalDials === 0 && kpis.totalAnswered === 0 ? (
         <EmptyState
           icon={DatabaseZap}
           title="No activity data available yet"
@@ -202,11 +202,7 @@ const ClientView = () => {
       )}
 
       {/* Section 7: SQL Meetings Table */}
-      {loading ? (
-        <TableSkeleton />
-      ) : (
-        <ClientViewMeetingsTable clientSlug={clientSlug || ""} meetings={meetings} />
-      )}
+      <ClientViewMeetingsTable clientSlug={clientSlug || ""} meetings={meetings} />
 
       {/* Drill-down Modals */}
       <ClientDrillDownModal

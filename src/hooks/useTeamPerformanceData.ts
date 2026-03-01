@@ -76,8 +76,20 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
   }, [startDate, endDate, clientFilter])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await fetchData();
+      } catch {
+        if (!cancelled) {
+          await new Promise(r => setTimeout(r, 2000));
+          if (!cancelled) fetchData();
+        }
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [fetchData]);
 
   useRealtimeSubscription({
     table: 'daily_snapshots',
