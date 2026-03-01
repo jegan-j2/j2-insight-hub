@@ -9,8 +9,8 @@ import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
 import { SDRQuickStatsCards } from "@/components/SDRQuickStatsCards";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KPICardSkeleton, ChartSkeleton } from "@/components/LoadingSkeletons";
 import { EmptyState } from "@/components/EmptyState";
+import { J2Loader } from "@/components/J2Loader";
 import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -91,6 +91,8 @@ const TeamPerformance = () => {
     };
     fetchClients();
   }, []);
+
+  if (loading) return <J2Loader />;
 
   return (
     <div id="team-performance-content" className="space-y-4 sm:space-y-6 animate-fade-in">
@@ -207,16 +209,7 @@ const TeamPerformance = () => {
       )}
 
       {/* Top Section: Leaderboard + Quick Stats */}
-      {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <ChartSkeleton />
-          </div>
-          <div className="lg:col-span-1">
-            <KPICardSkeleton />
-          </div>
-        </div>
-      ) : leaderboard.length > 0 ? (
+      {leaderboard.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <SDRLeaderboardTable leaderboardData={leaderboard} />
@@ -228,9 +221,7 @@ const TeamPerformance = () => {
       ) : null}
 
       {/* SDR Activity Breakdown Chart - Full Width */}
-      {loading ? (
-        <ChartSkeleton />
-      ) : activityChartData.length > 0 ? (
+      {activityChartData.length > 0 ? (
         <SDRActivityChart chartData={activityChartData} />
       ) : null}
     </div>
