@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import type { Client } from "@/lib/supabase-types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -51,23 +50,14 @@ const Overview = () => {
     };
     getUser();
   }, []);
-  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
-  const [overviewClients, setOverviewClients] = useState<Client[]>([]);
   
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchClients = async () => {
-      const { data } = await supabase.from("clients").select("*").eq("status", "active");
-      if (data) setOverviewClients(data as unknown as Client[]);
-    };
-    fetchClients();
-  }, []);
 
   const activeClientCount = useMemo(() =>
     new Set(snapshots?.map(s => s.client_id) ?? []).size, [snapshots]);
@@ -605,7 +595,7 @@ const Overview = () => {
       )}
 
       {/* Client Performance Table */}
-        <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} clients={overviewClients} />
+        <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} clients={clients} />
 
       {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
@@ -620,7 +610,7 @@ const Overview = () => {
 
 
       {/* SQL Meetings Table */}
-        <SQLBookedMeetingsTable meetings={meetings} clients={overviewClients} />
+        <SQLBookedMeetingsTable meetings={meetings} clients={clients as any} />
     </div>
   );
 };
