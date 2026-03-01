@@ -1,0 +1,87 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Target } from "lucide-react";
+import { format } from "date-fns";
+import type { ClientViewData } from "@/hooks/useClientViewData";
+
+interface ClientCampaignCardsProps {
+  campaign: NonNullable<ClientViewData["campaign"]>;
+}
+
+export const ClientCampaignCards = ({ campaign }: ClientCampaignCardsProps) => {
+  const sqlPct = Math.min(campaign.sqlPercentage, 100);
+  const timePct = Math.min(campaign.timePercentage, 100);
+  const daysLabel = campaign.daysRemaining === 1 ? "day" : "days";
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+      {/* SQL Progress */}
+      <Card className="bg-card/50 backdrop-blur-sm border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">SQL Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Progress</span>
+              <span className="text-sm font-semibold text-rose-500">{campaign.sqlPercentage.toFixed(1)}%</span>
+            </div>
+            <Progress value={sqlPct} className="h-3 [&>div]:bg-rose-500" />
+            <p className="text-sm text-muted-foreground">
+              {campaign.achievedSQLs} of {campaign.targetSQLs} SQLs achieved
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 rounded-lg bg-muted/20 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">SQLs Generated</p>
+              <p className="text-lg font-bold text-foreground">{campaign.achievedSQLs}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/20 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Leads Remaining</p>
+              <p className="text-lg font-bold text-foreground">{campaign.remaining}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Time Progress */}
+      <Card className="bg-card/50 backdrop-blur-sm border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Time Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Progress</span>
+              <span className="text-sm font-semibold text-indigo-500">{Math.round(campaign.timePercentage)}%</span>
+            </div>
+            <Progress value={timePct} className="h-3 [&>div]:bg-indigo-500" />
+            <p className="text-sm text-muted-foreground">
+              {campaign.elapsedWorkingDays} of {campaign.totalWorkingDays} days elapsed
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 rounded-lg bg-muted/20 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Campaign Start</p>
+              <p className="text-lg font-bold text-foreground">
+                {campaign.campaignStart ? format(new Date(campaign.campaignStart), "MMM d") : "—"}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/20 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Campaign End</p>
+              <p className="text-lg font-bold text-foreground">
+                {campaign.campaignEnd ? format(new Date(campaign.campaignEnd), "MMM d") : "—"}
+              </p>
+            </div>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/20 border border-border">
+            <p className="text-xs text-muted-foreground mb-1">Days Remaining</p>
+            <p className={`text-lg text-foreground ${campaign.daysRemaining <= 10 ? "font-bold" : "font-bold"}`}>
+              {campaign.daysRemaining} {daysLabel}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
