@@ -1,5 +1,8 @@
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -18,15 +21,29 @@ interface ClientDrillDownModalProps {
   records: ActivityRecord[];
 }
 
-const formatDuration = (seconds: number | null): string => {
-  if (!seconds || seconds <= 0) return "—";
+const formatDuration = (seconds: number | null): { text: string; colorClass: string } => {
+  if (!seconds || seconds <= 0) return { text: "—", colorClass: "text-muted-foreground" };
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  const text = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  let colorClass = "text-muted-foreground";
+  if (seconds > 120) colorClass = "text-[#10b981]";
+  else if (seconds >= 30) colorClass = "text-[#f97316]";
+  return { text, colorClass };
 };
 
 export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: ClientDrillDownModalProps) => {
-  const sorted = [...records].sort((a, b) => b.activity_date.localeCompare(a.activity_date));
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 15;
+
+  const sorted = useMemo(() => [...records].sort((a, b) => b.activity_date.localeCompare(a.activity_date)), [records]);
+  const totalPages = Math.ceil(sorted.length / rowsPerPage);
+  const paginated = sorted.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const startIdx = (currentPage - 1) * rowsPerPage + 1;
+  const endIdx = Math.min(currentPage * rowsPerPage, sorted.length);
+
+  // Reset page when modal opens with new data
+  useMemo(() => { setCurrentPage(1); }, [records]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -35,7 +52,7 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
           <DialogTitle className="text-foreground">{title}</DialogTitle>
           <p className="text-sm text-muted-foreground">{sorted.length} record{sorted.length !== 1 ? "s" : ""}</p>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh] px-6 pb-6">
+        <ScrollArea className="max-h-[60vh] px-6 pb-2">
           {sorted.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
               No records in this period
@@ -51,20 +68,36 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sorted.map((record, index) => (
-                  <TableRow key={record.id} className={`border-border/50 hover:bg-muted/20 ${index % 2 === 0 ? "bg-muted/5" : ""}`}>
-                    <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
-                      {format(new Date(record.activity_date), "MMM dd, yyyy")}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 text-foreground">{record.contact_name || "—"}</TableCell>
-                    <TableCell className="px-4 py-2 text-foreground">{record.company_name || "—"}</TableCell>
-                    <TableCell className="px-4 py-2 text-foreground">{formatDuration(record.call_duration)}</TableCell>
-                  </TableRow>
-                ))}
+                {paginated.map((record, index) => {
+                  const dur = formatDuration(record.call_duration);
+                  return (
+                    <TableRow key={record.id} className={`border-border/50 hover:bg-muted/20 ${index % 2 === 0 ? "bg-muted/5" : ""}`}>
+                      <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
+                        {format(new Date(record.activity_date), "MMM dd, yyyy")}
+                      </TableCell>
+                      <TableCell className="px-4 py-2 text-foreground">{record.contact_name || "—"}</TableCell>
+                      <TableCell className="px-4 py-2 text-foreground">{record.company_name || "—"}</TableCell>
+                      <TableCell className={`px-4 py-2 ${dur.colorClass}`}>{dur.text}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
         </ScrollArea>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 pb-4 pt-2">
+            <p className="text-sm text-muted-foreground">Showing {startIdx}–{endIdx} of {sorted.length} records</p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="border-border">
+                <ChevronLeft className="h-4 w-4" /> Previous
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="border-border">
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
