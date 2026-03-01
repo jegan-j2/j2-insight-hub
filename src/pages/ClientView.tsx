@@ -40,7 +40,7 @@ const ClientView = () => {
   const [answeredModalOpen, setAnsweredModalOpen] = useState(false);
   const [dmsModalOpen, setDmsModalOpen] = useState(false);
 
-  const { loading, error, client, kpis, campaign, meetings, answeredCalls, dmConversations, refetch } =
+  const { loading, error, client, kpis, campaign, meetings, answeredCalls, dmConversations, meetingOutcomes, nextMeeting, refetch } =
     useClientViewData(clientSlug || "", dateRange);
 
   const clientName = client?.client_name || clientSlug?.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "Unknown Client";
@@ -193,7 +193,7 @@ const ClientView = () => {
           />
 
           {/* Section 6: Campaign Cards */}
-          {campaign && <ClientCampaignCards campaign={campaign} />}
+          {campaign && <ClientCampaignCards campaign={campaign} meetingOutcomes={meetingOutcomes} nextMeeting={nextMeeting} />}
         </>
       )}
 
