@@ -37,6 +37,7 @@ interface ClientData {
 interface ClientPerformanceTableProps {
   snapshots: DailySnapshot[];
   dmsByClient: Record<string, number>;
+  sqlCountsByClient: Record<string, number>;
   clients: Array<{
     client_id: string;
     client_name: string;
@@ -47,7 +48,7 @@ interface ClientPerformanceTableProps {
   }>;
 }
 
-export const ClientPerformanceTable = ({ snapshots, dmsByClient, clients }: ClientPerformanceTableProps) => {
+export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClient, clients }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -124,7 +125,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, clients }: Clie
       const totalDials = clientSnapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
       const totalAnswered = clientSnapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
       const totalDMs = (dmsByClient || {})[client.client_id] || 0;
-      const totalSQLs = clientSnapshots.reduce((sum, s) => sum + (s.sqls || 0), 0);
+      const totalSQLs = (sqlCountsByClient || {})[client.client_id] || 0;
       const target = client.target_sqls || 0;
 
       return {
@@ -150,7 +151,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, clients }: Clie
         ),
       };
     });
-  }, [clients, snapshots, dmsByClient]);
+  }, [clients, snapshots, dmsByClient, sqlCountsByClient]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
