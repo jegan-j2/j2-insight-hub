@@ -40,6 +40,7 @@ interface OverviewData {
   dmsByDate: Record<string, number>;
   allSnapshots: DailySnapshot[];
   allDmsByClient: Record<string, number>;
+  sqlCountsByClient: Record<string, number>;
   clients: ClientInfo[];
   loading: boolean;
   error: string | null;
@@ -60,6 +61,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   const [dmsByDate, setDmsByDate] = useState<Record<string, number>>({});
   const [allSnapshots, setAllSnapshots] = useState<DailySnapshot[]>([]);
   const [allDmsByClient, setAllDmsByClient] = useState<Record<string, number>>({});
+  const [sqlCountsByClient, setSqlCountsByClient] = useState<Record<string, number>>({});
   const [clients, setClients] = useState<ClientInfo[]>([]);
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
@@ -175,7 +177,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       }
 
       // Fetch ALL snapshots, DMs, and clients (unfiltered) for Client Performance table
-      const [allSnapshotRes, allDmRes, clientsRes] = await Promise.all([
+      const [allSnapshotRes, allDmRes, clientsRes, allSqlCountsRes] = await Promise.all([
         supabase.from("daily_snapshots").select("*"),
         supabase.from("activity_log").select("client_id").eq("is_decision_maker", true),
         supabase
@@ -184,6 +186,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           .eq("status", "active")
           .neq("client_id", "admin")
           .order("client_name", { ascending: true }),
+        supabase.from("sql_meetings").select("client_id").neq("client_id", null),
       ]);
 
       const allDmsMap: Record<string, number> = {};
@@ -236,6 +239,17 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setDmsByDate(dmDateMap);
       setAllSnapshots((allSnapshotRes.data || []) as unknown as DailySnapshot[]);
       setAllDmsByClient(allDmsMap);
+
+      const sqlClientMap: Record<string, number> = {};
+      if (allSqlCountsRes.data) {
+        for (const row of allSqlCountsRes.data) {
+          if (row.client_id) {
+            sqlClientMap[row.client_id] = (sqlClientMap[row.client_id] || 0) + 1;
+          }
+        }
+      }
+      setSqlCountsByClient(sqlClientMap);
+
       setClients((clientsRes.data || []) as ClientInfo[]);
 
       if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
@@ -305,5 +319,5 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     };
   }, [snapshots, conversations, sqlCount, prevSnapshotsData, prevConversations, prevSQLs]);
 
-  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, clients, loading, error, refetch: fetchDashboardData };
+  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, sqlCountsByClient, clients, loading, error, refetch: fetchDashboardData };
 };

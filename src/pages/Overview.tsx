@@ -50,7 +50,7 @@ const Overview = () => {
     };
     getUser();
   }, []);
-  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, sqlCountsByClient, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
   
@@ -608,7 +608,7 @@ const Overview = () => {
       )}
 
       {/* Client Performance Table */}
-        <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} clients={clients} />
+        <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} sqlCountsByClient={sqlCountsByClient} clients={clients} />
 
       {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
