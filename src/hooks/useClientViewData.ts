@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Client, SQLMeeting } from "@/lib/supabase-types";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks } from "date-fns";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 
@@ -20,6 +20,24 @@ interface ClientViewKPIs {
   totalAnswered: number;
   answerRate: string;
   totalDMs: number;
+}
+
+interface MeetingOutcomes {
+  held: number;
+  pending: number;
+  noShow: number;
+}
+
+interface NextMeetingInfo {
+  label: 'Next Meeting' | 'Last Meeting' | 'First Meeting';
+  date: string;
+  company: string;
+}
+
+interface WeekActivity {
+  thisMonth: number;
+  thisWeek: number;
+  lastWeek: number;
 }
 
 interface CampaignData {
@@ -44,6 +62,9 @@ export interface ClientViewData {
   meetings: SQLMeeting[];
   answeredCalls: ActivityRecord[];
   dmConversations: ActivityRecord[];
+  meetingOutcomes: MeetingOutcomes;
+  nextMeeting: NextMeetingInfo | null;
+  weekActivity: WeekActivity;
   refetch: () => void;
 }
 
@@ -69,6 +90,9 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
   const [answeredCalls, setAnsweredCalls] = useState<ActivityRecord[]>([]);
   const [dmConversations, setDmConversations] = useState<ActivityRecord[]>([]);
   const [campaignSQLs, setCampaignSQLs] = useState(0);
+  const [meetingOutcomes, setMeetingOutcomes] = useState<MeetingOutcomes>({ held: 0, pending: 0, noShow: 0 });
+  const [nextMeeting, setNextMeeting] = useState<NextMeetingInfo | null>(null);
+  const [weekActivity, setWeekActivity] = useState<WeekActivity>({ thisMonth: 0, thisWeek: 0, lastWeek: 0 });
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
   const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
@@ -142,6 +166,72 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       if (clientData?.campaign_end) campaignSqlQuery = campaignSqlQuery.lte("booking_date", clientData.campaign_end);
       const { count: campaignSqlCount } = await campaignSqlQuery;
 
+      // Meeting outcomes for full campaign period
+      let outcomesQuery = supabase
+        .from("sql_meetings")
+        .select("meeting_status")
+        .eq("client_id", clientId);
+      if (clientData?.campaign_start) outcomesQuery = outcomesQuery.gte("booking_date", clientData.campaign_start);
+      if (clientData?.campaign_end) outcomesQuery = outcomesQuery.lte("booking_date", clientData.campaign_end);
+      const { data: outcomesData } = await outcomesQuery;
+
+      const outcomes: MeetingOutcomes = { held: 0, pending: 0, noShow: 0 };
+      (outcomesData || []).forEach((m: any) => {
+        if (m.meeting_status === "held") outcomes.held++;
+        else if (m.meeting_status === "pending") outcomes.pending++;
+        else if (m.meeting_status === "no_show") outcomes.noShow++;
+      });
+
+      // Next/Last meeting
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      const { data: upcomingData } = await supabase
+        .from("sql_meetings")
+        .select("company_name, meeting_date")
+        .eq("client_id", clientId)
+        .gte("meeting_date", todayStr)
+        .order("meeting_date", { ascending: true })
+        .limit(1);
+
+      let nextMeetingInfo: NextMeetingInfo | null = null;
+      if (upcomingData && upcomingData.length > 0 && upcomingData[0].meeting_date) {
+        nextMeetingInfo = {
+          label: "Next Meeting",
+          date: upcomingData[0].meeting_date,
+          company: upcomingData[0].company_name || "",
+        };
+      } else {
+        const { data: pastData } = await supabase
+          .from("sql_meetings")
+          .select("company_name, meeting_date")
+          .eq("client_id", clientId)
+          .lt("meeting_date", todayStr)
+          .order("meeting_date", { ascending: false })
+          .limit(1);
+
+        if (pastData && pastData.length > 0 && pastData[0].meeting_date) {
+          nextMeetingInfo = {
+            label: "Last Meeting",
+            date: pastData[0].meeting_date,
+            company: pastData[0].company_name || "",
+          };
+        }
+      }
+
+      // SQLs booked breakdown (calendar month / ISO week)
+      const now = new Date();
+      const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
+      const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
+      const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+      const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+      const lastWeekStart = format(startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 }), "yyyy-MM-dd");
+      const lastWeekEnd = format(endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 }), "yyyy-MM-dd");
+
+      const [{ count: thisMonthCount }, { count: thisWeekCount }, { count: lastWeekCount }] = await Promise.all([
+        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", monthStart).lte("booking_date", monthEnd),
+        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", weekStart).lte("booking_date", weekEnd),
+        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd),
+      ]);
+
       setTotalDials(dialsCount || 0);
       setTotalAnswered(answeredData?.length || 0);
       setTotalDMs(dmData?.length || 0);
@@ -149,6 +239,9 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       setDmConversations(dmData || []);
       setMeetings((meetingData || []) as unknown as SQLMeeting[]);
       setCampaignSQLs(campaignSqlCount || 0);
+      setMeetingOutcomes(outcomes);
+      setNextMeeting(nextMeetingInfo);
+      setWeekActivity({ thisMonth: thisMonthCount || 0, thisWeek: thisWeekCount || 0, lastWeek: lastWeekCount || 0 });
     } catch (err: any) {
       console.error("Error fetching client view data:", err);
       setError(err?.message || "Failed to load client data");
@@ -221,6 +314,9 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
     meetings,
     answeredCalls,
     dmConversations,
+    meetingOutcomes,
+    nextMeeting,
+    weekActivity,
     refetch: fetchData,
   };
 };
