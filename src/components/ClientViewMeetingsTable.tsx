@@ -188,22 +188,55 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
 
   const handleExportExcel = async () => {
     const XLSX = await import("xlsx");
-    const data = [
-      ["Booking Date", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"],
-      ...filteredMeetings.map(m => [
-        format(m.bookingDate, "MMM dd, yyyy"),
-        m.contactPerson,
-        m.companyName,
-        m.sdr,
-        m.meetingDate ? format(m.meetingDate, "MMM dd, yyyy") : "TBC",
-        getStatusConfig(m.meetingStatus).label,
-        m.clientNotes,
-      ]),
+    const headers = ["Booking Date", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
+    const rows = filteredMeetings.map(m => [
+      format(m.bookingDate, "MMM dd, yyyy"),
+      m.contactPerson,
+      m.companyName,
+      m.sdr,
+      m.meetingDate ? format(m.meetingDate, "MMM dd, yyyy") : "TBC",
+      getStatusConfig(m.meetingStatus).label,
+      m.clientNotes || "",
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+    // Column widths
+    ws["!cols"] = [
+      { wch: 15 }, // Booking Date
+      { wch: 25 }, // Contact Person
+      { wch: 25 }, // Company
+      { wch: 20 }, // SDR
+      { wch: 15 }, // Meeting Date
+      { wch: 12 }, // Status
+      { wch: 30 }, // Notes
     ];
-    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Apply header styling
+    const headerStyle = {
+      fill: { fgColor: { rgb: "0F172A" } },
+      font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial" },
+      alignment: { horizontal: "center" as const },
+    };
+    for (let c = 0; c < headers.length; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c });
+      if (ws[cellRef]) ws[cellRef].s = headerStyle;
+    }
+
+    // Apply alternating row styling
+    const evenRowStyle = { fill: { fgColor: { rgb: "F1F5F9" } }, font: { name: "Arial" } };
+    const oddRowStyle = { fill: { fgColor: { rgb: "FFFFFF" } }, font: { name: "Arial" } };
+    for (let r = 0; r < rows.length; r++) {
+      const style = r % 2 === 0 ? evenRowStyle : oddRowStyle;
+      for (let c = 0; c < headers.length; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: r + 1, c });
+        if (ws[cellRef]) ws[cellRef].s = style;
+      }
+    }
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "SQL Meetings");
-    XLSX.writeFile(wb, `${clientSlug}-sql-meetings-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    XLSX.writeFile(wb, `${clientSlug}-sql-meetings-${format(new Date(), "yyyy-MM-dd")}.xlsx`, { cellStyles: true });
   };
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Client, SQLMeeting } from "@/lib/supabase-types";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, subWeeks } from "date-fns";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 
@@ -35,7 +35,7 @@ interface NextMeetingInfo {
 }
 
 interface WeekActivity {
-  thisMonth: number;
+  thisCampaign: number;
   thisWeek: number;
   lastWeek: number;
 }
@@ -92,7 +92,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
   const [campaignSQLs, setCampaignSQLs] = useState(0);
   const [meetingOutcomes, setMeetingOutcomes] = useState<MeetingOutcomes>({ held: 0, pending: 0, noShow: 0 });
   const [nextMeeting, setNextMeeting] = useState<NextMeetingInfo | null>(null);
-  const [weekActivity, setWeekActivity] = useState<WeekActivity>({ thisMonth: 0, thisWeek: 0, lastWeek: 0 });
+  const [weekActivity, setWeekActivity] = useState<WeekActivity>({ thisCampaign: 0, thisWeek: 0, lastWeek: 0 });
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
   const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
@@ -217,17 +217,15 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         }
       }
 
-      // SQLs booked breakdown (calendar month / ISO week)
+      // SQLs booked breakdown (campaign period / ISO week)
       const now = new Date();
-      const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
-      const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
       const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
       const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
       const lastWeekStart = format(startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 }), "yyyy-MM-dd");
       const lastWeekEnd = format(endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 }), "yyyy-MM-dd");
 
-      const [{ count: thisMonthCount }, { count: thisWeekCount }, { count: lastWeekCount }] = await Promise.all([
-        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", monthStart).lte("booking_date", monthEnd),
+      // thisCampaign = same as campaignSqlCount (already fetched above)
+      const [{ count: thisWeekCount }, { count: lastWeekCount }] = await Promise.all([
         supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", weekStart).lte("booking_date", weekEnd),
         supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd),
       ]);
@@ -241,7 +239,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       setCampaignSQLs(campaignSqlCount || 0);
       setMeetingOutcomes(outcomes);
       setNextMeeting(nextMeetingInfo);
-      setWeekActivity({ thisMonth: thisMonthCount || 0, thisWeek: thisWeekCount || 0, lastWeek: lastWeekCount || 0 });
+      setWeekActivity({ thisCampaign: campaignSqlCount || 0, thisWeek: thisWeekCount || 0, lastWeek: lastWeekCount || 0 });
     } catch (err: any) {
       console.error("Error fetching client view data:", err);
       setError(err?.message || "Failed to load client data");

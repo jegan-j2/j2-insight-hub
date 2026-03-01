@@ -132,8 +132,8 @@ export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting, we
               <p className="text-xs text-muted-foreground mb-2 mt-4">SQLs Booked</p>
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-3 rounded-lg bg-muted/20 border border-border text-center">
-                  <p className="text-xs text-muted-foreground mb-1">This Month</p>
-                  <p className="text-lg font-bold text-foreground">{weekActivity.thisMonth}</p>
+                  <p className="text-xs text-muted-foreground mb-1">This Campaign</p>
+                  <p className="text-lg font-bold text-foreground">{weekActivity.thisCampaign}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/20 border border-border text-center">
                   <p className="text-xs text-muted-foreground mb-1">This Week</p>
