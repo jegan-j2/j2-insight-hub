@@ -24,7 +24,7 @@ export const useMeetingUpdate = () => {
         .eq('id', meetingId)
 
       if (error) throw error
-      toast({ title: 'Success', description: 'Meeting status updated', duration: 2000 })
+      toast({ title: 'Meeting status updated', className: 'border-[#10b981] text-[#10b981]', duration: 2000 })
       return true
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating meeting status:', error)
@@ -53,7 +53,7 @@ export const useMeetingUpdate = () => {
         .eq('id', meetingId)
 
       if (error) throw error
-      toast({ title: 'Success', description: 'Status updated', duration: 2000 })
+      toast({ title: 'Status updated', className: 'border-[#10b981] text-[#10b981]', duration: 2000 })
       return true
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating meeting status:', error)
@@ -93,7 +93,7 @@ export const useMeetingUpdate = () => {
         .single()
 
       if (error) throw error
-      toast({ title: 'Success', description: 'Reschedule created', duration: 2000 })
+      toast({ title: 'Reschedule created', className: 'border-[#10b981] text-[#10b981]', duration: 2000 })
       return data
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error creating reschedule row:', error)
@@ -121,7 +121,7 @@ export const useMeetingUpdate = () => {
         .eq('id', meetingId)
 
       if (error) throw error
-      toast({ title: 'Success', description: 'Notes saved', duration: 2000 })
+      toast({ title: 'Notes saved', className: 'border-[#10b981] text-[#10b981]', duration: 2000 })
       return true
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating notes:', error)
