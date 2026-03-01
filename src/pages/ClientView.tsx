@@ -30,17 +30,15 @@ const getGreeting = () => {
 const ClientView = () => {
   const { clientSlug } = useParams();
   const [firstName, setFirstName] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState<FilterType>("thisMonth");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
-  });
+  const [filterType, setFilterType] = useState<FilterType | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
   const [answeredModalOpen, setAnsweredModalOpen] = useState(false);
   const [dmsModalOpen, setDmsModalOpen] = useState(false);
+  const [campaignRangeInitialized, setCampaignRangeInitialized] = useState(false);
 
-  const { loading, error, client, kpis, campaign, meetings, answeredCalls, dmConversations, meetingOutcomes, nextMeeting, refetch } =
+  const { loading, error, client, kpis, campaign, meetings, answeredCalls, dmConversations, meetingOutcomes, nextMeeting, weekActivity, refetch } =
     useClientViewData(clientSlug || "", dateRange);
 
   const clientName = client?.client_name || clientSlug?.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "Unknown Client";
@@ -48,6 +46,18 @@ const ClientView = () => {
   useEffect(() => {
     document.title = `J2 Insights Dashboard - ${clientName}`;
   }, [clientName]);
+
+  // Initialize date range to campaign period once client loads
+  useEffect(() => {
+    if (!campaignRangeInitialized && client?.campaign_start && client?.campaign_end) {
+      setDateRange({
+        from: new Date(client.campaign_start),
+        to: new Date(client.campaign_end),
+      });
+      setFilterType(null);
+      setCampaignRangeInitialized(true);
+    }
+  }, [client, campaignRangeInitialized]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -94,7 +104,7 @@ const ClientView = () => {
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
           {filters.map((filter) => {
-            const isActive = filterType === filter.type && dateRange?.from && dateRange?.to && isSameDay(dateRange.from, filter.range.from) && isSameDay(dateRange.to, filter.range.to);
+                 const isActive = filterType === filter.type && dateRange?.from && dateRange?.to && isSameDay(dateRange.from, filter.range.from) && isSameDay(dateRange.to, filter.range.to);
             return (
               <Button
                 key={filter.type}
@@ -153,12 +163,6 @@ const ClientView = () => {
             <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
           </div>
         )}
-        {client?.campaign_start && client?.campaign_end && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CalendarIcon className="h-4 w-4" />
-            <span>Campaign Period: {format(new Date(client.campaign_start), "MMM dd")} – {format(new Date(client.campaign_end), "MMM dd, yyyy")}</span>
-          </div>
-        )}
       </div>
 
       {/* Error State */}
@@ -193,7 +197,7 @@ const ClientView = () => {
           />
 
           {/* Section 6: Campaign Cards */}
-          {campaign && <ClientCampaignCards campaign={campaign} meetingOutcomes={meetingOutcomes} nextMeeting={nextMeeting} />}
+          {campaign && <ClientCampaignCards campaign={campaign} meetingOutcomes={meetingOutcomes} nextMeeting={nextMeeting} weekActivity={weekActivity} />}
         </>
       )}
 
