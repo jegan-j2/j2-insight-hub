@@ -35,11 +35,12 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 15;
 
-  // Sort by duration DESC, nulls last
+  // Sort by date DESC, then duration DESC within each date
   const sorted = useMemo(() => [...records].sort((a, b) => {
-    const aDur = a.call_duration ?? -1;
-    const bDur = b.call_duration ?? -1;
-    return bDur - aDur;
+    const dateA = new Date(a.activity_date).getTime();
+    const dateB = new Date(b.activity_date).getTime();
+    if (dateB !== dateA) return dateB - dateA;
+    return (b.call_duration || 0) - (a.call_duration || 0);
   }), [records]);
 
   const totalPages = Math.ceil(sorted.length / rowsPerPage);

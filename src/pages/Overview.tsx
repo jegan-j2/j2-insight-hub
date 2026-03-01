@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Client } from "@/lib/supabase-types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,8 +15,8 @@ import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
 import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
 import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { KPICardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 import { EmptyState } from "@/components/EmptyState";
+import { J2Loader } from "@/components/J2Loader";
 import { useOverviewData } from "@/hooks/useOverviewData";
 import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
 import type { DateRange } from "react-day-picker";
@@ -367,6 +366,8 @@ const Overview = () => {
     },
   ];
 
+  if (loading) return <J2Loader />;
+
   return (
     <div id="overview-content" className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -490,13 +491,6 @@ const Overview = () => {
       )}
 
       {/* KPI Cards */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          {[...Array(5)].map((_, i) => (
-            <KPICardSkeleton key={i} />
-          ))}
-        </div>
-      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 animate-fade-in">
           {kpiCards.map((kpi) => (
             <Card
@@ -513,13 +507,9 @@ const Overview = () => {
 
                 <div className="flex items-end justify-between">
                   <div>
-                    {loading ? (
-                      <Skeleton className="h-9 w-24" />
-                    ) : (
-                      <p className="text-3xl font-extrabold text-foreground">
+                    <p className="text-3xl font-extrabold text-foreground">
                         {kpi.value}
                       </p>
-                    )}
                   </div>
 
                   {kpi.delta !== null ? (
@@ -553,7 +543,6 @@ const Overview = () => {
             </Card>
           ))}
         </div>
-      )}
 
       {/* Empty State */}
       {!loading && !error && snapshots.length === 0 && (
@@ -616,19 +605,9 @@ const Overview = () => {
       )}
 
       {/* Client Performance Table */}
-      {loading ? (
-        <TableSkeleton />
-      ) : (
         <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} clients={overviewClients} />
-      )}
 
       {/* Charts Section */}
-      {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartSkeleton />
-          <ChartSkeleton />
-        </div>
-      ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
           <CallActivityChart snapshots={snapshots} dmsByDate={dmsByDate} />
           <ConversionFunnelChart
@@ -638,14 +617,10 @@ const Overview = () => {
             sqls={kpis.totalSQLs}
           />
         </div>
-      )}
+
 
       {/* SQL Meetings Table */}
-      {loading ? (
-        <TableSkeleton />
-      ) : (
         <SQLBookedMeetingsTable meetings={meetings} clients={overviewClients} />
-      )}
     </div>
   );
 };

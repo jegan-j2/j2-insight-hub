@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Client, SQLMeeting } from "@/lib/supabase-types";
-import { format } from "date-fns";
+import { format, startOfWeek, subWeeks } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 
@@ -133,6 +134,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         .eq("call_outcome", "connected");
       if (dateStart) answeredQuery = answeredQuery.gte("activity_date", dateStart);
       if (dateEnd) answeredQuery = answeredQuery.lte("activity_date", dateEnd);
+      answeredQuery = answeredQuery.order("activity_date", { ascending: false });
       const { data: answeredData } = await answeredQuery;
 
       // DM Conversations (is_decision_maker = true AND call_outcome = 'connected')
@@ -144,6 +146,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         .eq("call_outcome", "connected");
       if (dateStart) dmQuery = dmQuery.gte("activity_date", dateStart);
       if (dateEnd) dmQuery = dmQuery.lte("activity_date", dateEnd);
+      dmQuery = dmQuery.order("activity_date", { ascending: false });
       const { data: dmData } = await dmQuery;
 
       // SQL meetings for table (filtered by date)
@@ -218,23 +221,19 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         }
       }
 
-      // SQLs booked breakdown (Melbourne timezone weeks)
-      const melb = new Date(new Date().toLocaleString("en-AU", { timeZone: "Australia/Melbourne" }));
-      const melbDay = melb.getDay();
-      const daysFromMon = melbDay === 0 ? 6 : melbDay - 1;
-      const weekStartDate = new Date(melb);
-      weekStartDate.setDate(melb.getDate() - daysFromMon);
-      weekStartDate.setHours(0, 0, 0, 0);
-      const weekEndDate = new Date(weekStartDate);
-      weekEndDate.setDate(weekStartDate.getDate() + 6);
-      weekEndDate.setHours(23, 59, 59, 999);
-      const lastWeekStartDate = new Date(weekStartDate);
-      lastWeekStartDate.setDate(weekStartDate.getDate() - 7);
-      const lastWeekEndDate = new Date(weekEndDate);
-      lastWeekEndDate.setDate(weekEndDate.getDate() - 7);
+      // SQLs booked breakdown (Melbourne timezone weeks, Mon-Fri)
+      const MELBOURNE_TZ = "Australia/Melbourne";
+      const nowUtc = new Date();
+      const nowMelb = toZonedTime(nowUtc, MELBOURNE_TZ);
+      const thisWeekStartDate = startOfWeek(nowMelb, { weekStartsOn: 1 });
+      const thisWeekEndDate = new Date(thisWeekStartDate);
+      thisWeekEndDate.setDate(thisWeekStartDate.getDate() + 4); // Friday
+      const lastWeekStartDate = subWeeks(thisWeekStartDate, 1);
+      const lastWeekEndDate = new Date(lastWeekStartDate);
+      lastWeekEndDate.setDate(lastWeekStartDate.getDate() + 4); // Friday
 
-      const weekStart = format(weekStartDate, "yyyy-MM-dd");
-      const weekEnd = format(weekEndDate, "yyyy-MM-dd");
+      const weekStart = format(thisWeekStartDate, "yyyy-MM-dd");
+      const weekEnd = format(thisWeekEndDate, "yyyy-MM-dd");
       const lastWeekStart = format(lastWeekStartDate, "yyyy-MM-dd");
       const lastWeekEnd = format(lastWeekEndDate, "yyyy-MM-dd");
 
