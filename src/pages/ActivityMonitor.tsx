@@ -133,19 +133,24 @@ const ActivityMonitor = () => {
 
   useEffect(() => {
     const fetchPhotosAndMembers = async () => {
-      const { data: members } = await supabase
+      const { data: allMembers } = await supabase
         .from("team_members")
-        .select("sdr_name, profile_photo_url, client_id");
-      if (members) {
+        .select("sdr_name, profile_photo_url, client_id, role");
+      if (allMembers) {
         const photoMap: Record<string, string | null> = {};
-        const teamList: {sdr_name: string, client_id: string}[] = [];
-        for (const m of members) {
+        for (const m of allMembers) {
           photoMap[m.sdr_name] = m.profile_photo_url;
-          teamList.push({ sdr_name: m.sdr_name, client_id: m.client_id || "" });
         }
         setSdrPhotoMap(photoMap);
-        setAllTeamMembers(teamList);
       }
+
+      const { data: members } = await supabase
+        .from("team_members")
+        .select("sdr_name, client_id, role")
+        .eq("role", "SDR")
+        .not("client_id", "eq", "admin")
+        .not("client_id", "is", null);
+      setAllTeamMembers(members || []);
 
       const { data: clients } = await supabase
         .from("clients")
@@ -606,7 +611,12 @@ const ActivityMonitor = () => {
         }
 
         const { data } = await query;
-        setDrillDownData(data || []);
+        const sorted = (data || []).sort((a, b) => {
+          const dateDiff = new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime();
+          if (dateDiff !== 0) return dateDiff;
+          return (b.call_duration || 0) - (a.call_duration || 0);
+        });
+        setDrillDownData(sorted);
       } else if (metric === "sqls") {
         let startTimestamp: string;
         let endTimestamp: string;
@@ -684,6 +694,10 @@ const ActivityMonitor = () => {
             });
           }
         }
+        enrichedSqlData.sort((a, b) =>
+          new Date(b.created_at || b.booking_date).getTime() -
+          new Date(a.created_at || a.booking_date).getTime()
+        );
         setDrillDownSqlData(enrichedSqlData);
       }
     } catch (err) {
@@ -992,7 +1006,9 @@ const ActivityMonitor = () => {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <J2Loader />
+                <div className="h-9 flex items-center">
+                  <J2Loader />
+                </div>
               ) : (
                 <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
               )}
@@ -1032,9 +1048,27 @@ const ActivityMonitor = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pagedSdrRows.map((row) => {
+                  {(() => { let dividerShown = false; return pagedSdrRows.map((row) => {
                     const recent = mode === "live" && isRecentActivity(row.lastActivity);
+                    const showDivider = !dividerShown && row.dials === 0;
+                    if (showDivider) dividerShown = true;
                     return (
+                      <>{showDivider && (
+                        <TableRow key="inactive-divider" className="border-0 pointer-events-none">
+                          <TableCell 
+                            colSpan={mode === "live" ? 9 : 8}
+                            className="py-2 px-4"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 h-px bg-border/50" />
+                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                                No Activity Today
+                              </span>
+                              <div className="flex-1 h-px bg-border/50" />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
                       <TableRow
                         key={row.sdrName}
                         className={cn(
@@ -1109,8 +1143,9 @@ const ActivityMonitor = () => {
                           </TableCell>
                         )}
                       </TableRow>
+                      </>
                     );
-                  })}
+                  }); })()}
                 </TableBody>
               </Table>
              </div>
@@ -1138,7 +1173,7 @@ const ActivityMonitor = () => {
             </DialogTitle>
           </DialogHeader>
           {loadingDrill ? (
-            <div className="flex justify-center py-8"><J2Loader /></div>
+            <div className="flex items-center justify-center py-16"><J2Loader /></div>
           ) : (drillDown?.metric === "answered" || drillDown?.metric === "conversations") ? (
             drillDownData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
@@ -1148,12 +1183,12 @@ const ActivityMonitor = () => {
               <div className="overflow-auto flex-1">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                    <TableRow className="border-border/50">
-                      <TableHead>Time</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead className="text-right">Duration</TableHead>
-                      <TableHead className="text-center">Recording</TableHead>
+                     <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Time</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
+                      <TableHead className="text-right font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
+                      <TableHead className="text-center font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1238,12 +1273,12 @@ const ActivityMonitor = () => {
               <div className="overflow-auto flex-1">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                    <TableRow className="border-border/50">
-                      <TableHead>Time Booked</TableHead>
-                      <TableHead>Contact Person</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Meeting Date</TableHead>
-                      <TableHead className="text-center">Recording</TableHead>
+                     <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Time Booked</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Meeting Date</TableHead>
+                      <TableHead className="text-center font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
