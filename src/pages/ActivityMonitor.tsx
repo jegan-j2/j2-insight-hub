@@ -1006,9 +1006,7 @@ const ActivityMonitor = () => {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="h-9 flex items-center">
-                  <J2Loader />
-                </div>
+                <div className="h-9 w-16 bg-muted/40 rounded animate-pulse" />
               ) : (
                 <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
               )}
@@ -1024,7 +1022,11 @@ const ActivityMonitor = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center py-12"><J2Loader /></div>
+            <div className="space-y-3 py-4">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-10 bg-muted/40 rounded animate-pulse" />
+              ))}
+            </div>
           ) : sdrRows.length === 0 ? (
             <EmptyState
               icon={mode === "live" ? Phone : CalendarIcon}
@@ -1173,7 +1175,10 @@ const ActivityMonitor = () => {
             </DialogTitle>
           </DialogHeader>
           {loadingDrill ? (
-            <div className="flex items-center justify-center py-16"><J2Loader /></div>
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div className="h-8 w-8 rounded-full border-2 border-[#0f172a] border-t-transparent animate-spin dark:border-white dark:border-t-transparent" />
+              <span className="text-sm text-muted-foreground">Loading...</span>
+            </div>
           ) : (drillDown?.metric === "answered" || drillDown?.metric === "conversations") ? (
             drillDownData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
