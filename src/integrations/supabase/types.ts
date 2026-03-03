@@ -33,6 +33,8 @@ export type Database = {
           meeting_held: boolean | null
           meeting_scheduled_date: string | null
           meeting_status: string | null
+          recording_last_retry: string | null
+          recording_retry_count: number | null
           recording_url: string | null
           remarks: string | null
           sdr_name: string | null
@@ -55,6 +57,8 @@ export type Database = {
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
           meeting_status?: string | null
+          recording_last_retry?: string | null
+          recording_retry_count?: number | null
           recording_url?: string | null
           remarks?: string | null
           sdr_name?: string | null
@@ -77,6 +81,8 @@ export type Database = {
           meeting_held?: boolean | null
           meeting_scheduled_date?: string | null
           meeting_status?: string | null
+          recording_last_retry?: string | null
+          recording_retry_count?: number | null
           recording_url?: string | null
           remarks?: string | null
           sdr_name?: string | null
