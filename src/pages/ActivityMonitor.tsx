@@ -127,6 +127,16 @@ const ActivityMonitor = () => {
   const [sdrPage, setSdrPage] = useState(0);
   const [drillPage, setDrillPage] = useState(0);
   const { toast } = useToast();
+  const [latestSql, setLatestSql] = useState<{
+    sdrName: string;
+    companyName: string;
+    clientId: string;
+    createdAt: string;
+  } | null>(null);
+  const [topSqlPerformer, setTopSqlPerformer] = useState<{
+    sdrName: string;
+    sqlCount: number;
+  } | null>(null);
 
   const SDR_PAGE_SIZE = 15;
   const DRILL_PAGE_SIZE = 15;
@@ -294,6 +304,24 @@ const ActivityMonitor = () => {
     }
   }, [histDate, dateMode, selectedWeekdays]);
 
+  const fetchLatestSqlLive = useCallback(async () => {
+    const startOfDay = todayMelbourne + "T00:00:00";
+    const endOfDay = todayMelbourne + "T23:59:59";
+    const { data } = await supabase
+      .from("sql_meetings")
+      .select("sdr_name, company_name, client_id, created_at")
+      .gte("created_at", startOfDay)
+      .lte("created_at", endOfDay)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    setLatestSql(data?.[0] ? {
+      sdrName: data[0].sdr_name || "",
+      companyName: data[0].company_name || "",
+      clientId: data[0].client_id || "",
+      createdAt: data[0].created_at,
+    } : null);
+  }, [todayMelbourne]);
+
   // LIVE fetch
   const fetchLiveData = useCallback(async () => {
     if (mode !== "live") return;
@@ -389,6 +417,35 @@ const ActivityMonitor = () => {
       setActivities(activityData);
       setHistSqlMeetings(sqlRes.data || []);
       setSnapshots(snapshotRes.data?.map(s => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || []);
+
+      // Latest SQL in period
+      const latestSqlInPeriod = sqlRes.data?.[0];
+      if (latestSqlInPeriod) {
+        setLatestSql({
+          sdrName: latestSqlInPeriod.sdr_name || "",
+          companyName: latestSqlInPeriod.company_name || "",
+          clientId: latestSqlInPeriod.client_id || "",
+          createdAt: latestSqlInPeriod.created_at,
+        });
+      } else {
+        setLatestSql(null);
+      }
+
+      // Top SQL Performer — SDR with most SQLs in period
+      const sdrSqlCounts = new Map<string, number>();
+      for (const m of sqlRes.data || []) {
+        if (!m.sdr_name) continue;
+        sdrSqlCounts.set(m.sdr_name, (sdrSqlCounts.get(m.sdr_name) || 0) + 1);
+      }
+      let topSdr: string | null = null;
+      let topCount = 0;
+      for (const [name, count] of sdrSqlCounts) {
+        if (count > topCount) {
+          topCount = count;
+          topSdr = name;
+        }
+      }
+      setTopSqlPerformer(topSdr ? { sdrName: topSdr, sqlCount: topCount } : null);
     } catch (err) {
       console.error("Error fetching historical data:", err);
     } finally {
@@ -404,8 +461,9 @@ const ActivityMonitor = () => {
   useEffect(() => {
     if (mode === "live") {
       fetchLiveData();
+      fetchLatestSqlLive();
     }
-  }, [mode, fetchLiveData, refreshKey]);
+  }, [mode, fetchLiveData, fetchLatestSqlLive, refreshKey]);
 
   useEffect(() => {
     if (mode === "historical" && histApplied) {
@@ -959,6 +1017,19 @@ const ActivityMonitor = () => {
               {/* .spacer */}
               <div style={{ flex: 1 }} />
 
+              {topSqlPerformer && (
+                <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
+                  <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                    🏆 TOP SQL PERFORMER
+                  </span>
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground whitespace-nowrap">
+                    <span>{topSqlPerformer.sdrName}</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="font-bold text-[#f43f5e]">{topSqlPerformer.sqlCount} SQLs</span>
+                  </div>
+                </div>
+              )}
+
               {/* .divider-apply */}
               <div className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]" style={{ width: 1, height: 48, margin: '0 20px' }} />
 
@@ -998,7 +1069,55 @@ const ActivityMonitor = () => {
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>🎯</span>
+          {mode === "live" ? (
+            latestSql ? (
+              <span>
+                <span className="font-semibold text-foreground">Latest SQL</span>
+                {" · "}
+                <span>{latestSql.sdrName}</span>
+                {" booked "}
+                <span className="font-semibold text-foreground">{latestSql.companyName}</span>
+                {" · "}
+                <span>
+                  {new Date(latestSql.createdAt).toLocaleTimeString("en-AU", {
+                    timeZone: "Australia/Melbourne",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </span>
+                {" · "}
+                <span>{clientNameMap[latestSql.clientId] || latestSql.clientId}</span>
+              </span>
+            ) : (
+              <span className="italic">Waiting for today's first SQL to be booked...</span>
+            )
+          ) : (
+            latestSql && (
+              <span>
+                <span className="font-semibold text-foreground">Latest SQL</span>
+                {" · "}
+                <span>{latestSql.sdrName}</span>
+                {" booked "}
+                <span className="font-semibold text-foreground">{latestSql.companyName}</span>
+                {" · "}
+                <span>
+                  {new Date(latestSql.createdAt).toLocaleDateString("en-AU", {
+                    timeZone: "Australia/Melbourne",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+                {" · "}
+                <span>{clientNameMap[latestSql.clientId] || latestSql.clientId}</span>
+              </span>
+            )
+          )}
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2">
