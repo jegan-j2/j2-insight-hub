@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { J2Loader } from "@/components/J2Loader";
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
@@ -636,8 +635,8 @@ const ActivityMonitor = () => {
   const kpiCards = [
     { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, iconColor: "#f59e0b", iconBg: "rgba(245,158,11,0.1)" },
     { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, iconColor: "#10b981", iconBg: "rgba(16,185,129,0.1)" },
-    { label: "Avg Answer Rate", value: answerRateDisplay, icon: Percent, iconColor: "#3b82f6", iconBg: "rgba(59,130,246,0.1)" },
-    { label: "Total Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, iconColor: "#6366f1", iconBg: "rgba(99,102,241,0.1)", clickable: true },
+    { label: "Answer Rate", value: answerRateDisplay, icon: Percent, iconColor: "#6366f1", iconBg: "rgba(99,102,241,0.1)" },
+    { label: "DM Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, iconColor: "#0d9488", iconBg: "rgba(13,148,136,0.1)", clickable: true },
     { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, iconColor: "#f43f5e", iconBg: "rgba(244,63,94,0.1)" },
   ];
 
@@ -871,7 +870,7 @@ const ActivityMonitor = () => {
               {/* Apply Filters button */}
               <Button
                 onClick={() => setHistApplied(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-5 text-sm shrink-0"
+                className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 px-5 text-sm shrink-0"
               >
                 Apply Filters
               </Button>
@@ -895,7 +894,7 @@ const ActivityMonitor = () => {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <Skeleton className="h-8 w-16" />
+                <J2Loader />
               ) : (
                 <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
               )}
@@ -911,11 +910,7 @@ const ActivityMonitor = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
+            <div className="flex justify-center py-12"><J2Loader /></div>
           ) : sdrRows.length === 0 ? (
             <EmptyState
               icon={mode === "live" ? Phone : CalendarIcon}
@@ -968,7 +963,7 @@ const ActivityMonitor = () => {
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-[#64748b] dark:text-white/40 px-4 py-2">{row.clientId}</TableCell>
+                        <TableCell className="text-muted-foreground px-4 py-2">{row.clientId}</TableCell>
                         <TableCell className="text-center font-semibold text-foreground px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-center px-4 py-2">
                           <Button
@@ -1030,15 +1025,11 @@ const ActivityMonitor = () => {
         <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>
-              {drillDown?.sdrName} — {drillDown?.metric === "answered" ? "Connected Calls" : drillDown?.metric === "conversations" ? "Decision Maker Conversations" : "SQL Meetings"}
+              {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Connected Calls" : drillDown?.metric === "conversations" ? "Decision Maker Conversations" : "SQL Meetings"}
             </DialogTitle>
           </DialogHeader>
           {loadingDrill ? (
-            <div className="space-y-3 py-4">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
-              ))}
-            </div>
+            <div className="flex justify-center py-8"><J2Loader /></div>
           ) : (drillDown?.metric === "answered" || drillDown?.metric === "conversations") ? (
             drillDownData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
