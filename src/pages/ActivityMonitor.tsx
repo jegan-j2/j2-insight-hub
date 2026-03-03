@@ -9,8 +9,8 @@ import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, RefreshCw, Handshake } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown } from "lucide-react";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
@@ -18,9 +18,9 @@ import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SDRAvatar } from "@/components/SDRAvatar";
-import { exportToPDF } from "@/lib/pdfExport";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Loader2 } from "lucide-react";
+import * as XLSX from "xlsx-js-style";
+import { toCSV, downloadCSV } from "@/lib/csvExport";
 
 type Mode = "live" | "historical";
 type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "conversations" | "answerRate" | "sqls" | "conversion";
@@ -122,21 +122,100 @@ const ActivityMonitor = () => {
   const [playingRecordingId, setPlayingRecordingId] = useState<string | null>(null);
   const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [exportingPDF, setExportingPDF] = useState(false);
+  const [clientNameMap, setClientNameMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
-  const handleExportPDF = async () => {
-    setExportingPDF(true);
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data } = await supabase.from("clients").select("client_id, client_name");
+      if (data) {
+        const map: Record<string, string> = {};
+        for (const c of data) map[c.client_id] = c.client_name;
+        setClientNameMap(map);
+      }
+    };
+    fetchClients();
+  }, []);
+
+  const handleExportCSV = () => {
+    const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
+    const headers = ["SDR Name", "Client", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Conversion Rate"];
+    const rows = sdrRows.map(r => [
+      r.sdrName,
+      clientNameMap[r.clientId] || r.clientId,
+      r.dials,
+      r.answered,
+      r.answerRate.toFixed(1) + "%",
+      r.conversations,
+      r.sqls,
+      r.conversion.toFixed(1) + "%"
+    ]);
+    downloadCSV(toCSV(headers, rows), `j2-activity-${dateStr}.csv`);
+    toast({ title: "CSV exported successfully", className: "border-[#10b981]" });
+  };
+
+  const handleExportExcel = () => {
     try {
       const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
-      const title = mode === "live" ? "Today's Activity Report" : `Activity Report – ${dateRangeInfo.label}`;
-      await exportToPDF('activity-monitor-content', `j2-activity-${dateStr}.pdf`, title);
-      toast({ title: "PDF exported successfully", className: "border-[#10b981]" });
+      const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 11 },
+        fill: { fgColor: { rgb: "0F172A" } }
+      };
+      const evenRow = { fill: { fgColor: { rgb: "F1F5F9" } } };
+      const oddRow = { fill: { fgColor: { rgb: "FFFFFF" } } };
+
+      // Sheet 1 — KPI Summary
+      const kpiData = [
+        ["Metric", "Value"],
+        ["Total Dials", totals.dials],
+        ["Total Answered", totals.answered],
+        ["Answer Rate", answerRateDisplay],
+        ["DM Conversations", totals.conversations],
+        ["Total SQLs", totals.sqls],
+        ["Date", mode === "live" ? todayFormatted : dateRangeInfo.label],
+      ];
+      const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
+      kpiSheet["!cols"] = [{ wch: 24 }, { wch: 20 }];
+      kpiData.forEach((_, i) => {
+        const rowStyle = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
+        const cell1 = XLSX.utils.encode_cell({ r: i, c: 0 });
+        const cell2 = XLSX.utils.encode_cell({ r: i, c: 1 });
+        if (kpiSheet[cell1]) kpiSheet[cell1].s = rowStyle;
+        if (kpiSheet[cell2]) kpiSheet[cell2].s = rowStyle;
+      });
+
+      // Sheet 2 — SDR Performance
+      const sdrHeaders = ["SDR Name", "Client", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Conversion Rate"];
+      const sdrData = [
+        sdrHeaders,
+        ...sdrRows.map(r => [
+          r.sdrName,
+          clientNameMap[r.clientId] || r.clientId,
+          r.dials,
+          r.answered,
+          r.answerRate.toFixed(1) + "%",
+          r.conversations,
+          r.sqls,
+          r.conversion.toFixed(1) + "%"
+        ])
+      ];
+      const sdrSheet = XLSX.utils.aoa_to_sheet(sdrData);
+      sdrSheet["!cols"] = [{ wch: 22 }, { wch: 20 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 10 }, { wch: 18 }];
+      sdrData.forEach((_, i) => {
+        const rowStyle = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
+        sdrHeaders.forEach((__, c) => {
+          const cell = XLSX.utils.encode_cell({ r: i, c });
+          if (sdrSheet[cell]) sdrSheet[cell].s = rowStyle;
+        });
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, kpiSheet, "KPI Summary");
+      XLSX.utils.book_append_sheet(wb, sdrSheet, "SDR Performance");
+      XLSX.writeFile(wb, `j2-activity-${dateStr}.xlsx`);
+      toast({ title: "Excel exported successfully", className: "border-[#10b981]" });
     } catch (err) {
       toast({ title: "Export failed", description: String(err), variant: "destructive" });
-    } finally {
-      setExportingPDF(false);
     }
   };
 
@@ -310,8 +389,7 @@ const ActivityMonitor = () => {
   // Fetch data on mode change, live fetch, or auto-refresh
   useEffect(() => {
     if (mode === "live") {
-      setIsRefreshing(true);
-      fetchLiveData().finally(() => setIsRefreshing(false));
+      fetchLiveData();
     }
   }, [mode, fetchLiveData, refreshKey]);
 
@@ -665,40 +743,23 @@ const ActivityMonitor = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    setIsRefreshing(true);
-                    if (mode === "live") {
-                      fetchLiveData().finally(() => setIsRefreshing(false));
-                    } else {
-                      setHistApplied(true);
-                      setTimeout(() => setIsRefreshing(false), 1000);
-                    }
-                    manualRefresh();
-                  }}
-                  aria-label="Refresh data"
-                >
-                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-blue-500")} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <Button
-            variant="outline"
-            onClick={handleExportPDF}
-            disabled={loading || exportingPDF}
-            className="gap-2 shrink-0"
-          >
-            {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export PDF
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2">
+                <Download className="h-4 w-4" />
+                Export
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportCSV} className="gap-2 cursor-pointer">
+                <FileText className="h-4 w-4" /> Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                <Table2 className="h-4 w-4" /> Export as Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {mode === "live" && (
             <Badge variant="outline" className="gap-2 border-green-500/50 text-green-500 px-3 py-1.5">
               <span className="relative flex h-2 w-2">
