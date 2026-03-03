@@ -123,18 +123,40 @@ const ActivityMonitor = () => {
   const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [clientNameMap, setClientNameMap] = useState<Record<string, string>>({});
+  const [allTeamMembers, setAllTeamMembers] = useState<{sdr_name: string, client_id: string}[]>([]);
+  const [sdrPage, setSdrPage] = useState(0);
+  const [drillPage, setDrillPage] = useState(0);
   const { toast } = useToast();
 
+  const SDR_PAGE_SIZE = 15;
+  const DRILL_PAGE_SIZE = 15;
+
   useEffect(() => {
-    const fetchClients = async () => {
-      const { data } = await supabase.from("clients").select("client_id, client_name");
-      if (data) {
+    const fetchPhotosAndMembers = async () => {
+      const { data: members } = await supabase
+        .from("team_members")
+        .select("sdr_name, profile_photo_url, client_id");
+      if (members) {
+        const photoMap: Record<string, string | null> = {};
+        const teamList: {sdr_name: string, client_id: string}[] = [];
+        for (const m of members) {
+          photoMap[m.sdr_name] = m.profile_photo_url;
+          teamList.push({ sdr_name: m.sdr_name, client_id: m.client_id || "" });
+        }
+        setSdrPhotoMap(photoMap);
+        setAllTeamMembers(teamList);
+      }
+
+      const { data: clients } = await supabase
+        .from("clients")
+        .select("client_id, client_name");
+      if (clients) {
         const map: Record<string, string> = {};
-        for (const c of data) map[c.client_id] = c.client_name;
+        for (const c of clients) map[c.client_id] = c.client_name;
         setClientNameMap(map);
       }
     };
-    fetchClients();
+    fetchPhotosAndMembers();
   }, []);
 
   const handleExportCSV = () => {
@@ -219,19 +241,6 @@ const ActivityMonitor = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      const { data: members } = await supabase
-        .from("team_members")
-        .select("sdr_name, profile_photo_url");
-      if (members) {
-        const map: Record<string, string | null> = {};
-        for (const m of members) map[m.sdr_name] = m.profile_photo_url;
-        setSdrPhotoMap(map);
-      }
-    };
-    fetchPhotos();
-  }, []);
 
   // Historical filters
   const [histDate, setHistDate] = useState<Date>(new Date());
@@ -492,7 +501,6 @@ const ActivityMonitor = () => {
       }
     }
 
-    // Attach last activity
     // Attach last activity and compute conversations for live mode
     for (const a of activities) {
       if (!a.sdr_name) continue;
@@ -512,17 +520,45 @@ const ActivityMonitor = () => {
       row.conversion = row.dials > 0 ? (row.sqls / row.dials) * 100 : 0;
     }
 
+    // Merge inactive SDRs from team_members
+    for (const member of allTeamMembers) {
+      if (!map.has(member.sdr_name)) {
+        map.set(member.sdr_name, {
+          sdrName: member.sdr_name,
+          clientId: member.client_id || "",
+          dials: 0,
+          answered: 0,
+          conversations: 0,
+          answerRate: 0,
+          sqls: 0,
+          conversion: 0,
+          lastActivity: null,
+        });
+      }
+    }
+
     const rows = Array.from(map.values());
     rows.sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === "sdrName") cmp = a.sdrName.localeCompare(b.sdrName);
-      else if (sortKey === "clientId") cmp = a.clientId.localeCompare(b.clientId);
-      else cmp = (a[sortKey] as number) - (b[sortKey] as number);
-      return sortDir === "desc" ? -cmp : cmp;
+      const aActive = a.dials > 0;
+      const bActive = b.dials > 0;
+      if (aActive && !bActive) return -1;
+      if (!aActive && bActive) return 1;
+      if (aActive && bActive) {
+        let cmp = 0;
+        if (sortKey === "sdrName") cmp = a.sdrName.localeCompare(b.sdrName);
+        else if (sortKey === "clientId") cmp = a.clientId.localeCompare(b.clientId);
+        else cmp = (a[sortKey] as number) - (b[sortKey] as number);
+        return sortDir === "desc" ? -cmp : cmp;
+      }
+      return a.sdrName.localeCompare(b.sdrName);
     });
 
     return rows;
-  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir]);
+  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers]);
+
+  useEffect(() => { setSdrPage(0); }, [sdrRows]);
+
+  const pagedSdrRows = sdrRows.slice(sdrPage * SDR_PAGE_SIZE, (sdrPage + 1) * SDR_PAGE_SIZE);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -536,6 +572,7 @@ const ActivityMonitor = () => {
   // Drill-down
   const handleDrillDown = async (sdrName: string, metric: DrillMetric) => {
     setDrillDown({ sdrName, metric });
+    setDrillPage(0);
     setLoadingDrill(true);
     setDrillDownData([]);
     setDrillDownSqlData([]);
@@ -995,7 +1032,7 @@ const ActivityMonitor = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sdrRows.map((row) => {
+                  {pagedSdrRows.map((row) => {
                     const recent = mode === "live" && isRecentActivity(row.lastActivity);
                     return (
                       <TableRow
@@ -1024,7 +1061,7 @@ const ActivityMonitor = () => {
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground px-4 py-2">{row.clientId}</TableCell>
+                        <TableCell className="text-muted-foreground px-4 py-2">{clientNameMap[row.clientId] || row.clientId}</TableCell>
                         <TableCell className="text-center font-semibold text-foreground px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-center px-4 py-2">
                           <Button
@@ -1076,6 +1113,17 @@ const ActivityMonitor = () => {
                   })}
                 </TableBody>
               </Table>
+             </div>
+          )}
+          {sdrRows.length > SDR_PAGE_SIZE && (
+            <div className="flex items-center justify-between px-4 pt-4 border-t border-border/50">
+              <span className="text-sm text-muted-foreground">
+                Showing {sdrPage * SDR_PAGE_SIZE + 1}–{Math.min((sdrPage + 1) * SDR_PAGE_SIZE, sdrRows.length)} of {sdrRows.length} SDRs
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p - 1)} disabled={sdrPage === 0}>Previous</Button>
+                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p + 1)} disabled={(sdrPage + 1) * SDR_PAGE_SIZE >= sdrRows.length}>Next</Button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -1109,7 +1157,7 @@ const ActivityMonitor = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {drillDownData.map((a) => (
+                    {drillDownData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((a) => (
                       <>
                         <TableRow key={a.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
@@ -1199,7 +1247,7 @@ const ActivityMonitor = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {drillDownSqlData.map((m) => (
+                    {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m) => (
                       <>
                         <TableRow key={m.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
@@ -1258,6 +1306,17 @@ const ActivityMonitor = () => {
                 </Table>
               </div>
             )
+          )}
+          {(drillDownData.length > DRILL_PAGE_SIZE || drillDownSqlData.length > DRILL_PAGE_SIZE) && (
+            <div className="flex items-center justify-between px-2 pt-3 border-t border-border/50 shrink-0">
+              <span className="text-sm text-muted-foreground">
+                Showing {drillPage * DRILL_PAGE_SIZE + 1}–{Math.min((drillPage + 1) * DRILL_PAGE_SIZE, drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length)} of {drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length}
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p - 1)} disabled={drillPage === 0}>Previous</Button>
+                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p + 1)} disabled={(drillPage + 1) * DRILL_PAGE_SIZE >= (drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length)}>Next</Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
