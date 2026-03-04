@@ -974,7 +974,7 @@ const ActivityMonitor = () => {
                           step={1}
                           value={timeRange}
                           onValueChange={setTimeRange}
-                          style={{ width: 160 }}
+                          style={{ width: 260 }}
                         />
                         <span className="text-sm font-medium text-foreground whitespace-nowrap">
                           {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
@@ -1070,7 +1070,7 @@ const ActivityMonitor = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 rounded-lg px-4 py-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 border border-border/60 rounded-lg px-4 py-2.5">
           <span>🎯</span>
           {mode === "live" ? (
             latestSql ? (
@@ -1238,7 +1238,7 @@ const ActivityMonitor = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-semibold text-indigo-500 hover:text-indigo-400"
+                            className="font-semibold text-foreground hover:text-foreground/80"
                             onClick={() => handleDrillDown(row.sdrName, "conversations")}
                           >
                             {row.conversations}
@@ -1248,7 +1248,7 @@ const ActivityMonitor = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-bold text-rose-500 hover:text-rose-400"
+                            className="font-bold text-foreground hover:text-foreground/80"
                             onClick={() => handleDrillDown(row.sdrName, "sqls")}
                           >
                             {row.sqls}
