@@ -1015,7 +1015,7 @@ const ActivityMonitor = () => {
               </div>
 
               {/* .spacer */}
-              <div style={{ flex: 1 }} />
+              <div style={{ minWidth: 40, maxWidth: 80 }} />
 
               {topSqlPerformer && (
                 <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
@@ -1069,8 +1069,8 @@ const ActivityMonitor = () => {
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 rounded-lg px-4 py-2">
           <span>🎯</span>
           {mode === "live" ? (
             latestSql ? (
