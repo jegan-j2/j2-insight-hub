@@ -1069,7 +1069,7 @@ const ActivityMonitor = () => {
         ))}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 border border-border/60 rounded-lg px-4 py-2.5">
           <span>🎯</span>
           {mode === "live" ? (
@@ -1158,7 +1158,7 @@ const ActivityMonitor = () => {
           ) : (
             <div className="w-full overflow-x-hidden">
               <Table>
-                <TableHeader className="bg-[#f1f5f9] dark:bg-[#1e293b]">
+                <TableHeader>
                   <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
@@ -1181,7 +1181,7 @@ const ActivityMonitor = () => {
                         <TableRow key="inactive-divider" className="border-0 pointer-events-none">
                           <TableCell 
                             colSpan={mode === "live" ? 9 : 8}
-                            className="py-2 px-4"
+                            className="py-4 px-4"
                           >
                             <div className="flex items-center gap-3">
                               <div className="flex-1 h-px bg-border/50" />
