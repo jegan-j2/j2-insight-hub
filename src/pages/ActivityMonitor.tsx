@@ -786,9 +786,9 @@ const ActivityMonitor = () => {
     const diffMs = Date.now() - d.getTime();
     const mins = Math.floor(diffMs / 60000);
     if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins} min ago`;
+    if (mins < 60) return `${Math.floor(mins)} min ago`;
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs} hrs ago`;
+    if (hrs < 24) return `${hrs} ${hrs === 1 ? 'hr' : 'hrs'} ago`;
     return format(d, "MMM d");
   };
 
@@ -1158,7 +1158,7 @@ const ActivityMonitor = () => {
           ) : (
             <div className="w-full overflow-x-hidden">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-[#f1f5f9] dark:bg-[#1e293b]">
                   <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
