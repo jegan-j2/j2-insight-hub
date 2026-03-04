@@ -1025,7 +1025,7 @@ const ActivityMonitor = () => {
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground whitespace-nowrap">
                     <span>{topSqlPerformer.sdrName}</span>
                     <span className="text-muted-foreground">·</span>
-                    <span className="font-bold text-[#f43f5e]">{topSqlPerformer.sqlCount} SQLs</span>
+                    <span className="font-bold text-[#f43f5e]">{topSqlPerformer.sqlCount} {topSqlPerformer.sqlCount === 1 ? "SQL" : "SQLs"}</span>
                   </div>
                 </div>
               )}
@@ -1220,7 +1220,7 @@ const ActivityMonitor = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground px-4 py-2">{clientNameMap[row.clientId] || row.clientId}</TableCell>
-                        <TableCell className="text-center font-semibold text-foreground px-4 py-2">{row.dials}</TableCell>
+                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-center px-4 py-2">
                           <Button
                             variant="ghost"
@@ -1231,7 +1231,7 @@ const ActivityMonitor = () => {
                             {row.answered}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center text-muted-foreground px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
                         <TableCell className="text-center px-4 py-2">
@@ -1254,16 +1254,22 @@ const ActivityMonitor = () => {
                             {row.sqls}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center text-muted-foreground px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
                           {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
-                          <TableCell className="text-right text-muted-foreground text-sm px-4 py-2">
-                            {row.lastActivity ? (
-                              <span className={recent ? "text-green-500 font-medium" : ""}>
-                                {formatRelativeTime(row.lastActivity)}
-                              </span>
-                            ) : "—"}
+                          <TableCell className="px-4 py-2">
+                            {row.lastActivity ? (() => {
+                              const minutesAgo = (Date.now() - new Date(row.lastActivity).getTime()) / 60000;
+                              return (
+                                <span className={minutesAgo <= 5
+                                  ? "text-sm text-right text-[#10b981] font-medium"
+                                  : "text-sm text-right text-muted-foreground"
+                                }>
+                                  {formatRelativeTime(row.lastActivity)}
+                                </span>
+                              );
+                            })() : <span className="text-sm text-right text-muted-foreground">—</span>}
                           </TableCell>
                         )}
                       </TableRow>
