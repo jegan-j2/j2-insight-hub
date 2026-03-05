@@ -508,12 +508,12 @@ const ActivityMonitor = () => {
       (acc, s) => ({
         dials: acc.dials + (s.dials || 0),
         answered: acc.answered + (s.answered || 0),
-        sqls: acc.sqls + (s.sqls || 0),
       }),
-      { dials: 0, answered: 0, sqls: 0 }
+      { dials: 0, answered: 0 }
     );
+    const sqls = histSqlMeetings.length;
     const conversations = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length;
-    return { ...base, conversations };
+    return { ...base, sqls, conversations };
   }, [snapshots, activities, histSqlMeetings, mode]);
 
   // SDR rows
@@ -921,7 +921,7 @@ const ActivityMonitor = () => {
             </Tabs>
 
             {/* Filter row — single flex row */}
-            <div className="flex items-center justify-between" style={{ padding: '12px 20px 16px' }}>
+            <div className="flex items-center justify-between gap-6" style={{ padding: '12px 20px 16px' }}>
               {/* .filter-left */}
               <div className="flex items-center flex-1" style={{ gap: 0 }}>
                 {/* .col1 — Date navigator */}
@@ -1032,6 +1032,11 @@ const ActivityMonitor = () => {
                   )}
                 </div>
               </div>
+
+              <div
+                className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]"
+                style={{ width: 1, height: 48, margin: '0 20px' }}
+              />
 
               {topSqlPerformer && (
                 <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
@@ -1175,7 +1180,7 @@ const ActivityMonitor = () => {
             <div className="w-full overflow-x-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                  <TableRow className="border-border/50 dark:bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
@@ -1302,8 +1307,8 @@ const ActivityMonitor = () => {
                 Showing {sdrPage * SDR_PAGE_SIZE + 1}–{Math.min((sdrPage + 1) * SDR_PAGE_SIZE, sdrRows.length)} of {sdrRows.length} SDRs
               </span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p - 1)} disabled={sdrPage === 0}>Previous</Button>
-                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p + 1)} disabled={(sdrPage + 1) * SDR_PAGE_SIZE >= sdrRows.length}>Next</Button>
+                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p - 1)} disabled={sdrPage === 0} className="gap-1"><ChevronLeft className="h-4 w-4" /> Previous</Button>
+                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p + 1)} disabled={(sdrPage + 1) * SDR_PAGE_SIZE >= sdrRows.length} className="gap-1">Next <ChevronRight className="h-4 w-4" /></Button>
               </div>
             </div>
           )}
@@ -1317,6 +1322,15 @@ const ActivityMonitor = () => {
             <DialogTitle>
               {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Connected Calls" : drillDown?.metric === "conversations" ? "Decision Maker Conversations" : "SQL Meetings"}
             </DialogTitle>
+            {drillDown?.metric === "sqls" ? (
+              <p className="text-sm text-muted-foreground mt-1">
+                {drillDownSqlData.length} record{drillDownSqlData.length !== 1 ? "s" : ""}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-1">
+                {drillDownData.length} record{drillDownData.length !== 1 ? "s" : ""}
+              </p>
+            )}
           </DialogHeader>
           {loadingDrill ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -1332,8 +1346,8 @@ const ActivityMonitor = () => {
               <div className="overflow-auto flex-1">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Time</TableHead>
+                     <TableRow className="border-border/50 dark:bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
                       <TableHead className="text-right font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
@@ -1345,9 +1359,7 @@ const ActivityMonitor = () => {
                       <>
                         <TableRow key={a.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                            {mode === "historical" && (dateMode === "week" || dateMode === "month")
-                              ? new Date(a.activity_date).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric" }) + ", " + new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
-                              : new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
+                            {new Date(a.activity_date).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
@@ -1422,8 +1434,8 @@ const ActivityMonitor = () => {
               <div className="overflow-auto flex-1">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Time Booked</TableHead>
+                     <TableRow className="border-border/50 dark:bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date Booked</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Meeting Date</TableHead>
@@ -1436,9 +1448,7 @@ const ActivityMonitor = () => {
                         <TableRow key={m.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {m.created_at
-                              ? (mode === "historical" && (dateMode === "week" || dateMode === "month")
-                                ? new Date(m.created_at).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric" }) + ", " + new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
-                                : new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }))
+                              ? new Date(m.created_at).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
                               : format(new Date(m.booking_date), "MMM d, yyyy")}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
@@ -1497,8 +1507,8 @@ const ActivityMonitor = () => {
                 Showing {drillPage * DRILL_PAGE_SIZE + 1}–{Math.min((drillPage + 1) * DRILL_PAGE_SIZE, drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length)} of {drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length}
               </span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p - 1)} disabled={drillPage === 0}>Previous</Button>
-                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p + 1)} disabled={(drillPage + 1) * DRILL_PAGE_SIZE >= (drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length)}>Next</Button>
+                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p - 1)} disabled={drillPage === 0} className="gap-1"><ChevronLeft className="h-4 w-4" /> Previous</Button>
+                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p + 1)} disabled={(drillPage + 1) * DRILL_PAGE_SIZE >= (drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length)} className="gap-1">Next <ChevronRight className="h-4 w-4" /></Button>
               </div>
             </div>
           )}
