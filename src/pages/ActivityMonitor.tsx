@@ -920,149 +920,146 @@ const ActivityMonitor = () => {
               </TabsList>
             </Tabs>
 
-            {/* Filter row — single flex row */}
-            <div className="flex items-center" style={{ padding: '12px 20px 16px' }}>
-              {/* .filter-left */}
-              <div className="flex items-center shrink-0" style={{ gap: 0 }}>
-                {/* .col1 — Date navigator */}
-                <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
-                  <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                    📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => navigateDate("prev")}
-                      className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
-                      style={{ width: 30, height: 34 }}
+            {/* Filter row — CSS Grid layout */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'auto 1px 1fr 1px auto',
+              alignItems: 'center',
+              gap: '0 24px',
+              padding: '16px 24px'
+            }}>
+              {/* ZONE 1 — Date navigator */}
+              <div className="flex flex-col" style={{ gap: 6 }}>
+                <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                  📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => navigateDate("prev")}
+                    className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
+                    style={{ width: 30, height: 34 }}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                  {dateMode === "day" ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                         className="flex items-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
+                          style={{ padding: '0 12px', height: 34 }}
+                        >
+                          <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
+                          {format(histDate, "MMM d, yyyy")}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={histDate}
+                          onSelect={(d) => d && setHistDate(d)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <div
+                      className="flex items-center justify-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
+                      style={{ padding: '0 12px', height: 34 }}
                     >
-                      <ChevronLeft className="h-3.5 w-3.5" />
-                    </button>
-                    {dateMode === "day" ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button
-                           className="flex items-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
-                            style={{ padding: '0 12px', height: 34 }}
-                          >
-                            <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
-                            {format(histDate, "MMM d, yyyy")}
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={histDate}
-                            onSelect={(d) => d && setHistDate(d)}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <div
-                        className="flex items-center justify-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
-                        style={{ padding: '0 12px', height: 34 }}
-                      >
-                        {dateRangeInfo.label}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => navigateDate("next")}
-                      className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
-                      style={{ width: 30, height: 34 }}
-                    >
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* .divider */}
-                <div className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]" style={{ width: 1, height: 48, margin: '0 20px' }} />
-
-                {/* .col2 — Time Range / Days */}
-                <div className="flex flex-1 justify-center">
-                  <div className="flex flex-col" style={{ gap: 6 }}>
-                    {dateMode === "day" ? (
-                      <>
-                         <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                          🕐 Time Range
-                         </span>
-                        <div className="flex items-center gap-3">
-                          <Slider
-                            min={0}
-                            max={24}
-                            step={1}
-                            value={timeRange}
-                            onValueChange={setTimeRange}
-                            style={{ width: '100%', maxWidth: 360 }}
-                          />
-                          <span className="text-sm font-medium text-foreground whitespace-nowrap">
-                            {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                         <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                           📅 Days
-                         </span>
-                        <div className="flex gap-1.5">
-                          {ALL_DAYS.map((day) => {
-                            const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
-                            const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
-                            const isWeekend = !isWeekday;
-                            return (
-                              <button
-                                key={day}
-                                onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
-                                disabled={isWeekend}
-                                title={isWeekend ? "No calls on weekends" : undefined}
-                                 className={cn(
-                                  "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
-                                  isWeekend && "cursor-not-allowed border border-slate-300 dark:border-white/10 text-slate-400 dark:text-white/25",
-                                  isWeekday && isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
-                                  isWeekday && !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
-                                )}
-                              >
-                                {day}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </div>
+                      {dateRangeInfo.label}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => navigateDate("next")}
+                    className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
+                    style={{ width: 30, height: 34 }}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
-              <div
-                className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]"
-                style={{ width: 1, height: 48, margin: '0 20px' }}
-              />
+              {/* DIVIDER */}
+              <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
-              {topSqlPerformer && (
-                <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
-                  <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                    🏆 TOP SQL PERFORMER
-                  </span>
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground whitespace-nowrap">
-                    <span>{topSqlPerformer.sdrName}</span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="font-bold text-[#f43f5e]">{topSqlPerformer.sqlCount} {topSqlPerformer.sqlCount === 1 ? "SQL" : "SQLs"}</span>
+              {/* ZONE 2 — Time Range / Days */}
+              <div className="flex flex-col items-center" style={{ gap: 6 }}>
+                {dateMode === "day" ? (
+                  <>
+                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                      🕐 Time Range
+                     </span>
+                    <div className="flex items-center gap-3 w-full" style={{ maxWidth: 420 }}>
+                      <Slider
+                        min={0}
+                        max={24}
+                        step={1}
+                        value={timeRange}
+                        onValueChange={setTimeRange}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-medium text-foreground whitespace-nowrap">
+                        {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                       📅 Days
+                     </span>
+                    <div className="flex gap-1.5">
+                      {ALL_DAYS.map((day) => {
+                        const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
+                        const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
+                        const isWeekend = !isWeekday;
+                        return (
+                          <button
+                            key={day}
+                            onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
+                            disabled={isWeekend}
+                            title={isWeekend ? "No calls on weekends" : undefined}
+                             className={cn(
+                              "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
+                              isWeekend && "cursor-not-allowed border border-slate-300 dark:border-white/10 text-slate-400 dark:text-white/25",
+                              isWeekday && isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
+                              isWeekday && !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
+                            )}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* DIVIDER */}
+              <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
+
+              {/* ZONE 3 — TOP SQL + Apply Filters */}
+              <div className="flex items-center gap-6">
+                {topSqlPerformer && (
+                  <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
+                    <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                      🏆 TOP SQL PERFORMER
+                    </span>
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground whitespace-nowrap">
+                      <span>{topSqlPerformer.sdrName}</span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="font-bold text-[#f43f5e]">{topSqlPerformer.sqlCount} {topSqlPerformer.sqlCount === 1 ? "SQL" : "SQLs"}</span>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* .divider-apply */}
-              <div className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]" style={{ width: 1, height: 48, margin: '0 20px' }} />
-
-              {/* Apply Filters button */}
-              <Button
-                onClick={() => setHistApplied(true)}
-                className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 px-5 text-sm shrink-0"
-              >
-                Apply Filters
-              </Button>
+                )}
+                <Button
+                  onClick={() => setHistApplied(true)}
+                  className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 px-5 text-sm shrink-0"
+                >
+                  Apply Filters
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
