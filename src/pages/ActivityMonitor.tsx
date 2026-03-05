@@ -921,9 +921,9 @@ const ActivityMonitor = () => {
             </Tabs>
 
             {/* Filter row — single flex row */}
-            <div className="flex items-center justify-between gap-6" style={{ padding: '12px 20px 16px' }}>
+            <div className="flex items-center" style={{ padding: '12px 20px 16px' }}>
               {/* .filter-left */}
-              <div className="flex items-center flex-1" style={{ gap: 0 }}>
+              <div className="flex items-center shrink-0" style={{ gap: 0 }}>
                 {/* .col1 — Date navigator */}
                 <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
                   <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
@@ -980,56 +980,58 @@ const ActivityMonitor = () => {
                 <div className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]" style={{ width: 1, height: 48, margin: '0 20px' }} />
 
                 {/* .col2 — Time Range / Days */}
-                <div className="flex flex-col flex-1" style={{ gap: 6 }}>
-                  {dateMode === "day" ? (
-                    <>
-                       <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                        🕐 Time Range
-                       </span>
-                      <div className="flex items-center gap-3">
-                        <Slider
-                          min={0}
-                          max={24}
-                          step={1}
-                          value={timeRange}
-                          onValueChange={setTimeRange}
-                          style={{ width: '100%', maxWidth: 360 }}
-                        />
-                        <span className="text-sm font-medium text-foreground whitespace-nowrap">
-                          {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                       <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                         📅 Days
-                       </span>
-                      <div className="flex gap-1.5">
-                        {ALL_DAYS.map((day) => {
-                          const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
-                          const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
-                          const isWeekend = !isWeekday;
-                          return (
-                            <button
-                              key={day}
-                              onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
-                              disabled={isWeekend}
-                              title={isWeekend ? "No calls on weekends" : undefined}
-                               className={cn(
-                                "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
-                                isWeekend && "cursor-not-allowed border border-slate-300 dark:border-white/10 text-slate-400 dark:text-white/25",
-                                isWeekday && isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
-                                isWeekday && !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
-                              )}
-                            >
-                              {day}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
+                <div className="flex flex-1 justify-center">
+                  <div className="flex flex-col" style={{ gap: 6 }}>
+                    {dateMode === "day" ? (
+                      <>
+                         <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                          🕐 Time Range
+                         </span>
+                        <div className="flex items-center gap-3">
+                          <Slider
+                            min={0}
+                            max={24}
+                            step={1}
+                            value={timeRange}
+                            onValueChange={setTimeRange}
+                            style={{ width: '100%', maxWidth: 360 }}
+                          />
+                          <span className="text-sm font-medium text-foreground whitespace-nowrap">
+                            {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                         <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                           📅 Days
+                         </span>
+                        <div className="flex gap-1.5">
+                          {ALL_DAYS.map((day) => {
+                            const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
+                            const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
+                            const isWeekend = !isWeekday;
+                            return (
+                              <button
+                                key={day}
+                                onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
+                                disabled={isWeekend}
+                                title={isWeekend ? "No calls on weekends" : undefined}
+                                 className={cn(
+                                  "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
+                                  isWeekend && "cursor-not-allowed border border-slate-300 dark:border-white/10 text-slate-400 dark:text-white/25",
+                                  isWeekday && isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
+                                  isWeekday && !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
+                                )}
+                              >
+                                {day}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
