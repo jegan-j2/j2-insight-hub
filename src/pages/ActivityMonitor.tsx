@@ -715,58 +715,78 @@ const ActivityMonitor = () => {
           .lte("created_at", endTimestamp)
           .order("created_at", { ascending: false });
 
-        // For each SQL, try to find an associated call recording
+        // Batch-fetch recordings: 2 queries instead of N+1
         const enrichedSqlData: SqlMeetingRow[] = [];
-        if (sqlData) {
+        if (sqlData && sqlData.length > 0) {
+          // Batch 1: fetch by hubspot_engagement_id
+          const engagementIds = sqlData
+            .map(s => s.hubspot_engagement_id)
+            .filter((id): id is string => !!id);
+          const engagementMap = new Map<string, { recording_url: string | null; call_duration: number | null }>();
+          if (engagementIds.length > 0) {
+            const { data: engData } = await supabase
+              .from("activity_log")
+              .select("hubspot_engagement_id, recording_url, call_duration")
+              .in("hubspot_engagement_id", engagementIds)
+              .not("recording_url", "is", null);
+            if (engData) {
+              for (const row of engData) {
+                if (row.hubspot_engagement_id && !engagementMap.has(row.hubspot_engagement_id)) {
+                  engagementMap.set(row.hubspot_engagement_id, {
+                    recording_url: row.recording_url,
+                    call_duration: row.call_duration,
+                  });
+                }
+              }
+            }
+          }
+
+          // Batch 2: fallback by contact_name for SQLs without engagement match
+          const fallbackNames = sqlData
+            .filter(s => !s.hubspot_engagement_id || !engagementMap.has(s.hubspot_engagement_id))
+            .map(s => s.contact_person?.trim())
+            .filter((n): n is string => !!n);
+          const nameMap = new Map<string, { recording_url: string | null; call_duration: number | null }>();
+          if (fallbackNames.length > 0) {
+            const { data: nameData } = await supabase
+              .from("activity_log")
+              .select("contact_name, recording_url, call_duration")
+              .eq("sdr_name", sdrName)
+              .ilike("call_outcome", "connected")
+              .not("recording_url", "is", null)
+              .in("contact_name", fallbackNames)
+              .order("call_duration", { ascending: false });
+            if (nameData) {
+              for (const row of nameData) {
+                const key = row.contact_name?.toLowerCase();
+                if (key && !nameMap.has(key)) {
+                  nameMap.set(key, {
+                    recording_url: row.recording_url,
+                    call_duration: row.call_duration,
+                  });
+                }
+              }
+            }
+          }
+
+          // Match results in memory
           for (const sql of sqlData) {
             let recording_url: string | null = null;
             let call_duration: number | null = null;
 
-            // 1. Try engagement ID first (most accurate — direct HubSpot link)
-            if (sql.hubspot_engagement_id) {
-              const { data: engData } = await supabase
-                .from("activity_log")
-                .select("recording_url, call_duration, activity_date")
-                .eq("hubspot_engagement_id", sql.hubspot_engagement_id)
-                .not("recording_url", "is", null)
-                .limit(1);
-
-              if (engData && engData.length > 0) {
-                recording_url = engData[0].recording_url;
-                call_duration = engData[0].call_duration;
+            if (sql.hubspot_engagement_id && engagementMap.has(sql.hubspot_engagement_id)) {
+              const match = engagementMap.get(sql.hubspot_engagement_id)!;
+              recording_url = match.recording_url;
+              call_duration = match.call_duration;
+            } else if (sql.contact_person) {
+              const match = nameMap.get(sql.contact_person.trim().toLowerCase());
+              if (match) {
+                recording_url = match.recording_url;
+                call_duration = match.call_duration;
               }
             }
 
-            // 2. Fallback to email/name matching (for legacy SQLs without engagement ID)
-            if (!recording_url) {
-              let query = supabase
-                .from("activity_log")
-                .select("recording_url, call_duration, activity_date")
-                .eq("sdr_name", sdrName)
-                .ilike("call_outcome", "connected")
-                .not("recording_url", "is", null);
-
-              if (sql.contact_email) {
-                query = query.eq("contact_email", sql.contact_email);
-              } else if (sql.contact_person) {
-                query = query.ilike("contact_name", sql.contact_person.trim());
-              }
-
-              const { data: callData } = await query
-                .order("call_duration", { ascending: false })
-                .limit(1);
-
-              if (callData && callData.length > 0) {
-                recording_url = callData[0].recording_url;
-                call_duration = callData[0].call_duration;
-              }
-            }
-
-            enrichedSqlData.push({
-              ...sql,
-              recording_url,
-              call_duration,
-            });
+            enrichedSqlData.push({ ...sql, recording_url, call_duration });
           }
         }
         enrichedSqlData.sort((a, b) =>
@@ -1071,7 +1091,7 @@ const ActivityMonitor = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpiCards.map((kpi) => (
           <Card key={kpi.label} className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -1087,7 +1107,7 @@ const ActivityMonitor = () => {
               {loading ? (
                 <div className="h-9 w-16 bg-muted/40 rounded animate-pulse" />
               ) : (
-                <p className="text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.value}</p>
               )}
             </CardContent>
           </Card>
@@ -1244,7 +1264,7 @@ const ActivityMonitor = () => {
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap">{clientNameMap[row.clientId] || row.clientId}</TableCell>
+                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>{clientNameMap[row.clientId] || row.clientId}</TableCell>
                         <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-center px-4 py-2">
                           <Button
@@ -1321,7 +1341,7 @@ const ActivityMonitor = () => {
 
       {/* Drill-down Modal */}
       <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col [&>div]:overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle>
               {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Connected Calls" : drillDown?.metric === "conversations" ? "Decision Maker Conversations" : "SQL Meetings"}
@@ -1347,7 +1367,7 @@ const ActivityMonitor = () => {
                 {drillDown?.metric === "conversations" ? "No decision maker conversations found in this time range." : "No connected calls found for this SDR in the selected time range."}
               </p>
             ) : (
-              <div className="overflow-auto flex-1 max-w-full">
+              <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
@@ -1435,15 +1455,15 @@ const ActivityMonitor = () => {
             drillDownSqlData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No SQLs booked for this SDR in the selected time range.</p>
             ) : (
-              <div className="overflow-auto flex-1 max-w-full">
-                <Table>
+              <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
+                <Table className="table-fixed w-full">
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date Booked</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Meeting Date</TableHead>
-                      <TableHead className="text-center font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Date Booked</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Contact Person</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Company</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[18%]">Meeting Date</TableHead>
+                      <TableHead className="text-center font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
