@@ -327,7 +327,7 @@ const ActivityMonitor = () => {
     if (mode !== "live") return;
     setLoading(true);
     try {
-      const [snapshotRes, activityRes] = await Promise.all([
+      const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([
         supabase
           .from("daily_snapshots")
           .select("sdr_name, client_id, dials, answered, dms_reached, sqls, answer_rate")
@@ -338,9 +338,15 @@ const ActivityMonitor = () => {
           .gte("activity_date", todayMelbourne + "T00:00:00")
           .lte("activity_date", todayMelbourne + "T23:59:59")
           .order("activity_date", { ascending: false }),
+        supabase
+          .from("sql_meetings")
+          .select("sdr_name")
+          .gte("created_at", todayMelbourne + "T00:00:00")
+          .lte("created_at", todayMelbourne + "T23:59:59"),
       ]);
       if (snapshotRes.data) setSnapshots(snapshotRes.data);
       if (activityRes.data) setActivities(activityRes.data);
+      if (liveSqlRes.data) setHistSqlMeetings(liveSqlRes.data as any);
     } catch (err) {
       console.error("Error fetching live data:", err);
     } finally {
@@ -534,6 +540,19 @@ const ActivityMonitor = () => {
             conversion: 0,
             lastActivity: null,
           });
+        }
+      }
+
+      // Override SQLs from sql_meetings for live mode
+      if (mode === "live") {
+        const liveSqlCounts = new Map<string, number>();
+        for (const m of histSqlMeetings) {
+          if (!m.sdr_name) continue;
+          liveSqlCounts.set(m.sdr_name, (liveSqlCounts.get(m.sdr_name) || 0) + 1);
+        }
+        for (const row of map.values()) {
+          const liveCount = liveSqlCounts.get(row.sdrName);
+          if (liveCount !== undefined) row.sqls = liveCount;
         }
       }
     } else {
@@ -902,9 +921,9 @@ const ActivityMonitor = () => {
             </Tabs>
 
             {/* Filter row — single flex row */}
-            <div className="flex items-center" style={{ padding: '12px 20px 16px' }}>
+            <div className="flex items-center justify-between" style={{ padding: '12px 20px 16px' }}>
               {/* .filter-left */}
-              <div className="flex items-center" style={{ gap: 0 }}>
+              <div className="flex items-center flex-1" style={{ gap: 0 }}>
                 {/* .col1 — Date navigator */}
                 <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
                   <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
@@ -1013,9 +1032,6 @@ const ActivityMonitor = () => {
                   )}
                 </div>
               </div>
-
-              {/* .spacer */}
-              <div style={{ minWidth: 40, maxWidth: 80 }} />
 
               {topSqlPerformer && (
                 <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
