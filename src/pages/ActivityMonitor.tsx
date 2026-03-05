@@ -980,7 +980,7 @@ const ActivityMonitor = () => {
                 <div className="shrink-0 self-center bg-slate-300 dark:bg-white/[0.08]" style={{ width: 1, height: 48, margin: '0 20px' }} />
 
                 {/* .col2 — Time Range / Days */}
-                <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
+                <div className="flex flex-col flex-1" style={{ gap: 6 }}>
                   {dateMode === "day" ? (
                     <>
                        <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
@@ -993,7 +993,7 @@ const ActivityMonitor = () => {
                           step={1}
                           value={timeRange}
                           onValueChange={setTimeRange}
-                          style={{ width: 260 }}
+                          style={{ width: '100%', maxWidth: 360 }}
                         />
                         <span className="text-sm font-medium text-foreground whitespace-nowrap">
                           {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
@@ -1180,7 +1180,7 @@ const ActivityMonitor = () => {
             <div className="w-full overflow-x-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border/50 dark:bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
+                  <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-center px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
@@ -1346,7 +1346,7 @@ const ActivityMonitor = () => {
               <div className="overflow-auto flex-1">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50 dark:bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
+                     <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
@@ -1434,7 +1434,7 @@ const ActivityMonitor = () => {
               <div className="overflow-auto flex-1">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50 dark:bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
+                     <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date Booked</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
