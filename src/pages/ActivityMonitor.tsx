@@ -921,7 +921,7 @@ const ActivityMonitor = () => {
             {/* Filter row — CSS Grid layout */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1px 1fr 1px 1fr',
+              gridTemplateColumns: '1fr 1px 1fr 1px 1fr 1px auto',
               alignItems: 'center',
               gap: '0 24px',
               padding: '16px 24px'
@@ -1037,10 +1037,10 @@ const ActivityMonitor = () => {
               {/* DIVIDER */}
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
-              {/* ZONE 3 — TOP SQL + Apply Filters */}
-              <div className="flex items-center justify-between w-full gap-6">
+              {/* ZONE 3 — TOP SQL */}
+              <div className="flex flex-col justify-center" style={{ gap: 6, padding: '14px 24px' }}>
                 {topSqlPerformer && (
-                  <div className="flex flex-col shrink-0" style={{ gap: 6, marginRight: 8 }}>
+                  <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       🏆 TOP SQL PERFORMER
                     </span>
@@ -1051,6 +1051,13 @@ const ActivityMonitor = () => {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* DIVIDER */}
+              <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
+
+              {/* ZONE 4 — Apply Filters */}
+              <div style={{ padding: '14px 24px' }}>
                 <Button
                   onClick={() => setHistApplied(true)}
                   className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 px-5 text-sm shrink-0"
