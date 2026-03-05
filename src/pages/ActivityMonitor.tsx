@@ -927,7 +927,7 @@ const ActivityMonitor = () => {
               padding: '16px 24px'
             }}>
               {/* ZONE 1 — Date navigator */}
-              <div className="flex flex-col" style={{ gap: 6 }}>
+              <div className="flex flex-col" style={{ gap: 6, marginLeft: 8 }}>
                 <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                   📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
                 </span>
@@ -982,7 +982,7 @@ const ActivityMonitor = () => {
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
               {/* ZONE 2 — Time Range / Days */}
-              <div className="flex flex-col items-center" style={{ gap: 6 }}>
+              <div className="flex flex-col items-end" style={{ gap: 6 }}>
                 {dateMode === "day" ? (
                   <>
                      <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
@@ -1040,7 +1040,7 @@ const ActivityMonitor = () => {
               {/* ZONE 3 — TOP SQL + Apply Filters */}
               <div className="flex items-center gap-6">
                 {topSqlPerformer && (
-                  <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
+                  <div className="flex flex-col shrink-0" style={{ gap: 6, marginRight: 8 }}>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       🏆 TOP SQL PERFORMER
                     </span>
