@@ -921,7 +921,7 @@ const ActivityMonitor = () => {
             {/* Filter row — CSS Grid layout */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'auto 1px 1fr 1px auto',
+              gridTemplateColumns: '1fr 1px 1fr 1px 1fr',
               alignItems: 'center',
               gap: '0 24px',
               padding: '16px 24px'
@@ -982,13 +982,13 @@ const ActivityMonitor = () => {
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
               {/* ZONE 2 — Time Range / Days */}
-              <div className="flex flex-col items-end" style={{ gap: 6 }}>
+              <div className="flex flex-col items-start" style={{ gap: 6 }}>
                 {dateMode === "day" ? (
                   <>
                      <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       🕐 Time Range
                      </span>
-                    <div className="flex items-center gap-3 w-full" style={{ maxWidth: 420 }}>
+                    <div className="flex items-center gap-3 w-full">
                       <Slider
                         min={0}
                         max={24}
@@ -1038,7 +1038,7 @@ const ActivityMonitor = () => {
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
               {/* ZONE 3 — TOP SQL + Apply Filters */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center justify-between w-full gap-6">
                 {topSqlPerformer && (
                   <div className="flex flex-col shrink-0" style={{ gap: 6, marginRight: 8 }}>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
