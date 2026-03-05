@@ -944,7 +944,7 @@ const ActivityMonitor = () => {
                       <PopoverTrigger asChild>
                         <button
                          className="flex items-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
-                          style={{ padding: '0 12px', height: 34 }}
+                          style={{ padding: '0 12px', height: 34, minWidth: 140 }}
                         >
                           <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
                           {format(histDate, "MMM d, yyyy")}
@@ -1244,7 +1244,7 @@ const ActivityMonitor = () => {
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground px-4 py-2">{clientNameMap[row.clientId] || row.clientId}</TableCell>
+                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap">{clientNameMap[row.clientId] || row.clientId}</TableCell>
                         <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-center px-4 py-2">
                           <Button
@@ -1347,7 +1347,7 @@ const ActivityMonitor = () => {
                 {drillDown?.metric === "conversations" ? "No decision maker conversations found in this time range." : "No connected calls found for this SDR in the selected time range."}
               </p>
             ) : (
-              <div className="overflow-auto flex-1">
+              <div className="overflow-auto flex-1 max-w-full">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
@@ -1435,7 +1435,7 @@ const ActivityMonitor = () => {
             drillDownSqlData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No SQLs booked for this SDR in the selected time range.</p>
             ) : (
-              <div className="overflow-auto flex-1">
+              <div className="overflow-auto flex-1 max-w-full">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
