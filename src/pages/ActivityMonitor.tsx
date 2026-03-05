@@ -688,11 +688,9 @@ const ActivityMonitor = () => {
         }
 
         const { data } = await query;
-        const sorted = (data || []).sort((a, b) => {
-          const dateDiff = new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime();
-          if (dateDiff !== 0) return dateDiff;
-          return (b.call_duration || 0) - (a.call_duration || 0);
-        });
+        const sorted = (data || []).sort((a, b) =>
+          (b.call_duration || 0) - (a.call_duration || 0)
+        );
         setDrillDownData(sorted);
       } else if (metric === "sqls") {
         let startTimestamp: string;
