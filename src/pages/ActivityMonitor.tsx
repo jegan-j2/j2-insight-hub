@@ -1374,7 +1374,7 @@ const ActivityMonitor = () => {
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
-                          <TableCell className="text-right text-right">
+                          <TableCell className="text-right">
                             {a.call_duration ? (
                               <span
                                 className={`font-medium ${
