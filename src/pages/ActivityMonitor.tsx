@@ -301,7 +301,7 @@ const ActivityMonitor = () => {
       const totalDays = getDaysInMonth(histDate);
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
-        label: `${format(monthStart, "MMM d")} – ${format(monthEnd, "MMM d, yyyy")} · ${totalDays} days`,
+        label: format(histDate, "MMMM yyyy"),
       };
     }
   }, [histDate, dateMode, selectedWeekdays]);
@@ -883,6 +883,7 @@ const ActivityMonitor = () => {
     const indices = sorted.map(d => ALL_DAYS.indexOf(d));
     const isConsecutive = indices.every((v, i) => i === 0 || v === indices[i - 1] + 1);
     if (isConsecutive) return `${sorted[0]} – ${sorted[sorted.length - 1]}`;
+    if (sorted.length > 4) return `${sorted.length} of 7 days`;
     return sorted.map(d => d.substring(0, 3)).join(", ");
   }, [selectedWeekdays]);
 
@@ -972,7 +973,7 @@ const ActivityMonitor = () => {
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
           <CardContent className="pt-2 space-y-2">
             {/* Date Mode Tabs */}
-            <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); }}>
+            <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
               <TabsList className="bg-muted/50">
                 <TabsTrigger value="day" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Day</TabsTrigger>
                 <TabsTrigger value="week" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Week</TabsTrigger>
@@ -991,7 +992,7 @@ const ActivityMonitor = () => {
               {/* ZONE 1 — Date navigator */}
               <div className="flex flex-col" style={{ gap: 6, padding: '2px 0' }}>
                 <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                  📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
+                  {dateMode === "day" ? "DATE" : dateMode === "week" ? "WEEK" : "MONTH"}
                 </span>
                 <div className="flex items-center gap-1">
                   <button
@@ -1047,7 +1048,7 @@ const ActivityMonitor = () => {
                 {dateMode === "day" ? (
                   <>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                      🕐 Time Range
+                      TIME RANGE
                     </span>
                     <div className="flex items-center gap-3 w-full">
                       <div style={pillsWidth > 0 ? { width: pillsWidth, flexShrink: 0 } : undefined} className={pillsWidth > 0 ? "" : "flex-1"}>
@@ -1059,8 +1060,8 @@ const ActivityMonitor = () => {
                           onValueChange={setTimeRange}
                         />
                       </div>
-                      <div className="flex-1 flex justify-center">
-                        <span className="text-sm font-semibold text-[#64748b]">
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                        <span className="text-xs font-semibold text-[#64748b]">
                           <span className="text-[#cbd5e1]">· </span>
                           {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
                         </span>
@@ -1070,7 +1071,7 @@ const ActivityMonitor = () => {
                 ) : (
                   <>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                      📅 Days
+                      DAYS
                     </span>
                     <div className="flex items-center gap-3 w-full">
                       <div ref={pillsRef} className="flex gap-1.5 shrink-0">
@@ -1091,8 +1092,8 @@ const ActivityMonitor = () => {
                           );
                         })}
                       </div>
-                      <div className="flex-1 flex justify-center">
-                        <span className="text-sm font-semibold text-[#64748b]">
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                        <span className="text-xs font-semibold text-[#64748b]">
                           <span className="text-[#cbd5e1]">· </span>
                           {daysSummary}
                         </span>
