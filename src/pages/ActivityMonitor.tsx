@@ -136,10 +136,6 @@ const ActivityMonitor = () => {
     clientId: string;
     createdAt: string;
   } | null>(null);
-  const [topSqlPerformer, setTopSqlPerformer] = useState<{
-    sdrName: string;
-    sqlCount: number;
-  } | null>(null);
 
   const SDR_PAGE_SIZE = 15;
   const DRILL_PAGE_SIZE = 15;
@@ -451,21 +447,6 @@ const ActivityMonitor = () => {
         setLatestSql(null);
       }
 
-      // Top SQL Performer — SDR with most SQLs in period
-      const sdrSqlCounts = new Map<string, number>();
-      for (const m of sqlRes.data || []) {
-        if (!m.sdr_name) continue;
-        sdrSqlCounts.set(m.sdr_name, (sdrSqlCounts.get(m.sdr_name) || 0) + 1);
-      }
-      let topSdr: string | null = null;
-      let topCount = 0;
-      for (const [name, count] of sdrSqlCounts) {
-        if (count > topCount) {
-          topCount = count;
-          topSdr = name;
-        }
-      }
-      setTopSqlPerformer(topSdr ? { sdrName: topSdr, sqlCount: topCount } : null);
     } catch (err) {
       console.error("Error fetching historical data:", err);
     } finally {
@@ -961,7 +942,7 @@ const ActivityMonitor = () => {
             {/* Filter row — CSS Grid layout */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1px 1fr 1px 1fr 1px auto',
+              gridTemplateColumns: '1fr 1px 2fr 1px auto',
               alignItems: 'center',
               gap: '0 24px',
               padding: '16px 24px'
@@ -1072,26 +1053,7 @@ const ActivityMonitor = () => {
               {/* DIVIDER */}
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
-              {/* ZONE 3 — TOP SQL */}
-              <div className="flex flex-col justify-center" style={{ gap: 6, padding: '14px 24px' }}>
-                {topSqlPerformer && (
-                  <div className="flex flex-col shrink-0" style={{ gap: 6 }}>
-                    <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                      🏆 TOP SQL PERFORMER
-                    </span>
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground whitespace-nowrap">
-                      <span>{topSqlPerformer.sdrName}</span>
-                      <span className="text-muted-foreground">·</span>
-                      <span className="font-bold text-[#f43f5e]">{topSqlPerformer.sqlCount} {topSqlPerformer.sqlCount === 1 ? "SQL" : "SQLs"}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* DIVIDER */}
-              <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
-
-              {/* ZONE 4 — Apply Filters */}
+              {/* ZONE 3 — Apply Filters */}
               <div style={{ padding: '14px 24px' }}>
                 <Button
                   onClick={() => setHistApplied(true)}
@@ -1356,7 +1318,7 @@ const ActivityMonitor = () => {
 
       {/* Drill-down Modal */}
       <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col [&>div]:overflow-hidden">
+        <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>
               {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Connected Calls" : drillDown?.metric === "conversations" ? "Decision Maker Conversations" : "SQL Meetings"}
@@ -1398,7 +1360,7 @@ const ActivityMonitor = () => {
                       <>
                         <TableRow key={a.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                            {new Date(a.activity_date).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })}
+                            {new Date(a.activity_date).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }).replace(' am', ' AM').replace(' pm', ' PM')}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
@@ -1487,7 +1449,7 @@ const ActivityMonitor = () => {
                         <TableRow key={m.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {m.created_at
-                              ? new Date(m.created_at).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true })
+                              ? new Date(m.created_at).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }).replace(' am', ' AM').replace(' pm', ' PM')
                               : format(new Date(m.booking_date), "MMM d, yyyy")}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
@@ -1540,17 +1502,23 @@ const ActivityMonitor = () => {
               </div>
             )
           )}
-          {(drillDownData.length > DRILL_PAGE_SIZE || drillDownSqlData.length > DRILL_PAGE_SIZE) && (
-            <div className="flex items-center justify-between px-2 pt-3 border-t border-border/50 shrink-0">
-              <span className="text-sm text-muted-foreground">
-                Showing {drillPage * DRILL_PAGE_SIZE + 1}–{Math.min((drillPage + 1) * DRILL_PAGE_SIZE, drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length)} of {drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length}
-              </span>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p - 1)} disabled={drillPage === 0} className="gap-1"><ChevronLeft className="h-4 w-4" /> Previous</Button>
-                <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p + 1)} disabled={(drillPage + 1) * DRILL_PAGE_SIZE >= (drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length)} className="gap-1">Next <ChevronRight className="h-4 w-4" /></Button>
+          {(() => {
+            const totalRecords = drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length;
+            if (totalRecords === 0) return null;
+            return (
+              <div className="flex items-center justify-between px-2 pt-3 border-t border-border/50 shrink-0">
+                <span className="text-sm text-muted-foreground">
+                  Showing {drillPage * DRILL_PAGE_SIZE + 1}–{Math.min((drillPage + 1) * DRILL_PAGE_SIZE, totalRecords)} of {totalRecords}
+                </span>
+                {totalRecords > DRILL_PAGE_SIZE && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p - 1)} disabled={drillPage === 0} className="gap-1"><ChevronLeft className="h-4 w-4" /> Previous</Button>
+                    <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p + 1)} disabled={(drillPage + 1) * DRILL_PAGE_SIZE >= totalRecords} className="gap-1">Next <ChevronRight className="h-4 w-4" /></Button>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
