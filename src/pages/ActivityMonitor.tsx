@@ -88,6 +88,9 @@ const formatHour = (h: number) => {
   return `${h - 12}:00 PM`;
 };
 
+const buildDateOrFilter = (dates: string[], field: string) =>
+  dates.map(d => `and(${field}.gte.${d}T00:00:00,${field}.lte.${d}T23:59:59)`).join(",");
+
 const getMelbourneToday = () => {
   const now = new Date();
   const melb = new Intl.DateTimeFormat("en-AU", {
@@ -397,15 +400,23 @@ const ActivityMonitor = () => {
       const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
 
       const [activityData, sqlRes, snapshotRes] = await Promise.all([
-        fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) =>
-          q.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp),
-          "activity_date"
-        ),
-        supabase
-          .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id")
-          .gte("created_at", startTimestamp)
-          .lte("created_at", endTimestamp),
+        fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) => {
+          if (dates.length === 1) {
+            return q.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp);
+          }
+          return q.or(buildDateOrFilter(dates, "activity_date"));
+        }, "activity_date"),
+        (() => {
+          let q = supabase
+            .from("sql_meetings")
+            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id");
+          if (dates.length === 1) {
+            q = q.gte("created_at", startTimestamp).lte("created_at", endTimestamp);
+          } else {
+            q = q.or(buildDateOrFilter(dates, "created_at"));
+          }
+          return q;
+        })(),
         supabase
           .from("daily_snapshots")
           .select("sdr_name, client_id, dms_reached")
@@ -664,56 +675,66 @@ const ActivityMonitor = () => {
         let endTimestamp: string;
 
         if (mode === "live") {
-          startTimestamp = `${todayMelbourne}T00:00:00`;
-          endTimestamp = `${todayMelbourne}T23:59:59`;
+          const startTs = `${todayMelbourne}T00:00:00`;
+          const endTs2 = `${todayMelbourne}T23:59:59`;
+          let query = supabase
+            .from("activity_log")
+            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker")
+            .eq("sdr_name", sdrName)
+            .ilike("call_outcome", "connected")
+            .gte("activity_date", startTs)
+            .lte("activity_date", endTs2)
+            .order("activity_date", { ascending: false });
+          if (metric === "conversations") query = query.eq("is_decision_maker", true);
+          const { data } = await query;
+          const sorted = (data || []).sort((a, b) => (b.call_duration || 0) - (a.call_duration || 0));
+          setDrillDownData(sorted);
         } else {
           const dates = dateRangeInfo.dates;
-          const startHour = String(timeRange[0]).padStart(2, "0");
-          const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-          startTimestamp = `${dates[0]}T${startHour}:00:00`;
-          endTimestamp = `${dates[dates.length - 1]}T${endTs}`;
+          let query = supabase
+            .from("activity_log")
+            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker")
+            .eq("sdr_name", sdrName)
+            .ilike("call_outcome", "connected");
+          if (dates.length === 1) {
+            const startHour = String(timeRange[0]).padStart(2, "0");
+            const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
+            query = query.gte("activity_date", `${dates[0]}T${startHour}:00:00`).lte("activity_date", `${dates[0]}T${endTs}`);
+          } else {
+            query = query.or(buildDateOrFilter(dates, "activity_date"));
+          }
+          query = query.order("activity_date", { ascending: false });
+          if (metric === "conversations") query = query.eq("is_decision_maker", true);
+          const { data } = await query;
+          const sorted = (data || []).sort((a, b) => (b.call_duration || 0) - (a.call_duration || 0));
+          setDrillDownData(sorted);
         }
-
-        let query = supabase
-          .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker")
-          .eq("sdr_name", sdrName)
-          .ilike("call_outcome", "connected")
-          .gte("activity_date", startTimestamp)
-          .lte("activity_date", endTimestamp)
-          .order("activity_date", { ascending: false });
-
-        if (metric === "conversations") {
-          query = query.eq("is_decision_maker", true);
-        }
-
-        const { data } = await query;
         const sorted = (data || []).sort((a, b) =>
           (b.call_duration || 0) - (a.call_duration || 0)
         );
         setDrillDownData(sorted);
       } else if (metric === "sqls") {
-        let startTimestamp: string;
-        let endTimestamp: string;
-
-        if (mode === "live") {
-          startTimestamp = `${todayMelbourne}T00:00:00`;
-          endTimestamp = `${todayMelbourne}T23:59:59`;
-        } else {
-          const dates = dateRangeInfo.dates;
-          const startHour = String(timeRange[0]).padStart(2, "0");
-          const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-          startTimestamp = `${dates[0]}T${startHour}:00:00`;
-          endTimestamp = `${dates[dates.length - 1]}T${endTs}`;
-        }
-
-        const { data: sqlData } = await supabase
+        let sqlQuery = supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id")
-          .eq("sdr_name", sdrName)
-          .gte("created_at", startTimestamp)
-          .lte("created_at", endTimestamp)
-          .order("created_at", { ascending: false });
+          .eq("sdr_name", sdrName);
+
+        if (mode === "live") {
+          sqlQuery = sqlQuery
+            .gte("created_at", `${todayMelbourne}T00:00:00`)
+            .lte("created_at", `${todayMelbourne}T23:59:59`);
+        } else {
+          const dates = dateRangeInfo.dates;
+          if (dates.length === 1) {
+            const startHour = String(timeRange[0]).padStart(2, "0");
+            const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
+            sqlQuery = sqlQuery.gte("created_at", `${dates[0]}T${startHour}:00:00`).lte("created_at", `${dates[0]}T${endTs}`);
+          } else {
+            sqlQuery = sqlQuery.or(buildDateOrFilter(dates, "created_at"));
+          }
+        }
+
+        const { data: sqlData } = await sqlQuery.order("created_at", { ascending: false });
 
         // Batch-fetch recordings: 2 queries instead of N+1
         const enrichedSqlData: SqlMeetingRow[] = [];
