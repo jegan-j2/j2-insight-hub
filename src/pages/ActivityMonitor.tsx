@@ -15,7 +15,7 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
-import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval } from "date-fns";
+import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval, getDaysInMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SDRAvatar } from "@/components/SDRAvatar";
 import { useToast } from "@/hooks/use-toast";
@@ -263,6 +263,8 @@ const ActivityMonitor = () => {
   const [histApplied, setHistApplied] = useState(false);
   const [histSqlMeetings, setHistSqlMeetings] = useState<SqlMeetingRow[]>([]);
   const [dateMode, setDateMode] = useState<DateMode>("day");
+  const pillsRef = useRef<HTMLDivElement>(null);
+  const [pillsWidth, setPillsWidth] = useState(0);
 
   const todayMelbourne = useMemo(getMelbourneToday, []);
   const todayFormatted = useMemo(() => {
@@ -283,22 +285,23 @@ const ActivityMonitor = () => {
 
     if (dateMode === "day") {
       const dateStr = format(histDate, "yyyy-MM-dd");
-      return { dates: [dateStr], label: format(histDate, "EEEE, MMMM d, yyyy") };
+      return { dates: [dateStr], label: format(histDate, "EEEE, MMM d, yyyy") };
     } else if (dateMode === "week") {
       const weekStart = startOfWeek(histDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(histDate, { weekStartsOn: 1 });
       const days = filterByWeekdays(eachDayOfInterval({ start: weekStart, end: weekEnd }));
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
-        label: `${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d, yyyy")}`,
+        label: `${format(weekStart, "EEE, MMM d")} – ${format(weekEnd, "EEE, MMM d, yyyy")}`,
       };
     } else {
       const monthStart = startOfMonth(histDate);
       const monthEnd = endOfMonth(histDate);
       const days = filterByWeekdays(eachDayOfInterval({ start: monthStart, end: monthEnd }));
+      const totalDays = getDaysInMonth(histDate);
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
-        label: format(histDate, "MMMM yyyy"),
+        label: `${format(monthStart, "MMM d")} – ${format(monthEnd, "MMM d, yyyy")} · ${totalDays} days`,
       };
     }
   }, [histDate, dateMode, selectedWeekdays]);
@@ -855,6 +858,34 @@ const ActivityMonitor = () => {
     });
   };
 
+  // Measure pills width for slider sizing
+  useEffect(() => {
+    const measure = () => {
+      if (pillsRef.current) {
+        setPillsWidth(pillsRef.current.offsetWidth);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [dateMode, selectedWeekdays]);
+
+  const daysSummary = useMemo(() => {
+    const days = selectedWeekdays;
+    if (days.length === 0) return "";
+    if (days.length === 7) return "Monday – Sunday";
+    const isMonFri = days.length === 5 && ALL_WEEKDAYS.every(d => days.includes(d));
+    if (isMonFri) return "Monday – Friday";
+    const isSatSun = days.length === 2 && days.includes("Saturday") && days.includes("Sunday");
+    if (isSatSun) return "Saturday – Sunday";
+    const sorted = [...days].sort((a, b) => ALL_DAYS.indexOf(a) - ALL_DAYS.indexOf(b));
+    if (days.length === 1) return sorted[0];
+    const indices = sorted.map(d => ALL_DAYS.indexOf(d));
+    const isConsecutive = indices.every((v, i) => i === 0 || v === indices[i - 1] + 1);
+    if (isConsecutive) return `${sorted[0]} – ${sorted[sorted.length - 1]}`;
+    return sorted.map(d => d.substring(0, 3)).join(", ");
+  }, [selectedWeekdays]);
+
   const navigateDate = (direction: "prev" | "next") => {
     if (dateMode === "day") {
       setHistDate(d => direction === "next" ? new Date(d.getTime() + 86400000) : new Date(d.getTime() - 86400000));
@@ -958,7 +989,7 @@ const ActivityMonitor = () => {
               padding: '8px 24px'
             }}>
               {/* ZONE 1 — Date navigator */}
-              <div className="flex flex-col" style={{ gap: 6, marginLeft: 8 }}>
+              <div className="flex flex-col" style={{ gap: 6, padding: '2px 0' }}>
                 <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                   📅 {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
                 </span>
@@ -1012,49 +1043,60 @@ const ActivityMonitor = () => {
               {/* DIVIDER */}
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
-              {/* ZONE 2 — Time Range / Days */}
-              <div className="flex flex-col items-start" style={{ gap: 6 }}>
+              <div className="flex flex-col items-start" style={{ gap: 6, padding: '2px 0' }}>
                 {dateMode === "day" ? (
                   <>
-                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                    <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       🕐 Time Range
-                     </span>
+                    </span>
                     <div className="flex items-center gap-3 w-full">
-                      <Slider
-                        min={0}
-                        max={24}
-                        step={1}
-                        value={timeRange}
-                        onValueChange={setTimeRange}
-                        className="flex-1"
-                      />
-                      <span className="text-sm font-medium text-foreground whitespace-nowrap">
-                        {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                      </span>
+                      <div style={pillsWidth > 0 ? { width: pillsWidth, flexShrink: 0 } : undefined} className={pillsWidth > 0 ? "" : "flex-1"}>
+                        <Slider
+                          min={0}
+                          max={24}
+                          step={1}
+                          value={timeRange}
+                          onValueChange={setTimeRange}
+                        />
+                      </div>
+                      <div className="flex-1 flex justify-center">
+                        <span className="text-sm font-semibold text-[#64748b]">
+                          <span className="text-[#cbd5e1]">· </span>
+                          {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                        </span>
+                      </div>
                     </div>
                   </>
                 ) : (
                   <>
-                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
-                       📅 Days
-                     </span>
-                    <div className="flex gap-1.5">
-                      {ALL_DAYS.map((day) => {
-                        const isActive = selectedWeekdays.includes(day);
-                        return (
-                          <button
-                            key={day}
-                            onClick={() => toggleWeekday(day)}
-                             className={cn(
-                              "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
-                              isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
-                              !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
-                            )}
-                          >
-                            {day}
-                          </button>
-                        );
-                      })}
+                    <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
+                      📅 Days
+                    </span>
+                    <div className="flex items-center gap-3 w-full">
+                      <div ref={pillsRef} className="flex gap-1.5 shrink-0">
+                        {ALL_DAYS.map((day) => {
+                          const isActive = selectedWeekdays.includes(day);
+                          return (
+                            <button
+                              key={day}
+                              onClick={() => toggleWeekday(day)}
+                              className={cn(
+                                "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
+                                isActive && "bg-[#0f172a] text-white hover:opacity-90 border-transparent dark:bg-white dark:text-[#0f172a]",
+                                !isActive && "bg-transparent text-[#94a3b8] hover:text-foreground border border-[#e2e8f0] dark:border-white/10"
+                              )}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex-1 flex justify-center">
+                        <span className="text-sm font-semibold text-[#64748b]">
+                          <span className="text-[#cbd5e1]">· </span>
+                          {daysSummary}
+                        </span>
+                      </div>
                     </div>
                   </>
                 )}
@@ -1064,7 +1106,7 @@ const ActivityMonitor = () => {
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
               {/* ZONE 3 — Apply Filters */}
-              <div style={{ padding: '14px 24px' }}>
+              <div style={{ padding: '14px 0' }}>
                 <Button
                   onClick={() => setHistApplied(true)}
                   className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 px-5 text-sm shrink-0"
