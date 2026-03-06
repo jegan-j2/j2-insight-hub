@@ -971,7 +971,7 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
-          <CardContent style={{ padding: '8px 0 10px 0' }}>
+          <CardContent style={{ padding: '6px 0 8px 0' }}>
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
               <TabsList className="bg-muted/50">
@@ -987,7 +987,7 @@ const ActivityMonitor = () => {
               gridTemplateColumns: '1fr 1px 2fr 1px auto',
               alignItems: 'center',
               gap: '0 24px',
-              padding: '4px 16px'
+              padding: '2px 16px'
             }}>
               {/* ZONE 1 — Date navigator */}
               <div className="flex flex-col" style={{ gap: 6, padding: '2px 0' }}>
@@ -997,7 +997,7 @@ const ActivityMonitor = () => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => navigateDate("prev")}
-                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md"
+                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md border border-white/20"
                     style={{ width: 30, height: 34 }}
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
@@ -1006,7 +1006,7 @@ const ActivityMonitor = () => {
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
-                         className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-[#0f172a] border border-transparent rounded-md"
+                         className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-[#0f172a] border border-white/20 rounded-md"
                           style={{ padding: '0 12px', height: 34, minWidth: 140 }}
                         >
                           <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
@@ -1025,7 +1025,7 @@ const ActivityMonitor = () => {
                     </Popover>
                   ) : (
                     <div
-                      className="flex items-center justify-center text-xs font-medium text-white whitespace-nowrap bg-[#0f172a] border border-transparent rounded-md"
+                      className="flex items-center justify-center text-xs font-medium text-white whitespace-nowrap bg-[#0f172a] border border-white/20 rounded-md"
                       style={{ padding: '0 12px', height: 34 }}
                     >
                       {dateRangeInfo.label}
@@ -1033,7 +1033,7 @@ const ActivityMonitor = () => {
                   )}
                   <button
                     onClick={() => navigateDate("next")}
-                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md"
+                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md border border-white/20"
                     style={{ width: 30, height: 34 }}
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -1401,7 +1401,7 @@ const ActivityMonitor = () => {
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">{mode === "live" ? "Time" : "Date"}</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
                       <TableHead className="text-right font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
@@ -1413,7 +1413,20 @@ const ActivityMonitor = () => {
                       <>
                         <TableRow key={a.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                            {new Date(a.activity_date).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }).replace(' am', ' AM').replace(' pm', ' PM')}
+                            {mode === "live"
+                              ? new Date(a.activity_date).toLocaleTimeString("en-AU", {
+                                  timeZone: "Australia/Melbourne",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                }).replace(' am', ' AM').replace(' pm', ' PM')
+                              : new Date(a.activity_date).toLocaleDateString("en-AU", {
+                                  timeZone: "Australia/Melbourne",
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })
+                            }
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
@@ -1489,7 +1502,7 @@ const ActivityMonitor = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Date Booked</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">{mode === "live" ? "Time Booked" : "Date Booked"}</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Company</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[18%]">Meeting Date</TableHead>
@@ -1502,7 +1515,20 @@ const ActivityMonitor = () => {
                         <TableRow key={m.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {m.created_at
-                              ? new Date(m.created_at).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }).replace(' am', ' AM').replace(' pm', ' PM')
+                              ? (mode === "live"
+                                ? new Date(m.created_at).toLocaleTimeString("en-AU", {
+                                    timeZone: "Australia/Melbourne",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  }).replace(' am', ' AM').replace(' pm', ' PM')
+                                : new Date(m.created_at).toLocaleDateString("en-AU", {
+                                    timeZone: "Australia/Melbourne",
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })
+                              )
                               : format(new Date(m.booking_date), "MMM d, yyyy")}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
