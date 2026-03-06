@@ -265,8 +265,6 @@ const ActivityMonitor = () => {
   const [dateMode, setDateMode] = useState<DateMode>("day");
   const pillsRef = useRef<HTMLDivElement>(null);
   const [pillsWidth, setPillsWidth] = useState(0);
-  const zone2Ref = useRef<HTMLDivElement>(null);
-  const [zone2Width, setZone2Width] = useState(0);
 
   const todayMelbourne = useMemo(getMelbourneToday, []);
   const todayFormatted = useMemo(() => {
@@ -872,17 +870,6 @@ const ActivityMonitor = () => {
     return () => window.removeEventListener("resize", measure);
   }, [dateMode, selectedWeekdays]);
 
-  // Measure Zone 2 width for slider fallback
-  useEffect(() => {
-    const measure = () => {
-      if (zone2Ref.current) {
-        setZone2Width(zone2Ref.current.offsetWidth);
-      }
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [dateMode]);
 
   const daysSummary = useMemo(() => {
     const days = selectedWeekdays;
@@ -1058,14 +1045,14 @@ const ActivityMonitor = () => {
               {/* DIVIDER */}
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
-              <div ref={zone2Ref} className="flex flex-col items-start" style={{ gap: 6, padding: '2px 0' }}>
+              <div className="flex flex-col items-start" style={{ gap: 6, padding: '2px 0' }}>
                 {dateMode === "day" ? (
                   <>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       TIME RANGE
                     </span>
                     <div className="flex items-center gap-3 w-full">
-                      <div style={{ width: pillsWidth > 0 ? pillsWidth : zone2Width > 0 ? Math.round(zone2Width * 0.62) : 400, flexShrink: 0 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <Slider
                           min={0}
                           max={24}
@@ -1074,8 +1061,8 @@ const ActivityMonitor = () => {
                           onValueChange={setTimeRange}
                         />
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-                        <span className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8]">
+                      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                        <span className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8] whitespace-nowrap">
                           <span className="text-[#cbd5e1]">· </span>
                           {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
                         </span>
