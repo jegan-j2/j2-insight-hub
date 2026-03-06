@@ -285,22 +285,23 @@ const ActivityMonitor = () => {
 
     if (dateMode === "day") {
       const dateStr = format(histDate, "yyyy-MM-dd");
-      return { dates: [dateStr], label: format(histDate, "EEEE, MMMM d, yyyy") };
+      return { dates: [dateStr], label: format(histDate, "EEEE, MMM d, yyyy") };
     } else if (dateMode === "week") {
       const weekStart = startOfWeek(histDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(histDate, { weekStartsOn: 1 });
       const days = filterByWeekdays(eachDayOfInterval({ start: weekStart, end: weekEnd }));
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
-        label: `${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d, yyyy")}`,
+        label: `${format(weekStart, "EEE, MMM d")} – ${format(weekEnd, "EEE, MMM d, yyyy")}`,
       };
     } else {
       const monthStart = startOfMonth(histDate);
       const monthEnd = endOfMonth(histDate);
       const days = filterByWeekdays(eachDayOfInterval({ start: monthStart, end: monthEnd }));
+      const totalDays = getDaysInMonth(histDate);
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
-        label: format(histDate, "MMMM yyyy"),
+        label: `${format(monthStart, "MMM d")} – ${format(monthEnd, "MMM d, yyyy")} · ${totalDays} days`,
       };
     }
   }, [histDate, dateMode, selectedWeekdays]);
