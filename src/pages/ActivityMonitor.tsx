@@ -27,8 +27,8 @@ type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "conversations" |
 type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls" | "conversations";
 type DateMode = "day" | "week" | "month";
-type WeekDay = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
-type AllDay = WeekDay | "Sat" | "Sun";
+type WeekDay = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday";
+type AllDay = WeekDay | "Saturday" | "Sunday";
 
 interface SqlMeetingRow {
   id: string;
@@ -105,9 +105,9 @@ const getMelbourneToday = () => {
   return `${y}-${m}-${d}`;
 };
 
-const ALL_WEEKDAYS: WeekDay[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const ALL_DAYS: AllDay[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const WEEKDAY_MAP: Record<AllDay, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
+const ALL_WEEKDAYS: WeekDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const ALL_DAYS: AllDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0 };
 
 const ActivityMonitor = () => {
   const [mode, setMode] = useState<Mode>("live");
@@ -671,7 +671,12 @@ const ActivityMonitor = () => {
             .order("activity_date", { ascending: false });
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
-          const sorted = (data || []).sort((a, b) => (b.call_duration || 0) - (a.call_duration || 0));
+          const sorted = (data || []).sort((a, b) => {
+            const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
+            const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
+            if (dateB !== dateA) return dateB - dateA;
+            return (b.call_duration || 0) - (a.call_duration || 0);
+          });
           setDrillDownData(sorted);
         } else {
           const dates = dateRangeInfo.dates;
@@ -690,7 +695,12 @@ const ActivityMonitor = () => {
           query = query.order("activity_date", { ascending: false });
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
-          const sorted = (data || []).sort((a, b) => (b.call_duration || 0) - (a.call_duration || 0));
+          const sorted = (data || []).sort((a, b) => {
+            const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
+            const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
+            if (dateB !== dateA) return dateB - dateA;
+            return (b.call_duration || 0) - (a.call_duration || 0);
+          });
           setDrillDownData(sorted);
         }
       } else if (metric === "sqls") {
@@ -905,7 +915,7 @@ const ActivityMonitor = () => {
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 mode === "live"
-                  ? "bg-green-500/15 text-green-500 border-r border-border"
+                  ? "bg-[#0f172a] text-white border-r border-border"
                   : "bg-card text-muted-foreground hover:text-foreground border-r border-border"
               )}
             >
@@ -916,7 +926,7 @@ const ActivityMonitor = () => {
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 mode === "historical"
-                  ? "bg-blue-500/15 text-blue-500"
+                  ? "bg-[#0f172a] text-white"
                   : "bg-card text-muted-foreground hover:text-foreground"
               )}
             >
@@ -929,7 +939,7 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-3 space-y-4">
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); }}>
               <TabsList className="bg-muted/50">
@@ -945,7 +955,7 @@ const ActivityMonitor = () => {
               gridTemplateColumns: '1fr 1px 2fr 1px auto',
               alignItems: 'center',
               gap: '0 24px',
-              padding: '16px 24px'
+              padding: '10px 24px'
             }}>
               {/* ZONE 1 — Date navigator */}
               <div className="flex flex-col" style={{ gap: 6, marginLeft: 8 }}>
@@ -1321,7 +1331,7 @@ const ActivityMonitor = () => {
         <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>
-              {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Connected Calls" : drillDown?.metric === "conversations" ? "Decision Maker Conversations" : "SQL Meetings"}
+              {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Answered Calls" : drillDown?.metric === "conversations" ? "DM Conversations" : "SQL Meetings"}
             </DialogTitle>
             {drillDown?.metric === "sqls" ? (
               <p className="text-sm text-muted-foreground mt-1">
@@ -1349,22 +1359,22 @@ const ActivityMonitor = () => {
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
                       <TableHead className="text-right font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
                       <TableHead className="text-center font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {drillDownData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((a) => (
+                    {drillDownData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((a, index) => (
                       <>
-                        <TableRow key={a.id} className="border-border/50">
+                        <TableRow key={a.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {new Date(a.activity_date).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(a.activity_date).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }).replace(' am', ' AM').replace(' pm', ' PM')}
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right text-right">
                             {a.call_duration ? (
                               <span
                                 className={`font-medium ${
@@ -1444,9 +1454,9 @@ const ActivityMonitor = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m) => (
+                    {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => (
                       <>
-                        <TableRow key={m.id} className="border-border/50">
+                        <TableRow key={m.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {m.created_at
                               ? new Date(m.created_at).toLocaleDateString("en-AU", { timeZone: "Australia/Melbourne", month: "short", day: "numeric", year: "numeric" }) + ", " + new Date(m.created_at).toLocaleTimeString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", minute: "2-digit", hour12: true }).replace(' am', ' AM').replace(' pm', ' PM')
