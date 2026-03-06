@@ -709,10 +709,6 @@ const ActivityMonitor = () => {
           const sorted = (data || []).sort((a, b) => (b.call_duration || 0) - (a.call_duration || 0));
           setDrillDownData(sorted);
         }
-        const sorted = (data || []).sort((a, b) =>
-          (b.call_duration || 0) - (a.call_duration || 0)
-        );
-        setDrillDownData(sorted);
       } else if (metric === "sqls") {
         let sqlQuery = supabase
           .from("sql_meetings")
