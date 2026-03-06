@@ -947,7 +947,7 @@ const ActivityMonitor = () => {
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 mode === "live"
-                  ? "bg-[#0f172a] text-white border-r border-border"
+                  ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-r border-border"
                   : "bg-card text-muted-foreground hover:text-foreground border-r border-border"
               )}
             >
@@ -958,7 +958,7 @@ const ActivityMonitor = () => {
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 mode === "historical"
-                  ? "bg-[#0f172a] text-white"
+                  ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
                   : "bg-card text-muted-foreground hover:text-foreground"
               )}
             >
@@ -971,10 +971,10 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
-          <CardContent style={{ padding: '6px 0 8px 0' }}>
+           <CardContent style={{ padding: '4px 0 8px 0' }}>
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
-              <TabsList className="bg-muted/50">
+              <TabsList className="bg-muted/50" style={{ marginTop: 0, marginBottom: 4 }}>
                 <TabsTrigger value="day" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Day</TabsTrigger>
                 <TabsTrigger value="week" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Week</TabsTrigger>
                 <TabsTrigger value="month" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Month</TabsTrigger>
@@ -987,7 +987,7 @@ const ActivityMonitor = () => {
               gridTemplateColumns: '1fr 1px 2fr 1px auto',
               alignItems: 'center',
               gap: '0 24px',
-              padding: '2px 16px'
+              padding: '0px 16px 2px 16px'
             }}>
               {/* ZONE 1 — Date navigator */}
               <div className="flex flex-col" style={{ gap: 6, padding: '2px 0' }}>
@@ -1051,7 +1051,7 @@ const ActivityMonitor = () => {
                       TIME RANGE
                     </span>
                     <div className="flex items-center gap-3 w-full">
-                      <div style={pillsWidth > 0 ? { width: pillsWidth, flexShrink: 0 } : undefined} className={pillsWidth > 0 ? "" : "flex-1"}>
+                      <div style={{ width: pillsWidth > 0 ? pillsWidth : 400, flexShrink: 0 }}>
                         <Slider
                           min={0}
                           max={24}
