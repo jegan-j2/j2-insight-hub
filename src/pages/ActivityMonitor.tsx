@@ -939,13 +939,13 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
-          <CardContent className="pt-3 space-y-4">
+          <CardContent className="pt-2 space-y-2">
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); }}>
               <TabsList className="bg-muted/50">
-                <TabsTrigger value="day">Day</TabsTrigger>
-                <TabsTrigger value="week">Week</TabsTrigger>
-                <TabsTrigger value="month">Month</TabsTrigger>
+                <TabsTrigger value="day" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Day</TabsTrigger>
+                <TabsTrigger value="week" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Week</TabsTrigger>
+                <TabsTrigger value="month" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Month</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -955,7 +955,7 @@ const ActivityMonitor = () => {
               gridTemplateColumns: '1fr 1px 2fr 1px auto',
               alignItems: 'center',
               gap: '0 24px',
-              padding: '10px 24px'
+              padding: '8px 24px'
             }}>
               {/* ZONE 1 — Date navigator */}
               <div className="flex flex-col" style={{ gap: 6, marginLeft: 8 }}>
