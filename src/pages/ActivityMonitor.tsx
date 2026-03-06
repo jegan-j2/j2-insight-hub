@@ -107,7 +107,7 @@ const getMelbourneToday = () => {
 
 const ALL_WEEKDAYS: WeekDay[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const ALL_DAYS: AllDay[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const WEEKDAY_MAP: Record<WeekDay, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5 };
+const WEEKDAY_MAP: Record<AllDay, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
 
 const ActivityMonitor = () => {
   const [mode, setMode] = useState<Mode>("live");
@@ -263,7 +263,7 @@ const ActivityMonitor = () => {
   // Historical filters
   const [histDate, setHistDate] = useState<Date>(new Date());
   const [timeRange, setTimeRange] = useState<number[]>([9, 17]);
-  const [selectedWeekdays, setSelectedWeekdays] = useState<WeekDay[]>([...ALL_WEEKDAYS]);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<AllDay[]>([...ALL_WEEKDAYS]);
   const [histApplied, setHistApplied] = useState(false);
   const [histSqlMeetings, setHistSqlMeetings] = useState<SqlMeetingRow[]>([]);
   const [dateMode, setDateMode] = useState<DateMode>("day");
@@ -387,11 +387,14 @@ const ActivityMonitor = () => {
     setLoading(true);
     try {
       const dates = dateRangeInfo.dates;
-      const startHour = String(timeRange[0]).padStart(2, "0");
-      const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-
       const firstDate = dates[0];
       const lastDate = dates[dates.length - 1];
+
+      // Only use timeRange for day mode; week/month always use full day
+      const isDayMode = dateMode === "day";
+      const startHour = isDayMode ? String(timeRange[0]).padStart(2, "0") : "00";
+      const endTs = isDayMode ? (timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`) : "23:59:59";
+
       const startTimestamp = `${firstDate}T${startHour}:00:00`;
       const endTimestamp = `${lastDate}T${endTs}`;
 
@@ -851,7 +854,7 @@ const ActivityMonitor = () => {
     return Date.now() - lastActivity.getTime() < 5 * 60 * 1000;
   };
 
-  const toggleWeekday = (day: WeekDay) => {
+  const toggleWeekday = (day: AllDay) => {
     setSelectedWeekdays(prev => {
       if (prev.includes(day)) {
         if (prev.length === 1) return prev;
@@ -947,7 +950,7 @@ const ActivityMonitor = () => {
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
           <CardContent className="pt-6 space-y-4">
             {/* Date Mode Tabs */}
-            <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as DateMode)}>
+            <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); }}>
               <TabsList className="bg-muted/50">
                 <TabsTrigger value="day">Day</TabsTrigger>
                 <TabsTrigger value="week">Week</TabsTrigger>
@@ -1046,20 +1049,15 @@ const ActivityMonitor = () => {
                      </span>
                     <div className="flex gap-1.5">
                       {ALL_DAYS.map((day) => {
-                        const isWeekday = ALL_WEEKDAYS.includes(day as WeekDay);
-                        const isActive = isWeekday && selectedWeekdays.includes(day as WeekDay);
-                        const isWeekend = !isWeekday;
+                        const isActive = selectedWeekdays.includes(day);
                         return (
                           <button
                             key={day}
-                            onClick={() => isWeekday && toggleWeekday(day as WeekDay)}
-                            disabled={isWeekend}
-                            title={isWeekend ? "No calls on weekends" : undefined}
+                            onClick={() => toggleWeekday(day)}
                              className={cn(
                               "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
-                              isWeekend && "cursor-not-allowed border border-slate-300 dark:border-white/10 text-slate-400 dark:text-white/25",
-                              isWeekday && isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
-                              isWeekday && !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
+                              isActive && "bg-[#3b82f6] text-white hover:bg-blue-600 border-transparent",
+                              !isActive && "bg-transparent text-muted-foreground hover:text-foreground border border-slate-300 dark:border-white/10"
                             )}
                           >
                             {day}
