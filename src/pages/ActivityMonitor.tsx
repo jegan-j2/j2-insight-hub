@@ -301,7 +301,7 @@ const ActivityMonitor = () => {
       const totalDays = getDaysInMonth(histDate);
       return {
         dates: days.map(d => format(d, "yyyy-MM-dd")),
-        label: format(histDate, "MMMM yyyy"),
+        label: `${format(monthStart, "MMM d")} – ${format(monthEnd, "MMM d, yyyy")} · ${totalDays} days`,
       };
     }
   }, [histDate, dateMode, selectedWeekdays]);
@@ -971,7 +971,7 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
-          <CardContent className="pt-2 space-y-2">
+          <CardContent style={{ padding: '8px 0 10px 0' }}>
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
               <TabsList className="bg-muted/50">
@@ -987,7 +987,7 @@ const ActivityMonitor = () => {
               gridTemplateColumns: '1fr 1px 2fr 1px auto',
               alignItems: 'center',
               gap: '0 24px',
-              padding: '8px 24px'
+              padding: '4px 16px'
             }}>
               {/* ZONE 1 — Date navigator */}
               <div className="flex flex-col" style={{ gap: 6, padding: '2px 0' }}>
@@ -997,7 +997,7 @@ const ActivityMonitor = () => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => navigateDate("prev")}
-                    className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
+                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md"
                     style={{ width: 30, height: 34 }}
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
@@ -1006,11 +1006,11 @@ const ActivityMonitor = () => {
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
-                         className="flex items-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
+                         className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-[#0f172a] border border-transparent rounded-md"
                           style={{ padding: '0 12px', height: 34, minWidth: 140 }}
                         >
                           <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
-                          {format(histDate, "MMM d, yyyy")}
+                          {format(histDate, "EEEE, MMM d, yyyy")}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -1025,7 +1025,7 @@ const ActivityMonitor = () => {
                     </Popover>
                   ) : (
                     <div
-                      className="flex items-center justify-center text-xs font-medium text-slate-800 dark:text-white whitespace-nowrap bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-transparent rounded-md"
+                      className="flex items-center justify-center text-xs font-medium text-white whitespace-nowrap bg-[#0f172a] border border-transparent rounded-md"
                       style={{ padding: '0 12px', height: 34 }}
                     >
                       {dateRangeInfo.label}
@@ -1033,7 +1033,7 @@ const ActivityMonitor = () => {
                   )}
                   <button
                     onClick={() => navigateDate("next")}
-                    className="flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white hover:opacity-80 transition-opacity rounded-md"
+                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md"
                     style={{ width: 30, height: 34 }}
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
