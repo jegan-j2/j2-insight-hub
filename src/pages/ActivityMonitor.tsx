@@ -265,6 +265,8 @@ const ActivityMonitor = () => {
   const [dateMode, setDateMode] = useState<DateMode>("day");
   const pillsRef = useRef<HTMLDivElement>(null);
   const [pillsWidth, setPillsWidth] = useState(0);
+  const zone2Ref = useRef<HTMLDivElement>(null);
+  const [zone2Width, setZone2Width] = useState(0);
 
   const todayMelbourne = useMemo(getMelbourneToday, []);
   const todayFormatted = useMemo(() => {
@@ -870,6 +872,18 @@ const ActivityMonitor = () => {
     return () => window.removeEventListener("resize", measure);
   }, [dateMode, selectedWeekdays]);
 
+  // Measure Zone 2 width for slider fallback
+  useEffect(() => {
+    const measure = () => {
+      if (zone2Ref.current) {
+        setZone2Width(zone2Ref.current.offsetWidth);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [dateMode]);
+
   const daysSummary = useMemo(() => {
     const days = selectedWeekdays;
     if (days.length === 0) return "";
@@ -971,13 +985,13 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
-           <CardContent style={{ padding: '4px 0 8px 0' }}>
+           <div style={{ padding: '4px 0 8px 0' }}>
             {/* Date Mode Tabs */}
             <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
               <TabsList className="bg-muted/50" style={{ marginTop: 0, marginBottom: 4 }}>
-                <TabsTrigger value="day" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Day</TabsTrigger>
-                <TabsTrigger value="week" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Week</TabsTrigger>
-                <TabsTrigger value="month" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground">Month</TabsTrigger>
+                <TabsTrigger value="day" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Day</TabsTrigger>
+                <TabsTrigger value="week" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Week</TabsTrigger>
+                <TabsTrigger value="month" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Month</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -1044,14 +1058,14 @@ const ActivityMonitor = () => {
               {/* DIVIDER */}
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
-              <div className="flex flex-col items-start" style={{ gap: 6, padding: '2px 0' }}>
+              <div ref={zone2Ref} className="flex flex-col items-start" style={{ gap: 6, padding: '2px 0' }}>
                 {dateMode === "day" ? (
                   <>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       TIME RANGE
                     </span>
                     <div className="flex items-center gap-3 w-full">
-                      <div style={{ width: pillsWidth > 0 ? pillsWidth : 400, flexShrink: 0 }}>
+                      <div style={{ width: pillsWidth > 0 ? pillsWidth : zone2Width > 0 ? Math.round(zone2Width * 0.62) : 400, flexShrink: 0 }}>
                         <Slider
                           min={0}
                           max={24}
@@ -1061,7 +1075,7 @@ const ActivityMonitor = () => {
                         />
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-                        <span className="text-xs font-semibold text-[#64748b]">
+                        <span className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8]">
                           <span className="text-[#cbd5e1]">· </span>
                           {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
                         </span>
@@ -1093,7 +1107,7 @@ const ActivityMonitor = () => {
                         })}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-                        <span className="text-xs font-semibold text-[#64748b]">
+                        <span className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8]">
                           <span className="text-[#cbd5e1]">· </span>
                           {daysSummary}
                         </span>
@@ -1116,7 +1130,7 @@ const ActivityMonitor = () => {
                 </Button>
               </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
