@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { sendSlackNotification, formatTestMessage } from "@/lib/slackNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SDRAvatar } from "@/components/SDRAvatar";
-import { usePermissions } from "@/hooks/useUserRole";
+import { usePermissions, useUserRole } from "@/hooks/useUserRole";
 import { getSafeErrorMessage } from "@/lib/safeError";
 
 interface ClientRow {
@@ -46,6 +46,7 @@ interface TeamMemberRow {
   status: string | null;
   created_at: string | null;
   profile_photo_url: string | null;
+  client_id: string | null;
 }
 
 interface InviteRecord {
@@ -62,6 +63,7 @@ interface InviteRecord {
 const Settings = () => {
   const { toast } = useToast();
   const { permission: browserNotifPermission, supported: browserNotifSupported, requestPermission } = useBrowserNotifications();
+  const { loading: roleLoading } = useUserRole();
   const { canEditClients, canEditTeamMembers, canEditSettings, isAdmin } = usePermissions();
 
   useEffect(() => {
@@ -110,6 +112,23 @@ const Settings = () => {
     }
   }, [toast]);
 
+  // --- Active clients list for SDR assignment dropdown ---
+  const [clientsList, setClientsList] = useState<{ client_id: string; client_name: string }[]>([]);
+
+  const fetchClientsList = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('client_id, client_name')
+        .or('status.eq.active,status.is.null')
+        .order('client_name');
+      if (error) throw error;
+      setClientsList(data || []);
+    } catch (error) {
+      console.error('Error fetching clients list:', error);
+    }
+  }, []);
+
   // --- Invite records state ---
   const [inviteRecords, setInviteRecords] = useState<InviteRecord[]>([]);
   const [clientInviteStatus, setClientInviteStatus] = useState<Record<string, 'not_sent' | 'sending' | 'sent' | 'error'>>({});
@@ -130,7 +149,11 @@ const Settings = () => {
     fetchClients();
     fetchTeamMembers();
     fetchInviteRecords();
-  }, [fetchClients, fetchTeamMembers, fetchInviteRecords]);
+    fetchClientsList();
+  }, [fetchClients, fetchTeamMembers, fetchInviteRecords, fetchClientsList]);
+
+  // --- Slack webhook visibility ---
+  const [showSlackWebhook, setShowSlackWebhook] = useState(false);
 
   const getClientInviteInfo = (clientEmail: string) => {
     const invite = inviteRecords.find(r => r.email === clientEmail && r.role === 'client');
@@ -312,7 +335,7 @@ const Settings = () => {
   // --- Team dialog ---
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMemberRow | null>(null);
-  const [memberForm, setMemberForm] = useState({ sdr_name: "", email: "", role: "", profile_photo_url: "" });
+  const [memberForm, setMemberForm] = useState({ sdr_name: "", email: "", role: "", profile_photo_url: "", client_id: "" });
   const [isSavingMember, setIsSavingMember] = useState(false);
   const [uploadingMemberPhoto, setUploadingMemberPhoto] = useState(false);
   const memberPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -573,13 +596,13 @@ const Settings = () => {
   // --- Team CRUD ---
   const handleAddMember = () => {
     setEditingMember(null);
-    setMemberForm({ sdr_name: "", email: "", role: "", profile_photo_url: "" });
+    setMemberForm({ sdr_name: "", email: "", role: "", profile_photo_url: "", client_id: "" });
     setIsTeamDialogOpen(true);
   };
 
   const handleEditMember = (member: TeamMemberRow) => {
     setEditingMember(member);
-    setMemberForm({ sdr_name: member.sdr_name, email: member.email, role: member.role || "", profile_photo_url: member.profile_photo_url || "" });
+    setMemberForm({ sdr_name: member.sdr_name, email: member.email, role: member.role || "", profile_photo_url: member.profile_photo_url || "", client_id: member.client_id || "" });
     setIsTeamDialogOpen(true);
   };
 
@@ -610,6 +633,7 @@ const Settings = () => {
             sdr_name: memberForm.sdr_name,
             email: memberForm.email,
             role: memberForm.role,
+            client_id: memberForm.client_id || null,
           })
           .eq('id', editingMember.id);
         if (error) throw error;
@@ -621,6 +645,7 @@ const Settings = () => {
             sdr_name: memberForm.sdr_name,
             email: memberForm.email,
             role: memberForm.role,
+            client_id: memberForm.client_id || null,
           });
         if (error) throw error;
         toast({ title: "Team member added", description: `${memberForm.sdr_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
@@ -736,6 +761,10 @@ const Settings = () => {
     </>
   );
 
+  // FIX 4: Role loading guard
+  if (roleLoading) {
+    return <div />;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -746,17 +775,17 @@ const Settings = () => {
 
       <Tabs defaultValue="clients" className="space-y-6">
         <TabsList className="bg-card border border-border">
-          <TabsTrigger value="clients" className="gap-2 data-[state=active]:bg-secondary/20 data-[state=active]:text-secondary">
+          <TabsTrigger value="clients" className="gap-2 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Client Management</span>
             <span className="sm:hidden">Clients</span>
           </TabsTrigger>
-          <TabsTrigger value="team" className="gap-2 data-[state=active]:bg-secondary/20 data-[state=active]:text-secondary">
+          <TabsTrigger value="team" className="gap-2 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Team Members</span>
             <span className="sm:hidden">Team</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2 data-[state=active]:bg-secondary/20 data-[state=active]:text-secondary">
+          <TabsTrigger value="notifications" className="gap-2 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Notifications</span>
             <span className="sm:hidden">Alerts</span>
@@ -775,7 +804,7 @@ const Settings = () => {
                 <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
                   {canEditClients ? (
                     <DialogTrigger asChild>
-                      <Button onClick={handleAddClient} className="gap-2">
+                      <Button onClick={handleAddClient} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                         <Plus className="h-4 w-4" />
                         Add New Client
                       </Button>
@@ -802,22 +831,23 @@ const Settings = () => {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="client-id">Client ID (slug)</Label>
+                        <Label htmlFor="client-id">Client ID</Label>
                         <Input
                           id="client-id"
-                          placeholder="e.g., acme-corp (auto-generated if empty)"
+                          placeholder="auto-generated from name"
                           value={clientForm.client_id}
                           onChange={(e) => setClientForm({ ...clientForm, client_id: e.target.value })}
                           className="bg-background/50 border-border"
                         />
+                        <p className="text-xs text-muted-foreground">Leave blank to auto-generate from client name</p>
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="client-email">Client Email</Label>
+                        <Label htmlFor="client-email">Email</Label>
                         <div className="flex gap-2">
                           <Input
                             id="client-email"
                             type="email"
-                            placeholder="client@company.com"
+                            placeholder="client@example.com"
                             value={clientForm.email}
                             onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
                             className="bg-background/50 border-border flex-1"
@@ -826,13 +856,13 @@ const Settings = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleSendInvite(clientForm.email, 'client', clientForm.client_name, clientForm.client_id || editingClient.client_id)}
-                              disabled={clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sending'}
+                              onClick={() => handleSendInvite(clientForm.email, 'client', clientForm.client_name, editingClient.client_id)}
+                              disabled={clientInviteStatus[editingClient.client_id] === 'sending'}
                               className="gap-1.5 shrink-0 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white"
                             >
-                              {clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sending' ? (
+                              {clientInviteStatus[editingClient.client_id] === 'sending' ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : clientInviteStatus[clientForm.client_id || editingClient.client_id] === 'sent' ? (
+                              ) : clientInviteStatus[editingClient.client_id] === 'sent' ? (
                                 <>✓ Invite Sent</>
                               ) : (
                                 <><Mail className="h-3.5 w-3.5" />Send Invite</>
@@ -840,13 +870,12 @@ const Settings = () => {
                             </Button>
                           )}
                         </div>
-                        {clientInviteStatus[clientForm.client_id || editingClient?.client_id || ''] === 'sent' && (
+                        {editingClient && clientInviteStatus[editingClient.client_id] === 'sent' && (
                           <p className="text-xs text-green-500">Invite sent successfully!</p>
                         )}
-                        {clientInviteStatus[clientForm.client_id || editingClient?.client_id || ''] === 'error' && (
+                        {editingClient && clientInviteStatus[editingClient.client_id] === 'error' && (
                           <p className="text-xs text-destructive">Failed to send invite. Try again.</p>
                         )}
-                        <p className="text-[10px] text-muted-foreground">Used for sending dashboard login credentials</p>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
@@ -887,13 +916,11 @@ const Settings = () => {
                         <div className="grid gap-2 border-t border-border pt-4">
                           <Label>Client Logo</Label>
                           <div className="flex items-center gap-4">
-                            <div className="h-[60px] w-[60px] rounded-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="w-16 h-16 rounded-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden">
                               {clientForm.logo_url ? (
-                                <img src={clientForm.logo_url} alt="Client logo" className="h-full w-full object-cover rounded-full" />
+                                <img src={clientForm.logo_url} alt="Client logo" className="w-full h-full object-contain" />
                               ) : (
-                                <span className="text-lg font-bold text-muted-foreground">
-                                  {clientForm.client_name?.[0]?.toUpperCase() || "?"}
-                                </span>
+                                <Building2 className="h-6 w-6 text-muted-foreground" />
                               )}
                             </div>
                             <div className="flex flex-col gap-2">
@@ -955,6 +982,7 @@ const Settings = () => {
                       <Button
                         onClick={handleSaveClient}
                         disabled={!clientForm.client_name || isSavingClient}
+                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
                       >
                         {isSavingClient ? (
                           <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>
@@ -1137,7 +1165,7 @@ const Settings = () => {
                 <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
                   {canEditTeamMembers ? (
                     <DialogTrigger asChild>
-                      <Button onClick={handleAddMember} className="gap-2">
+                      <Button onClick={handleAddMember} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                         <Plus className="h-4 w-4" />
                         Add Team Member
                       </Button>
@@ -1226,7 +1254,7 @@ const Settings = () => {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="member-role">Role *</Label>
-                        <Select value={memberForm.role} onValueChange={(value) => setMemberForm({ ...memberForm, role: value })}>
+                        <Select value={memberForm.role} onValueChange={(value) => setMemberForm({ ...memberForm, role: value, client_id: value === 'SDR' ? memberForm.client_id : '' })}>
                           <SelectTrigger className="bg-background/50 border-border">
                             <SelectValue placeholder="Select a role" />
                           </SelectTrigger>
@@ -1237,6 +1265,23 @@ const Settings = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                      {/* Assigned Client dropdown - only for SDR role */}
+                      {memberForm.role === 'SDR' && (
+                        <div className="grid gap-2">
+                          <Label htmlFor="member-client">Assigned Client</Label>
+                          <Select value={memberForm.client_id} onValueChange={(value) => setMemberForm({ ...memberForm, client_id: value === '__none__' ? '' : value })}>
+                            <SelectTrigger className="bg-background/50 border-border">
+                              <SelectValue placeholder="Select a client" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">None</SelectItem>
+                              {clientsList.map((c) => (
+                                <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsTeamDialogOpen(false)}>
@@ -1245,6 +1290,7 @@ const Settings = () => {
                       <Button
                         onClick={handleSaveMember}
                         disabled={!memberForm.sdr_name || !memberForm.email || !memberForm.role || isSavingMember}
+                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
                       >
                         {isSavingMember ? (
                           <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>
@@ -1275,6 +1321,7 @@ const Settings = () => {
                       <TableHead className="text-muted-foreground">Name</TableHead>
                       <TableHead className="text-muted-foreground">Email</TableHead>
                       <TableHead className="text-muted-foreground">Role</TableHead>
+                      <TableHead className="text-muted-foreground">Client</TableHead>
                       <TableHead className="text-muted-foreground">Invite</TableHead>
                       <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                     </TableRow>
@@ -1284,7 +1331,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
@@ -1292,6 +1339,9 @@ const Settings = () => {
                       filteredMembers.map((member) => {
                         const isInactive = member.status === 'inactive';
                         const memberInviteInfo = getMemberInviteInfo(member.email);
+                        const memberClientName = member.client_id && member.role?.toLowerCase() === 'sdr'
+                          ? clientsList.find(c => c.client_id === member.client_id)?.client_name || member.client_id
+                          : '—';
                         return (
                           <TableRow key={member.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
@@ -1305,6 +1355,7 @@ const Settings = () => {
                             </TableCell>
                             <TableCell className="text-muted-foreground">{member.email}</TableCell>
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{memberClientName}</TableCell>
                             <TableCell>
                               <span className={`text-xs px-2 py-1 rounded-full ${
                                 memberInviteInfo.status === 'active' 
@@ -1607,7 +1658,7 @@ const Settings = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
-                <Button onClick={handleSaveNotifications} className="gap-2 flex-1 sm:flex-initial" disabled={isSavingNotifications || !canEditSettings}>
+                <Button onClick={handleSaveNotifications} className="gap-2 flex-1 sm:flex-initial bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
                 <Button variant="outline" onClick={handleSendTestEmail} className="gap-2 flex-1 sm:flex-initial" disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}>
@@ -1630,11 +1681,21 @@ const Settings = () => {
                 <div className="flex gap-2">
                   <Input
                     id="slack-webhook"
+                    type={showSlackWebhook ? "text" : "password"}
                     placeholder="https://hooks.slack.com/services/..."
                     value={slackWebhook}
                     onChange={(e) => setSlackWebhook(e.target.value)}
                     className="bg-background/50 border-border flex-1"
                   />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowSlackWebhook(!showSlackWebhook)}
+                    className="shrink-0"
+                    aria-label={showSlackWebhook ? "Hide webhook URL" : "Show webhook URL"}
+                  >
+                    {showSlackWebhook ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
