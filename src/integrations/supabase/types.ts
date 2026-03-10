@@ -97,6 +97,50 @@ export type Database = {
           },
         ]
       }
+      client_contacts: {
+        Row: {
+          client_id: string
+          contact_name: string
+          contact_title: string | null
+          contact_type: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          portal_access: boolean | null
+          status: string | null
+        }
+        Insert: {
+          client_id: string
+          contact_name: string
+          contact_title?: string | null
+          contact_type?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          portal_access?: boolean | null
+          status?: string | null
+        }
+        Update: {
+          client_id?: string
+          contact_name?: string
+          contact_title?: string | null
+          contact_type?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          portal_access?: boolean | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           banner_gradient: string | null
