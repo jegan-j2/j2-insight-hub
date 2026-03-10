@@ -215,6 +215,68 @@ const Settings = () => {
   const filteredClients = showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status);
   const filteredMembers = showInactiveMembers ? teamMembers : teamMembers.filter(m => m.status === 'active' || !m.status);
 
+  // --- Primary contacts for Client Management table ---
+  const [primaryContacts, setPrimaryContacts] = useState<Record<string, { contact_name: string }>>({});
+  const [contactsModalClient, setContactsModalClient] = useState<ClientRow | null>(null);
+
+  const fetchPrimaryContacts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("client_contacts")
+        .select("client_id, contact_name")
+        .eq("contact_type", "primary")
+        .eq("status", "active");
+      if (error) throw error;
+      const map: Record<string, { contact_name: string }> = {};
+      (data || []).forEach(c => { map[c.client_id] = { contact_name: c.contact_name }; });
+      setPrimaryContacts(map);
+    } catch (err) {
+      console.error("Error fetching primary contacts:", err);
+    }
+  }, []);
+
+  useEffect(() => { fetchPrimaryContacts(); }, [fetchPrimaryContacts]);
+
+  // --- Client table helpers ---
+  const HASH_COLORS = [
+    "from-blue-500 to-indigo-600", "from-emerald-500 to-teal-600",
+    "from-purple-500 to-violet-600", "from-rose-500 to-pink-600",
+    "from-amber-500 to-orange-600", "from-cyan-500 to-blue-600",
+    "from-fuchsia-500 to-purple-600", "from-lime-500 to-green-600",
+  ];
+  const getHashColor = (name: string) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return HASH_COLORS[Math.abs(hash) % HASH_COLORS.length];
+  };
+  const getInitials = (name: string) => name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+
+  const getCampaignStatus = (client: ClientRow) => {
+    if (!client.campaign_start || !client.campaign_end) return null;
+    const now = new Date(); now.setHours(0,0,0,0);
+    const start = new Date(client.campaign_start); start.setHours(0,0,0,0);
+    const end = new Date(client.campaign_end); end.setHours(0,0,0,0);
+    if (now < start) return { label: "Not Started", color: "bg-muted/50 text-muted-foreground border-border" };
+    if (now > end) return { label: "Expired", color: "bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30" };
+    const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000*60*60*24));
+    if (daysLeft <= 14) return { label: "Ending Soon", color: "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30", dot: "bg-amber-500" };
+    return { label: "Active", color: "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30", dot: "bg-emerald-500" };
+  };
+
+  const getDaysLeft = (client: ClientRow) => {
+    if (!client.campaign_start || !client.campaign_end) return "—";
+    const now = new Date(); now.setHours(0,0,0,0);
+    const end = new Date(client.campaign_end); end.setHours(0,0,0,0);
+    if (now > end) return "Ended";
+    const days = Math.ceil((end.getTime() - now.getTime()) / (1000*60*60*24));
+    return days === 1 ? "1 day" : `${days} days`;
+  };
+
+  const formatCampaignPeriod = (start: string | null, end: string | null) => {
+    if (!start || !end) return "—";
+    return `${format(new Date(start), "d MMM")} → ${format(new Date(end), "d MMM yyyy")}`;
+  };
+
   const handleReactivateClient = async (client: ClientRow) => {
     try {
       const { error } = await supabase
