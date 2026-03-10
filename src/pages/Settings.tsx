@@ -1070,17 +1070,17 @@ const Settings = () => {
                   Show inactive clients
                 </Label>
               </div>
-              <div className="overflow-x-auto scrollbar-thin">
+              <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+                <TooltipProvider>
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="text-muted-foreground">Client Name</TableHead>
-                      <TableHead className="text-muted-foreground">Client ID</TableHead>
-                      <TableHead className="text-muted-foreground">Email</TableHead>
-                      <TableHead className="text-muted-foreground">Access</TableHead>
-                      <TableHead className="text-muted-foreground">Campaign</TableHead>
-                      <TableHead className="text-muted-foreground">Target SQLs</TableHead>
-                      <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                    <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Client</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Primary Contact</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Status</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Days Left</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1088,86 +1088,98 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           No clients found. Add your first client above.
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredClients.map((client) => {
                         const isInactive = client.status === 'inactive';
-                        const inviteInfo = getClientInviteInfo(client.email || '');
+                        const gradient = getHashColor(client.client_name);
+                        const primary = primaryContacts[client.client_id];
+                        const campaignStatus = getCampaignStatus(client);
+                        const daysLeft = getDaysLeft(client);
+
                         return (
                           <TableRow key={client.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
-                            <TableCell className="font-medium text-foreground">
-                              <div className="flex items-center gap-2">
-                                {client.logo_url ? (
-                                  <img src={client.logo_url} alt={`${client.client_name} logo`} className="h-6 w-6 rounded-full object-contain bg-white" />
-                                ) : (
-                                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                {client.client_name}
-                                {isInactive && (
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive uppercase">Inactive</span>
-                                )}
+                            {/* CLIENT */}
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="relative flex-shrink-0">
+                                  {client.logo_url ? (
+                                    <img src={client.logo_url} alt={client.client_name} className="w-8 h-8 rounded-full object-contain bg-white" />
+                                  ) : (
+                                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                                      <span className="text-xs font-bold text-white">{getInitials(client.client_name)}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="font-medium text-foreground whitespace-nowrap">{client.client_name}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-muted-foreground">{client.client_id}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">{client.email || '—'}</TableCell>
+
+                            {/* PRIMARY CONTACT */}
                             <TableCell>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                inviteInfo.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                                inviteInfo.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                                inviteInfo.status === 'expired' ? 'bg-destructive/20 text-destructive' :
-                                'bg-muted/30 text-muted-foreground'
-                              }`}>
-                                {inviteInfo.label}
-                              </span>
+                              {primary ? (
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${getHashColor(primary.contact_name)} flex items-center justify-center flex-shrink-0`}>
+                                    <span className="text-[9px] font-bold text-white">{getInitials(primary.contact_name)}</span>
+                                  </div>
+                                  <span className="text-sm text-foreground">{primary.contact_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground italic">No primary set</span>
+                              )}
                             </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {client.campaign_start && client.campaign_end
-                                ? `${client.campaign_start} → ${client.campaign_end}`
-                                : client.campaign_start || "—"}
+
+                            {/* CAMPAIGN PERIOD */}
+                            <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                              {formatCampaignPeriod(client.campaign_start, client.campaign_end)}
                             </TableCell>
-                            <TableCell className="text-muted-foreground">{client.target_sqls ?? "—"}</TableCell>
+
+                            {/* CAMPAIGN STATUS */}
+                            <TableCell>
+                              {campaignStatus ? (
+                                <Badge className={`${campaignStatus.color} hover:${campaignStatus.color} gap-1.5`}>
+                                  {(campaignStatus as any).dot && (
+                                    <span className={`w-1.5 h-1.5 rounded-full ${(campaignStatus as any).dot}`} />
+                                  )}
+                                  {campaignStatus.label}
+                                </Badge>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+
+                            {/* DAYS LEFT */}
+                            <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>
+
+                            {/* ACTIONS */}
                             <TableCell className="text-right">
                               {canEditClients ? (
-                                <TooltipProvider>
-                                <div className="flex justify-end gap-2">
+                                <div className="flex justify-end items-center gap-1">
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" onClick={() => handleEditClient(client)} aria-label={`Edit ${client.client_name}`}>
-                                        <Pencil className="h-4 w-4 text-blue-500" />
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10" onClick={() => handleEditClient(client)} aria-label={`Edit ${client.client_name}`}>
+                                        <Home className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>Edit</TooltipContent>
+                                    <TooltipContent>Edit client</TooltipContent>
                                   </Tooltip>
-                                  {inviteInfo.status === 'pending' && client.email && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => handleResendInvite(client.email!, 'client', client.client_name, client.client_id)}
-                                          aria-label={`Resend invite to ${client.client_name}`}
-                                          className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
-                                        >
-                                          <RefreshCw className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Resend Invite</TooltipContent>
-                                    </Tooltip>
-                                  )}
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-500 hover:text-purple-400 hover:bg-purple-500/10" onClick={() => setContactsModalClient(client)} aria-label={`Manage contacts for ${client.client_name}`}>
+                                        <Users className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Manage contacts</TooltipContent>
+                                  </Tooltip>
+                                  <div className="w-px h-5 bg-border mx-0.5" />
                                   {isInactive ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => handleReactivateClient(client)}
-                                          aria-label={`Reactivate ${client.client_name}`}
-                                          className="text-green-500 hover:text-green-400 hover:bg-green-500/10"
-                                        >
-                                          <Power className="h-4 w-4" />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10" onClick={() => handleReactivateClient(client)} aria-label={`Reactivate ${client.client_name}`}>
+                                          <RotateCcw className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>Reactivate</TooltipContent>
@@ -1177,8 +1189,8 @@ const Settings = () => {
                                       <Tooltip>
                                         <TooltipTrigger asChild>
                                           <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" aria-label={`Deactivate ${client.client_name}`} className="text-orange-500 hover:text-orange-400 hover:bg-orange-500/10">
-                                              <Power className="h-4 w-4" />
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10" aria-label={`Deactivate ${client.client_name}`}>
+                                              <MinusCircle className="h-4 w-4" />
                                             </Button>
                                           </AlertDialogTrigger>
                                         </TooltipTrigger>
@@ -1201,7 +1213,6 @@ const Settings = () => {
                                     </AlertDialog>
                                   )}
                                 </div>
-                                </TooltipProvider>
                               ) : (
                                 <span className="text-xs text-muted-foreground">View only</span>
                               )}
@@ -1212,7 +1223,23 @@ const Settings = () => {
                     )}
                   </TableBody>
                 </Table>
+                </TooltipProvider>
               </div>
+
+              {/* Contacts Modal */}
+              {contactsModalClient && (
+                <ClientContactsModal
+                  client={{
+                    client_id: contactsModalClient.client_id,
+                    client_name: contactsModalClient.client_name,
+                    logo_url: contactsModalClient.logo_url,
+                    campaign_end: contactsModalClient.campaign_end,
+                  }}
+                  open={!!contactsModalClient}
+                  onClose={() => setContactsModalClient(null)}
+                  onContactsChanged={fetchPrimaryContacts}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
