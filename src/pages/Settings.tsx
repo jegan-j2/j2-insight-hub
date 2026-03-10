@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, RotateCcw } from "lucide-react";
+import { format } from "date-fns";
+import { ClientContactsModal } from "@/components/ClientContactsModal";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
