@@ -409,7 +409,7 @@ const Settings = () => {
   // --- Client CRUD ---
   const handleAddClient = () => {
     setEditingClient(null);
-    setClientForm({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
+    setClientForm({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "", banner_url: "" });
     setIsClientDialogOpen(true);
   };
 
