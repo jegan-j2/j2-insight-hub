@@ -1163,7 +1163,7 @@ const Settings = () => {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDeactivateClient(client)} className="bg-orange-600 hover:bg-orange-700 text-white">
+                                          <AlertDialogAction onClick={() => handleDeactivateClient(client)} className="bg-orange-600 hover:bg-orange-700 text-white rounded-md">
                                             Deactivate
                                           </AlertDialogAction>
                                         </AlertDialogFooter>
