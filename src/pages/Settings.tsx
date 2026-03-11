@@ -1137,7 +1137,7 @@ const Settings = () => {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10" onClick={() => handleReactivateClient(client)} aria-label={`Reactivate ${client.client_name}`}>
-                                          <RotateCcw className="h-4 w-4" />
+                                          <CheckCircle className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>Reactivate</TooltipContent>
