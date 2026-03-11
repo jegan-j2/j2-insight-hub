@@ -590,32 +590,23 @@ const Settings = () => {
       toast({ title: "Invalid client name", description: "Name must be 2-100 characters.", variant: "destructive" });
       return;
     }
-    if (clientForm.email && !isValidEmail(clientForm.email)) {
-      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
-      return;
-    }
-    if (clientForm.email && clientForm.email.length > 255) {
-      toast({ title: "Email too long", description: "Email must be under 255 characters.", variant: "destructive" });
-      return;
-    }
     if (clientForm.target_sqls && (isNaN(parseInt(clientForm.target_sqls)) || parseInt(clientForm.target_sqls) < 0 || parseInt(clientForm.target_sqls) > 100000)) {
       toast({ title: "Invalid target", description: "Target SQLs must be 0-100,000.", variant: "destructive" });
       return;
     }
     setIsSavingClient(true);
     try {
-      const slug = clientForm.client_id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
+      const slug = editingClient ? editingClient.client_id : name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
       if (editingClient) {
         const { error } = await supabase
           .from('clients')
           .update({
             client_name: clientForm.client_name,
-            client_id: slug,
-            email: clientForm.email || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
             logo_url: clientForm.logo_url || null,
+            banner_url: clientForm.banner_url || null,
           })
           .eq('id', editingClient.id);
         if (error) throw error;
@@ -626,11 +617,11 @@ const Settings = () => {
           .insert({
             client_name: clientForm.client_name,
             client_id: slug,
-            email: clientForm.email || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
             logo_url: clientForm.logo_url || null,
+            banner_url: clientForm.banner_url || null,
           });
         if (error) throw error;
         toast({ title: "Client added", description: `${clientForm.client_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
