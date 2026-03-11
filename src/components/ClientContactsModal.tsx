@@ -330,7 +330,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
             </div>
             <div className="flex justify-end gap-2 mt-3">
               <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
+              <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }}>
                 {saving ? "Saving..." : "Save Contact"}
               </Button>
             </div>
