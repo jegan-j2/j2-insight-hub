@@ -464,12 +464,30 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={contact.portal_access
-                          ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
-                          : "bg-muted/50 text-muted-foreground border-border hover:bg-muted/50"
-                        }>
-                          {contact.portal_access ? "Active" : "Not Invited"}
-                        </Badge>
+                        {contact.portal_access ? (
+                          <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20">
+                            Active
+                          </Badge>
+                        ) : contact.email ? (
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs gap-1.5"
+                            style={{ backgroundColor: '#0f172a', color: 'white' }}
+                            disabled={sendingInviteId === contact.id}
+                            onClick={() => handleSendInvite(contact)}
+                          >
+                            {sendingInviteId === contact.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Mail className="h-3 w-3" />
+                            )}
+                            Send Invite
+                          </Button>
+                        ) : (
+                          <Badge className="bg-muted/50 text-muted-foreground border-border hover:bg-muted/50">
+                            Not Invited
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground italic">Never logged in</span>
