@@ -86,6 +86,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<ContactFormData>({ ...emptyForm });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
