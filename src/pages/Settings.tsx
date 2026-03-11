@@ -391,7 +391,7 @@ const Settings = () => {
   // --- Client dialog ---
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
-  const [clientForm, setClientForm] = useState({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
+  const [clientForm, setClientForm] = useState({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "", banner_url: "" });
   const [isSavingClient, setIsSavingClient] = useState(false);
   const [uploadingClientLogo, setUploadingClientLogo] = useState(false);
   const [uploadingClientBanner, setUploadingClientBanner] = useState(false);
