@@ -171,7 +171,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
               <h2 className="text-lg font-semibold text-foreground">{client.client_name} — Contacts</h2>
               <p className="text-sm text-muted-foreground">
                 {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
-                {client.campaign_end && ` • Campaign ends ${client.campaign_end}`}
+                {client.campaign_end && ` • Campaign ends ${format(new Date(client.campaign_end), "d MMM yyyy")}`}
               </p>
             </div>
           </div>
