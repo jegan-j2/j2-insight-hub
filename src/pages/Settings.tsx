@@ -511,6 +511,7 @@ const Settings = () => {
         await supabase.from("clients").update({ banner_url: publicUrl }).eq("id", editingClient.id);
       }
       setEditingClient(prev => prev ? { ...prev, banner_url: publicUrl } : prev);
+      setClientForm(f => ({ ...f, banner_url: publicUrl }));
       toast({ title: "Banner uploaded", className: "border-[#10b981] text-[#10b981]" });
       fetchClients();
     } catch (err: any) {
