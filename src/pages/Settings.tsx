@@ -423,6 +423,7 @@ const Settings = () => {
       campaign_end: client.campaign_end || "",
       target_sqls: client.target_sqls?.toString() || "",
       logo_url: client.logo_url || "",
+      banner_url: client.banner_url || "",
     });
     setIsClientDialogOpen(true);
   };
