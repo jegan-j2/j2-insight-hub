@@ -493,9 +493,9 @@ const Settings = () => {
       toast({ title: "File too large", description: "Max 5MB allowed.", variant: "destructive" });
       return;
     }
-    const clientId = clientForm.client_id || editingClient?.client_id;
+    const clientId = clientForm.client_id || editingClient?.client_id || clientForm.client_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
     if (!clientId) {
-      toast({ title: "Save client first", description: "Please save the client before uploading.", variant: "destructive" });
+      toast({ title: "Enter client name first", description: "Please enter a client name before uploading.", variant: "destructive" });
       return;
     }
     setUploadingClientBanner(true);
