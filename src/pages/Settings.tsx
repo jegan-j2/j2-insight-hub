@@ -897,53 +897,18 @@ const Settings = () => {
                           className="bg-background/50 border-border"
                         />
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="client-id">Client ID</Label>
-                        <Input
-                          id="client-id"
-                          placeholder="auto-generated from name"
-                          value={clientForm.client_id}
-                          onChange={(e) => setClientForm({ ...clientForm, client_id: e.target.value })}
-                          className="bg-background/50 border-border"
-                        />
-                        <p className="text-xs text-muted-foreground">Leave blank to auto-generate from client name</p>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="client-email">Email</Label>
-                        <div className="flex gap-2">
+                      {editingClient && (
+                        <div className="grid gap-2">
+                          <Label htmlFor="client-id">Client ID</Label>
                           <Input
-                            id="client-email"
-                            type="email"
-                            placeholder="client@example.com"
-                            value={clientForm.email}
-                            onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                            className="bg-background/50 border-border flex-1"
+                            id="client-id"
+                            value={clientForm.client_id}
+                            disabled
+                            className="bg-muted/30 border-border text-muted-foreground cursor-not-allowed"
                           />
-                          {clientForm.email && isValidEmail(clientForm.email) && editingClient && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSendInvite(clientForm.email, 'client', clientForm.client_name, editingClient.client_id)}
-                              disabled={clientInviteStatus[editingClient.client_id] === 'sending'}
-                              className="gap-1.5 shrink-0 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white"
-                            >
-                              {clientInviteStatus[editingClient.client_id] === 'sending' ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : clientInviteStatus[editingClient.client_id] === 'sent' ? (
-                                <>✓ Invite Sent</>
-                              ) : (
-                                <><Mail className="h-3.5 w-3.5" />Send Invite</>
-                              )}
-                            </Button>
-                          )}
+                          <p className="text-xs text-muted-foreground">Auto-generated, cannot be changed</p>
                         </div>
-                        {editingClient && clientInviteStatus[editingClient.client_id] === 'sent' && (
-                          <p className="text-xs text-green-500">Invite sent successfully!</p>
-                        )}
-                        {editingClient && clientInviteStatus[editingClient.client_id] === 'error' && (
-                          <p className="text-xs text-destructive">Failed to send invite. Try again.</p>
-                        )}
-                      </div>
+                      )}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="campaign-start">Campaign Start</Label>
@@ -979,68 +944,64 @@ const Settings = () => {
                       </div>
 
                       {/* Client Logo Upload */}
-                      {editingClient && (
-                        <div className="grid gap-2 border-t border-border pt-4">
-                          <Label>Client Logo</Label>
-                          <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden">
-                              {clientForm.logo_url ? (
-                                <img src={clientForm.logo_url} alt="Client logo" className="w-full h-full object-contain" />
-                              ) : (
-                                <Building2 className="h-6 w-6 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <input ref={clientLogoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleClientLogoUpload} className="hidden" />
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => clientLogoInputRef.current?.click()} disabled={uploadingClientLogo} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
-                                  {uploadingClientLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                                  Upload Logo
-                                </Button>
-                                {clientForm.logo_url && (
-                                  <Button variant="outline" size="sm" onClick={handleRemoveClientLogo} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
-                                    <Trash2 className="h-3 w-3" />
-                                    Remove
-                                  </Button>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-muted-foreground">PNG, JPG, SVG • Max 2MB</p>
-                            </div>
+                      <div className="grid gap-2 border-t border-border pt-4">
+                        <Label>Client Logo</Label>
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden">
+                            {clientForm.logo_url ? (
+                              <img src={clientForm.logo_url} alt="Client logo" className="w-full h-full object-contain" />
+                            ) : (
+                              <Building2 className="h-6 w-6 text-muted-foreground" />
+                            )}
                           </div>
-                        </div>
-                      )}
-
-                      {/* Client Banner Upload */}
-                      {editingClient && (
-                        <div className="grid gap-2 border-t border-border pt-4">
-                          <Label>Banner Image</Label>
-                          <div className="space-y-3">
-                            <div className="w-full h-[100px] rounded-lg bg-muted/30 border border-border overflow-hidden">
-                              {editingClient.banner_url ? (
-                                <img src={editingClient.banner_url} alt="Client banner" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                                  No banner image
-                                </div>
-                              )}
-                            </div>
-                            <input ref={clientBannerInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleClientBannerUpload} className="hidden" />
+                          <div className="flex flex-col gap-2">
+                            <input ref={clientLogoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleClientLogoUpload} className="hidden" />
                             <div className="flex gap-2">
-                              <Button variant="outline" size="sm" onClick={() => clientBannerInputRef.current?.click()} disabled={uploadingClientBanner} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
-                                {uploadingClientBanner ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                                Upload Banner
+                              <Button variant="outline" size="sm" onClick={() => clientLogoInputRef.current?.click()} disabled={uploadingClientLogo || (!editingClient && !clientForm.client_name)} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
+                                {uploadingClientLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                                Upload Logo
                               </Button>
-                              {editingClient.banner_url && (
-                                <Button variant="outline" size="sm" onClick={handleRemoveClientBanner} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                              {clientForm.logo_url && (
+                                <Button variant="outline" size="sm" onClick={handleRemoveClientLogo} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
                                   <Trash2 className="h-3 w-3" />
                                   Remove
                                 </Button>
                               )}
                             </div>
-                            <p className="text-[10px] text-muted-foreground">PNG, JPG • Max 5MB • Recommended: 1200×300px</p>
+                            <p className="text-[10px] text-muted-foreground">PNG, JPG, SVG • Max 2MB</p>
                           </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Client Banner Upload */}
+                      <div className="grid gap-2 border-t border-border pt-4">
+                        <Label>Banner Image</Label>
+                        <div className="space-y-3">
+                          <div className="w-full h-[100px] rounded-lg bg-muted/30 border border-border overflow-hidden">
+                            {(clientForm.banner_url || editingClient?.banner_url) ? (
+                              <img src={clientForm.banner_url || editingClient?.banner_url || ''} alt="Client banner" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                                No banner image
+                              </div>
+                            )}
+                          </div>
+                          <input ref={clientBannerInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleClientBannerUpload} className="hidden" />
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => clientBannerInputRef.current?.click()} disabled={uploadingClientBanner || (!editingClient && !clientForm.client_name)} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
+                              {uploadingClientBanner ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                              Upload Banner
+                            </Button>
+                            {(clientForm.banner_url || editingClient?.banner_url) && (
+                              <Button variant="outline" size="sm" onClick={handleRemoveClientBanner} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                                <Trash2 className="h-3 w-3" />
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">PNG, JPG • Max 5MB • Recommended: 1200×300px</p>
+                        </div>
+                      </div>
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsClientDialogOpen(false)}>

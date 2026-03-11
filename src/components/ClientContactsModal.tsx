@@ -245,7 +245,14 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <J2Loader />
+              <div className="flex flex-col items-center gap-4">
+                <img
+                  src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT}
+                  alt="Loading"
+                  className="w-[48px] h-[48px] rounded-full object-contain border-2 border-[#0f172a] dark:border-white animate-[spin_2s_linear_infinite]"
+                />
+                <p className="text-sm font-semibold text-muted-foreground">Loading...</p>
+              </div>
             </div>
           ) : contacts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
