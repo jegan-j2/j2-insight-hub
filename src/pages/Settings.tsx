@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, RotateCcw } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ClientContactsModal } from "@/components/ClientContactsModal";
 import { Badge } from "@/components/ui/badge";
@@ -1137,7 +1137,7 @@ const Settings = () => {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10" onClick={() => handleReactivateClient(client)} aria-label={`Reactivate ${client.client_name}`}>
-                                          <RotateCcw className="h-4 w-4" />
+                                          <CheckCircle className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>Reactivate</TooltipContent>
@@ -1163,7 +1163,7 @@ const Settings = () => {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDeactivateClient(client)} className="bg-orange-600 hover:bg-orange-700 text-white">
+                                          <AlertDialogAction onClick={() => handleDeactivateClient(client)} className="bg-orange-600 hover:bg-orange-700 text-white rounded-md">
                                             Deactivate
                                           </AlertDialogAction>
                                         </AlertDialogFooter>

@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X, Plus, Pencil, MinusCircle, Users } from "lucide-react";
+import { X, Plus, Pencil, MinusCircle, Users, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -64,25 +65,43 @@ const getInitials = (name: string) => {
   return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 };
 
+interface ContactFormData {
+  contact_name: string;
+  contact_title: string;
+  email: string;
+  contact_type: string;
+}
+
+const emptyForm: ContactFormData = { contact_name: "", contact_title: "", email: "", contact_type: "secondary" };
+
 export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }: ClientContactsModalProps) => {
   const { toast } = useToast();
   const { resolvedTheme } = useTheme();
   const [contacts, setContacts] = useState<ClientContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [contactForm, setContactForm] = useState({ contact_name: "", contact_title: "", email: "", contact_type: "secondary" });
+  const [contactForm, setContactForm] = useState<ContactFormData>({ ...emptyForm });
   const [saving, setSaving] = useState(false);
+  const [showInactiveContacts, setShowInactiveContacts] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<ContactFormData>({ ...emptyForm });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from("client_contacts")
         .select("*")
         .eq("client_id", client.client_id)
-        .eq("status", "active")
         .order("contact_type", { ascending: false })
         .order("contact_name");
+
+      if (!showInactiveContacts) {
+        query.eq("status", "active");
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setContacts(data || []);
     } catch (err) {
@@ -90,12 +109,13 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     } finally {
       setLoading(false);
     }
-  }, [client.client_id]);
+  }, [client.client_id, showInactiveContacts]);
 
   useEffect(() => {
     if (open) {
       fetchContacts();
       setShowAddForm(false);
+      setEditingContactId(null);
     }
   }, [open, fetchContacts]);
 
@@ -115,17 +135,38 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from("client_contacts").insert({
-        client_id: client.client_id,
-        contact_name: contactForm.contact_name.trim(),
-        contact_title: contactForm.contact_title.trim() || null,
-        email: contactForm.email.trim() || null,
-        contact_type: contactForm.contact_type,
-        status: "active",
-      });
-      if (error) throw error;
+      // Check for existing inactive contact with same name
+      const { data: existing } = await supabase
+        .from("client_contacts")
+        .select("*")
+        .eq("client_id", client.client_id)
+        .eq("contact_name", contactForm.contact_name.trim())
+        .eq("status", "inactive")
+        .maybeSingle();
+
+      if (existing) {
+        // Reactivate and update
+        const { error } = await supabase.from("client_contacts").update({
+          contact_title: contactForm.contact_title.trim() || null,
+          email: contactForm.email.trim() || null,
+          contact_type: contactForm.contact_type,
+          status: "active",
+        }).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("client_contacts").insert({
+          client_id: client.client_id,
+          contact_name: contactForm.contact_name.trim(),
+          contact_title: contactForm.contact_title.trim() || null,
+          email: contactForm.email.trim() || null,
+          contact_type: contactForm.contact_type,
+          status: "active",
+        });
+        if (error) throw error;
+      }
+
       toast({ title: "Contact added", description: `${contactForm.contact_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
-      setContactForm({ contact_name: "", contact_title: "", email: "", contact_type: "secondary" });
+      setContactForm({ ...emptyForm });
       setShowAddForm(false);
       fetchContacts();
       onContactsChanged?.();
@@ -137,7 +178,6 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
   };
 
   const handleDeactivateContact = async (contact: ClientContact) => {
-    // Optimistic
     setContacts(prev => prev.filter(c => c.id !== contact.id));
     try {
       const { error } = await supabase.from("client_contacts").update({ status: "inactive" }).eq("id", contact.id);
@@ -145,21 +185,73 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
       toast({ title: "Contact removed", className: "border-[#10b981] text-[#10b981]" });
       onContactsChanged?.();
     } catch (err: any) {
-      fetchContacts(); // rollback
+      fetchContacts();
       toast({ title: "Error", description: getSafeErrorMessage(err), variant: "destructive" });
+    }
+  };
+
+  const handleReactivateContact = async (contact: ClientContact) => {
+    setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, status: "active" } : c));
+    try {
+      const { error } = await supabase.from("client_contacts").update({ status: "active" }).eq("id", contact.id);
+      if (error) throw error;
+      toast({ title: "Contact reactivated", className: "border-[#10b981] text-[#10b981]" });
+      onContactsChanged?.();
+    } catch (err: any) {
+      fetchContacts();
+      toast({ title: "Error", description: getSafeErrorMessage(err), variant: "destructive" });
+    }
+  };
+
+  const handleStartEdit = (contact: ClientContact) => {
+    setEditingContactId(contact.id);
+    setEditForm({
+      contact_name: contact.contact_name,
+      contact_title: contact.contact_title || "",
+      email: contact.email || "",
+      contact_type: contact.contact_type || "secondary",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingContactId(null);
+  };
+
+  const handleSaveEdit = async (contactId: string) => {
+    if (!editForm.contact_name.trim()) {
+      toast({ title: "Name is required", variant: "destructive" });
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const { error } = await supabase.from("client_contacts").update({
+        contact_name: editForm.contact_name.trim(),
+        contact_title: editForm.contact_title.trim() || null,
+        email: editForm.email.trim() || null,
+        contact_type: editForm.contact_type,
+      }).eq("id", contactId);
+      if (error) throw error;
+      toast({ title: "Contact updated", className: "border-[#10b981] text-[#10b981]" });
+      setEditingContactId(null);
+      fetchContacts();
+      onContactsChanged?.();
+    } catch (err: any) {
+      toast({ title: "Error updating contact", description: getSafeErrorMessage(err), variant: "destructive" });
+    } finally {
+      setSavingEdit(false);
     }
   };
 
   if (!open) return null;
 
   const clientGradient = getHashColor(client.client_name);
+  const activeContacts = contacts.filter(c => c.status === "active");
+  const contactCount = activeContacts.length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
       <div className="relative z-10 w-full max-w-4xl max-h-[85vh] bg-card border border-border rounded-xl shadow-2xl flex flex-col mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
@@ -174,14 +266,14 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
             <div>
               <h2 className="text-lg font-semibold text-foreground">{client.client_name} — Contacts</h2>
               <p className="text-sm text-muted-foreground">
-                {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
+                {contactCount} contact{contactCount !== 1 ? "s" : ""}
                 {client.campaign_end && ` • Campaign ends ${format(new Date(client.campaign_end), "d MMM yyyy")}`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => { setShowAddForm(true); setContactForm({ contact_name: "", contact_title: "", email: "", contact_type: "secondary" }); }}
+              onClick={() => { setShowAddForm(true); setContactForm({ ...emptyForm }); }}
               className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
               size="sm"
             >
@@ -245,8 +337,21 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           </div>
         )}
 
+        {/* Show inactive contacts toggle */}
+        <div className="px-6 pt-4 pb-2 flex items-center gap-2">
+          <Switch
+            id="show-inactive-contacts"
+            checked={showInactiveContacts}
+            onCheckedChange={setShowInactiveContacts}
+            className="data-[state=checked]:bg-[#10b981]"
+          />
+          <Label htmlFor="show-inactive-contacts" className="text-sm text-muted-foreground cursor-pointer">
+            Show inactive contacts
+          </Label>
+        </div>
+
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="flex flex-col items-center gap-4">
@@ -278,9 +383,63 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
               </TableHeader>
               <TableBody>
                 {contacts.map(contact => {
+                  const isInactive = contact.status === "inactive";
                   const gradient = getHashColor(contact.contact_name);
+
+                  // Inline edit mode
+                  if (editingContactId === contact.id) {
+                    return (
+                      <TableRow key={contact.id} className="border-border/50 bg-muted/10">
+                        <TableCell colSpan={6}>
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 py-2">
+                            <div>
+                              <Label className="text-xs mb-1 block">Name *</Label>
+                              <Input
+                                value={editForm.contact_name}
+                                onChange={e => setEditForm({ ...editForm, contact_name: e.target.value })}
+                                className="bg-background/50 border-border h-9 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1 block">Job Title</Label>
+                              <Input
+                                value={editForm.contact_title}
+                                onChange={e => setEditForm({ ...editForm, contact_title: e.target.value })}
+                                className="bg-background/50 border-border h-9 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1 block">Email</Label>
+                              <Input
+                                value={editForm.email}
+                                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                                className="bg-background/50 border-border h-9 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1 block">Type</Label>
+                              <Select value={editForm.contact_type} onValueChange={val => setEditForm({ ...editForm, contact_type: val })}>
+                                <SelectTrigger className="bg-background/50 border-border h-9 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="primary">Primary</SelectItem>
+                                  <SelectItem value="secondary">Secondary</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 mt-2">
+                            <Button variant="outline" size="sm" onClick={handleCancelEdit}>Cancel</Button>
+                            <Button size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={savingEdit || !editForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
+                              {savingEdit ? "Saving..." : "Save Changes"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+
                   return (
-                    <TableRow key={contact.id} className="border-border/50 hover:bg-muted/20">
+                    <TableRow key={contact.id} className={`border-border/50 hover:bg-muted/20 ${isInactive ? 'opacity-50' : ''}`}>
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <div className={`w-[30px] h-[30px] rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}>
@@ -320,20 +479,31 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                           <div className="flex justify-end gap-1">
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-500 hover:text-purple-400 hover:bg-purple-500/10">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-500 hover:text-purple-400 hover:bg-purple-500/10" onClick={() => handleStartEdit(contact)}>
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Edit contact</TooltipContent>
                             </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10" onClick={() => handleDeactivateContact(contact)}>
-                                  <MinusCircle className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Remove contact</TooltipContent>
-                            </Tooltip>
+                            {isInactive ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10" onClick={() => handleReactivateContact(contact)}>
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Reactivate contact</TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10" onClick={() => handleDeactivateContact(contact)}>
+                                    <MinusCircle className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Remove contact</TooltipContent>
+                              </Tooltip>
+                            )}
                           </div>
                         </TooltipProvider>
                       </TableCell>
