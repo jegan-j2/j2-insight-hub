@@ -555,7 +555,23 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
 
         {/* Footer */}
         <div className="flex justify-end p-4 border-t border-border">
-          <button className="border border-input bg-background hover:bg-muted text-foreground px-4 py-2 rounded-md text-sm font-medium" onClick={onClose}>Close</button>
+          <button
+            onClick={onClose}
+            style={{
+              border: '1px solid var(--border)',
+              backgroundColor: 'transparent',
+              color: 'var(--foreground)',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--muted)')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
