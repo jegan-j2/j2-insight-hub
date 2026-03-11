@@ -10,8 +10,11 @@ import { X, Plus, Pencil, MinusCircle, Users } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { J2Loader } from "@/components/J2Loader";
+import { useTheme } from "@/contexts/ThemeContext";
 import { getSafeErrorMessage } from "@/lib/safeError";
+
+const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png";
+const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 
 interface ClientContact {
   id: string;
