@@ -528,6 +528,7 @@ const Settings = () => {
       await supabase.from("clients").update({ banner_url: null }).eq("id", editingClient.id);
     }
     setEditingClient(prev => prev ? { ...prev, banner_url: null } : prev);
+    setClientForm(f => ({ ...f, banner_url: "" }));
     toast({ title: "Banner removed", className: "border-[#10b981] text-[#10b981]" });
     fetchClients();
   };
