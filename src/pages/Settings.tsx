@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, RotateCcw } from "lucide-react";
@@ -252,6 +253,7 @@ const Settings = () => {
   const getInitials = (name: string) => name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
   const getCampaignStatus = (client: ClientRow) => {
+    if (client.status === 'inactive') return { label: "Inactive", color: "bg-muted/50 text-muted-foreground border-border" };
     if (!client.campaign_start || !client.campaign_end) return null;
     const now = new Date(); now.setHours(0,0,0,0);
     const start = new Date(client.campaign_start); start.setHours(0,0,0,0);
@@ -389,7 +391,7 @@ const Settings = () => {
   // --- Client dialog ---
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
-  const [clientForm, setClientForm] = useState({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
+  const [clientForm, setClientForm] = useState({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "", banner_url: "" });
   const [isSavingClient, setIsSavingClient] = useState(false);
   const [uploadingClientLogo, setUploadingClientLogo] = useState(false);
   const [uploadingClientBanner, setUploadingClientBanner] = useState(false);
@@ -407,7 +409,7 @@ const Settings = () => {
   // --- Client CRUD ---
   const handleAddClient = () => {
     setEditingClient(null);
-    setClientForm({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "" });
+    setClientForm({ client_name: "", client_id: "", email: "", campaign_start: "", campaign_end: "", target_sqls: "", logo_url: "", banner_url: "" });
     setIsClientDialogOpen(true);
   };
 
@@ -421,6 +423,7 @@ const Settings = () => {
       campaign_end: client.campaign_end || "",
       target_sqls: client.target_sqls?.toString() || "",
       logo_url: client.logo_url || "",
+      banner_url: client.banner_url || "",
     });
     setIsClientDialogOpen(true);
   };
@@ -438,9 +441,9 @@ const Settings = () => {
       toast({ title: "File too large", description: "Max 2MB allowed.", variant: "destructive" });
       return;
     }
-    const clientId = clientForm.client_id || editingClient?.client_id;
+    const clientId = clientForm.client_id || editingClient?.client_id || clientForm.client_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
     if (!clientId) {
-      toast({ title: "Save client first", description: "Please save the client before uploading.", variant: "destructive" });
+      toast({ title: "Enter client name first", description: "Please enter a client name before uploading.", variant: "destructive" });
       return;
     }
     setUploadingClientLogo(true);
@@ -490,9 +493,9 @@ const Settings = () => {
       toast({ title: "File too large", description: "Max 5MB allowed.", variant: "destructive" });
       return;
     }
-    const clientId = clientForm.client_id || editingClient?.client_id;
+    const clientId = clientForm.client_id || editingClient?.client_id || clientForm.client_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
     if (!clientId) {
-      toast({ title: "Save client first", description: "Please save the client before uploading.", variant: "destructive" });
+      toast({ title: "Enter client name first", description: "Please enter a client name before uploading.", variant: "destructive" });
       return;
     }
     setUploadingClientBanner(true);
@@ -508,6 +511,7 @@ const Settings = () => {
         await supabase.from("clients").update({ banner_url: publicUrl }).eq("id", editingClient.id);
       }
       setEditingClient(prev => prev ? { ...prev, banner_url: publicUrl } : prev);
+      setClientForm(f => ({ ...f, banner_url: publicUrl }));
       toast({ title: "Banner uploaded", className: "border-[#10b981] text-[#10b981]" });
       fetchClients();
     } catch (err: any) {
@@ -524,6 +528,7 @@ const Settings = () => {
       await supabase.from("clients").update({ banner_url: null }).eq("id", editingClient.id);
     }
     setEditingClient(prev => prev ? { ...prev, banner_url: null } : prev);
+    setClientForm(f => ({ ...f, banner_url: "" }));
     toast({ title: "Banner removed", className: "border-[#10b981] text-[#10b981]" });
     fetchClients();
   };
@@ -587,32 +592,23 @@ const Settings = () => {
       toast({ title: "Invalid client name", description: "Name must be 2-100 characters.", variant: "destructive" });
       return;
     }
-    if (clientForm.email && !isValidEmail(clientForm.email)) {
-      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
-      return;
-    }
-    if (clientForm.email && clientForm.email.length > 255) {
-      toast({ title: "Email too long", description: "Email must be under 255 characters.", variant: "destructive" });
-      return;
-    }
     if (clientForm.target_sqls && (isNaN(parseInt(clientForm.target_sqls)) || parseInt(clientForm.target_sqls) < 0 || parseInt(clientForm.target_sqls) > 100000)) {
       toast({ title: "Invalid target", description: "Target SQLs must be 0-100,000.", variant: "destructive" });
       return;
     }
     setIsSavingClient(true);
     try {
-      const slug = clientForm.client_id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
+      const slug = editingClient ? editingClient.client_id : name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
       if (editingClient) {
         const { error } = await supabase
           .from('clients')
           .update({
             client_name: clientForm.client_name,
-            client_id: slug,
-            email: clientForm.email || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
             logo_url: clientForm.logo_url || null,
+            banner_url: clientForm.banner_url || null,
           })
           .eq('id', editingClient.id);
         if (error) throw error;
@@ -623,11 +619,11 @@ const Settings = () => {
           .insert({
             client_name: clientForm.client_name,
             client_id: slug,
-            email: clientForm.email || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
             logo_url: clientForm.logo_url || null,
+            banner_url: clientForm.banner_url || null,
           });
         if (error) throw error;
         toast({ title: "Client added", description: `${clientForm.client_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
@@ -894,53 +890,18 @@ const Settings = () => {
                           className="bg-background/50 border-border"
                         />
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="client-id">Client ID</Label>
-                        <Input
-                          id="client-id"
-                          placeholder="auto-generated from name"
-                          value={clientForm.client_id}
-                          onChange={(e) => setClientForm({ ...clientForm, client_id: e.target.value })}
-                          className="bg-background/50 border-border"
-                        />
-                        <p className="text-xs text-muted-foreground">Leave blank to auto-generate from client name</p>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="client-email">Email</Label>
-                        <div className="flex gap-2">
+                      {editingClient && (
+                        <div className="grid gap-2">
+                          <Label htmlFor="client-id">Client ID</Label>
                           <Input
-                            id="client-email"
-                            type="email"
-                            placeholder="client@example.com"
-                            value={clientForm.email}
-                            onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                            className="bg-background/50 border-border flex-1"
+                            id="client-id"
+                            value={clientForm.client_id}
+                            disabled
+                            className="bg-muted/30 border-border text-muted-foreground cursor-not-allowed"
                           />
-                          {clientForm.email && isValidEmail(clientForm.email) && editingClient && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSendInvite(clientForm.email, 'client', clientForm.client_name, editingClient.client_id)}
-                              disabled={clientInviteStatus[editingClient.client_id] === 'sending'}
-                              className="gap-1.5 shrink-0 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white"
-                            >
-                              {clientInviteStatus[editingClient.client_id] === 'sending' ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : clientInviteStatus[editingClient.client_id] === 'sent' ? (
-                                <>✓ Invite Sent</>
-                              ) : (
-                                <><Mail className="h-3.5 w-3.5" />Send Invite</>
-                              )}
-                            </Button>
-                          )}
+                          <p className="text-xs text-muted-foreground">Auto-generated, cannot be changed</p>
                         </div>
-                        {editingClient && clientInviteStatus[editingClient.client_id] === 'sent' && (
-                          <p className="text-xs text-green-500">Invite sent successfully!</p>
-                        )}
-                        {editingClient && clientInviteStatus[editingClient.client_id] === 'error' && (
-                          <p className="text-xs text-destructive">Failed to send invite. Try again.</p>
-                        )}
-                      </div>
+                      )}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="campaign-start">Campaign Start</Label>
@@ -976,68 +937,64 @@ const Settings = () => {
                       </div>
 
                       {/* Client Logo Upload */}
-                      {editingClient && (
-                        <div className="grid gap-2 border-t border-border pt-4">
-                          <Label>Client Logo</Label>
-                          <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden">
-                              {clientForm.logo_url ? (
-                                <img src={clientForm.logo_url} alt="Client logo" className="w-full h-full object-contain" />
-                              ) : (
-                                <Building2 className="h-6 w-6 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <input ref={clientLogoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleClientLogoUpload} className="hidden" />
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => clientLogoInputRef.current?.click()} disabled={uploadingClientLogo} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
-                                  {uploadingClientLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                                  Upload Logo
-                                </Button>
-                                {clientForm.logo_url && (
-                                  <Button variant="outline" size="sm" onClick={handleRemoveClientLogo} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
-                                    <Trash2 className="h-3 w-3" />
-                                    Remove
-                                  </Button>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-muted-foreground">PNG, JPG, SVG • Max 2MB</p>
-                            </div>
+                      <div className="grid gap-2 border-t border-border pt-4">
+                        <Label>Client Logo</Label>
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden">
+                            {clientForm.logo_url ? (
+                              <img src={clientForm.logo_url} alt="Client logo" className="w-full h-full object-contain" />
+                            ) : (
+                              <Building2 className="h-6 w-6 text-muted-foreground" />
+                            )}
                           </div>
-                        </div>
-                      )}
-
-                      {/* Client Banner Upload */}
-                      {editingClient && (
-                        <div className="grid gap-2 border-t border-border pt-4">
-                          <Label>Banner Image</Label>
-                          <div className="space-y-3">
-                            <div className="w-full h-[100px] rounded-lg bg-muted/30 border border-border overflow-hidden">
-                              {editingClient.banner_url ? (
-                                <img src={editingClient.banner_url} alt="Client banner" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                                  No banner image
-                                </div>
-                              )}
-                            </div>
-                            <input ref={clientBannerInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleClientBannerUpload} className="hidden" />
+                          <div className="flex flex-col gap-2">
+                            <input ref={clientLogoInputRef} type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleClientLogoUpload} className="hidden" />
                             <div className="flex gap-2">
-                              <Button variant="outline" size="sm" onClick={() => clientBannerInputRef.current?.click()} disabled={uploadingClientBanner} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
-                                {uploadingClientBanner ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                                Upload Banner
+                              <Button variant="outline" size="sm" onClick={() => clientLogoInputRef.current?.click()} disabled={uploadingClientLogo || (!editingClient && !clientForm.client_name)} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
+                                {uploadingClientLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                                Upload Logo
                               </Button>
-                              {editingClient.banner_url && (
-                                <Button variant="outline" size="sm" onClick={handleRemoveClientBanner} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                              {clientForm.logo_url && (
+                                <Button variant="outline" size="sm" onClick={handleRemoveClientLogo} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
                                   <Trash2 className="h-3 w-3" />
                                   Remove
                                 </Button>
                               )}
                             </div>
-                            <p className="text-[10px] text-muted-foreground">PNG, JPG • Max 5MB • Recommended: 1200×300px</p>
+                            <p className="text-[10px] text-muted-foreground">PNG, JPG, SVG • Max 2MB</p>
                           </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Client Banner Upload */}
+                      <div className="grid gap-2 border-t border-border pt-4">
+                        <Label>Banner Image</Label>
+                        <div className="space-y-3">
+                          <div className="w-full h-[100px] rounded-lg bg-muted/30 border border-border overflow-hidden">
+                            {(clientForm.banner_url || editingClient?.banner_url) ? (
+                              <img src={clientForm.banner_url || editingClient?.banner_url || ''} alt="Client banner" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                                No banner image
+                              </div>
+                            )}
+                          </div>
+                          <input ref={clientBannerInputRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleClientBannerUpload} className="hidden" />
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => clientBannerInputRef.current?.click()} disabled={uploadingClientBanner || (!editingClient && !clientForm.client_name)} className="gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
+                              {uploadingClientBanner ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                              Upload Banner
+                            </Button>
+                            {(clientForm.banner_url || editingClient?.banner_url) && (
+                              <Button variant="outline" size="sm" onClick={handleRemoveClientBanner} className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
+                                <Trash2 className="h-3 w-3" />
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">PNG, JPG • Max 5MB • Recommended: 1200×300px</p>
+                        </div>
+                      </div>
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsClientDialogOpen(false)}>
@@ -1061,10 +1018,11 @@ const Settings = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-4">
-                <Checkbox
+                <Switch
                   id="show-inactive-clients"
                   checked={showInactiveClients}
-                  onCheckedChange={(checked) => setShowInactiveClients(!!checked)}
+                  onCheckedChange={setShowInactiveClients}
+                  className="data-[state=checked]:bg-[#10b981]"
                 />
                 <Label htmlFor="show-inactive-clients" className="text-sm text-muted-foreground cursor-pointer">
                   Show inactive clients

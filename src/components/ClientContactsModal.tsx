@@ -7,10 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { X, Plus, Pencil, MinusCircle, Users } from "lucide-react";
+import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { J2Loader } from "@/components/J2Loader";
+import { useTheme } from "@/contexts/ThemeContext";
 import { getSafeErrorMessage } from "@/lib/safeError";
+
+const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png";
+const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 
 interface ClientContact {
   id: string;
@@ -62,6 +66,7 @@ const getInitials = (name: string) => {
 
 export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }: ClientContactsModalProps) => {
   const { toast } = useToast();
+  const { resolvedTheme } = useTheme();
   const [contacts, setContacts] = useState<ClientContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -170,7 +175,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
               <h2 className="text-lg font-semibold text-foreground">{client.client_name} — Contacts</h2>
               <p className="text-sm text-muted-foreground">
                 {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
-                {client.campaign_end && ` • Campaign ends ${client.campaign_end}`}
+                {client.campaign_end && ` • Campaign ends ${format(new Date(client.campaign_end), "d MMM yyyy")}`}
               </p>
             </div>
           </div>
@@ -244,7 +249,14 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <J2Loader />
+              <div className="flex flex-col items-center gap-4">
+                <img
+                  src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT}
+                  alt="Loading"
+                  className="w-[48px] h-[48px] rounded-full object-contain border-2 border-[#0f172a] dark:border-white animate-[spin_2s_linear_infinite]"
+                />
+                <p className="text-sm font-semibold text-muted-foreground">Loading...</p>
+              </div>
             </div>
           ) : contacts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
