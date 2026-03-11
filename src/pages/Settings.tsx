@@ -1004,6 +1004,7 @@ const Settings = () => {
                         onClick={handleSaveClient}
                         disabled={!clientForm.client_name || isSavingClient}
                         className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                        style={{ backgroundColor: '#0f172a', color: 'white' }}
                       >
                         {isSavingClient ? (
                           <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X, Plus, Pencil, MinusCircle, Users, CheckCircle } from "lucide-react";
+import { X, Plus, Pencil, MinusCircle, Users, CheckCircle, Mail, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -86,6 +86,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<ContactFormData>({ ...emptyForm });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -242,6 +243,25 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     }
   };
 
+  const handleSendInvite = async (contact: ClientContact) => {
+    if (!contact.email) return;
+    setSendingInviteId(contact.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-invite", {
+        body: { email: contact.email, inviteUrl: `${window.location.origin}/reset-password` },
+      });
+      if (error) throw error;
+      // Optimistically update portal_access
+      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, portal_access: true } : c));
+      await supabase.from("client_contacts").update({ portal_access: true }).eq("id", contact.id);
+      toast({ title: "Invite sent", description: `Invitation sent to ${contact.email}`, className: "border-[#10b981] text-[#10b981]" });
+    } catch (err: any) {
+      toast({ title: "Failed to send invite", description: getSafeErrorMessage(err), variant: "destructive" });
+    } finally {
+      setSendingInviteId(null);
+    }
+  };
+
   if (!open) return null;
 
   const clientGradient = getHashColor(client.client_name);
@@ -330,7 +350,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
             </div>
             <div className="flex justify-end gap-2 mt-3">
               <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
+              <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }}>
                 {saving ? "Saving..." : "Save Contact"}
               </Button>
             </div>
@@ -464,12 +484,30 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={contact.portal_access
-                          ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
-                          : "bg-muted/50 text-muted-foreground border-border hover:bg-muted/50"
-                        }>
-                          {contact.portal_access ? "Active" : "Not Invited"}
-                        </Badge>
+                        {contact.portal_access ? (
+                          <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20">
+                            Active
+                          </Badge>
+                        ) : contact.email ? (
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs gap-1.5"
+                            style={{ backgroundColor: '#0f172a', color: 'white' }}
+                            disabled={sendingInviteId === contact.id}
+                            onClick={() => handleSendInvite(contact)}
+                          >
+                            {sendingInviteId === contact.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Mail className="h-3 w-3" />
+                            )}
+                            Send Invite
+                          </Button>
+                        ) : (
+                          <Badge className="bg-muted/50 text-muted-foreground border-border hover:bg-muted/50">
+                            Not Invited
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground italic">Never logged in</span>
@@ -501,7 +539,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                                     <MinusCircle className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Remove contact</TooltipContent>
+                                <TooltipContent>Deactivate contact</TooltipContent>
                               </Tooltip>
                             )}
                           </div>
@@ -517,7 +555,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
 
         {/* Footer */}
         <div className="flex justify-end p-4 border-t border-border">
-          <Button variant="outline" onClick={onClose}>Close</Button>
+          <button className="border border-input bg-background hover:bg-muted text-foreground px-4 py-2 rounded-md text-sm font-medium" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
