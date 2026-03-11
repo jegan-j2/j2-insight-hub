@@ -253,6 +253,7 @@ const Settings = () => {
   const getInitials = (name: string) => name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
   const getCampaignStatus = (client: ClientRow) => {
+    if (client.status === 'inactive') return { label: "Inactive", color: "bg-muted/50 text-muted-foreground border-border" };
     if (!client.campaign_start || !client.campaign_end) return null;
     const now = new Date(); now.setHours(0,0,0,0);
     const start = new Date(client.campaign_start); start.setHours(0,0,0,0);
