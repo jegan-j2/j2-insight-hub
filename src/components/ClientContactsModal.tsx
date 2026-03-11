@@ -501,7 +501,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                                     <MinusCircle className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Remove contact</TooltipContent>
+                                <TooltipContent>Deactivate contact</TooltipContent>
                               </Tooltip>
                             )}
                           </div>
