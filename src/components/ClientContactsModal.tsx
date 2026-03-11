@@ -535,7 +535,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
 
         {/* Footer */}
         <div className="flex justify-end p-4 border-t border-border">
-          <Button variant="outline" onClick={onClose}>Close</Button>
+          <button className="border border-input bg-background hover:bg-muted text-foreground px-4 py-2 rounded-md text-sm font-medium" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
