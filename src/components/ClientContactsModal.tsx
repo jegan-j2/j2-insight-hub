@@ -247,8 +247,8 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     if (!contact.email) return;
     setSendingInviteId(contact.id);
     try {
-      const { data, error } = await supabase.functions.invoke("send-invite", {
-        body: { email: contact.email, inviteUrl: `${window.location.origin}/reset-password` },
+      const { data, error } = await supabase.functions.invoke("generate-invite-link", {
+        body: { email: contact.email },
       });
       if (error) throw error;
       // Optimistically update portal_access
