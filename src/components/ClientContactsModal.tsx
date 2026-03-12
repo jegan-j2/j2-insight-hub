@@ -558,17 +558,15 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           <button
             onClick={onClose}
             style={{
-              border: `1px solid ${resolvedTheme === 'dark' ? '#334155' : '#e2e8f0'}`,
+              border: '1px solid #94a3b8',
               backgroundColor: 'transparent',
-              color: resolvedTheme === 'dark' ? '#f1f5f9' : '#0f172a',
+              color: 'inherit',
               padding: '8px 16px',
               borderRadius: '6px',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = resolvedTheme === 'dark' ? '#1e293b' : '#f1f5f9')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             Close
           </button>
