@@ -216,6 +216,17 @@ const Settings = () => {
   const filteredClients = showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status);
   const filteredMembers = showInactiveMembers ? teamMembers : teamMembers.filter(m => m.status === 'active' || !m.status);
 
+  const [teamPage, setTeamPage] = useState(1);
+  const TEAM_PAGE_SIZE = 15;
+
+  const sortedMembers = [...filteredMembers].sort((a, b) =>
+    a.sdr_name.localeCompare(b.sdr_name));
+  const totalTeamPages = Math.ceil(sortedMembers.length / TEAM_PAGE_SIZE);
+  const paginatedMembers = sortedMembers.slice(
+    (teamPage - 1) * TEAM_PAGE_SIZE,
+    teamPage * TEAM_PAGE_SIZE
+  );
+
   // --- Primary contacts for Client Management table ---
   const [primaryContacts, setPrimaryContacts] = useState<Record<string, { contact_name: string }>>({});
   const [contactsModalClient, setContactsModalClient] = useState<ClientRow | null>(null);
@@ -1368,7 +1379,7 @@ const Settings = () => {
                 <Switch
                   id="show-inactive-members"
                   checked={showInactiveMembers}
-                  onCheckedChange={setShowInactiveMembers}
+                  onCheckedChange={(checked) => { setShowInactiveMembers(checked); setTeamPage(1); }}
                   className="data-[state=checked]:bg-[#10b981]"
                 />
                 <Label htmlFor="show-inactive-members" className="text-sm text-muted-foreground cursor-pointer">
@@ -1390,14 +1401,14 @@ const Settings = () => {
                   <TableBody>
                     {loadingTeam ? (
                       <TableSkeletonRows />
-                    ) : filteredMembers.length === 0 ? (
+                    ) : sortedMembers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredMembers.map((member) => {
+                      paginatedMembers.map((member) => {
                         const isInactive = member.status === 'inactive';
                         const memberInviteInfo = getMemberInviteInfo(member.email);
                         const memberClientName = member.client_id && member.role?.toLowerCase() === 'sdr'
@@ -1514,6 +1525,36 @@ const Settings = () => {
                     )}
                   </TableBody>
                 </Table>
+                {totalTeamPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 mt-2">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {((teamPage - 1) * TEAM_PAGE_SIZE) + 1}–{Math.min(teamPage * TEAM_PAGE_SIZE, sortedMembers.length)} of {sortedMembers.length} members
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTeamPage(p => Math.max(1, p - 1))}
+                        disabled={teamPage === 1}
+                        className="h-8 px-3 text-xs"
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground font-medium">
+                        {teamPage} / {totalTeamPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTeamPage(p => Math.min(totalTeamPages, p + 1))}
+                        disabled={teamPage === totalTeamPages}
+                        className="h-8 px-3 text-xs"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
