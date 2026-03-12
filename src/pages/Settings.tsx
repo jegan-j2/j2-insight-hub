@@ -376,7 +376,7 @@ const Settings = () => {
   };
 
   // --- Notification settings ---
-  const [notifTab, setNotifTab] = useState('email');
+  // notifTab removed — all notification sections now stack vertically
   const [reportFrequency, setReportFrequency] = useState<"daily" | "weekly" | "monthly" | "disabled">("daily");
   const [sendTime, setSendTime] = useState("4:00 PM");
   const [sendDay, setSendDay] = useState("Monday");
