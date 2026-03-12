@@ -1334,14 +1334,23 @@ const Settings = () => {
                     <DialogFooter>
                       <button
                         onClick={() => setIsTeamDialogOpen(false)}
-                        style={{ border: '1px solid #e2e8f0', backgroundColor: 'transparent', color: 'inherit', padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}
+                        style={{
+                          border: '1px solid #94a3b8',
+                          backgroundColor: 'transparent',
+                          color: 'inherit',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          cursor: 'pointer'
+                        }}
                       >
                         Cancel
                       </button>
                       <Button
                         onClick={handleSaveMember}
                         disabled={!memberForm.sdr_name || !memberForm.email || !memberForm.role || isSavingMember}
-                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:text-white dark:hover:bg-[#2563eb]"
+                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                        style={{ backgroundColor: '#0f172a', color: 'white' }}
                       >
                         {isSavingMember ? (
                           <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>
