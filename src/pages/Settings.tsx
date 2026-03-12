@@ -1860,7 +1860,7 @@ const Settings = () => {
               <CardTitle>Slack Integration</CardTitle>
               <CardDescription>Connect your Slack workspace for real-time notifications</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               <div className="grid gap-2">
                 <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
                 <div className="flex gap-2">
