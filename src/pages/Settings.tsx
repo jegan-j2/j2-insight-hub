@@ -1650,13 +1650,13 @@ const Settings = () => {
               { key: 'slack', label: 'Slack', icon: <Send className="h-4 w-4" /> },
               { key: 'browser', label: 'Browser', icon: <BellRing className="h-4 w-4" /> },
             ].map(({ key, label, icon }) => (
-              <button
+             <button
                 key={key}
                 onClick={() => setNotifTab(key)}
-                className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   notifTab === key
-                    ? 'bg-[#0f172a] text-white border-[#0f172a] dark:bg-white dark:text-[#0f172a] dark:border-white'
-                    : 'bg-transparent text-muted-foreground border-border hover:bg-muted/20'
+                    ? 'bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]'
+                    : 'bg-transparent text-muted-foreground border border-border hover:bg-muted/20'
                 }`}
                 style={notifTab === key ? { backgroundColor: '#0f172a', color: 'white' } : undefined}
               >
@@ -1668,15 +1668,15 @@ const Settings = () => {
 
           {/* Email Sub-tab */}
           {notifTab === 'email' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <div className="max-w-3xl">
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
                   <Mail className="h-5 w-5 text-muted-foreground" />
                   Email Reports Configuration
-                </CardTitle>
-                <CardDescription>Configure automated email report settings</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-6">
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1.5">Configure automated email report settings</p>
+              </div>
+              <div className="space-y-6">
                 {loadingNotifications ? (
                   <div className="space-y-4">
                     <Skeleton className="h-6 w-40" />
@@ -1844,9 +1844,9 @@ const Settings = () => {
                     )}
                   </>
                 )}
-              </CardContent>
-              {/* Card Footer */}
-              <div className="border-t border-border px-6 py-4 flex justify-end gap-3">
+              </div>
+              {/* Footer */}
+              <div className="border-t border-border pt-4 mt-6 flex justify-end gap-3">
                 <Button
                   variant="outline"
                   onClick={handleSendTestEmail}
@@ -1864,17 +1864,17 @@ const Settings = () => {
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
-            </Card>
+            </div>
           )}
 
           {/* Slack Sub-tab */}
           {notifTab === 'slack' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
-              <CardHeader>
-                <CardTitle>Slack Integration</CardTitle>
-                <CardDescription>Connect your Slack workspace for real-time notifications</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-6">
+            <div className="max-w-3xl">
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight">Slack Integration</h3>
+                <p className="text-sm text-muted-foreground mt-1.5">Connect your Slack workspace for real-time notifications</p>
+              </div>
+              <div className="space-y-6">
                 {/* SECTION 1 — Webhook URL */}
                 <div className="space-y-2">
                   <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
@@ -1960,9 +1960,9 @@ const Settings = () => {
                     ))}
                   </div>
                 </div>
-              </CardContent>
-              {/* Card Footer */}
-              <div className="border-t border-border px-6 py-4 flex justify-end">
+              </div>
+              {/* Footer */}
+              <div className="border-t border-border pt-4 mt-6 flex justify-end">
                 <Button
                   onClick={handleSaveNotifications}
                   className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
@@ -1972,20 +1972,20 @@ const Settings = () => {
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Slack Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
-            </Card>
+            </div>
           )}
 
           {/* Browser Sub-tab */}
           {notifTab === 'browser' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <div className="max-w-3xl">
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
                   <Bell className="h-5 w-5 text-muted-foreground" />
                   Browser Notifications
-                </CardTitle>
-                <CardDescription>Get desktop notifications even when the dashboard is in the background</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-6">
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1.5">Get desktop notifications even when the dashboard is in the background</p>
+              </div>
+              <div className="space-y-6">
                 {/* SECTION 1 — Permission Status */}
                 <div className="rounded-md border border-border p-3 bg-muted/20">
                   {!browserNotifSupported ? (
@@ -2058,9 +2058,9 @@ const Settings = () => {
                     Browser notifications only work when this tab is open. For background alerts, use Slack notifications.
                   </p>
                 </div>
-              </CardContent>
-              {/* Card Footer */}
-              <div className="border-t border-border px-6 py-4 flex justify-end">
+              </div>
+              {/* Footer */}
+              <div className="border-t border-border pt-4 mt-6 flex justify-end">
                 <Button
                   onClick={handleSaveNotifications}
                   className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
@@ -2070,7 +2070,7 @@ const Settings = () => {
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Notification Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
-            </Card>
+            </div>
           )}
         </TabsContent>
       </Tabs>
