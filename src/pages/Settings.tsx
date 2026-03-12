@@ -1220,7 +1220,7 @@ const Settings = () => {
                     </DialogTrigger>
                   ) : (
                     <p className="text-sm text-muted-foreground">👮 Contact your administrator to manage team members</p>
-                  )
+                  )}
                   <DialogContent className="bg-card border-border sm:max-w-[525px]">
                     <DialogHeader>
                       <DialogTitle>{editingMember ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
