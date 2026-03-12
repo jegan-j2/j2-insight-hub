@@ -1869,12 +1869,12 @@ const Settings = () => {
 
           {/* Slack Sub-tab */}
           {notifTab === 'slack' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
-              <CardHeader>
-                <CardTitle>Slack Integration</CardTitle>
-                <CardDescription>Connect your Slack workspace for real-time notifications</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-6">
+            <div className="max-w-3xl">
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight">Slack Integration</h3>
+                <p className="text-sm text-muted-foreground mt-1.5">Connect your Slack workspace for real-time notifications</p>
+              </div>
+              <div className="space-y-6">
                 {/* SECTION 1 — Webhook URL */}
                 <div className="space-y-2">
                   <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
