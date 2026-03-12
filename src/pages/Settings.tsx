@@ -1337,9 +1337,12 @@ const Settings = () => {
                       )}
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsTeamDialogOpen(false)}>
+                      <button
+                        onClick={() => setIsTeamDialogOpen(false)}
+                        style={{ border: '1px solid #e2e8f0', backgroundColor: 'transparent', color: 'inherit', padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}
+                      >
                         Cancel
-                      </Button>
+                      </button>
                       <Button
                         onClick={handleSaveMember}
                         disabled={!memberForm.sdr_name || !memberForm.email || !memberForm.role || isSavingMember}
