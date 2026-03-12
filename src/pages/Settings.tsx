@@ -1048,7 +1048,7 @@ const Settings = () => {
                       <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
                       <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Status</TableHead>
                       <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Days Left</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
