@@ -1668,15 +1668,15 @@ const Settings = () => {
 
           {/* Email Sub-tab */}
           {notifTab === 'email' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <div className="max-w-3xl">
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
                   <Mail className="h-5 w-5 text-muted-foreground" />
                   Email Reports Configuration
-                </CardTitle>
-                <CardDescription>Configure automated email report settings</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-6">
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1.5">Configure automated email report settings</p>
+              </div>
+              <div className="space-y-6">
                 {loadingNotifications ? (
                   <div className="space-y-4">
                     <Skeleton className="h-6 w-40" />
