@@ -1341,7 +1341,7 @@ const Settings = () => {
                       <Button
                         onClick={handleSaveMember}
                         disabled={!memberForm.sdr_name || !memberForm.email || !memberForm.role || isSavingMember}
-                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:text-white dark:hover:bg-[#2563eb]"
                       >
                         {isSavingMember ? (
                           <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>
@@ -1401,7 +1401,7 @@ const Settings = () => {
                                 <SDRAvatar name={member.sdr_name} photoUrl={member.profile_photo_url} size="sm" />
                                 {member.sdr_name}
                                 {isInactive && (
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive uppercase">Inactive</span>
+                                  <Badge className="text-[10px] bg-destructive/20 text-destructive border-destructive/30 hover:bg-destructive/20 uppercase">Inactive</Badge>
                                 )}
                               </div>
                             </TableCell>
@@ -1409,17 +1409,17 @@ const Settings = () => {
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
                             <TableCell className="text-muted-foreground">{memberClientName}</TableCell>
                             <TableCell>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
+                              <Badge className={
                                 memberInviteInfo.status === 'active' 
-                                  ? 'bg-green-500/20 text-green-400' :
+                                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' :
                                 memberInviteInfo.status === 'pending' 
-                                  ? 'bg-yellow-500/20 text-yellow-400' :
+                                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20' :
                                 memberInviteInfo.status === 'expired' 
-                                  ? 'bg-destructive/20 text-destructive' :
-                                  'bg-muted/30 text-muted-foreground'
-                              }`}>
+                                  ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20' :
+                                  'bg-muted/50 text-muted-foreground border-border hover:bg-muted/50'
+                              }>
                                 {memberInviteInfo.label}
-                              </span>
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-right">
                               {canEditTeamMembers ? (
