@@ -997,9 +997,12 @@ const Settings = () => {
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsClientDialogOpen(false)}>
+                      <button
+                        onClick={() => setIsClientDialogOpen(false)}
+                        style={{ border: '1px solid #e2e8f0', backgroundColor: 'transparent', color: 'inherit', padding: '8px 16px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}
+                      >
                         Cancel
-                      </Button>
+                      </button>
                       <Button
                         onClick={handleSaveClient}
                         disabled={!clientForm.client_name || isSavingClient}
