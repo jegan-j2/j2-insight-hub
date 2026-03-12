@@ -1405,8 +1405,8 @@ const ActivityMonitor = () => {
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">{mode === "live" ? "Time" : "Date"}</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
-                      <TableHead className="text-right font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
-                      <TableHead className="text-center font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
+                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
+                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
