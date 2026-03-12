@@ -212,9 +212,21 @@ const Settings = () => {
   // --- Show inactive toggles ---
   const [showInactiveClients, setShowInactiveClients] = useState(false);
   const [showInactiveMembers, setShowInactiveMembers] = useState(false);
+  const [teamSearch, setTeamSearch] = useState('');
 
   const filteredClients = showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status);
-  const filteredMembers = showInactiveMembers ? teamMembers : teamMembers.filter(m => m.status === 'active' || !m.status);
+  const filteredMembers = teamMembers.filter(member => {
+    const matchesActive = showInactiveMembers
+      ? true
+      : member.status !== 'inactive';
+    const search = teamSearch.toLowerCase().trim();
+    const clientName = clientsList.find(c =>
+      c.client_id === member.client_id)?.client_name?.toLowerCase() || '';
+    const matchesSearch = search === '' ||
+      member.sdr_name?.toLowerCase().includes(search) ||
+      clientName.includes(search);
+    return matchesActive && matchesSearch;
+  });
 
   const [teamPage, setTeamPage] = useState(1);
   const TEAM_PAGE_SIZE = 15;
