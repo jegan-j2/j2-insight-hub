@@ -219,13 +219,56 @@ const Settings = () => {
   const [teamPage, setTeamPage] = useState(1);
   const TEAM_PAGE_SIZE = 15;
 
-  const sortedMembers = [...filteredMembers].sort((a, b) =>
-    a.sdr_name.localeCompare(b.sdr_name));
+  type TeamSortField = 'sdr_name' | 'email' | 'role' | 'client' | 'login_status';
+  type TeamSortDir = 'asc' | 'desc';
+  const [teamSortField, setTeamSortField] = useState<TeamSortField>('sdr_name');
+  const [teamSortDir, setTeamSortDir] = useState<TeamSortDir>('asc');
+
+  const handleTeamSort = (field: TeamSortField) => {
+    if (teamSortField === field) {
+      setTeamSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setTeamSortField(field);
+      setTeamSortDir('asc');
+    }
+    setTeamPage(1);
+  };
+
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
+    let aVal = '';
+    let bVal = '';
+    if (teamSortField === 'sdr_name') {
+      aVal = a.sdr_name || '';
+      bVal = b.sdr_name || '';
+    } else if (teamSortField === 'email') {
+      aVal = a.email || '';
+      bVal = b.email || '';
+    } else if (teamSortField === 'role') {
+      aVal = a.role || '';
+      bVal = b.role || '';
+    } else if (teamSortField === 'client') {
+      aVal = clientsList.find(c => c.client_id === a.client_id)?.client_name || '';
+      bVal = clientsList.find(c => c.client_id === b.client_id)?.client_name || '';
+    } else if (teamSortField === 'login_status') {
+      const order = { active: 0, pending: 1, expired: 2, no_invite: 3 };
+      const aInfo = getMemberInviteInfo(a.email);
+      const bInfo = getMemberInviteInfo(b.email);
+      aVal = String(order[aInfo.status as keyof typeof order] ?? 9);
+      bVal = String(order[bInfo.status as keyof typeof order] ?? 9);
+    }
+    const cmp = aVal.localeCompare(bVal, undefined, { numeric: true });
+    return teamSortDir === 'asc' ? cmp : -cmp;
+  });
   const totalTeamPages = Math.ceil(sortedMembers.length / TEAM_PAGE_SIZE);
   const paginatedMembers = sortedMembers.slice(
     (teamPage - 1) * TEAM_PAGE_SIZE,
     teamPage * TEAM_PAGE_SIZE
   );
+
+  const SortIcon = ({ field, current, dir }: { field: TeamSortField; current: TeamSortField; dir: TeamSortDir }) => {
+    if (field !== current) return <span className="ml-1 text-muted-foreground/40 text-xs">↕</span>;
+    return <span className="ml-1 text-[#0f172a] dark:text-white text-xs">{dir === 'asc' ? '↑' : '↓'}</span>;
+  };
 
   // --- Primary contacts for Client Management table ---
   const [primaryContacts, setPrimaryContacts] = useState<Record<string, { contact_name: string }>>({});
@@ -1390,12 +1433,22 @@ const Settings = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Name</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Role</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Assigned Client</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Login Status</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Actions</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('sdr_name')}>
+                        <span className="flex items-center">Name<SortIcon field="sdr_name" current={teamSortField} dir={teamSortDir} /></span>
+                      </TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('email')}>
+                        <span className="flex items-center">Email<SortIcon field="email" current={teamSortField} dir={teamSortDir} /></span>
+                      </TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('role')}>
+                        <span className="flex items-center">Role<SortIcon field="role" current={teamSortField} dir={teamSortDir} /></span>
+                      </TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('client')}>
+                        <span className="flex items-center">Assigned Client<SortIcon field="client" current={teamSortField} dir={teamSortDir} /></span>
+                      </TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('login_status')}>
+                        <span className="flex items-center">Login Status<SortIcon field="login_status" current={teamSortField} dir={teamSortDir} /></span>
+                      </TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
