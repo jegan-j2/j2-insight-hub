@@ -1775,20 +1775,23 @@ const Settings = () => {
                       { value: "saturday", label: "Sat" },
                       { value: "sunday", label: "Sun" },
                     ].map(({ value, label }) => (
-                      <div key={value} className="flex items-center space-x-1.5">
-                        <Checkbox
-                          id={`day-${value}`}
-                          checked={sendDays.includes(value)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSendDays(prev => [...prev, value]);
-                            } else {
-                              setSendDays(prev => prev.filter(d => d !== value));
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`day-${value}`} className="text-sm cursor-pointer">{label}</Label>
-                      </div>
+                      <span
+                        key={value}
+                        onClick={() => {
+                          if (sendDays.includes(value)) {
+                            setSendDays(prev => prev.filter(d => d !== value));
+                          } else {
+                            setSendDays(prev => [...prev, value]);
+                          }
+                        }}
+                        className={sendDays.includes(value)
+                          ? "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors"
+                          : "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer border border-border bg-transparent text-foreground hover:bg-muted/20 transition-colors"
+                        }
+                        style={sendDays.includes(value) ? { backgroundColor: '#0f172a', color: 'white' } : undefined}
+                      >
+                        {label}
+                      </span>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">Reports will only be sent on selected days</p>
