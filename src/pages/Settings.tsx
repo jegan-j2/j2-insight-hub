@@ -1650,13 +1650,13 @@ const Settings = () => {
               { key: 'slack', label: 'Slack', icon: <Send className="h-4 w-4" /> },
               { key: 'browser', label: 'Browser', icon: <BellRing className="h-4 w-4" /> },
             ].map(({ key, label, icon }) => (
-              <button
+             <button
                 key={key}
                 onClick={() => setNotifTab(key)}
-                className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   notifTab === key
-                    ? 'bg-[#0f172a] text-white border-[#0f172a] dark:bg-white dark:text-[#0f172a] dark:border-white'
-                    : 'bg-transparent text-muted-foreground border-border hover:bg-muted/20'
+                    ? 'bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]'
+                    : 'bg-transparent text-muted-foreground border border-border hover:bg-muted/20'
                 }`}
                 style={notifTab === key ? { backgroundColor: '#0f172a', color: 'white' } : undefined}
               >
