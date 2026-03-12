@@ -1341,7 +1341,7 @@ const Settings = () => {
                       <Button
                         onClick={handleSaveMember}
                         disabled={!memberForm.sdr_name || !memberForm.email || !memberForm.role || isSavingMember}
-                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:text-white dark:hover:bg-[#2563eb]"
                       >
                         {isSavingMember ? (
                           <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>
