@@ -266,8 +266,10 @@ const Settings = () => {
   );
 
   const SortIcon = ({ field, current, dir }: { field: TeamSortField; current: TeamSortField; dir: TeamSortDir }) => {
-    if (field !== current) return <span className="ml-1 text-muted-foreground/40 text-xs">↕</span>;
-    return <span className="ml-1 text-[#0f172a] dark:text-white text-xs">{dir === 'asc' ? '↑' : '↓'}</span>;
+    if (field !== current) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50 inline" />;
+    return dir === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white inline" />
+      : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white inline" />;
   };
 
   // --- Primary contacts for Client Management table ---
