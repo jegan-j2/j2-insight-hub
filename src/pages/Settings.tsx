@@ -1424,11 +1424,11 @@ const Settings = () => {
                             <TableCell className="text-right">
                               {canEditTeamMembers ? (
                               <TooltipProvider>
-                                <div className="flex justify-end gap-2">
+                                <div className="flex justify-end items-center gap-2">
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)} aria-label={`Edit ${member.sdr_name}`}>
-                                        <Pencil className="h-4 w-4 text-blue-500" />
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10" onClick={() => handleEditMember(member)} aria-label={`Edit ${member.sdr_name}`}>
+                                        <Pencil className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Edit</TooltipContent>
@@ -1439,9 +1439,9 @@ const Settings = () => {
                                         <Button
                                           variant="ghost"
                                           size="icon"
+                                          className="h-8 w-8 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
                                           onClick={() => handleResendInvite(member.email, 'member', member.sdr_name)}
                                           aria-label={`Resend invite to ${member.sdr_name}`}
-                                          className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
                                         >
                                           <RefreshCw className="h-4 w-4" />
                                         </Button>
@@ -1449,17 +1449,18 @@ const Settings = () => {
                                       <TooltipContent>Resend Invite</TooltipContent>
                                     </Tooltip>
                                   )}
+                                  <div className="mx-0.5" style={{ width: '1px', height: '20px', backgroundColor: '#e2e8f0', flexShrink: 0 }} />
                                   {isInactive ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
                                           variant="ghost"
                                           size="icon"
+                                          className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
                                           onClick={() => handleReactivateMember(member)}
                                           aria-label={`Reactivate ${member.sdr_name}`}
-                                          className="text-green-500 hover:text-green-400 hover:bg-green-500/10"
                                         >
-                                          <Power className="h-4 w-4" />
+                                          <CheckCircle className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>Reactivate</TooltipContent>
@@ -1469,8 +1470,8 @@ const Settings = () => {
                                       <Tooltip>
                                         <TooltipTrigger asChild>
                                           <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" aria-label={`Deactivate ${member.sdr_name}`} className="text-orange-500 hover:text-orange-400 hover:bg-orange-500/10">
-                                              <Power className="h-4 w-4" />
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10" aria-label={`Deactivate ${member.sdr_name}`}>
+                                              <MinusCircle className="h-4 w-4" />
                                             </Button>
                                           </AlertDialogTrigger>
                                         </TooltipTrigger>
