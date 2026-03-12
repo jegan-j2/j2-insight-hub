@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, CheckCircle } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { ClientContactsModal } from "@/components/ClientContactsModal";
 import { Badge } from "@/components/ui/badge";
@@ -266,8 +266,10 @@ const Settings = () => {
   );
 
   const SortIcon = ({ field, current, dir }: { field: TeamSortField; current: TeamSortField; dir: TeamSortDir }) => {
-    if (field !== current) return <span className="ml-1 text-muted-foreground/40 text-xs">↕</span>;
-    return <span className="ml-1 text-[#0f172a] dark:text-white text-xs">{dir === 'asc' ? '↑' : '↓'}</span>;
+    if (field !== current) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50 inline" />;
+    return dir === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white inline" />
+      : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white inline" />;
   };
 
   // --- Primary contacts for Client Management table ---
