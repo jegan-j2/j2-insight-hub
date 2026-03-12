@@ -1357,10 +1357,11 @@ const Settings = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-4">
-                <Checkbox
+                <Switch
                   id="show-inactive-members"
                   checked={showInactiveMembers}
-                  onCheckedChange={(checked) => setShowInactiveMembers(!!checked)}
+                  onCheckedChange={setShowInactiveMembers}
+                  className="data-[state=checked]:bg-[#10b981]"
                 />
                 <Label htmlFor="show-inactive-members" className="text-sm text-muted-foreground cursor-pointer">
                   Show inactive team members
