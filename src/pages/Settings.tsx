@@ -1490,7 +1490,7 @@ const Settings = () => {
                                       <Tooltip>
                                         <TooltipTrigger asChild>
                                           <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10" aria-label={`Deactivate ${member.sdr_name}`}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 dark:text-orange-400 hover:text-orange-400 hover:bg-orange-500/10" aria-label={`Deactivate ${member.sdr_name}`}>
                                               <MinusCircle className="h-4 w-4" />
                                             </Button>
                                           </AlertDialogTrigger>
@@ -1526,7 +1526,7 @@ const Settings = () => {
                   </TableBody>
                 </Table>
                 {totalTeamPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 mt-2">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border mt-2">
                     <p className="text-sm text-muted-foreground">
                       Showing {((teamPage - 1) * TEAM_PAGE_SIZE) + 1}–{Math.min(teamPage * TEAM_PAGE_SIZE, sortedMembers.length)} of {sortedMembers.length} members
                     </p>
@@ -1536,7 +1536,7 @@ const Settings = () => {
                         size="sm"
                         onClick={() => setTeamPage(p => Math.max(1, p - 1))}
                         disabled={teamPage === 1}
-                        className="h-8 px-3 text-xs"
+                        className="h-8 px-3 text-xs border border-border hover:bg-muted/20"
                       >
                         Previous
                       </Button>
@@ -1548,7 +1548,7 @@ const Settings = () => {
                         size="sm"
                         onClick={() => setTeamPage(p => Math.min(totalTeamPages, p + 1))}
                         disabled={teamPage === totalTeamPages}
-                        className="h-8 px-3 text-xs"
+                        className="h-8 px-3 text-xs border border-border hover:bg-muted/20"
                       >
                         Next
                       </Button>
