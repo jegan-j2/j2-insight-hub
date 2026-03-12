@@ -1844,9 +1844,9 @@ const Settings = () => {
                     )}
                   </>
                 )}
-              </CardContent>
-              {/* Card Footer */}
-              <div className="border-t border-border px-6 py-4 flex justify-end gap-3">
+              </div>
+              {/* Footer */}
+              <div className="border-t border-border pt-4 mt-6 flex justify-end gap-3">
                 <Button
                   variant="outline"
                   onClick={handleSendTestEmail}
@@ -1864,7 +1864,7 @@ const Settings = () => {
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
-            </Card>
+            </div>
           )}
 
           {/* Slack Sub-tab */}
