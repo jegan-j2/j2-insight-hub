@@ -855,12 +855,12 @@ const Settings = () => {
         {/* Client Management Tab */}
         <TabsContent value="clients" className="space-y-4">
           <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <CardTitle>Client Management</CardTitle>
-                  <CardDescription>Add, edit, or remove client accounts</CardDescription>
-                </div>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <CardTitle className="text-left">Client Management</CardTitle>
+                <CardDescription className="text-left">Add, edit, or remove client accounts</CardDescription>
+              </div>
+              <div className="flex-shrink-0">
                 <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
                   {canEditClients ? (
                     <DialogTrigger asChild>
@@ -1033,7 +1033,7 @@ const Settings = () => {
                 <TooltipProvider>
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                    <TableRow className="border-border/50 !bg-[#f1f5f9] dark:!bg-[#1e293b] hover:bg-[#f1f5f9] dark:hover:bg-[#1e293b]">
                       <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Client</TableHead>
                       <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Primary Contact</TableHead>
                       <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
