@@ -1401,7 +1401,7 @@ const Settings = () => {
                                 <SDRAvatar name={member.sdr_name} photoUrl={member.profile_photo_url} size="sm" />
                                 {member.sdr_name}
                                 {isInactive && (
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive uppercase">Inactive</span>
+                                  <Badge className="text-[10px] bg-destructive/20 text-destructive border-destructive/30 hover:bg-destructive/20 uppercase">Inactive</Badge>
                                 )}
                               </div>
                             </TableCell>
