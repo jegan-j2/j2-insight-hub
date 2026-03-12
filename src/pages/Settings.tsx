@@ -1918,7 +1918,7 @@ const Settings = () => {
                         onCheckedChange={(checked) =>
                           setReportContent({ ...reportContent, [key]: checked as boolean })
                         }
-                        className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                        className="mt-0.5 data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
                       />
                       <div className="grid gap-0.5">
                         <Label htmlFor={`slack-${key}`} className="font-normal cursor-pointer">{label}</Label>
