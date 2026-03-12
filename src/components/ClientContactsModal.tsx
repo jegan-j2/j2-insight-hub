@@ -433,6 +433,9 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        <span className="text-sm text-muted-foreground italic">Never logged in</span>
+                      </TableCell>
+                      <TableCell>
                         {contact.portal_access ? (
                           <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20">
                             Active
@@ -457,9 +460,6 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                             Not Invited
                           </Badge>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground italic">Never logged in</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <TooltipProvider>
