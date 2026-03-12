@@ -1401,14 +1401,14 @@ const Settings = () => {
                   <TableBody>
                     {loadingTeam ? (
                       <TableSkeletonRows />
-                    ) : filteredMembers.length === 0 ? (
+                    ) : sortedMembers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredMembers.map((member) => {
+                      paginatedMembers.map((member) => {
                         const isInactive = member.status === 'inactive';
                         const memberInviteInfo = getMemberInviteInfo(member.email);
                         const memberClientName = member.client_id && member.role?.toLowerCase() === 'sdr'
