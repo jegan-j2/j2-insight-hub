@@ -1204,12 +1204,12 @@ const Settings = () => {
         {/* Team Members Tab */}
         <TabsContent value="team" className="space-y-4">
           <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <CardTitle>Team Members</CardTitle>
-                  <CardDescription>Manage SDR team members and their roles</CardDescription>
-                </div>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <CardTitle className="text-left">Team Members</CardTitle>
+                <CardDescription className="text-left">Manage SDR team members and their roles</CardDescription>
+              </div>
+              <div className="flex-shrink-0">
                 <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
                   {canEditTeamMembers ? (
                     <DialogTrigger asChild>
@@ -1220,7 +1220,7 @@ const Settings = () => {
                     </DialogTrigger>
                   ) : (
                     <p className="text-sm text-muted-foreground">👮 Contact your administrator to manage team members</p>
-                  )}
+                  )
                   <DialogContent className="bg-card border-border sm:max-w-[525px]">
                     <DialogHeader>
                       <DialogTitle>{editingMember ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
