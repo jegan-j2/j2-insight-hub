@@ -1525,6 +1525,36 @@ const Settings = () => {
                     )}
                   </TableBody>
                 </Table>
+                {totalTeamPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 mt-2">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {((teamPage - 1) * TEAM_PAGE_SIZE) + 1}–{Math.min(teamPage * TEAM_PAGE_SIZE, sortedMembers.length)} of {sortedMembers.length} members
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTeamPage(p => Math.max(1, p - 1))}
+                        disabled={teamPage === 1}
+                        className="h-8 px-3 text-xs"
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground font-medium">
+                        {teamPage} / {totalTeamPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTeamPage(p => Math.min(totalTeamPages, p + 1))}
+                        disabled={teamPage === totalTeamPages}
+                        className="h-8 px-3 text-xs"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
