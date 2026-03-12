@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ClientContactsModal } from "@/components/ClientContactsModal";
 import { Badge } from "@/components/ui/badge";
@@ -212,9 +212,21 @@ const Settings = () => {
   // --- Show inactive toggles ---
   const [showInactiveClients, setShowInactiveClients] = useState(false);
   const [showInactiveMembers, setShowInactiveMembers] = useState(false);
+  const [teamSearch, setTeamSearch] = useState('');
 
   const filteredClients = showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status);
-  const filteredMembers = showInactiveMembers ? teamMembers : teamMembers.filter(m => m.status === 'active' || !m.status);
+  const filteredMembers = teamMembers.filter(member => {
+    const matchesActive = showInactiveMembers
+      ? true
+      : member.status !== 'inactive';
+    const search = teamSearch.toLowerCase().trim();
+    const clientName = clientsList.find(c =>
+      c.client_id === member.client_id)?.client_name?.toLowerCase() || '';
+    const matchesSearch = search === '' ||
+      member.sdr_name?.toLowerCase().includes(search) ||
+      clientName.includes(search);
+    return matchesActive && matchesSearch;
+  });
 
   const [teamPage, setTeamPage] = useState(1);
   const TEAM_PAGE_SIZE = 15;
@@ -1265,7 +1277,20 @@ const Settings = () => {
                 <CardTitle className="text-left">Team Members</CardTitle>
                 <CardDescription className="text-left">Manage SDR team members and their roles</CardDescription>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or client..."
+                    value={teamSearch}
+                    onChange={e => {
+                      setTeamSearch(e.target.value);
+                      setTeamPage(1);
+                    }}
+                    className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 dark:focus:ring-white/20 w-64"
+                  />
+                </div>
                 <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
                   {canEditTeamMembers ? (
                     <DialogTrigger asChild>
