@@ -1548,7 +1548,7 @@ const Settings = () => {
                         size="sm"
                         onClick={() => setTeamPage(p => Math.min(totalTeamPages, p + 1))}
                         disabled={teamPage === totalTeamPages}
-                        className="h-8 px-3 text-xs"
+                        className="h-8 px-3 text-xs border border-border hover:bg-muted/20"
                       >
                         Next
                       </Button>
