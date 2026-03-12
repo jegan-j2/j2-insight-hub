@@ -1133,7 +1133,7 @@ const Settings = () => {
                                     </TooltipTrigger>
                                     <TooltipContent>Manage contacts</TooltipContent>
                                   </Tooltip>
-                                  <div className="mx-0.5" style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)' }} />
+                                  <div className="mx-0.5" style={{ width: '1px', height: '20px', backgroundColor: '#e2e8f0', flexShrink: 0 }} />
                                   {isInactive ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
