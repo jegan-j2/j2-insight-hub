@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Bell, X, Send, Save, Loader2, Upload, Power, BellRing, Mail, RefreshCw, Eye, EyeOff, Home, MinusCircle, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ClientContactsModal } from "@/components/ClientContactsModal";
 import { Badge } from "@/components/ui/badge";
