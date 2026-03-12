@@ -1204,12 +1204,12 @@ const Settings = () => {
         {/* Team Members Tab */}
         <TabsContent value="team" className="space-y-4">
           <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <CardTitle>Team Members</CardTitle>
-                  <CardDescription>Manage SDR team members and their roles</CardDescription>
-                </div>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <CardTitle className="text-left">Team Members</CardTitle>
+                <CardDescription className="text-left">Manage SDR team members and their roles</CardDescription>
+              </div>
+              <div className="flex-shrink-0">
                 <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
                   {canEditTeamMembers ? (
                     <DialogTrigger asChild>
@@ -1356,10 +1356,11 @@ const Settings = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-4">
-                <Checkbox
+                <Switch
                   id="show-inactive-members"
                   checked={showInactiveMembers}
-                  onCheckedChange={(checked) => setShowInactiveMembers(!!checked)}
+                  onCheckedChange={setShowInactiveMembers}
+                  className="data-[state=checked]:bg-[#10b981]"
                 />
                 <Label htmlFor="show-inactive-members" className="text-sm text-muted-foreground cursor-pointer">
                   Show inactive team members
@@ -1368,13 +1369,13 @@ const Settings = () => {
               <div className="overflow-x-auto scrollbar-thin">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="text-muted-foreground">Name</TableHead>
-                      <TableHead className="text-muted-foreground">Email</TableHead>
-                      <TableHead className="text-muted-foreground">Role</TableHead>
-                      <TableHead className="text-muted-foreground">Client</TableHead>
-                      <TableHead className="text-muted-foreground">Invite</TableHead>
-                      <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                    <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Name</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Role</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Assigned Client</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Login Status</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
