@@ -1656,8 +1656,9 @@ const Settings = () => {
                 className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border transition-all ${
                   notifTab === key
                     ? 'bg-[#0f172a] text-white border-[#0f172a] dark:bg-white dark:text-[#0f172a] dark:border-white'
-                    : 'bg-transparent border-border text-foreground hover:bg-muted/30'
+                    : 'bg-transparent text-muted-foreground border-border hover:bg-muted/20'
                 }`}
+                style={notifTab === key ? { backgroundColor: '#0f172a', color: 'white' } : undefined}
               >
                 {icon}
                 {label}
@@ -1667,12 +1668,15 @@ const Settings = () => {
 
           {/* Email Sub-tab */}
           {notifTab === 'email' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
               <CardHeader>
-                <CardTitle>Email Reports Configuration</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  Email Reports Configuration
+                </CardTitle>
                 <CardDescription>Configure automated email report settings</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="p-6 pt-0 space-y-6">
                 {loadingNotifications ? (
                   <div className="space-y-4">
                     <Skeleton className="h-6 w-40" />
@@ -1684,94 +1688,68 @@ const Settings = () => {
                     <Skeleton className="h-10 w-32" />
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    {/* Report Frequency - Select dropdown */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium">Report Frequency</Label>
-                      <Select value={reportFrequency} onValueChange={(value) => setReportFrequency(value as "daily" | "weekly" | "monthly" | "disabled")}>
-                        <SelectTrigger className="bg-background/50 border-border w-full sm:w-64">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="disabled">Disabled</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  <>
+                    {/* SECTION 1 — Two column grid */}
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Report Frequency</Label>
+                        <Select value={reportFrequency} onValueChange={(value) => setReportFrequency(value as "daily" | "weekly" | "monthly" | "disabled")}>
+                          <SelectTrigger className="bg-background/50 border-border w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="disabled">Disabled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Send Time</Label>
+                        <Select value={sendTime} onValueChange={setSendTime}>
+                          <SelectTrigger className="bg-background/50 border-border w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["6:00 AM", "9:00 AM", "12:00 PM", "3:00 PM", "4:00 PM", "6:00 PM", "9:00 PM"].map(t => (
+                              <SelectItem key={t} value={t}>{t} AEDT</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    {/* Time Settings */}
-                    {reportFrequency === "daily" && (
-                      <div className="space-y-3 animate-fade-in">
-                        <div className="grid gap-2">
-                          <Label htmlFor="send-time">Send Time</Label>
-                          <Select value={sendTime} onValueChange={setSendTime}>
-                            <SelectTrigger id="send-time" className="bg-background/50 border-border"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {["6:00 AM", "9:00 AM", "12:00 PM", "3:00 PM", "4:00 PM", "6:00 PM", "9:00 PM"].map(t => (
-                                <SelectItem key={t} value={t}>{t} AEDT</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground">Reports sent every day at selected time</p>
-                        </div>
-                      </div>
-                    )}
-
+                    {/* Weekly/Monthly extra selects */}
                     {reportFrequency === "weekly" && (
-                      <div className="space-y-3 animate-fade-in">
-                        <div className="grid gap-2">
-                          <Label htmlFor="send-day">Send Day</Label>
-                          <Select value={sendDay} onValueChange={setSendDay}>
-                            <SelectTrigger id="send-day" className="bg-background/50 border-border"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map(d => (
-                                <SelectItem key={d} value={d}>{d}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="send-time-weekly">Send Time</Label>
-                          <Select value={sendTime} onValueChange={setSendTime}>
-                            <SelectTrigger id="send-time-weekly" className="bg-background/50 border-border"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {["6:00 AM", "9:00 AM", "12:00 PM", "3:00 PM", "4:00 PM", "6:00 PM", "9:00 PM"].map(t => (
-                                <SelectItem key={t} value={t}>{t} AEDT</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground">Reports sent every {sendDay} at {sendTime} AEDT</p>
-                        </div>
+                      <div className="space-y-2 animate-fade-in">
+                        <Label>Send Day</Label>
+                        <Select value={sendDay} onValueChange={setSendDay}>
+                          <SelectTrigger className="bg-background/50 border-border w-full sm:w-64">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map(d => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
 
                     {reportFrequency === "monthly" && (
-                      <div className="space-y-3 animate-fade-in">
-                        <div className="grid gap-2">
-                          <Label htmlFor="send-date">Send On</Label>
-                          <Select value={sendDate} onValueChange={setSendDate}>
-                            <SelectTrigger id="send-date" className="bg-background/50 border-border"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {["1st of month", "5th of month", "10th of month", "15th of month", "20th of month", "25th of month", "Last day of month"].map(d => (
-                                <SelectItem key={d} value={d}>{d}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="send-time-monthly">Send Time</Label>
-                          <Select value={sendTime} onValueChange={setSendTime}>
-                            <SelectTrigger id="send-time-monthly" className="bg-background/50 border-border"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {["6:00 AM", "9:00 AM", "12:00 PM", "3:00 PM", "4:00 PM", "6:00 PM", "9:00 PM"].map(t => (
-                                <SelectItem key={t} value={t}>{t} AEDT</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground">Reports sent on the {sendDate} at {sendTime} AEDT</p>
-                        </div>
+                      <div className="space-y-2 animate-fade-in">
+                        <Label>Send On</Label>
+                        <Select value={sendDate} onValueChange={setSendDate}>
+                          <SelectTrigger className="bg-background/50 border-border w-full sm:w-64">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["1st of month", "5th of month", "10th of month", "15th of month", "20th of month", "25th of month", "Last day of month"].map(d => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
 
@@ -1783,9 +1761,9 @@ const Settings = () => {
                       </div>
                     )}
 
-                    {/* Active Days - emerald pills */}
+                    {/* SECTION 2 — Active Days */}
                     {reportFrequency !== "disabled" && (
-                      <div className="grid gap-2 animate-fade-in">
+                      <div className="space-y-2 animate-fade-in">
                         <Label>Active Days</Label>
                         <div className="flex flex-wrap gap-2">
                           {[
@@ -1807,11 +1785,12 @@ const Settings = () => {
                                   setSendDays(prev => [...prev, value]);
                                 }
                               }}
-                              className={`px-3 py-1.5 text-sm rounded-md font-medium transition-all ${
+                              className={`px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer ${
                                 sendDays.includes(value)
-                                  ? 'bg-[#10b981] text-white'
-                                  : 'border border-border bg-transparent text-foreground hover:bg-muted/30'
+                                  ? ''
+                                  : 'border border-border bg-transparent text-foreground hover:bg-muted/20'
                               }`}
+                              style={sendDays.includes(value) ? { backgroundColor: '#0f172a', color: 'white' } : undefined}
                             >
                               {label}
                             </button>
@@ -1821,8 +1800,8 @@ const Settings = () => {
                       </div>
                     )}
 
-                    {/* Email Recipients */}
-                    <div className="grid gap-2">
+                    {/* SECTION 3 — Email Recipients */}
+                    <div className="space-y-2">
                       <Label htmlFor="report-emails">Email Recipients</Label>
                       <Input
                         id="report-emails"
@@ -1836,11 +1815,11 @@ const Settings = () => {
                       <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
                     </div>
 
-                    {/* Report Content - Checkboxes with emerald */}
+                    {/* SECTION 4 — Include in Report */}
                     {reportFrequency !== "disabled" && (
-                      <div className="space-y-3 animate-fade-in">
-                        <Label className="text-base font-medium">Include in Report:</Label>
-                        <div className="space-y-3">
+                      <div className="space-y-2 animate-fade-in">
+                        <Label>Include in Report</Label>
+                        <div className="rounded-md border border-border divide-y divide-border">
                           {[
                             { key: "campaignOverview", label: "Campaign Overview (KPIs across all clients)" },
                             { key: "topPerformingClients", label: "Top Performing Clients" },
@@ -1848,7 +1827,7 @@ const Settings = () => {
                             { key: "sqlBookedMeetings", label: "SQL Booked Meetings" },
                             { key: "detailedActivityBreakdown", label: "Detailed Activity Breakdown" },
                           ].map(({ key, label }) => (
-                            <div key={key} className="flex items-center space-x-2">
+                            <div key={key} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
                               <Checkbox
                                 id={key}
                                 checked={reportContent[key as keyof typeof reportContent]}
@@ -1863,41 +1842,41 @@ const Settings = () => {
                         </div>
                       </div>
                     )}
-
-                    {/* Action Buttons - right-aligned */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                      <Button
-                        onClick={handleSaveNotifications}
-                        className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
-                        style={{ backgroundColor: '#0f172a', color: 'white' }}
-                        disabled={isSavingNotifications || !canEditSettings}
-                      >
-                        {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleSendTestEmail}
-                        className="gap-2 border-border"
-                        disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}
-                      >
-                        {isSendingTestEmail ? (<><Loader2 className="h-4 w-4 animate-spin" />Sending...</>) : (<><Send className="h-4 w-4" />Send Test Email</>)}
-                      </Button>
-                    </div>
-                  </div>
+                  </>
                 )}
               </CardContent>
+              {/* Card Footer */}
+              <div className="border-t border-border px-6 py-4 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleSendTestEmail}
+                  className="gap-2 border-border"
+                  disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}
+                >
+                  {isSendingTestEmail ? (<><Loader2 className="h-4 w-4 animate-spin" />Sending...</>) : (<><Send className="h-4 w-4" />Send Test Email</>)}
+                </Button>
+                <Button
+                  onClick={handleSaveNotifications}
+                  className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                  style={{ backgroundColor: '#0f172a', color: 'white' }}
+                  disabled={isSavingNotifications || !canEditSettings}
+                >
+                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
+                </Button>
+              </div>
             </Card>
           )}
 
           {/* Slack Sub-tab */}
           {notifTab === 'slack' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
               <CardHeader>
                 <CardTitle>Slack Integration</CardTitle>
                 <CardDescription>Connect your Slack workspace for real-time notifications</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-2">
+              <CardContent className="p-6 pt-0 space-y-6">
+                {/* SECTION 1 — Webhook URL */}
+                <div className="space-y-2">
                   <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
                   <div className="flex gap-2">
                     <Input
@@ -1922,7 +1901,7 @@ const Settings = () => {
                       size="sm"
                       onClick={handleSendTestSlack}
                       disabled={!slackWebhook || isSendingTestSlack}
-                      className="gap-1.5 shrink-0"
+                      className="gap-2 shrink-0 border-border"
                       aria-label="Send test Slack notification"
                     >
                       {isSendingTestSlack ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -1937,17 +1916,34 @@ const Settings = () => {
                   </p>
                 </div>
 
-                {/* Slack Notification Toggles - Checkboxes with emerald */}
-                <div className="space-y-3">
-                  <Label className="text-base font-medium">Slack Notification Types</Label>
-                  <div className="space-y-3">
+                {/* SECTION 2 — Connection Status */}
+                <div className="rounded-md border border-border p-3 bg-muted/20">
+                  <div className="flex items-center gap-2">
+                    {slackWebhook ? (
+                      <>
+                        <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <span className="text-sm text-foreground">Connected — webhook verified</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="h-2 w-2 rounded-full bg-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Not connected — enter a webhook URL above and click Send Test</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* SECTION 3 — Notification Types */}
+                <div className="space-y-2">
+                  <Label>Notification Types</Label>
+                  <div className="rounded-md border border-border divide-y divide-border">
                     {[
                       { key: "sqlNotifications", label: "New SQL Notifications", description: "Get notified when a new SQL meeting is booked" },
                       { key: "dailySummary", label: "Daily Summary Reports", description: "Receive a daily summary of team activity" },
                       { key: "inactiveAlerts", label: "Inactive SDR Alerts", description: "Alert when an SDR has no activity for 1+ hour during business hours" },
                       { key: "weeklyReports", label: "Weekly Summary Reports", description: "Receive a weekly overview of performance metrics" },
                     ].map(({ key, label, description }) => (
-                      <div key={key} className="flex items-start space-x-3">
+                      <div key={key} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
                         <Checkbox
                           id={`slack-${key}`}
                           checked={reportContent[key as keyof typeof reportContent]}
@@ -1956,114 +1952,124 @@ const Settings = () => {
                           }
                           className="mt-0.5 data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
                         />
-                        <div className="grid gap-0.5">
-                          <Label htmlFor={`slack-${key}`} className="font-normal cursor-pointer">{label}</Label>
-                          <p className="text-xs text-muted-foreground">{description}</p>
+                        <div>
+                          <span className="text-sm font-medium">{label}</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                <div className="flex justify-end pt-2 border-t border-border">
-                  <Button
-                    onClick={handleSaveNotifications}
-                    className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
-                    style={{ backgroundColor: '#0f172a', color: 'white' }}
-                    disabled={isSavingNotifications || !canEditSettings}
-                  >
-                    {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Slack Settings' : '🔒 Admin Access Required'}</>)}
-                  </Button>
-                </div>
               </CardContent>
+              {/* Card Footer */}
+              <div className="border-t border-border px-6 py-4 flex justify-end">
+                <Button
+                  onClick={handleSaveNotifications}
+                  className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                  style={{ backgroundColor: '#0f172a', color: 'white' }}
+                  disabled={isSavingNotifications || !canEditSettings}
+                >
+                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Slack Settings' : '🔒 Admin Access Required'}</>)}
+                </Button>
+              </div>
             </Card>
           )}
 
           {/* Browser Sub-tab */}
           {notifTab === 'browser' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BellRing className="h-5 w-5 text-blue-500" />
+                  <Bell className="h-5 w-5 text-muted-foreground" />
                   Browser Notifications
                 </CardTitle>
                 <CardDescription>Get desktop notifications even when the dashboard is in the background</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Permission Status */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Browser notification permission</span>
+              <CardContent className="p-6 pt-0 space-y-6">
+                {/* SECTION 1 — Permission Status */}
+                <div className="rounded-md border border-border p-3 bg-muted/20">
                   {!browserNotifSupported ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
-                      ℹ️ Not supported
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Browser notifications are not supported in this browser</span>
+                    </div>
                   ) : browserNotifPermission === 'granted' ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-green-500/15 text-green-500">
-                      ✓ Enabled
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                      <span className="text-sm text-foreground">Notifications enabled in this browser</span>
+                    </div>
                   ) : browserNotifPermission === 'denied' ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-destructive/15 text-destructive">
-                      ✗ Blocked
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-rose-500" />
+                      <span className="text-sm text-foreground">Notifications blocked — enable in browser settings</span>
+                    </div>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-yellow-500/15 text-yellow-500">
-                      ⚠ Not enabled
-                    </span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                        <span className="text-sm text-foreground">Notifications not yet enabled</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          const result = await requestPermission();
+                          if (result === 'granted') {
+                            toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-[#10b981] text-[#10b981]" });
+                          } else {
+                            toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
+                          }
+                        }}
+                        className="gap-2"
+                      >
+                        <BellRing className="h-4 w-4" />
+                        Request Permission
+                      </Button>
+                    </div>
                   )}
                 </div>
 
-                {/* Toggle */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <span className="text-sm font-medium">Show desktop notifications for new SQLs</span>
-                    <p className="text-xs text-muted-foreground">Displays a native browser popup when a new SQL meeting is booked</p>
+                {/* SECTION 2 — Notification Settings */}
+                <div className="space-y-2">
+                  <Label>Notification Settings</Label>
+                  <div className="rounded-md border border-border">
+                    <div className="flex items-start gap-3 px-4 py-3">
+                      <Checkbox
+                        id="browserNotifications"
+                        checked={reportContent.browserNotifications}
+                        onCheckedChange={(checked) =>
+                          setReportContent({ ...reportContent, browserNotifications: checked as boolean })
+                        }
+                        disabled={browserNotifPermission !== 'granted'}
+                        className="mt-0.5 data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
+                      />
+                      <div>
+                        <span className="text-sm font-medium">Show desktop notifications for new SQLs</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">Displays a native browser popup when a new SQL meeting is booked</p>
+                      </div>
+                    </div>
                   </div>
-                  <Checkbox
-                    id="browserNotifications"
-                    checked={reportContent.browserNotifications}
-                    onCheckedChange={(checked) =>
-                      setReportContent({ ...reportContent, browserNotifications: checked as boolean })
-                    }
-                    disabled={browserNotifPermission !== 'granted'}
-                    className="mt-0.5 data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
-                  />
                 </div>
 
-                {browserNotifPermission === 'default' && (
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      const result = await requestPermission();
-                      if (result === 'granted') {
-                        toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-[#10b981] text-[#10b981]" });
-                      } else {
-                        toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
-                      }
-                    }}
-                    className="gap-2 w-full sm:w-auto"
-                  >
-                    <BellRing className="h-4 w-4" />
-                    Request Permission
-                  </Button>
-                )}
-
-                {browserNotifPermission === 'denied' && (
+                {/* SECTION 3 — Info callout */}
+                <div className="rounded-md bg-muted/30 border border-border p-3 flex items-start gap-2">
+                  <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <p className="text-xs text-muted-foreground">
-                    Notifications are blocked. You can enable them in your browser's site settings.
+                    Browser notifications only work when this tab is open. For background alerts, use Slack notifications.
                   </p>
-                )}
-
-                <div className="flex justify-end pt-2 border-t border-border">
-                  <Button
-                    onClick={handleSaveNotifications}
-                    className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
-                    style={{ backgroundColor: '#0f172a', color: 'white' }}
-                    disabled={isSavingNotifications || !canEditSettings}
-                  >
-                    {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Notification Settings' : '🔒 Admin Access Required'}</>)}
-                  </Button>
                 </div>
               </CardContent>
+              {/* Card Footer */}
+              <div className="border-t border-border px-6 py-4 flex justify-end">
+                <Button
+                  onClick={handleSaveNotifications}
+                  className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                  style={{ backgroundColor: '#0f172a', color: 'white' }}
+                  disabled={isSavingNotifications || !canEditSettings}
+                >
+                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Notification Settings' : '🔒 Admin Access Required'}</>)}
+                </Button>
+              </div>
             </Card>
           )}
         </TabsContent>
