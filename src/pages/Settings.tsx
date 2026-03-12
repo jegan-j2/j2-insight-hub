@@ -1379,7 +1379,7 @@ const Settings = () => {
                 <Switch
                   id="show-inactive-members"
                   checked={showInactiveMembers}
-                  onCheckedChange={setShowInactiveMembers}
+                  onCheckedChange={(checked) => { setShowInactiveMembers(checked); setTeamPage(1); }}
                   className="data-[state=checked]:bg-[#10b981]"
                 />
                 <Label htmlFor="show-inactive-members" className="text-sm text-muted-foreground cursor-pointer">
