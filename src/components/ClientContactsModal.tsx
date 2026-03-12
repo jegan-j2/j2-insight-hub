@@ -397,7 +397,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                             </div>
                           </div>
                           <div className="flex justify-end gap-2 mt-2">
-                            <Button variant="outline" size="sm" onClick={handleCancelEdit}>Cancel</Button>
+                            <button onClick={handleCancelEdit} style={{ border: '1px solid #94a3b8', backgroundColor: 'transparent', color: 'inherit', padding: '6px 12px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
                             <Button size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={savingEdit || !editForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                               {savingEdit ? "Saving..." : "Save Changes"}
                             </Button>
