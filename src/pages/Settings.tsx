@@ -1946,7 +1946,7 @@ const Settings = () => {
               </CardTitle>
               <CardDescription>Get desktop notifications even when the dashboard is in the background</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               {/* Permission Status */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Browser notification permission</span>
