@@ -85,13 +85,13 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                   <TableRow>
                     <TableHead className="w-16 sticky left-0 bg-card z-10">Rank</TableHead>
                     <TableHead className="sticky left-16 bg-card z-10 min-w-[180px]">SDR Name</TableHead>
-                    <TableHead className="text-right">Total Dials</TableHead>
-                    <TableHead className="text-right">Answer Rate</TableHead>
-                    <TableHead className="text-right">DM Conversations</TableHead>
-                    <TableHead className="text-right">SQLs</TableHead>
-                    <TableHead className="text-right">Conv. Rate</TableHead>
-                    <TableHead className="text-right">Avg Duration</TableHead>
-                    <TableHead className="text-right">Trend</TableHead>
+                    <TableHead className="text-left">Total Dials</TableHead>
+                    <TableHead className="text-left">Answer Rate</TableHead>
+                    <TableHead className="text-left">DM Conversations</TableHead>
+                    <TableHead className="text-left">SQLs</TableHead>
+                    <TableHead className="text-left">Conv. Rate</TableHead>
+                    <TableHead className="text-left">Avg Duration</TableHead>
+                    <TableHead className="text-left">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
