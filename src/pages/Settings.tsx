@@ -1353,7 +1353,6 @@ const Settings = () => {
                   </DialogContent>
                 </Dialog>
               </div>
-              </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-4">
