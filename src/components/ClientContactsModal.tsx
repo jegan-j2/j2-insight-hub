@@ -443,8 +443,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         ) : contact.email ? (
                           <Button
                             size="sm"
-                            className="h-7 text-xs gap-1.5"
-                            style={{ backgroundColor: '#0f172a', color: 'white' }}
+                            className="h-7 text-xs gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
                             disabled={sendingInviteId === contact.id}
                             onClick={() => handleSendInvite(contact)}
                           >
