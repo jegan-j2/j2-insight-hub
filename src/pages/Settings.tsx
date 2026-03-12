@@ -1536,7 +1536,7 @@ const Settings = () => {
                         size="sm"
                         onClick={() => setTeamPage(p => Math.max(1, p - 1))}
                         disabled={teamPage === 1}
-                        className="h-8 px-3 text-xs"
+                        className="h-8 px-3 text-xs border border-border hover:bg-muted/20"
                       >
                         Previous
                       </Button>
