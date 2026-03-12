@@ -1370,13 +1370,13 @@ const Settings = () => {
               <div className="overflow-x-auto scrollbar-thin">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="text-muted-foreground">Name</TableHead>
-                      <TableHead className="text-muted-foreground">Email</TableHead>
-                      <TableHead className="text-muted-foreground">Role</TableHead>
-                      <TableHead className="text-muted-foreground">Client</TableHead>
-                      <TableHead className="text-muted-foreground">Invite</TableHead>
-                      <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                    <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Name</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Role</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Assigned Client</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Login Status</TableHead>
+                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
