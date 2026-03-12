@@ -345,8 +345,8 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Job Title</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Type</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Dashboard Access</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Last Login</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Dashboard Access</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -433,6 +433,9 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        <span className="text-sm text-muted-foreground italic">Never logged in</span>
+                      </TableCell>
+                      <TableCell>
                         {contact.portal_access ? (
                           <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20">
                             Active
@@ -457,9 +460,6 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                             Not Invited
                           </Badge>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground italic">Never logged in</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <TooltipProvider>
@@ -558,17 +558,15 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           <button
             onClick={onClose}
             style={{
-              border: `1px solid ${resolvedTheme === 'dark' ? '#334155' : '#e2e8f0'}`,
+              border: '1px solid #94a3b8',
               backgroundColor: 'transparent',
-              color: resolvedTheme === 'dark' ? '#f1f5f9' : '#0f172a',
+              color: 'inherit',
               padding: '8px 16px',
               borderRadius: '6px',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = resolvedTheme === 'dark' ? '#1e293b' : '#f1f5f9')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             Close
           </button>
