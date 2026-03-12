@@ -1832,7 +1832,7 @@ const Settings = () => {
                           onCheckedChange={(checked) =>
                             setReportContent({ ...reportContent, [key]: checked as boolean })
                           }
-                          className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                          className="data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
                         />
                         <Label htmlFor={key} className="font-normal cursor-pointer">{label}</Label>
                       </div>
