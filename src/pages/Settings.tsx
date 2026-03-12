@@ -1490,7 +1490,7 @@ const Settings = () => {
                                       <Tooltip>
                                         <TooltipTrigger asChild>
                                           <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10" aria-label={`Deactivate ${member.sdr_name}`}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 dark:text-orange-400 hover:text-orange-400 hover:bg-orange-500/10" aria-label={`Deactivate ${member.sdr_name}`}>
                                               <MinusCircle className="h-4 w-4" />
                                             </Button>
                                           </AlertDialogTrigger>
