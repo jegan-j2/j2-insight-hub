@@ -235,9 +235,9 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
             <TableHeader>
               <TableRow>
                 <TableHead>Client</TableHead>
-                <TableHead className="text-right">Dials</TableHead>
-                <TableHead className="text-right">SQLs</TableHead>
-                <TableHead className="text-right">Conversion Rate</TableHead>
+                <TableHead className="text-left">Dials</TableHead>
+                <TableHead className="text-left">SQLs</TableHead>
+                <TableHead className="text-left">Conversion Rate</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -429,7 +429,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
                 <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                   <SortButton field="meetingDate" label="Meeting Date" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-center">
+                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
                   <SortButton field="meetingStatus" label="Status" />
                 </TableHead>
                 <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 200 }}>Notes</TableHead>

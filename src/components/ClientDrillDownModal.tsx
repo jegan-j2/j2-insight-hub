@@ -70,7 +70,7 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Duration</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Duration</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
