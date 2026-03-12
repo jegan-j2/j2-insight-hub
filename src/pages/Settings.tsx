@@ -1960,9 +1960,9 @@ const Settings = () => {
                     ))}
                   </div>
                 </div>
-              </CardContent>
-              {/* Card Footer */}
-              <div className="border-t border-border px-6 py-4 flex justify-end">
+              </div>
+              {/* Footer */}
+              <div className="border-t border-border pt-4 mt-6 flex justify-end">
                 <Button
                   onClick={handleSaveNotifications}
                   className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
@@ -1972,7 +1972,7 @@ const Settings = () => {
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Slack Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
-            </Card>
+            </div>
           )}
 
           {/* Browser Sub-tab */}
