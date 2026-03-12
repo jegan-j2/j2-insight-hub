@@ -1982,7 +1982,7 @@ const Settings = () => {
                     setReportContent({ ...reportContent, browserNotifications: checked as boolean })
                   }
                   disabled={browserNotifPermission !== 'granted'}
-                  className="mt-0.5 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                  className="mt-0.5 data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
                 />
               </div>
 
