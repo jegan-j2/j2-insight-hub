@@ -1526,7 +1526,7 @@ const Settings = () => {
                   </TableBody>
                 </Table>
                 {totalTeamPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 mt-2">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border mt-2">
                     <p className="text-sm text-muted-foreground">
                       Showing {((teamPage - 1) * TEAM_PAGE_SIZE) + 1}–{Math.min(teamPage * TEAM_PAGE_SIZE, sortedMembers.length)} of {sortedMembers.length} members
                     </p>
