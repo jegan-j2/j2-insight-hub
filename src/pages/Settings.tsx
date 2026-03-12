@@ -1977,15 +1977,15 @@ const Settings = () => {
 
           {/* Browser Sub-tab */}
           {notifTab === 'browser' && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border max-w-3xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <div className="max-w-3xl">
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
                   <Bell className="h-5 w-5 text-muted-foreground" />
                   Browser Notifications
-                </CardTitle>
-                <CardDescription>Get desktop notifications even when the dashboard is in the background</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-6">
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1.5">Get desktop notifications even when the dashboard is in the background</p>
+              </div>
+              <div className="space-y-6">
                 {/* SECTION 1 — Permission Status */}
                 <div className="rounded-md border border-border p-3 bg-muted/20">
                   {!browserNotifSupported ? (
