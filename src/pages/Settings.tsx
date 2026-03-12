@@ -1647,7 +1647,7 @@ const Settings = () => {
               <CardTitle>Email Reports Configuration</CardTitle>
               <CardDescription>Configure automated email report settings</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               {loadingNotifications ? (
                 <div className="space-y-4">
                   <Skeleton className="h-6 w-40" />
@@ -1662,22 +1662,21 @@ const Settings = () => {
                   <Skeleton className="h-10 w-32" />
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-5">
               {/* Report Frequency */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label className="text-base font-medium">Report Frequency</Label>
-                <RadioGroup
-                  value={reportFrequency}
-                  onValueChange={(value) => setReportFrequency(value as "daily" | "weekly" | "monthly" | "disabled")}
-                  className="flex flex-wrap gap-4"
-                >
-                  {["daily", "weekly", "monthly", "disabled"].map((freq) => (
-                    <div key={freq} className="flex items-center space-x-2">
-                      <RadioGroupItem value={freq} id={freq} className="border-accent data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground" />
-                      <Label htmlFor={freq} className="font-normal cursor-pointer capitalize">{freq}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                <Select value={reportFrequency} onValueChange={(value) => setReportFrequency(value as "daily" | "weekly" | "monthly" | "disabled")}>
+                  <SelectTrigger className="bg-background/50 border-border max-w-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="disabled">Disabled</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Time Settings */}
