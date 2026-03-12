@@ -306,57 +306,6 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           </div>
         </div>
 
-        {/* Add Contact Form */}
-        {showAddForm && (
-          <div className="p-4 border-b border-border bg-muted/20 animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div>
-                <Label className="text-xs mb-1 block">Name *</Label>
-                <Input
-                  value={contactForm.contact_name}
-                  onChange={e => setContactForm({ ...contactForm, contact_name: e.target.value })}
-                  placeholder="Full name"
-                  className="bg-background/50 border-border h-9 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-xs mb-1 block">Job Title</Label>
-                <Input
-                  value={contactForm.contact_title}
-                  onChange={e => setContactForm({ ...contactForm, contact_title: e.target.value })}
-                  placeholder="e.g. VP Sales"
-                  className="bg-background/50 border-border h-9 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-xs mb-1 block">Email</Label>
-                <Input
-                  value={contactForm.email}
-                  onChange={e => setContactForm({ ...contactForm, email: e.target.value })}
-                  placeholder="email@company.com"
-                  className="bg-background/50 border-border h-9 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-xs mb-1 block">Type</Label>
-                <Select value={contactForm.contact_type} onValueChange={val => setContactForm({ ...contactForm, contact_type: val })}>
-                  <SelectTrigger className="bg-background/50 border-border h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="primary">Primary</SelectItem>
-                    <SelectItem value="secondary">Secondary</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-3">
-              <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }}>
-                {saving ? "Saving..." : "Save Contact"}
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* Show inactive contacts toggle */}
         <div className="px-6 pt-4 pb-2 flex items-center gap-2">
           <Switch
@@ -550,6 +499,57 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                 })}
               </TableBody>
             </Table>
+          )}
+
+          {/* Add Contact Form - below table */}
+          {showAddForm && (
+            <div className="p-4 border border-border rounded-lg bg-muted/20 animate-fade-in mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs mb-1 block">Name *</Label>
+                  <Input
+                    value={contactForm.contact_name}
+                    onChange={e => setContactForm({ ...contactForm, contact_name: e.target.value })}
+                    placeholder="Full name"
+                    className="bg-background/50 border-border h-9 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Job Title</Label>
+                  <Input
+                    value={contactForm.contact_title}
+                    onChange={e => setContactForm({ ...contactForm, contact_title: e.target.value })}
+                    placeholder="e.g. VP Sales"
+                    className="bg-background/50 border-border h-9 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Email</Label>
+                  <Input
+                    value={contactForm.email}
+                    onChange={e => setContactForm({ ...contactForm, email: e.target.value })}
+                    placeholder="email@company.com"
+                    className="bg-background/50 border-border h-9 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Type</Label>
+                  <Select value={contactForm.contact_type} onValueChange={val => setContactForm({ ...contactForm, contact_type: val })}>
+                    <SelectTrigger className="bg-background/50 border-border h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="primary">Primary</SelectItem>
+                      <SelectItem value="secondary">Secondary</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-3">
+                <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} style={{ backgroundColor: '#0f172a', color: 'white' }}>
+                  {saving ? "Saving..." : "Save Contact"}
+                </Button>
+              </div>
+            </div>
           )}
         </div>
 
