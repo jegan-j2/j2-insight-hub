@@ -855,12 +855,12 @@ const Settings = () => {
         {/* Client Management Tab */}
         <TabsContent value="clients" className="space-y-4">
           <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <CardTitle>Client Management</CardTitle>
-                  <CardDescription>Add, edit, or remove client accounts</CardDescription>
-                </div>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <CardTitle className="text-left">Client Management</CardTitle>
+                <CardDescription className="text-left">Add, edit, or remove client accounts</CardDescription>
+              </div>
+              <div className="flex-shrink-0">
                 <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
                   {canEditClients ? (
                     <DialogTrigger asChild>
