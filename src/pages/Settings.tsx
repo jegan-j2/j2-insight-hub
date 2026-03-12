@@ -1409,17 +1409,17 @@ const Settings = () => {
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
                             <TableCell className="text-muted-foreground">{memberClientName}</TableCell>
                             <TableCell>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
+                              <Badge className={
                                 memberInviteInfo.status === 'active' 
-                                  ? 'bg-green-500/20 text-green-400' :
+                                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' :
                                 memberInviteInfo.status === 'pending' 
-                                  ? 'bg-yellow-500/20 text-yellow-400' :
+                                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20' :
                                 memberInviteInfo.status === 'expired' 
-                                  ? 'bg-destructive/20 text-destructive' :
-                                  'bg-muted/30 text-muted-foreground'
-                              }`}>
+                                  ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20' :
+                                  'bg-muted/50 text-muted-foreground border-border hover:bg-muted/50'
+                              }>
                                 {memberInviteInfo.label}
-                              </span>
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-right">
                               {canEditTeamMembers ? (
