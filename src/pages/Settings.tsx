@@ -216,6 +216,17 @@ const Settings = () => {
   const filteredClients = showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status);
   const filteredMembers = showInactiveMembers ? teamMembers : teamMembers.filter(m => m.status === 'active' || !m.status);
 
+  const [teamPage, setTeamPage] = useState(1);
+  const TEAM_PAGE_SIZE = 15;
+
+  const sortedMembers = [...filteredMembers].sort((a, b) =>
+    a.sdr_name.localeCompare(b.sdr_name));
+  const totalTeamPages = Math.ceil(sortedMembers.length / TEAM_PAGE_SIZE);
+  const paginatedMembers = sortedMembers.slice(
+    (teamPage - 1) * TEAM_PAGE_SIZE,
+    teamPage * TEAM_PAGE_SIZE
+  );
+
   // --- Primary contacts for Client Management table ---
   const [primaryContacts, setPrimaryContacts] = useState<Record<string, { contact_name: string }>>({});
   const [contactsModalClient, setContactsModalClient] = useState<ClientRow | null>(null);
