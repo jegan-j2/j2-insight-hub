@@ -1641,30 +1641,30 @@ const Settings = () => {
         </TabsContent>
 
         {/* Notifications Tab */}
-        <TabsContent value="notifications" className="space-y-4">
-          <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <CardTitle>Email Reports Configuration</CardTitle>
-              <CardDescription>Configure automated email report settings</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {loadingNotifications ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-6 w-40" />
-                  <div className="flex gap-4">
-                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-5 w-20" />)}
-                  </div>
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-6 w-32" />
-                  <div className="space-y-2">
-                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-5 w-64" />)}
-                  </div>
-                  <Skeleton className="h-10 w-32" />
-                </div>
-              ) : (
-                <div className="space-y-5">
-              {/* FIX 1: Report Frequency + Send Time side by side */}
-              <div className="grid grid-cols-2 gap-6 max-w-2xl">
+        <TabsContent value="notifications" className="space-y-6">
+          {/* ===== EMAIL REPORTS SECTION ===== */}
+          <div className="bg-[#f1f5f9] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
+            <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email Reports Configuration</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Configure automated email report settings</p>
+          </div>
+
+          {loadingNotifications ? (
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-40" />
+              <div className="flex gap-4">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-5 w-20" />)}
+              </div>
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-6 w-32" />
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-5 w-64" />)}
+              </div>
+              <Skeleton className="h-10 w-32" />
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {/* Report Frequency + Send Time side by side */}
+              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-base font-medium">Report Frequency</Label>
                   <Select value={reportFrequency} onValueChange={(value) => setReportFrequency(value as "daily" | "weekly" | "monthly" | "disabled")}>
@@ -1697,7 +1697,7 @@ const Settings = () => {
 
               {/* Weekly: Send Day */}
               {reportFrequency === "weekly" && (
-                <div className="space-y-3 animate-fade-in max-w-2xl">
+                <div className="space-y-3 animate-fade-in">
                   <div className="grid gap-2">
                     <Label htmlFor="send-day">Send Day</Label>
                     <Select value={sendDay} onValueChange={setSendDay}>
@@ -1715,7 +1715,7 @@ const Settings = () => {
 
               {/* Monthly: Send Date */}
               {reportFrequency === "monthly" && (
-                <div className="space-y-3 animate-fade-in max-w-2xl">
+                <div className="space-y-3 animate-fade-in">
                   <div className="grid gap-2">
                     <Label htmlFor="send-date">Send On</Label>
                     <Select value={sendDate} onValueChange={setSendDate}>
@@ -1739,7 +1739,7 @@ const Settings = () => {
                 </div>
               )}
 
-              {/* FIX 3: Active Days with dark mode className only */}
+              {/* Active Days */}
               {reportFrequency !== "disabled" && (
                 <div className="grid gap-2 animate-fade-in">
                   <Label>Active Days</Label>
@@ -1764,7 +1764,7 @@ const Settings = () => {
                         }}
                         className={sendDays.includes(value)
                           ? "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
-                          : "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer border border-border bg-transparent text-foreground hover:bg-muted/20 transition-colors"
+                          : "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors border border-border bg-transparent text-foreground hover:bg-muted/20"
                         }
                       >
                         {label}
@@ -1775,8 +1775,8 @@ const Settings = () => {
                 </div>
               )}
 
-              {/* FIX 4: Email Recipients with max-w-2xl */}
-              <div className="grid gap-2 max-w-2xl">
+              {/* Email Recipients */}
+              <div className="grid gap-2">
                 <Label htmlFor="report-emails">Email Recipients</Label>
                 <Input
                   id="report-emails"
@@ -1790,11 +1790,11 @@ const Settings = () => {
                 <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
               </div>
 
-              {/* FIX 2: Report Content - Switch toggles */}
+              {/* Include in Report toggles */}
               {reportFrequency !== "disabled" && (
                 <div className="space-y-3 animate-fade-in">
                   <Label className="text-base font-medium">Include in Report:</Label>
-                  <div className="rounded-md border border-border max-w-2xl">
+                  <div className="space-y-1">
                     {[
                       { key: "campaignOverview", label: "Campaign Overview (KPIs across all clients)" },
                       { key: "topPerformingClients", label: "Top Performing Clients" },
@@ -1802,18 +1802,18 @@ const Settings = () => {
                       { key: "sqlBookedMeetings", label: "SQL Booked Meetings" },
                       { key: "detailedActivityBreakdown", label: "Detailed Activity Breakdown" },
                     ].map(({ key, label }) => (
-                      <div key={key} className="flex items-center justify-between py-3 px-4 border-b border-border last:border-0">
-                        <div className="space-y-0.5">
-                          <span className="text-sm font-medium">{label}</span>
-                        </div>
+                      <div key={key} className="flex items-center gap-3 py-2">
                         <Switch
                           id={key}
                           checked={reportContent[key as keyof typeof reportContent]}
                           onCheckedChange={(checked) =>
                             setReportContent({ ...reportContent, [key]: checked as boolean })
                           }
-                          className="data-[state=checked]:bg-[#10b981]"
+                          className="data-[state=checked]:bg-[#10b981] shrink-0"
                         />
+                        <div>
+                          <span className="text-sm font-medium text-foreground">{label}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1822,187 +1822,184 @@ const Settings = () => {
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-3 mt-4">
-                <Button variant="outline" onClick={handleSendTestEmail} className="gap-2 border-border" disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}>
+                <Button variant="outline" onClick={handleSendTestEmail} className="gap-2 border-border dark:border-white/20 dark:text-white" disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}>
                   {isSendingTestEmail ? (<><Loader2 className="h-4 w-4 animate-spin" />Sending...</>) : (<><Send className="h-4 w-4" />Send Test Email</>)}
                 </Button>
                 <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }} disabled={isSavingNotifications || !canEditSettings}>
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          )}
 
-          {/* FIX 5: Section divider */}
+          {/* Section divider */}
           <div className="border-t border-border my-8" />
 
-          <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <CardTitle>Slack Integration</CardTitle>
-              <CardDescription>Connect your Slack workspace for real-time notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {/* FIX 4: Slack webhook with max-w-2xl */}
-              <div className="grid gap-2 max-w-2xl">
-                <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="slack-webhook"
-                    type={showSlackWebhook ? "text" : "password"}
-                    placeholder="https://hooks.slack.com/services/..."
-                    value={slackWebhook}
-                    onChange={(e) => setSlackWebhook(e.target.value)}
-                    className="bg-background/50 border-border flex-1"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSlackWebhook(!showSlackWebhook)}
-                    className="shrink-0"
-                    aria-label={showSlackWebhook ? "Hide webhook URL" : "Show webhook URL"}
-                  >
-                    {showSlackWebhook ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSendTestSlack}
-                    disabled={!slackWebhook || isSendingTestSlack}
-                    className="gap-1.5 shrink-0"
-                    aria-label="Send test Slack notification"
-                  >
-                    {isSendingTestSlack ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    Send Test
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Get your webhook URL from{" "}
-                  <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
-                    Slack's Incoming Webhooks
-                  </a>
-                </p>
-              </div>
+          {/* ===== SLACK INTEGRATION SECTION ===== */}
+          <div className="bg-[#f1f5f9] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
+            <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Slack Integration</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Connect your Slack workspace for real-time notifications</p>
+          </div>
 
-              {/* FIX 2: Slack Notification Toggles - Switch */}
-              <div className="space-y-3">
-                <Label className="text-base font-medium">Slack Notification Types</Label>
-                <div className="rounded-md border border-border max-w-2xl">
-                  {[
-                    { key: "sqlNotifications", label: "New SQL Notifications", description: "Get notified when a new SQL meeting is booked" },
-                    { key: "dailySummary", label: "Daily Summary Reports", description: "Receive a daily summary of team activity" },
-                    { key: "inactiveAlerts", label: "Inactive SDR Alerts", description: "Alert when an SDR has no activity for 1+ hour during business hours" },
-                    { key: "weeklyReports", label: "Weekly Summary Reports", description: "Receive a weekly overview of performance metrics" },
-                  ].map(({ key, label, description }) => (
-                    <div key={key} className="flex items-center justify-between py-3 px-4 border-b border-border last:border-0">
-                      <div className="space-y-0.5">
-                        <span className="text-sm font-medium">{label}</span>
-                        <p className="text-xs text-muted-foreground">{description}</p>
-                      </div>
-                      <Switch
-                        id={`slack-${key}`}
-                        checked={reportContent[key as keyof typeof reportContent]}
-                        onCheckedChange={(checked) =>
-                          setReportContent({ ...reportContent, [key]: checked as boolean })
-                        }
-                        className="data-[state=checked]:bg-[#10b981]"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* FIX 8: Save Slack Settings dark mode */}
-              <div className="flex justify-end pt-2 border-t border-border">
-                <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
-                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Slack Settings' : '🔒 Admin Access Required'}</>)}
+          <div className="space-y-5">
+            {/* Slack webhook */}
+            <div className="grid gap-2">
+              <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="slack-webhook"
+                  type={showSlackWebhook ? "text" : "password"}
+                  placeholder="https://hooks.slack.com/services/..."
+                  value={slackWebhook}
+                  onChange={(e) => setSlackWebhook(e.target.value)}
+                  className="bg-background/50 border-border flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowSlackWebhook(!showSlackWebhook)}
+                  className="shrink-0"
+                  aria-label={showSlackWebhook ? "Hide webhook URL" : "Show webhook URL"}
+                >
+                  {showSlackWebhook ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* FIX 5: Section divider */}
-          <div className="border-t border-border my-8" />
-
-          {/* FIX 6: Browser Notifications - no bell icon */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <CardTitle>Browser Notifications</CardTitle>
-              <CardDescription>Get desktop notifications even when the dashboard is in the background</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {/* FIX 7: Permission Status row */}
-              <div className="flex items-center justify-between max-w-2xl border border-border rounded-md p-3">
-                <span className="text-sm font-medium">Browser notification permission</span>
-                {!browserNotifSupported ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
-                    ℹ️ Not supported
-                  </span>
-                ) : browserNotifPermission === 'granted' ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-green-500/15 text-green-500">
-                    ✓ Enabled
-                  </span>
-                ) : browserNotifPermission === 'denied' ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-destructive/15 text-destructive">
-                    ✗ Blocked
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-yellow-500/15 text-yellow-500">
-                    ⚠ Not enabled
-                  </span>
-                )}
-              </div>
-
-              {/* FIX 2: Browser notification toggle - Switch */}
-              <div className="rounded-md border border-border max-w-2xl">
-                <div className="flex items-center justify-between py-3 px-4">
-                  <div className="space-y-0.5">
-                    <span className="text-sm font-medium">Show desktop notifications for new SQLs</span>
-                    <p className="text-xs text-muted-foreground">Displays a native browser popup when a new SQL meeting is booked</p>
-                  </div>
-                  <Switch
-                    id="browserNotifications"
-                    checked={reportContent.browserNotifications}
-                    onCheckedChange={(checked) =>
-                      setReportContent({ ...reportContent, browserNotifications: checked as boolean })
-                    }
-                    disabled={browserNotifPermission !== 'granted'}
-                    className="data-[state=checked]:bg-[#10b981]"
-                  />
-                </div>
-              </div>
-
-              {browserNotifPermission === 'default' && (
                 <Button
                   variant="outline"
-                  onClick={async () => {
-                    const result = await requestPermission();
-                    if (result === 'granted') {
-                      toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-[#10b981] text-[#10b981]" });
-                    } else {
-                      toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
-                    }
-                  }}
-                  className="gap-2 w-full sm:w-auto"
+                  size="sm"
+                  onClick={handleSendTestSlack}
+                  disabled={!slackWebhook || isSendingTestSlack}
+                  className="gap-1.5 shrink-0"
+                  aria-label="Send test Slack notification"
                 >
-                  <BellRing className="h-4 w-4" />
-                  Request Permission
-                </Button>
-              )}
-
-              {browserNotifPermission === 'denied' && (
-                <p className="text-xs text-muted-foreground">
-                  Notifications are blocked. You can enable them in your browser's site settings.
-                </p>
-              )}
-
-              <div className="flex justify-end pt-2 border-t border-border">
-                <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
-                  {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Notification Settings' : '🔒 Admin Access Required'}</>)}
+                  {isSendingTestSlack ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Send Test
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-xs text-muted-foreground">
+                Get your webhook URL from{" "}
+                <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
+                  Slack's Incoming Webhooks
+                </a>
+              </p>
+            </div>
+
+            {/* Slack Notification Toggles */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Slack Notification Types</Label>
+              <div className="space-y-1">
+                {[
+                  { key: "sqlNotifications", label: "New SQL Notifications", description: "Get notified when a new SQL meeting is booked" },
+                  { key: "dailySummary", label: "Daily Summary Reports", description: "Receive a daily summary of team activity" },
+                  { key: "inactiveAlerts", label: "Inactive SDR Alerts", description: "Alert when an SDR has no activity for 1+ hour during business hours" },
+                  { key: "weeklyReports", label: "Weekly Summary Reports", description: "Receive a weekly overview of performance metrics" },
+                ].map(({ key, label, description }) => (
+                  <div key={key} className="flex items-center gap-3 py-2">
+                    <Switch
+                      id={`slack-${key}`}
+                      checked={reportContent[key as keyof typeof reportContent]}
+                      onCheckedChange={(checked) =>
+                        setReportContent({ ...reportContent, [key]: checked as boolean })
+                      }
+                      className="data-[state=checked]:bg-[#10b981] shrink-0"
+                    />
+                    <div className="space-y-0.5">
+                      <span className="text-sm font-medium text-foreground">{label}</span>
+                      <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Save Slack Settings */}
+            <div className="flex justify-end pt-2">
+              <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }} disabled={isSavingNotifications || !canEditSettings}>
+                {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
+              </Button>
+            </div>
+          </div>
+
+          {/* Section divider */}
+          <div className="border-t border-border my-8" />
+
+          {/* ===== BROWSER NOTIFICATIONS SECTION ===== */}
+          <div className="bg-[#f1f5f9] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
+            <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Browser Notifications</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Get desktop notifications even when the dashboard is in the background</p>
+          </div>
+
+          <div className="space-y-5">
+            {/* Permission Status row */}
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm font-medium">Browser notification permission</span>
+              {!browserNotifSupported ? (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+                  ℹ️ Not supported
+                </span>
+              ) : browserNotifPermission === 'granted' ? (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-green-500/15 text-green-500">
+                  ✓ Enabled
+                </span>
+              ) : browserNotifPermission === 'denied' ? (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-destructive/15 text-destructive">
+                  ✗ Blocked
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-yellow-500/15 text-yellow-500">
+                  ⚠ Not enabled
+                </span>
+              )}
+            </div>
+
+            {/* Browser notification toggle */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-3 py-2">
+                <Switch
+                  id="browserNotifications"
+                  checked={reportContent.browserNotifications}
+                  onCheckedChange={(checked) =>
+                    setReportContent({ ...reportContent, browserNotifications: checked as boolean })
+                  }
+                  disabled={browserNotifPermission !== 'granted'}
+                  className="data-[state=checked]:bg-[#10b981] shrink-0"
+                />
+                <div className="space-y-0.5">
+                  <span className="text-sm font-medium text-foreground">Show desktop notifications for new SQLs</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">Displays a native browser popup when a new SQL meeting is booked</p>
+                </div>
+              </div>
+            </div>
+
+            {browserNotifPermission === 'default' && (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  const result = await requestPermission();
+                  if (result === 'granted') {
+                    toast({ title: "Notifications enabled", description: "You'll now receive desktop notifications for new SQLs.", className: "border-[#10b981] text-[#10b981]" });
+                  } else {
+                    toast({ title: "Notifications blocked", description: "You can enable them later in your browser settings.", variant: "destructive" });
+                  }
+                }}
+                className="gap-2 w-full sm:w-auto"
+              >
+                <BellRing className="h-4 w-4" />
+                Request Permission
+              </Button>
+            )}
+
+            {browserNotifPermission === 'denied' && (
+              <p className="text-xs text-muted-foreground">
+                Notifications are blocked. You can enable them in your browser's site settings.
+              </p>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }} disabled={isSavingNotifications || !canEditSettings}>
+                {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
+              </Button>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
