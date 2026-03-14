@@ -1836,7 +1836,7 @@ const Settings = () => {
           <div className="border-t border-border my-8" />
 
           {/* ===== SLACK INTEGRATION SECTION ===== */}
-          <div className="bg-[#f1f5f9] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
+          <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
             <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Slack Integration</p>
             <p className="text-xs text-muted-foreground mt-0.5">Connect your Slack workspace for real-time notifications</p>
           </div>
