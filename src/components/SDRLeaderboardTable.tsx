@@ -82,16 +82,19 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
             <div className="overflow-x-auto scrollbar-thin scroll-gradient">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16 sticky left-0 bg-card z-10">Rank</TableHead>
-                    <TableHead className="sticky left-16 bg-card z-10 min-w-[180px]">SDR Name</TableHead>
-                    <TableHead className="text-left">Total Dials</TableHead>
-                    <TableHead className="text-left">Answer Rate</TableHead>
-                    <TableHead className="text-left">DM Conversations</TableHead>
-                    <TableHead className="text-left">SQLs</TableHead>
-                    <TableHead className="text-left">Conv. Rate</TableHead>
-                    <TableHead className="text-left">Avg Duration</TableHead>
-                    <TableHead className="text-left">Trend</TableHead>
+                  <TableRow 
+                    className="border-border/50 dark:!bg-[#1e293b]"
+                    style={{ backgroundColor: '#f1f5f9' }}
+                  >
+                    <TableHead className="w-16 sticky left-0 z-10 px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left bg-[#f1f5f9] dark:bg-[#1e293b]">Rank</TableHead>
+                    <TableHead className="sticky left-16 z-10 min-w-[180px] px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left bg-[#f1f5f9] dark:bg-[#1e293b]">SDR Name</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Total Dials</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Answer Rate</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">DM Conversations</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">SQLs</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Conv. Rate</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Avg Duration</TableHead>
+                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
