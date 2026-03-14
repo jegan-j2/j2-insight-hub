@@ -232,7 +232,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
             <TooltipProvider>
               <Table>
                 <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
-                  <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                  <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20" style={{ minWidth: "200px" }}>
                       <SortButton field="name" label="Client" />
                     </TableHead>
