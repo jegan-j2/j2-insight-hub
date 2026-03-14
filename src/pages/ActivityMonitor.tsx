@@ -111,6 +111,9 @@ const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 
 
 const ActivityMonitor = () => {
   const [mode, setMode] = useState<Mode>("live");
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.classList.contains('dark')
+  );
   const [snapshots, setSnapshots] = useState<SnapshotRow[]>([]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,6 +142,17 @@ const ActivityMonitor = () => {
 
   const SDR_PAGE_SIZE = 15;
   const DRILL_PAGE_SIZE = 15;
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const fetchPhotosAndMembers = async () => {
@@ -1235,7 +1249,7 @@ const ActivityMonitor = () => {
             <div className="w-full overflow-x-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
+                  <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
                     <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
@@ -1296,8 +1310,8 @@ const ActivityMonitor = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>{clientNameMap[row.clientId] || row.clientId}</TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">{row.dials}</TableCell>
-                        <TableCell className="text-center px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">{row.dials}</TableCell>
+                        <TableCell className="text-left px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1307,10 +1321,10 @@ const ActivityMonitor = () => {
                             {row.answered}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
-                        <TableCell className="text-center px-4 py-2">
+                        <TableCell className="text-left px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1320,7 +1334,7 @@ const ActivityMonitor = () => {
                             {row.conversations}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center px-4 py-2">
+                        <TableCell className="text-left px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1330,7 +1344,7 @@ const ActivityMonitor = () => {
                             {row.sqls}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
                           {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
@@ -1401,7 +1415,7 @@ const ActivityMonitor = () => {
               <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table>
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
+                     <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">{mode === "live" ? "Time" : "Date"}</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
@@ -1502,7 +1516,7 @@ const ActivityMonitor = () => {
               <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table className="table-fixed w-full">
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
+                     <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">{mode === "live" ? "Time Booked" : "Date Booked"}</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Company</TableHead>

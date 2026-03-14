@@ -17,7 +17,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Sidebar + content below the fixed header */}
       <div className="flex w-full pt-16 min-h-screen">
         <AppSidebar />
-        <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-auto" role="main">
+        <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-6 overflow-auto" role="main">
           {children}
         </main>
       </div>

@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2 } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2 } from "lucide-react";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
@@ -253,8 +253,18 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const uniqueSdrs = Array.from(new Set(localMeetings.map(m => m.sdr))).sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
-    <button onClick={() => handleSort(field)} className="flex items-center gap-1 hover:text-foreground transition-colors">
-      {label} <ArrowUpDown className="h-3 w-3" />
+    <button
+      onClick={() => handleSort(field)}
+      className="flex items-center gap-1 hover:text-foreground transition-colors"
+    >
+      {label}
+      {sortField === field ? (
+        sortOrder === "asc"
+          ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+          : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+      ) : (
+        <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50" />
+      )}
     </button>
   );
 
