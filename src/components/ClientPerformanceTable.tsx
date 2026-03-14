@@ -193,7 +193,13 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
       aria-label={`Sort by ${label}`}
     >
       {label}
-      <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
+      {sortField === field ? (
+        sortOrder === "asc"
+          ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+          : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
+      )}
     </button>
   );
 
