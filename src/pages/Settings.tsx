@@ -1883,7 +1883,7 @@ const Settings = () => {
               </div>
               <p className="text-xs text-muted-foreground">
                 Get your webhook URL from{" "}
-                <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
+                <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 hover:underline">
                   Slack's Incoming Webhooks
                 </a>
               </p>
