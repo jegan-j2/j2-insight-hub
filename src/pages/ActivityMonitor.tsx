@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown } from "lucide-react";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown } from "lucide-react";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
