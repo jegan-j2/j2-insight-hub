@@ -1310,8 +1310,8 @@ const ActivityMonitor = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>{clientNameMap[row.clientId] || row.clientId}</TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">{row.dials}</TableCell>
-                        <TableCell className="text-center px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">{row.dials}</TableCell>
+                        <TableCell className="text-left px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1321,10 +1321,10 @@ const ActivityMonitor = () => {
                             {row.answered}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
-                        <TableCell className="text-center px-4 py-2">
+                        <TableCell className="text-left px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1334,7 +1334,7 @@ const ActivityMonitor = () => {
                             {row.conversations}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center px-4 py-2">
+                        <TableCell className="text-left px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1344,7 +1344,7 @@ const ActivityMonitor = () => {
                             {row.sqls}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
                           {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
