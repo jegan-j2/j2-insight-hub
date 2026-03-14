@@ -1963,6 +1963,7 @@ const Settings = () => {
                   ⚠ Not enabled
                 </span>
               )}
+              <span className="text-sm font-medium text-foreground">Browser notification permission</span>
             </div>
 
             {/* Browser notification toggle */}
