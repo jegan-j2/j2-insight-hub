@@ -1516,7 +1516,7 @@ const ActivityMonitor = () => {
               <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table className="table-fixed w-full">
                   <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50" style={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9' }}>
+                     <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">{mode === "live" ? "Time Booked" : "Date Booked"}</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Company</TableHead>
