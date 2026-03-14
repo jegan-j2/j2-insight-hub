@@ -305,7 +305,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                         );
                         const isBold = days <= 10;
                         return (
-                          <TableCell className="text-center px-4 py-2">
+                          <TableCell className="text-left px-4 py-2">
                             <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
                               {days}
                             </span>
