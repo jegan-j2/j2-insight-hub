@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowUpDown, Search, DatabaseZap } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, DatabaseZap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
@@ -193,7 +193,13 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
       aria-label={`Sort by ${label}`}
     >
       {label}
-      <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
+      {sortField === field ? (
+        sortOrder === "asc"
+          ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+          : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
+      )}
     </button>
   );
 
@@ -226,7 +232,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
             <TooltipProvider>
               <Table>
                 <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
-                  <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
+                  <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
                     <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20" style={{ minWidth: "200px" }}>
                       <SortButton field="name" label="Client" />
                     </TableHead>
@@ -295,11 +301,11 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-center px-4 py-2 text-muted-foreground">-</TableCell>
+                          <TableCell className="text-left px-4 py-2 text-muted-foreground">-</TableCell>
                         );
                         const isBold = days <= 10;
                         return (
-                          <TableCell className="text-center px-4 py-2">
+                          <TableCell className="text-left px-4 py-2">
                             <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
                               {days}
                             </span>
@@ -309,15 +315,15 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                           </TableCell>
                         );
                       })()}
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.dials.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.answered.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.answeredPercent.toFixed(1)}%</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.dms.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.sqls.toLocaleString()}</TableCell>
-                      <TableCell className="text-center px-4 py-2">
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dials.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answered.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answeredPercent.toFixed(1)}%</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dms.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.sqls.toLocaleString()}</TableCell>
+                      <TableCell className="text-left px-4 py-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex flex-col gap-1.5 min-w-[130px] cursor-default mx-auto">
+                            <div className="flex flex-col gap-1.5 min-w-[130px] cursor-default">
                               <Progress value={client.elapsedPercent} className="h-2" />
                               <span className="text-xs text-muted-foreground text-center">
                                 {client.elapsedPercent.toFixed(0)}% of campaign
