@@ -111,6 +111,9 @@ const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 
 
 const ActivityMonitor = () => {
   const [mode, setMode] = useState<Mode>("live");
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.classList.contains('dark')
+  );
   const [snapshots, setSnapshots] = useState<SnapshotRow[]>([]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
