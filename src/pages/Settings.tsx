@@ -1763,8 +1763,14 @@ const Settings = () => {
                           }
                         }}
                         className={sendDays.includes(value)
-                          ? "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                          ? "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors"
                           : "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors border border-border bg-transparent text-foreground hover:bg-muted/20"
+                        }
+                        style={sendDays.includes(value)
+                          ? isDark
+                            ? { backgroundColor: 'white', color: '#0f172a' }
+                            : { backgroundColor: '#0f172a', color: 'white' }
+                          : undefined
                         }
                       >
                         {label}
