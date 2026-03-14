@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowUpDown, Search, DatabaseZap } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, DatabaseZap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
