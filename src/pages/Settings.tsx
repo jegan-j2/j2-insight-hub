@@ -69,6 +69,15 @@ const Settings = () => {
   const { loading: roleLoading } = useUserRole();
   const { canEditClients, canEditTeamMembers, canEditSettings, isAdmin } = usePermissions();
 
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     document.title = "J2 Insights Dashboard - Settings";
   }, []);
