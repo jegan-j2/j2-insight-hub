@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2 } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2 } from "lucide-react";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
