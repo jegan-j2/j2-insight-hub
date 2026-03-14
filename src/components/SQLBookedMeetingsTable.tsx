@@ -253,8 +253,18 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const uniqueSdrs = Array.from(new Set(localMeetings.map(m => m.sdr))).sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
-    <button onClick={() => handleSort(field)} className="flex items-center gap-1 hover:text-foreground transition-colors">
-      {label} <ArrowUpDown className="h-3 w-3" />
+    <button
+      onClick={() => handleSort(field)}
+      className="flex items-center gap-1 hover:text-foreground transition-colors"
+    >
+      {label}
+      {sortField === field ? (
+        sortOrder === "asc"
+          ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+          : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+      ) : (
+        <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50" />
+      )}
     </button>
   );
 

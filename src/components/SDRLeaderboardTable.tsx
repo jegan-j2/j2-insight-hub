@@ -147,8 +147,8 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
+                        <TableCell className="text-left">
+                          <div className="flex items-center gap-1">
                             {sdr.trend > 0 ? (
                               <>
                                 <ArrowUp className="h-4 w-4 text-green-600" />

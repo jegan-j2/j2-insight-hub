@@ -144,6 +144,17 @@ const ActivityMonitor = () => {
   const DRILL_PAGE_SIZE = 15;
 
   useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const fetchPhotosAndMembers = async () => {
       const { data: allMembers } = await supabase
         .from("team_members")
