@@ -1943,10 +1943,9 @@ const Settings = () => {
             <p className="text-xs text-muted-foreground mt-0.5">Get desktop notifications even when the dashboard is in the background</p>
           </div>
 
-          <div className="space-y-5 bg-transparent dark:bg-transparent">
+          <div className="space-y-5 !bg-transparent !shadow-none !border-0">
             {/* Permission Status row */}
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm font-medium">Browser notification permission</span>
+            <div className="flex items-center gap-3 py-2">
               {!browserNotifSupported ? (
                 <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
                   ℹ️ Not supported
