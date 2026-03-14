@@ -69,6 +69,15 @@ const Settings = () => {
   const { loading: roleLoading } = useUserRole();
   const { canEditClients, canEditTeamMembers, canEditSettings, isAdmin } = usePermissions();
 
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     document.title = "J2 Insights Dashboard - Settings";
   }, []);
@@ -1643,7 +1652,7 @@ const Settings = () => {
         {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
           {/* ===== EMAIL REPORTS SECTION ===== */}
-          <div className="bg-[#f1f5f9] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
+          <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
             <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email Reports Configuration</p>
             <p className="text-xs text-muted-foreground mt-0.5">Configure automated email report settings</p>
           </div>
@@ -1763,8 +1772,14 @@ const Settings = () => {
                           }
                         }}
                         className={sendDays.includes(value)
-                          ? "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                          ? "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors"
                           : "px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors border border-border bg-transparent text-foreground hover:bg-muted/20"
+                        }
+                        style={sendDays.includes(value)
+                          ? isDark
+                            ? { backgroundColor: 'white', color: '#0f172a' }
+                            : { backgroundColor: '#0f172a', color: 'white' }
+                          : undefined
                         }
                       >
                         {label}
@@ -1825,7 +1840,7 @@ const Settings = () => {
                 <Button variant="outline" onClick={handleSendTestEmail} className="gap-2 border-border dark:border-white/20 dark:text-white" disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}>
                   {isSendingTestEmail ? (<><Loader2 className="h-4 w-4 animate-spin" />Sending...</>) : (<><Send className="h-4 w-4" />Send Test Email</>)}
                 </Button>
-                <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }} disabled={isSavingNotifications || !canEditSettings}>
+                <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
                   {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
                 </Button>
               </div>
@@ -1836,7 +1851,7 @@ const Settings = () => {
           <div className="border-t border-border my-8" />
 
           {/* ===== SLACK INTEGRATION SECTION ===== */}
-          <div className="bg-[#f1f5f9] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
+          <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
             <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Slack Integration</p>
             <p className="text-xs text-muted-foreground mt-0.5">Connect your Slack workspace for real-time notifications</p>
           </div>
@@ -1877,7 +1892,7 @@ const Settings = () => {
               </div>
               <p className="text-xs text-muted-foreground">
                 Get your webhook URL from{" "}
-                <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
+                <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 hover:underline">
                   Slack's Incoming Webhooks
                 </a>
               </p>
@@ -1913,7 +1928,7 @@ const Settings = () => {
 
             {/* Save Slack Settings */}
             <div className="flex justify-end pt-2">
-              <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }} disabled={isSavingNotifications || !canEditSettings}>
+              <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
                 {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
               </Button>
             </div>
@@ -1923,12 +1938,12 @@ const Settings = () => {
           <div className="border-t border-border my-8" />
 
           {/* ===== BROWSER NOTIFICATIONS SECTION ===== */}
-          <div className="bg-[#f1f5f9] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
+          <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
             <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Browser Notifications</p>
             <p className="text-xs text-muted-foreground mt-0.5">Get desktop notifications even when the dashboard is in the background</p>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-5 bg-transparent dark:bg-transparent">
             {/* Permission Status row */}
             <div className="flex items-center justify-between py-2">
               <span className="text-sm font-medium">Browser notification permission</span>
@@ -1995,7 +2010,7 @@ const Settings = () => {
             )}
 
             <div className="flex justify-end pt-2">
-              <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" style={{ backgroundColor: '#0f172a', color: 'white' }} disabled={isSavingNotifications || !canEditSettings}>
+              <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
                 {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
               </Button>
             </div>
