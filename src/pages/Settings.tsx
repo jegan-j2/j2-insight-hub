@@ -860,9 +860,36 @@ const Settings = () => {
 
   const handleSendTestEmail = async () => {
     setIsSendingTestEmail(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSendingTestEmail(false);
-    toast({ title: "Test email sent", description: `A test report has been sent to ${reportEmails}`, className: "border-[#10b981] text-[#10b981]" });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { error } = await supabase.functions.invoke(
+        'send-daily-reports',
+        {
+          body: { force: true },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        }
+      );
+
+      if (error) throw error;
+
+      toast({
+        title: "Test report sent",
+        description: `Report sent to ${reportEmails}`,
+        className: "border-[#10b981] text-[#10b981]"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to send test report",
+        description: error.message || "Something went wrong.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingTestEmail(false);
+    }
   };
 
   const handleSendTestSlack = async () => {
