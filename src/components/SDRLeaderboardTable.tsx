@@ -120,16 +120,16 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                             <span className="font-medium whitespace-nowrap">{sdr.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">{sdr.totalDials}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-left">{sdr.totalDials}</TableCell>
+                        <TableCell className="text-left">
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
-                        <TableCell className="text-right">{sdr.totalDMs}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-left">{sdr.totalDMs}</TableCell>
+                        <TableCell className="text-left">
                           <span className="text-lg font-bold">{sdr.totalSQLs}</span>
                         </TableCell>
-                        <TableCell className="text-right">{sdr.conversionRate}%</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-left">{sdr.conversionRate}%</TableCell>
+                        <TableCell className="text-left">
                           {sdr.avgDuration > 0 ? (
                             <span
                               className={`font-medium ${
