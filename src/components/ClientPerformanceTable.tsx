@@ -315,15 +315,15 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                           </TableCell>
                         );
                       })()}
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.dials.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.answered.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.answeredPercent.toFixed(1)}%</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.dms.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center">{client.sqls.toLocaleString()}</TableCell>
-                      <TableCell className="text-center px-4 py-2">
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dials.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answered.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answeredPercent.toFixed(1)}%</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dms.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-left">{client.sqls.toLocaleString()}</TableCell>
+                      <TableCell className="text-left px-4 py-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex flex-col gap-1.5 min-w-[130px] cursor-default mx-auto">
+                            <div className="flex flex-col gap-1.5 min-w-[130px] cursor-default">
                               <Progress value={client.elapsedPercent} className="h-2" />
                               <span className="text-xs text-muted-foreground text-center">
                                 {client.elapsedPercent.toFixed(0)}% of campaign

@@ -930,7 +930,13 @@ const ActivityMonitor = () => {
       onClick={() => toggleSort(sortKeyName)}
     >
       {label}
-      <ArrowUpDown className="ml-1 h-3 w-3" />
+      {sortKey === sortKeyName ? (
+        sortDir === "asc"
+          ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+          : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+      ) : (
+        <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50" />
+      )}
     </Button>
   );
 
