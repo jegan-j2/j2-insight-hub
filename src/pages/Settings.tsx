@@ -1653,7 +1653,7 @@ const Settings = () => {
         <TabsContent value="notifications" className="space-y-6">
           {/* ===== EMAIL REPORTS SECTION ===== */}
           <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
-            <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email Reports Configuration</p>
+            <p className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email Reports Configuration</p>
             <p className="text-xs text-muted-foreground mt-0.5">Configure automated email report settings</p>
           </div>
 
@@ -1852,7 +1852,7 @@ const Settings = () => {
 
           {/* ===== SLACK INTEGRATION SECTION ===== */}
           <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
-            <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Slack Integration</p>
+            <p className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Slack Integration</p>
             <p className="text-xs text-muted-foreground mt-0.5">Connect your Slack workspace for real-time notifications</p>
           </div>
 
@@ -1939,14 +1939,13 @@ const Settings = () => {
 
           {/* ===== BROWSER NOTIFICATIONS SECTION ===== */}
           <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
-            <p className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">Browser Notifications</p>
+            <p className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Browser Notifications</p>
             <p className="text-xs text-muted-foreground mt-0.5">Get desktop notifications even when the dashboard is in the background</p>
           </div>
 
-          <div className="space-y-5 bg-transparent dark:bg-transparent">
+          <div className="space-y-5 !bg-transparent !shadow-none !border-0">
             {/* Permission Status row */}
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm font-medium">Browser notification permission</span>
+            <div className="flex items-center gap-3 py-2">
               {!browserNotifSupported ? (
                 <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
                   ℹ️ Not supported
@@ -1964,6 +1963,7 @@ const Settings = () => {
                   ⚠ Not enabled
                 </span>
               )}
+              <span className="text-sm font-medium text-foreground">Browser notification permission</span>
             </div>
 
             {/* Browser notification toggle */}
