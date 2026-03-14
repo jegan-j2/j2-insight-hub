@@ -1650,7 +1650,7 @@ const Settings = () => {
         </TabsContent>
 
         {/* Notifications Tab */}
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="notifications" className="space-y-6 !bg-transparent">
           {/* ===== EMAIL REPORTS SECTION ===== */}
           <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
             <p className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email Reports Configuration</p>
