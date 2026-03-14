@@ -358,6 +358,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sdr_alert_log: {
+        Row: {
+          alerted_at: string
+          created_at: string | null
+          id: string
+          resolved_at: string | null
+          sdr_name: string
+        }
+        Insert: {
+          alerted_at: string
+          created_at?: string | null
+          id?: string
+          resolved_at?: string | null
+          sdr_name: string
+        }
+        Update: {
+          alerted_at?: string
+          created_at?: string | null
+          id?: string
+          resolved_at?: string | null
+          sdr_name?: string
+        }
+        Relationships: []
+      }
       sql_meetings: {
         Row: {
           booking_date: string
