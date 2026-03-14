@@ -1650,10 +1650,10 @@ const Settings = () => {
         </TabsContent>
 
         {/* Notifications Tab */}
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="notifications" className="space-y-6 !bg-transparent">
           {/* ===== EMAIL REPORTS SECTION ===== */}
           <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
-            <p className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Email Reports Configuration</p>
+            <p className="text-lg font-semibold text-[#0f172a] dark:text-[#f1f5f9]">Email Reports Configuration</p>
             <p className="text-xs text-muted-foreground mt-0.5">Configure automated email report settings</p>
           </div>
 
@@ -1852,7 +1852,7 @@ const Settings = () => {
 
           {/* ===== SLACK INTEGRATION SECTION ===== */}
           <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
-            <p className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Slack Integration</p>
+            <p className="text-lg font-semibold text-[#0f172a] dark:text-[#f1f5f9]">Slack Integration</p>
             <p className="text-xs text-muted-foreground mt-0.5">Connect your Slack workspace for real-time notifications</p>
           </div>
 
@@ -1939,11 +1939,11 @@ const Settings = () => {
 
           {/* ===== BROWSER NOTIFICATIONS SECTION ===== */}
           <div className="bg-[#e2e8f0] dark:bg-[#1e293b] px-4 py-3 rounded-md mb-6">
-            <p className="text-base font-bold text-[#0f172a] dark:text-[#f1f5f9]">Browser Notifications</p>
+            <p className="text-lg font-semibold text-[#0f172a] dark:text-[#f1f5f9]">Browser Notifications</p>
             <p className="text-xs text-muted-foreground mt-0.5">Get desktop notifications even when the dashboard is in the background</p>
           </div>
 
-          <div className="space-y-5 !bg-transparent !shadow-none !border-0">
+          <div className="space-y-5 !bg-transparent !shadow-none !border-none outline-none">
             {/* Permission Status row */}
             <div className="flex items-center gap-3 py-2">
               {!browserNotifSupported ? (
