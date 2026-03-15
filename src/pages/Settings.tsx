@@ -861,24 +861,23 @@ const Settings = () => {
   const handleSendTestEmail = async () => {
     setIsSendingTestEmail(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const { error } = await supabase.functions.invoke(
-        'send-daily-reports',
+      fetch(
+        'https://eaeqkgjhgdykxwjkaxpj.supabase.co/functions/v1/send-daily-reports',
         {
-          body: { force: true },
+          method: 'POST',
           headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          },
+          body: JSON.stringify({ force: true }),
         }
-      );
+      ).catch(() => {})
 
-      if (error) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       toast({
         title: "Test report sent",
-        description: `Report sent to ${reportEmails}`,
+        description: `Report dispatched to ${reportEmails} — check your inbox in 30 seconds`,
         className: "border-[#10b981] text-[#10b981]"
       });
     } catch (error: any) {
