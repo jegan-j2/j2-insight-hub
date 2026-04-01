@@ -98,8 +98,10 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
   })
 
   const leaderboard: LeaderboardEntry[] = useMemo(() => {
+    const compositeKey = (name: string, clientId: string) => `${name}|||${clientId}`
     const grouped = snapshots.reduce((acc, snapshot) => {
-      const existing = acc.find(item => item.name === snapshot.sdr_name)
+      const key = compositeKey(snapshot.sdr_name, snapshot.client_id || '')
+      const existing = acc.find(item => item.key === key)
 
       if (existing) {
         existing.totalDials += snapshot.dials
@@ -110,7 +112,9 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
         const nameParts = snapshot.sdr_name.split(' ')
         const initials = nameParts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
         acc.push({
+          key,
           name: snapshot.sdr_name,
+          clientId: snapshot.client_id || '',
           initials,
           totalDials: snapshot.dials,
           totalAnswered: snapshot.answered,
@@ -120,7 +124,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
       }
 
       return acc
-    }, [] as Array<{ name: string; initials: string; totalDials: number; totalAnswered: number; totalDMs: number; totalSQLs: number }>)
+    }, [] as Array<{ key: string; name: string; clientId: string; initials: string; totalDials: number; totalAnswered: number; totalDMs: number; totalSQLs: number }>)
 
     grouped.sort((a, b) => b.totalSQLs - a.totalSQLs)
 
