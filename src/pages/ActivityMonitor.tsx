@@ -614,20 +614,23 @@ const ActivityMonitor = () => {
       row.conversion = row.dials > 0 ? (row.sqls / row.dials) * 100 : 0;
     }
 
-    // Merge inactive SDRs from team_members
-    for (const member of allTeamMembers) {
-      if (!map.has(member.sdr_name)) {
-        map.set(member.sdr_name, {
-          sdrName: member.sdr_name,
-          clientId: member.client_id || "",
-          dials: 0,
-          answered: 0,
-          conversations: 0,
-          answerRate: 0,
-          sqls: 0,
-          conversion: 0,
-          lastActivity: null,
-        });
+    // In live mode (today): show all active team members even if no activity
+    // In historical mode: only show SDRs who have activity data (already in map)
+    if (mode === "live") {
+      for (const member of allTeamMembers) {
+        if (member.status === "active" && !map.has(member.sdr_name)) {
+          map.set(member.sdr_name, {
+            sdrName: member.sdr_name,
+            clientId: member.client_id || "",
+            dials: 0,
+            answered: 0,
+            conversations: 0,
+            answerRate: 0,
+            sqls: 0,
+            conversion: 0,
+            lastActivity: null,
+          });
+        }
       }
     }
 
