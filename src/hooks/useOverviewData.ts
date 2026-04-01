@@ -193,14 +193,14 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       // Fetch ALL snapshots, DMs, and clients (unfiltered) for Client Performance table
       const [allSnapshotRes, allDmRes, clientsRes, allSqlCountsRes] = await Promise.all([
         supabase.from("daily_snapshots").select("*"),
-        supabase.from("activity_log").select("client_id").eq("is_decision_maker", true),
+        supabase.from("activity_log").select("client_id, activity_date").eq("is_decision_maker", true),
         supabase
           .from("clients")
           .select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url, status")
           .eq("status", "active")
           .neq("client_id", "admin")
           .order("client_name", { ascending: true }),
-        supabase.from("sql_meetings").select("client_id").neq("client_id", null),
+        supabase.from("sql_meetings").select("client_id, booking_date").neq("client_id", null),
       ]);
 
       const allDmsMap: Record<string, number> = {};
