@@ -427,7 +427,8 @@ const ActivityMonitor = () => {
         (() => {
           let q = supabase
             .from("sql_meetings")
-            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id");
+            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id, meeting_status")
+            .in("meeting_status", ["pending", "held", "reschedule"]);
           if (dates.length === 1) {
             q = q.gte("created_at", startTimestamp).lte("created_at", endTimestamp);
           } else {

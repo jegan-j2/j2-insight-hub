@@ -235,6 +235,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           supabase
             .from("sql_meetings")
             .select("id", { count: "exact" })
+            .in("meeting_status", ["pending", "held", "reschedule"])
             .gte("booking_date", prevDates.from)
             .lte("booking_date", prevDates.to),
         ]);
