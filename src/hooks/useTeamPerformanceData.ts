@@ -67,7 +67,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
       if (fetchError) throw fetchError
 
       setSnapshots(data || [])
-      setActivityLogs((callData || []).filter(c => c.sdr_name !== null) as { sdr_name: string; call_duration: number }[])
+      setActivityLogs((callData || []).filter(c => c.sdr_name !== null) as { sdr_name: string; client_id: string; call_duration: number }[])
     } catch (err) {
       console.error('Error fetching team performance data:', err)
       setError('Failed to load team performance data')
