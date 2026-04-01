@@ -26,11 +26,10 @@ export const CallActivityChart = ({ snapshots, dmsByDate }: CallActivityChartPro
     for (const s of snapshots) {
       const date = s.snapshot_date;
       if (!grouped[date]) {
-        grouped[date] = { date, dials: 0, answered: 0, dms: 0 };
+        grouped[date] = { date, dials: 0, answered: 0, dms: (dmsByDate || {})[date] || 0 };
       }
       grouped[date].dials += s.dials || 0;
       grouped[date].answered += s.answered || 0;
-      grouped[date].dms += (dmsByDate || {})[date] || 0;
     }
 
     return Object.values(grouped)
