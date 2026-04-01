@@ -32,6 +32,16 @@ interface ClientInfo {
   status?: string | null;
 }
 
+export interface DmRecord {
+  client_id: string;
+  activity_date: string;
+}
+
+export interface SqlRecord {
+  client_id: string;
+  booking_date: string;
+}
+
 interface OverviewData {
   snapshots: DailySnapshot[];
   meetings: SQLMeeting[];
@@ -41,6 +51,8 @@ interface OverviewData {
   allSnapshots: DailySnapshot[];
   allDmsByClient: Record<string, number>;
   sqlCountsByClient: Record<string, number>;
+  allDmData: DmRecord[];
+  allSqlData: SqlRecord[];
   clients: ClientInfo[];
   loading: boolean;
   error: string | null;
