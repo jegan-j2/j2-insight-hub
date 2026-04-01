@@ -33,6 +33,7 @@ type AllDay = WeekDay | "Saturday" | "Sunday";
 interface SqlMeetingRow {
   id: string;
   sdr_name: string | null;
+  client_id: string | null;
   contact_person: string;
   company_name: string | null;
   booking_date: string;
@@ -356,7 +357,7 @@ const ActivityMonitor = () => {
           .order("activity_date", { ascending: false }),
         supabase
           .from("sql_meetings")
-          .select("sdr_name")
+          .select("sdr_name, client_id")
           .gte("created_at", todayMelbourne + "T00:00:00")
           .lte("created_at", todayMelbourne + "T23:59:59"),
       ]);
@@ -531,23 +532,25 @@ const ActivityMonitor = () => {
   // SDR rows
   const sdrRows = useMemo(() => {
     const map = new Map<string, SDRRow>();
-    // Build a set of active SDR names for live mode filtering
-    const activeSDRNames = new Set(
-      allTeamMembers.filter(m => m.status === "active").map(m => m.sdr_name)
+    const compositeKey = (name: string, clientId: string) => `${name}|||${clientId}`;
+    // Build a set of active SDR composite keys for live mode filtering
+    const activeSDRKeys = new Set(
+      allTeamMembers.filter(m => m.status === "active").map(m => compositeKey(m.sdr_name, m.client_id || ""))
     );
 
     if (mode === "live") {
       for (const s of snapshots) {
         if (!s.sdr_name) continue;
+        const key = compositeKey(s.sdr_name, s.client_id || "");
         // In live mode, only show active team members
-        if (!activeSDRNames.has(s.sdr_name)) continue;
-        const existing = map.get(s.sdr_name);
+        if (!activeSDRKeys.has(key)) continue;
+        const existing = map.get(key);
         if (existing) {
           existing.dials += s.dials || 0;
           existing.answered += s.answered || 0;
           existing.sqls += s.sqls || 0;
         } else {
-          map.set(s.sdr_name, {
+          map.set(key, {
             sdrName: s.sdr_name,
             clientId: s.client_id || "",
             dials: s.dials || 0,
@@ -562,39 +565,44 @@ const ActivityMonitor = () => {
       }
 
       // Override SQLs from sql_meetings for live mode
-      if (mode === "live") {
-        const liveSqlCounts = new Map<string, number>();
-        for (const m of histSqlMeetings) {
-          if (!m.sdr_name) continue;
-          liveSqlCounts.set(m.sdr_name, (liveSqlCounts.get(m.sdr_name) || 0) + 1);
-        }
-        for (const row of map.values()) {
-          const liveCount = liveSqlCounts.get(row.sdrName);
-          if (liveCount !== undefined) row.sqls = liveCount;
-        }
-      }
-    } else {
-      const sqlCountBySdr = new Map<string, number>();
+      const liveSqlCounts = new Map<string, number>();
       for (const m of histSqlMeetings) {
         if (!m.sdr_name) continue;
-        sqlCountBySdr.set(m.sdr_name, (sqlCountBySdr.get(m.sdr_name) || 0) + 1);
+        const key = compositeKey(m.sdr_name, m.client_id || "");
+        liveSqlCounts.set(key, (liveSqlCounts.get(key) || 0) + 1);
+      }
+      for (const [key, row] of map.entries()) {
+        const liveCount = liveSqlCounts.get(key);
+        if (liveCount !== undefined) row.sqls = liveCount;
+      }
+    } else {
+      const sqlCountByKey = new Map<string, number>();
+      const sqlClientMap = new Map<string, string>();
+      for (const m of histSqlMeetings) {
+        if (!m.sdr_name) continue;
+        const key = compositeKey(m.sdr_name, m.client_id || "");
+        sqlCountByKey.set(key, (sqlCountByKey.get(key) || 0) + 1);
+        sqlClientMap.set(key, m.client_id || "");
       }
 
-      const allSdrNames = new Set<string>();
-      for (const a of activities) if (a.sdr_name) allSdrNames.add(a.sdr_name);
-      for (const name of sqlCountBySdr.keys()) allSdrNames.add(name);
+      const allSdrKeys = new Set<string>();
+      for (const a of activities) {
+        if (a.sdr_name) allSdrKeys.add(compositeKey(a.sdr_name, a.client_id || ""));
+      }
+      for (const key of sqlCountByKey.keys()) allSdrKeys.add(key);
 
-      for (const sdrName of allSdrNames) {
-        const sdrActivities = activities.filter(a => a.sdr_name === sdrName);
-        const clientId = sdrActivities[0]?.client_id || "";
-        map.set(sdrName, {
+      for (const key of allSdrKeys) {
+        const [sdrName] = key.split("|||");
+        const sdrActivities = activities.filter(a => compositeKey(a.sdr_name || "", a.client_id || "") === key);
+        const clientId = sdrActivities[0]?.client_id || sqlClientMap.get(key) || "";
+        map.set(key, {
           sdrName,
           clientId: typeof clientId === "string" ? clientId : "",
           dials: sdrActivities.length,
           answered: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected").length,
           conversations: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length,
           answerRate: 0,
-          sqls: sqlCountBySdr.get(sdrName) || 0,
+          sqls: sqlCountByKey.get(key) || 0,
           conversion: 0,
           lastActivity: null,
         });
@@ -604,7 +612,8 @@ const ActivityMonitor = () => {
     // Attach last activity and compute conversations for live mode
     for (const a of activities) {
       if (!a.sdr_name) continue;
-      const row = map.get(a.sdr_name);
+      const key = compositeKey(a.sdr_name, a.client_id || "");
+      const row = map.get(key);
       if (row) {
         const actDate = new Date(a.activity_date);
         if (!row.lastActivity || actDate > row.lastActivity) row.lastActivity = actDate;
@@ -621,11 +630,11 @@ const ActivityMonitor = () => {
     }
 
     // In live mode (today): show all active team members even if no activity
-    // In historical mode: only show SDRs who have activity data (already in map)
     if (mode === "live") {
       for (const member of allTeamMembers) {
-        if (member.status === "active" && !map.has(member.sdr_name)) {
-          map.set(member.sdr_name, {
+        const key = compositeKey(member.sdr_name, member.client_id || "");
+        if (member.status === "active" && !map.has(key)) {
+          map.set(key, {
             sdrName: member.sdr_name,
             clientId: member.client_id || "",
             dials: 0,
@@ -732,7 +741,7 @@ const ActivityMonitor = () => {
       } else if (metric === "sqls") {
         let sqlQuery = supabase
           .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id, client_id")
           .eq("sdr_name", sdrName);
 
         if (mode === "live") {

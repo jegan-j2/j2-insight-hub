@@ -8,6 +8,7 @@ import { useRealtimeSubscription } from './useRealtimeSubscription'
 interface LeaderboardEntry {
   rank: number
   name: string
+  clientId: string
   initials: string
   totalDials: number
   totalAnswered: number
@@ -22,7 +23,7 @@ interface LeaderboardEntry {
 export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientFilter?: string) => {
   const [loading, setLoading] = useState(true)
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([])
-  const [activityLogs, setActivityLogs] = useState<{ sdr_name: string; call_duration: number }[]>([])
+  const [activityLogs, setActivityLogs] = useState<{ sdr_name: string; client_id: string; call_duration: number }[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const startDate = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : ''
@@ -47,7 +48,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
 
       let activityQuery = supabase
         .from('activity_log')
-        .select('sdr_name, call_duration')
+        .select('sdr_name, client_id, call_duration')
         .ilike('call_outcome', 'connected')
         .not('call_duration', 'is', null)
         .gt('call_duration', 0)
@@ -66,7 +67,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
       if (fetchError) throw fetchError
 
       setSnapshots(data || [])
-      setActivityLogs((callData || []).filter(c => c.sdr_name !== null) as { sdr_name: string; call_duration: number }[])
+      setActivityLogs((callData || []).filter(c => c.sdr_name !== null) as { sdr_name: string; client_id: string; call_duration: number }[])
     } catch (err) {
       console.error('Error fetching team performance data:', err)
       setError('Failed to load team performance data')
@@ -97,8 +98,10 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
   })
 
   const leaderboard: LeaderboardEntry[] = useMemo(() => {
+    const compositeKey = (name: string, clientId: string) => `${name}|||${clientId}`
     const grouped = snapshots.reduce((acc, snapshot) => {
-      const existing = acc.find(item => item.name === snapshot.sdr_name)
+      const key = compositeKey(snapshot.sdr_name, snapshot.client_id || '')
+      const existing = acc.find(item => item.key === key)
 
       if (existing) {
         existing.totalDials += snapshot.dials
@@ -109,7 +112,9 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
         const nameParts = snapshot.sdr_name.split(' ')
         const initials = nameParts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
         acc.push({
+          key,
           name: snapshot.sdr_name,
+          clientId: snapshot.client_id || '',
           initials,
           totalDials: snapshot.dials,
           totalAnswered: snapshot.answered,
@@ -119,24 +124,31 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
       }
 
       return acc
-    }, [] as Array<{ name: string; initials: string; totalDials: number; totalAnswered: number; totalDMs: number; totalSQLs: number }>)
+    }, [] as Array<{ key: string; name: string; clientId: string; initials: string; totalDials: number; totalAnswered: number; totalDMs: number; totalSQLs: number }>)
 
     grouped.sort((a, b) => b.totalSQLs - a.totalSQLs)
 
-    // Calculate avg duration per SDR from activity logs
+    // Calculate avg duration per SDR+client from activity logs
     const durationMap = new Map<string, { total: number; count: number }>()
     for (const log of activityLogs) {
-      const entry = durationMap.get(log.sdr_name) || { total: 0, count: 0 }
+      const key = compositeKey(log.sdr_name, log.client_id || '')
+      const entry = durationMap.get(key) || { total: 0, count: 0 }
       entry.total += log.call_duration
       entry.count += 1
-      durationMap.set(log.sdr_name, entry)
+      durationMap.set(key, entry)
     }
 
     return grouped.map((sdr, index) => {
-      const durInfo = durationMap.get(sdr.name)
+      const durInfo = durationMap.get(sdr.key)
       const avgDuration = durInfo ? durInfo.total / durInfo.count : 0
       return {
-        ...sdr,
+        name: sdr.name,
+        clientId: sdr.clientId,
+        initials: sdr.initials,
+        totalDials: sdr.totalDials,
+        totalAnswered: sdr.totalAnswered,
+        totalDMs: sdr.totalDMs,
+        totalSQLs: sdr.totalSQLs,
         rank: index + 1,
         answerRate: sdr.totalDials > 0 ? (sdr.totalAnswered / sdr.totalDials * 100).toFixed(1) : '0',
         conversionRate: sdr.totalDials > 0 ? (sdr.totalSQLs / sdr.totalDials * 100).toFixed(2) : '0',

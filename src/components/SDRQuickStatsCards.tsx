@@ -8,6 +8,7 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 interface LeaderboardEntry {
   rank: number;
   name: string;
+  clientId?: string;
   initials: string;
   totalDials: number;
   totalAnswered: number;
