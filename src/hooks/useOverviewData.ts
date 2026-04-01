@@ -74,6 +74,8 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   const [allSnapshots, setAllSnapshots] = useState<DailySnapshot[]>([]);
   const [allDmsByClient, setAllDmsByClient] = useState<Record<string, number>>({});
   const [sqlCountsByClient, setSqlCountsByClient] = useState<Record<string, number>>({});
+  const [allDmData, setAllDmData] = useState<DmRecord[]>([]);
+  const [allSqlData, setAllSqlData] = useState<SqlRecord[]>([]);
   const [clients, setClients] = useState<ClientInfo[]>([]);
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
