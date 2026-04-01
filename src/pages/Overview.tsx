@@ -608,7 +608,7 @@ const Overview = () => {
       )}
 
       {/* Client Performance Table */}
-        <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} sqlCountsByClient={sqlCountsByClient} clients={clients} />
+        <ClientPerformanceTable snapshots={allSnapshots} dmsByClient={allDmsByClient} sqlCountsByClient={sqlCountsByClient} allDmData={allDmData} allSqlData={allSqlData} clients={clients} />
 
       {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
