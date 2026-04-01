@@ -357,7 +357,8 @@ const ActivityMonitor = () => {
           .order("activity_date", { ascending: false }),
         supabase
           .from("sql_meetings")
-          .select("sdr_name, client_id")
+          .select("sdr_name, client_id, meeting_status")
+          .in("meeting_status", ["pending", "held", "reschedule"])
           .gte("created_at", todayMelbourne + "T00:00:00")
           .lte("created_at", todayMelbourne + "T23:59:59"),
       ]);
@@ -426,7 +427,8 @@ const ActivityMonitor = () => {
         (() => {
           let q = supabase
             .from("sql_meetings")
-            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id");
+            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id, meeting_status")
+            .in("meeting_status", ["pending", "held", "reschedule"]);
           if (dates.length === 1) {
             q = q.gte("created_at", startTimestamp).lte("created_at", endTimestamp);
           } else {

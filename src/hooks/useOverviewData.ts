@@ -144,7 +144,8 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       // Count SQLs from sql_meetings table
       let sqlCountQuery = supabase
         .from("sql_meetings")
-        .select("id", { count: "exact" });
+        .select("id", { count: "exact" })
+        .in("meeting_status", ["pending", "held", "reschedule"]);
 
       if (startDate) sqlCountQuery = sqlCountQuery.gte("booking_date", startDate);
       if (endDate) sqlCountQuery = sqlCountQuery.lte("booking_date", endDate);
@@ -200,7 +201,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           .eq("status", "active")
           .neq("client_id", "admin")
           .order("client_name", { ascending: true }),
-        supabase.from("sql_meetings").select("client_id, booking_date").neq("client_id", null),
+        supabase.from("sql_meetings").select("client_id, booking_date, meeting_status").neq("client_id", null).in("meeting_status", ["pending", "held", "reschedule"]),
       ]);
 
       const allDmsMap: Record<string, number> = {};
@@ -234,6 +235,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           supabase
             .from("sql_meetings")
             .select("id", { count: "exact" })
+            .in("meeting_status", ["pending", "held", "reschedule"])
             .gte("booking_date", prevDates.from)
             .lte("booking_date", prevDates.to),
         ]);

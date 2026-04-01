@@ -164,7 +164,8 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       let campaignSqlQuery = supabase
         .from("sql_meetings")
         .select("id", { count: "exact" })
-        .eq("client_id", clientId);
+        .eq("client_id", clientId)
+        .in("meeting_status", ["pending", "held", "reschedule"]);
       if (clientData?.campaign_start) campaignSqlQuery = campaignSqlQuery.gte("booking_date", clientData.campaign_start);
       if (clientData?.campaign_end) campaignSqlQuery = campaignSqlQuery.lte("booking_date", clientData.campaign_end);
       const { count: campaignSqlCount } = await campaignSqlQuery;
@@ -238,8 +239,8 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       const lastWeekEnd = format(lastWeekEndDate, "yyyy-MM-dd");
 
       const [{ count: thisWeekCount }, { count: lastWeekCount }] = await Promise.all([
-        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", weekStart).lte("booking_date", weekEnd),
-        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd),
+        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", weekStart).lte("booking_date", weekEnd),
+        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd),
       ]);
 
       setTotalDials(dialsCount || 0);
