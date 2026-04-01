@@ -733,7 +733,7 @@ const ActivityMonitor = () => {
       } else if (metric === "sqls") {
         let sqlQuery = supabase
           .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id, client_id")
           .eq("sdr_name", sdrName);
 
         if (mode === "live") {
