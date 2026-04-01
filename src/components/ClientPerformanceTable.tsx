@@ -39,6 +39,8 @@ interface ClientPerformanceTableProps {
   snapshots: DailySnapshot[];
   dmsByClient: Record<string, number>;
   sqlCountsByClient: Record<string, number>;
+  allDmData?: DmRecord[];
+  allSqlData?: SqlRecord[];
   clients: Array<{
     client_id: string;
     client_name: string;
@@ -49,7 +51,7 @@ interface ClientPerformanceTableProps {
   }>;
 }
 
-export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClient, clients }: ClientPerformanceTableProps) => {
+export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClient, allDmData, allSqlData, clients }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
