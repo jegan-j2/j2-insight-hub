@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { DmRecord, SqlRecord } from "@/hooks/useOverviewData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -38,6 +39,8 @@ interface ClientPerformanceTableProps {
   snapshots: DailySnapshot[];
   dmsByClient: Record<string, number>;
   sqlCountsByClient: Record<string, number>;
+  allDmData?: DmRecord[];
+  allSqlData?: SqlRecord[];
   clients: Array<{
     client_id: string;
     client_name: string;
@@ -48,7 +51,7 @@ interface ClientPerformanceTableProps {
   }>;
 }
 
-export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClient, clients }: ClientPerformanceTableProps) => {
+export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClient, allDmData, allSqlData, clients }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -121,11 +124,45 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
 
   const clientsData: ClientData[] = useMemo(() => {
     return clients.map((client) => {
-      const clientSnapshots = (snapshots || []).filter((s) => s.client_id === client.client_id);
+      const campStart = client.campaign_start || null;
+      const campEnd = client.campaign_end || null;
+
+      // Filter snapshots by client's campaign dates
+      const clientSnapshots = (snapshots || []).filter((s) => {
+        if (s.client_id !== client.client_id) return false;
+        if (campStart && s.snapshot_date < campStart) return false;
+        if (campEnd && s.snapshot_date > campEnd) return false;
+        return true;
+      });
       const totalDials = clientSnapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
       const totalAnswered = clientSnapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
-      const totalDMs = (dmsByClient || {})[client.client_id] || 0;
-      const totalSQLs = (sqlCountsByClient || {})[client.client_id] || 0;
+
+      // Filter DMs by campaign dates
+      let totalDMs: number;
+      if (allDmData) {
+        totalDMs = allDmData.filter((d) => {
+          if (d.client_id !== client.client_id) return false;
+          if (campStart && d.activity_date < campStart) return false;
+          if (campEnd && d.activity_date > campEnd) return false;
+          return true;
+        }).length;
+      } else {
+        totalDMs = (dmsByClient || {})[client.client_id] || 0;
+      }
+
+      // Filter SQLs by campaign dates
+      let totalSQLs: number;
+      if (allSqlData) {
+        totalSQLs = allSqlData.filter((s) => {
+          if (s.client_id !== client.client_id) return false;
+          if (campStart && s.booking_date < campStart) return false;
+          if (campEnd && s.booking_date > campEnd) return false;
+          return true;
+        }).length;
+      } else {
+        totalSQLs = (sqlCountsByClient || {})[client.client_id] || 0;
+      }
+
       const target = client.target_sqls || 0;
 
       return {
@@ -140,18 +177,18 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
         sqlsPercent: totalDMs > 0 ? (totalSQLs / totalDMs) * 100 : 0,
         target,
         progress: target > 0 ? (totalSQLs / target) * 100 : 0,
-        campaignStart: client.campaign_start || null,
-        campaignEnd: client.campaign_end || null,
-        daysLeft: getWorkingDaysLeft(client.campaign_end || null),
-        elapsedPercent: getCampaignElapsed(client.campaign_start || null, client.campaign_end || null),
+        campaignStart: campStart,
+        campaignEnd: campEnd,
+        daysLeft: getWorkingDaysLeft(campEnd),
+        elapsedPercent: getCampaignElapsed(campStart, campEnd),
         signal: getHealthSignal(
-          getCampaignElapsed(client.campaign_start || null, client.campaign_end || null),
+          getCampaignElapsed(campStart, campEnd),
           totalSQLs,
           target
         ),
       };
     });
-  }, [clients, snapshots, dmsByClient, sqlCountsByClient]);
+  }, [clients, snapshots, dmsByClient, sqlCountsByClient, allDmData, allSqlData]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
