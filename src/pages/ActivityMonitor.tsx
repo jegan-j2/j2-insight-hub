@@ -129,7 +129,7 @@ const ActivityMonitor = () => {
   const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [clientNameMap, setClientNameMap] = useState<Record<string, string>>({});
-  const [allTeamMembers, setAllTeamMembers] = useState<{sdr_name: string, client_id: string}[]>([]);
+  const [allTeamMembers, setAllTeamMembers] = useState<{sdr_name: string, client_id: string, status: string | null}[]>([]);
   const [sdrPage, setSdrPage] = useState(0);
   const [drillPage, setDrillPage] = useState(0);
   const { toast } = useToast();
@@ -169,7 +169,7 @@ const ActivityMonitor = () => {
 
       const { data: members } = await supabase
         .from("team_members")
-        .select("sdr_name, client_id, role")
+        .select("sdr_name, client_id, role, status")
         .eq("role", "SDR")
         .not("client_id", "eq", "admin")
         .not("client_id", "is", null);
@@ -531,10 +531,16 @@ const ActivityMonitor = () => {
   // SDR rows
   const sdrRows = useMemo(() => {
     const map = new Map<string, SDRRow>();
+    // Build a set of active SDR names for live mode filtering
+    const activeSDRNames = new Set(
+      allTeamMembers.filter(m => m.status === "active").map(m => m.sdr_name)
+    );
 
     if (mode === "live") {
       for (const s of snapshots) {
         if (!s.sdr_name) continue;
+        // In live mode, only show active team members
+        if (!activeSDRNames.has(s.sdr_name)) continue;
         const existing = map.get(s.sdr_name);
         if (existing) {
           existing.dials += s.dials || 0;
@@ -614,20 +620,23 @@ const ActivityMonitor = () => {
       row.conversion = row.dials > 0 ? (row.sqls / row.dials) * 100 : 0;
     }
 
-    // Merge inactive SDRs from team_members
-    for (const member of allTeamMembers) {
-      if (!map.has(member.sdr_name)) {
-        map.set(member.sdr_name, {
-          sdrName: member.sdr_name,
-          clientId: member.client_id || "",
-          dials: 0,
-          answered: 0,
-          conversations: 0,
-          answerRate: 0,
-          sqls: 0,
-          conversion: 0,
-          lastActivity: null,
-        });
+    // In live mode (today): show all active team members even if no activity
+    // In historical mode: only show SDRs who have activity data (already in map)
+    if (mode === "live") {
+      for (const member of allTeamMembers) {
+        if (member.status === "active" && !map.has(member.sdr_name)) {
+          map.set(member.sdr_name, {
+            sdrName: member.sdr_name,
+            clientId: member.client_id || "",
+            dials: 0,
+            answered: 0,
+            conversations: 0,
+            answerRate: 0,
+            sqls: 0,
+            conversion: 0,
+            lastActivity: null,
+          });
+        }
       }
     }
 
