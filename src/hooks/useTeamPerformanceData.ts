@@ -23,7 +23,7 @@ interface LeaderboardEntry {
 export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientFilter?: string) => {
   const [loading, setLoading] = useState(true)
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([])
-  const [activityLogs, setActivityLogs] = useState<{ sdr_name: string; call_duration: number }[]>([])
+  const [activityLogs, setActivityLogs] = useState<{ sdr_name: string; client_id: string; call_duration: number }[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const startDate = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : ''
