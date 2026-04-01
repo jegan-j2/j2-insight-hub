@@ -531,6 +531,10 @@ const ActivityMonitor = () => {
   // SDR rows
   const sdrRows = useMemo(() => {
     const map = new Map<string, SDRRow>();
+    // Build a set of active SDR names for live mode filtering
+    const activeSDRNames = new Set(
+      allTeamMembers.filter(m => m.status === "active").map(m => m.sdr_name)
+    );
 
     if (mode === "live") {
       for (const s of snapshots) {
