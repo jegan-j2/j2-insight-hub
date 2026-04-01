@@ -26,6 +26,7 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           created_at: string | null
+          hubspot_contact_id: string | null
           hubspot_engagement_id: string | null
           id: string
           is_decision_maker: boolean | null
@@ -50,6 +51,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string | null
+          hubspot_contact_id?: string | null
           hubspot_engagement_id?: string | null
           id?: string
           is_decision_maker?: boolean | null
@@ -74,6 +76,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string | null
+          hubspot_contact_id?: string | null
           hubspot_engagement_id?: string | null
           id?: string
           is_decision_maker?: boolean | null
@@ -392,6 +395,7 @@ export type Database = {
           contact_person: string
           created_at: string | null
           edited_in_dashboard: boolean | null
+          hubspot_contact_id: string | null
           hubspot_deal_id: string | null
           hubspot_engagement_id: string | null
           id: string
@@ -400,6 +404,8 @@ export type Database = {
           meeting_date: string | null
           meeting_held: boolean | null
           meeting_status: string | null
+          meeting_time: string | null
+          parent_sql_id: string | null
           remarks: string | null
           sdr_name: string | null
         }
@@ -412,6 +418,7 @@ export type Database = {
           contact_person: string
           created_at?: string | null
           edited_in_dashboard?: boolean | null
+          hubspot_contact_id?: string | null
           hubspot_deal_id?: string | null
           hubspot_engagement_id?: string | null
           id?: string
@@ -420,6 +427,8 @@ export type Database = {
           meeting_date?: string | null
           meeting_held?: boolean | null
           meeting_status?: string | null
+          meeting_time?: string | null
+          parent_sql_id?: string | null
           remarks?: string | null
           sdr_name?: string | null
         }
@@ -432,6 +441,7 @@ export type Database = {
           contact_person?: string
           created_at?: string | null
           edited_in_dashboard?: boolean | null
+          hubspot_contact_id?: string | null
           hubspot_deal_id?: string | null
           hubspot_engagement_id?: string | null
           id?: string
@@ -440,6 +450,8 @@ export type Database = {
           meeting_date?: string | null
           meeting_held?: boolean | null
           meeting_status?: string | null
+          meeting_time?: string | null
+          parent_sql_id?: string | null
           remarks?: string | null
           sdr_name?: string | null
         }
@@ -450,6 +462,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "sql_meetings_parent_sql_id_fkey"
+            columns: ["parent_sql_id"]
+            isOneToOne: false
+            referencedRelation: "sql_meetings"
+            referencedColumns: ["id"]
           },
         ]
       }
