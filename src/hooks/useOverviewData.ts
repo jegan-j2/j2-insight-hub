@@ -201,7 +201,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           .eq("status", "active")
           .neq("client_id", "admin")
           .order("client_name", { ascending: true }),
-        supabase.from("sql_meetings").select("client_id, booking_date").neq("client_id", null),
+        supabase.from("sql_meetings").select("client_id, booking_date, meeting_status").neq("client_id", null).in("meeting_status", ["pending", "held", "reschedule"]),
       ]);
 
       const allDmsMap: Record<string, number> = {};
