@@ -169,7 +169,7 @@ const ActivityMonitor = () => {
 
       const { data: members } = await supabase
         .from("team_members")
-        .select("sdr_name, client_id, role")
+        .select("sdr_name, client_id, role, status")
         .eq("role", "SDR")
         .not("client_id", "eq", "admin")
         .not("client_id", "is", null);
