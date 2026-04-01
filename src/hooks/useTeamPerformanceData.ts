@@ -48,7 +48,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
 
       let activityQuery = supabase
         .from('activity_log')
-        .select('sdr_name, call_duration')
+        .select('sdr_name, client_id, call_duration')
         .ilike('call_outcome', 'connected')
         .not('call_duration', 'is', null)
         .gt('call_duration', 0)
