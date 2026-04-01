@@ -129,7 +129,7 @@ const ActivityMonitor = () => {
   const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [clientNameMap, setClientNameMap] = useState<Record<string, string>>({});
-  const [allTeamMembers, setAllTeamMembers] = useState<{sdr_name: string, client_id: string}[]>([]);
+  const [allTeamMembers, setAllTeamMembers] = useState<{sdr_name: string, client_id: string, status: string | null}[]>([]);
   const [sdrPage, setSdrPage] = useState(0);
   const [drillPage, setDrillPage] = useState(0);
   const { toast } = useToast();
