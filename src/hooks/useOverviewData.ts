@@ -144,7 +144,8 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       // Count SQLs from sql_meetings table
       let sqlCountQuery = supabase
         .from("sql_meetings")
-        .select("id", { count: "exact" });
+        .select("id", { count: "exact" })
+        .in("meeting_status", ["pending", "held", "reschedule"]);
 
       if (startDate) sqlCountQuery = sqlCountQuery.gte("booking_date", startDate);
       if (endDate) sqlCountQuery = sqlCountQuery.lte("booking_date", endDate);
