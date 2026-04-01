@@ -539,6 +539,8 @@ const ActivityMonitor = () => {
     if (mode === "live") {
       for (const s of snapshots) {
         if (!s.sdr_name) continue;
+        // In live mode, only show active team members
+        if (!activeSDRNames.has(s.sdr_name)) continue;
         const existing = map.get(s.sdr_name);
         if (existing) {
           existing.dials += s.dials || 0;
