@@ -8,6 +8,7 @@ import { useRealtimeSubscription } from './useRealtimeSubscription'
 interface LeaderboardEntry {
   rank: number
   name: string
+  clientId: string
   initials: string
   totalDials: number
   totalAnswered: number
