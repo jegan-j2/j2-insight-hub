@@ -5,11 +5,13 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { EmptyState } from "@/components/EmptyState";
 import { TrendingUp } from "lucide-react";
 import type { DailySnapshot } from "@/lib/supabase-types";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, eachDayOfInterval, isBefore, startOfDay } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 interface CallActivityChartProps {
   snapshots?: DailySnapshot[];
   dmsByDate?: Record<string, number>;
+  dateRange?: DateRange;
 }
 
 const chartConfig = {
@@ -18,27 +20,48 @@ const chartConfig = {
   dms: { label: "DM Conversations", color: "#6366f1" },
 };
 
-export const CallActivityChart = ({ snapshots, dmsByDate }: CallActivityChartProps) => {
+export const CallActivityChart = ({ snapshots, dmsByDate, dateRange }: CallActivityChartProps) => {
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return [];
 
-    const grouped: Record<string, { date: string; dials: number; answered: number; dms: number }> = {};
+    // Build a map of actual data by date
+    const grouped: Record<string, { dials: number; answered: number; dms: number }> = {};
     for (const s of snapshots) {
       const date = s.snapshot_date;
       if (!grouped[date]) {
-        grouped[date] = { date, dials: 0, answered: 0, dms: (dmsByDate || {})[date] || 0 };
+        grouped[date] = { dials: 0, answered: 0, dms: (dmsByDate || {})[date] || 0 };
       }
       grouped[date].dials += s.dials || 0;
       grouped[date].answered += s.answered || 0;
     }
 
-    return Object.values(grouped)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map((d) => ({
-        ...d,
-        date: format(parseISO(d.date), "MMM d"),
+    // If dateRange provided, fill all dates in range (up to today)
+    if (dateRange?.from && dateRange?.to) {
+      const today = startOfDay(new Date());
+      const end = isBefore(dateRange.to, today) ? dateRange.to : today;
+      const allDates = eachDayOfInterval({ start: dateRange.from, end });
+      return allDates.map((d) => {
+        const key = format(d, "yyyy-MM-dd");
+        const entry = grouped[key];
+        return {
+          date: format(d, "MMM d"),
+          dials: entry?.dials || 0,
+          answered: entry?.answered || 0,
+          dms: entry?.dms || 0,
+        };
+      });
+    }
+
+    // Fallback: just use grouped data
+    return Object.keys(grouped)
+      .sort()
+      .map((date) => ({
+        date: format(parseISO(date), "MMM d"),
+        dials: grouped[date].dials,
+        answered: grouped[date].answered,
+        dms: grouped[date].dms,
       }));
-  }, [snapshots, dmsByDate]);
+  }, [snapshots, dmsByDate, dateRange]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border">

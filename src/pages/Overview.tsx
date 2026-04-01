@@ -612,7 +612,7 @@ const Overview = () => {
 
       {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          <CallActivityChart snapshots={snapshots} dmsByDate={dmsByDate} />
+          <CallActivityChart snapshots={snapshots} dmsByDate={dmsByDate} dateRange={dateRange} />
           <ConversionFunnelChart
             dials={kpis.totalDials}
             answered={kpis.totalAnswered}
