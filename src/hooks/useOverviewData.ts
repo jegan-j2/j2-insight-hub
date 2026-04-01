@@ -254,15 +254,23 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setAllSnapshots((allSnapshotRes.data || []) as unknown as DailySnapshot[]);
       setAllDmsByClient(allDmsMap);
 
+      const rawDmData: DmRecord[] = (allDmRes.data || [])
+        .filter((r: any) => r.client_id && r.activity_date)
+        .map((r: any) => ({ client_id: r.client_id, activity_date: r.activity_date.split("T")[0] }));
+      setAllDmData(rawDmData);
+
       const sqlClientMap: Record<string, number> = {};
+      const rawSqlData: SqlRecord[] = [];
       if (allSqlCountsRes.data) {
         for (const row of allSqlCountsRes.data) {
           if (row.client_id) {
             sqlClientMap[row.client_id] = (sqlClientMap[row.client_id] || 0) + 1;
+            rawSqlData.push({ client_id: row.client_id, booking_date: row.booking_date });
           }
         }
       }
       setSqlCountsByClient(sqlClientMap);
+      setAllSqlData(rawSqlData);
 
       setClients((clientsRes.data || []) as ClientInfo[]);
 
