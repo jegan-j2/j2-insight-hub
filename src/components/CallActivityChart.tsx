@@ -53,8 +53,8 @@ export const CallActivityChart = ({ snapshots, dmsByDate }: CallActivityChartPro
             description="Call activity trends will appear once data is available"
           />
         ) : (
-          <div role="img" aria-label="Line chart showing call activity trends over time">
-            <ChartContainer config={chartConfig} className="h-[350px]">
+          <div role="img" aria-label="Line chart showing call activity trends over time" className="w-full">
+            <ChartContainer config={chartConfig} className="h-[350px] w-full !aspect-auto">
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
