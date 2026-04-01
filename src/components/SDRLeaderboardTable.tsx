@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase";
 interface LeaderboardEntry {
   rank: number;
   name: string;
+  clientId?: string;
   initials: string;
   totalDials: number;
   totalAnswered: number;
