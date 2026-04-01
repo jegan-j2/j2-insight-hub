@@ -234,6 +234,8 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         return isInCampaign(s.client_id, s.snapshot_date);
       });
 
+      setAllSnapshots(campaignFilteredSnapshots as unknown as DailySnapshot[]);
+      setAllDmsByClient(allDmsMap);
       setClients((clientsRes.data || []) as ClientInfo[]);
 
       if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
