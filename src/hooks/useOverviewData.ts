@@ -341,5 +341,5 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     };
   }, [snapshots, conversations, sqlCount, prevSnapshotsData, prevConversations, prevSQLs]);
 
-  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, sqlCountsByClient, clients, loading, error, refetch: fetchDashboardData };
+  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch: fetchDashboardData };
 };
