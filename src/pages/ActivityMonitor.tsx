@@ -33,6 +33,7 @@ type AllDay = WeekDay | "Saturday" | "Sunday";
 interface SqlMeetingRow {
   id: string;
   sdr_name: string | null;
+  client_id: string | null;
   contact_person: string;
   company_name: string | null;
   booking_date: string;
