@@ -357,7 +357,7 @@ const ActivityMonitor = () => {
           .order("activity_date", { ascending: false }),
         supabase
           .from("sql_meetings")
-          .select("sdr_name")
+          .select("sdr_name, client_id")
           .gte("created_at", todayMelbourne + "T00:00:00")
           .lte("created_at", todayMelbourne + "T23:59:59"),
       ]);
