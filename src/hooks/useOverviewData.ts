@@ -176,79 +176,63 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         }
       }
 
-      // Fetch ALL snapshots, DMs, and clients (unfiltered) for Client Performance table
+      // Fetch ALL snapshots, DMs, and clients for Client Performance table
       const [allSnapshotRes, allDmRes, clientsRes, allSqlCountsRes] = await Promise.all([
         supabase.from("daily_snapshots").select("*"),
-        supabase.from("activity_log").select("client_id").eq("is_decision_maker", true),
+        supabase.from("activity_log").select("client_id, activity_date").eq("is_decision_maker", true),
         supabase
           .from("clients")
           .select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url, status")
           .eq("status", "active")
           .neq("client_id", "admin")
           .order("client_name", { ascending: true }),
-        supabase.from("sql_meetings").select("client_id").neq("client_id", null),
+        supabase.from("sql_meetings").select("client_id, booking_date").neq("client_id", null),
       ]);
 
+      // Build campaign date lookup from clients
+      const campaignDates: Record<string, { start: string | null; end: string | null }> = {};
+      if (clientsRes.data) {
+        for (const c of clientsRes.data) {
+          campaignDates[c.client_id] = {
+            start: c.campaign_start || null,
+            end: c.campaign_end || null,
+          };
+        }
+      }
+
+      const isInCampaign = (clientId: string, dateStr: string): boolean => {
+        const campaign = campaignDates[clientId];
+        if (!campaign?.start || !campaign?.end) return true; // no campaign bounds = include all
+        const d = dateStr.split("T")[0]; // normalize to date-only
+        return d >= campaign.start && d <= campaign.end;
+      };
+
+      // Filter DMs by each client's campaign period
       const allDmsMap: Record<string, number> = {};
       if (allDmRes.data) {
         for (const row of allDmRes.data) {
-          if (row.client_id) {
+          if (row.client_id && row.activity_date && isInCampaign(row.client_id, row.activity_date)) {
             allDmsMap[row.client_id] = (allDmsMap[row.client_id] || 0) + 1;
           }
         }
       }
 
-      // Fetch previous period data
-      const prevDates = getPreviousPeriodDates();
-      let prevSnapshots: {dials:number,answered:number}[] = [];
-      let prevConversationsCount = 0;
-      let prevSQLsCount = 0;
-
-      if (prevDates) {
-        const [prevSnapshotRes, prevConvRes, prevSqlRes] = await Promise.all([
-          supabase
-            .from("daily_snapshots")
-            .select("dials, answered")
-            .gte("snapshot_date", prevDates.from)
-            .lte("snapshot_date", prevDates.to),
-          supabase
-            .from("activity_log")
-            .select("id", { count: "exact" })
-            .eq("is_decision_maker", true)
-            .gte("activity_date", prevDates.from + "T00:00:00")
-            .lte("activity_date", prevDates.to + "T23:59:59"),
-          supabase
-            .from("sql_meetings")
-            .select("id", { count: "exact" })
-            .gte("booking_date", prevDates.from)
-            .lte("booking_date", prevDates.to),
-        ]);
-        prevSnapshots = prevSnapshotRes.data || [];
-        prevConversationsCount = prevConvRes.count || 0;
-        prevSQLsCount = prevSqlRes.count || 0;
-      }
-
-      setSnapshots(snapshotData || []);
-      setMeetings(meetingData || []);
-      setConversations(conversationsCount || 0);
-      setSqlCount(sqlsCount || 0);
-      setPrevSnapshotsData(prevSnapshots);
-      setPrevConversations(prevConversationsCount);
-      setPrevSQLs(prevSQLsCount);
-      setDmsByClient(dmMap);
-      setDmsByDate(dmDateMap);
-      setAllSnapshots((allSnapshotRes.data || []) as unknown as DailySnapshot[]);
-      setAllDmsByClient(allDmsMap);
-
+      // Filter SQLs by each client's campaign period
       const sqlClientMap: Record<string, number> = {};
       if (allSqlCountsRes.data) {
         for (const row of allSqlCountsRes.data) {
-          if (row.client_id) {
+          if (row.client_id && row.booking_date && isInCampaign(row.client_id, row.booking_date)) {
             sqlClientMap[row.client_id] = (sqlClientMap[row.client_id] || 0) + 1;
           }
         }
       }
       setSqlCountsByClient(sqlClientMap);
+
+      // Filter snapshots by each client's campaign period
+      const campaignFilteredSnapshots = (allSnapshotRes.data || []).filter((s: any) => {
+        if (!s.client_id || !s.snapshot_date) return false;
+        return isInCampaign(s.client_id, s.snapshot_date);
+      });
 
       setClients((clientsRes.data || []) as ClientInfo[]);
 
