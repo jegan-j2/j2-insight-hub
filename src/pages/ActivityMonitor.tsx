@@ -672,7 +672,7 @@ const ActivityMonitor = () => {
     });
 
     return rows;
-  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers]);
+  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers, clientNameMap]);
 
   useEffect(() => { setSdrPage(0); }, [sdrRows]);
 
