@@ -664,6 +664,10 @@ const ActivityMonitor = () => {
         else cmp = (a[sortKey] as number) - (b[sortKey] as number);
         return sortDir === "desc" ? -cmp : cmp;
       }
+      const aClient = clientNameMap[a.clientId] || a.clientId;
+      const bClient = clientNameMap[b.clientId] || b.clientId;
+      const clientCmp = aClient.localeCompare(bClient);
+      if (clientCmp !== 0) return clientCmp;
       return a.sdrName.localeCompare(b.sdrName);
     });
 
