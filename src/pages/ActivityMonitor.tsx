@@ -1278,17 +1278,17 @@ const ActivityMonitor = () => {
           ) : (
             <div className="w-full overflow-x-hidden">
               <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
-                    {mode === "live" && <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Last Activity</TableHead>}
+                <TableHeader className="table-header-navy">
+                  <TableRow>
+                    <TableHead className="px-4 py-3 text-left" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
+                    <TableHead className="px-4 py-3 text-left"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
+                    {mode === "live" && <TableHead className="px-4 py-3 text-left">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
