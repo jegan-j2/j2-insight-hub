@@ -1161,7 +1161,7 @@ const Settings = () => {
                         const daysLeft = getDaysLeft(client);
 
                         return (
-                          <TableRow key={client.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
+                          <TableRow key={client.id} className={`border-border/50 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             {/* CLIENT */}
                             <TableCell>
                               <div className="flex items-center gap-3">
