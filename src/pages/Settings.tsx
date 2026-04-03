@@ -1530,7 +1530,7 @@ const Settings = () => {
                           ? clientsList.find(c => c.client_id === member.client_id)?.client_name || member.client_id
                           : '—';
                         return (
-                          <TableRow key={member.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
+                          <TableRow key={member.id} className={`border-border/50 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
                               <div className="flex items-center gap-2">
                                 <SDRAvatar name={member.sdr_name} photoUrl={member.profile_photo_url} size="sm" />
