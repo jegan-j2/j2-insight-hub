@@ -1556,7 +1556,7 @@ const Settings = () => {
                                 {memberInviteInfo.label}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-center">
                               {canEditTeamMembers ? (
                               <TooltipProvider>
                                 <div className="flex justify-end items-center gap-2">
