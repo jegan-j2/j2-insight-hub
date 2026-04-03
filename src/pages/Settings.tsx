@@ -1133,14 +1133,14 @@ const Settings = () => {
               <div className="overflow-x-auto scrollbar-thin scroll-gradient">
                 <TooltipProvider>
                 <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Client</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Primary Contact</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Status</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Days Left</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Actions</TableHead>
+                  <TableHeader className="table-header-navy">
+                    <TableRow>
+                      <TableHead className="px-4 py-3 text-left">Client</TableHead>
+                      <TableHead className="px-4 py-3 text-left">Primary Contact</TableHead>
+                      <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>
+                      <TableHead className="px-4 py-3 text-left">Campaign Status</TableHead>
+                      <TableHead className="px-4 py-3 text-right">Days Left</TableHead>
+                      <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
