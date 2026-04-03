@@ -1133,17 +1133,17 @@ const Settings = () => {
               <div className="overflow-x-auto scrollbar-thin scroll-gradient">
                 <TooltipProvider>
                 <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Client</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Primary Contact</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Status</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Days Left</TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Actions</TableHead>
+                  <TableHeader className="table-header-navy">
+                    <TableRow>
+                      <TableHead className="px-4 py-3 text-left">Client</TableHead>
+                      <TableHead className="px-4 py-3 text-left">Primary Contact</TableHead>
+                      <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>
+                      <TableHead className="px-4 py-3 text-left">Campaign Status</TableHead>
+                      <TableHead className="px-4 py-3 text-right">Days Left</TableHead>
+                      <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="table-striped">
                     {loadingClients ? (
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
@@ -1161,7 +1161,7 @@ const Settings = () => {
                         const daysLeft = getDaysLeft(client);
 
                         return (
-                          <TableRow key={client.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
+                          <TableRow key={client.id} className={`border-border/50 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             {/* CLIENT */}
                             <TableCell>
                               <div className="flex items-center gap-3">
@@ -1215,7 +1215,7 @@ const Settings = () => {
                             <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>
 
                             {/* ACTIONS */}
-                            <TableCell className="text-right">
+                            <TableCell className="text-center">
                               {canEditClients ? (
                                 <div className="flex justify-end items-center gap-1">
                                   <Tooltip>
@@ -1493,27 +1493,27 @@ const Settings = () => {
               </div>
               <div className="overflow-x-auto scrollbar-thin">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('sdr_name')}>
+                  <TableHeader className="table-header-navy">
+                    <TableRow>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('sdr_name')}>
                         <span className="flex items-center">Name<SortIcon field="sdr_name" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('email')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('email')}>
                         <span className="flex items-center">Email<SortIcon field="email" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('role')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('role')}>
                         <span className="flex items-center">Role<SortIcon field="role" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('client')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('client')}>
                         <span className="flex items-center">Assigned Client<SortIcon field="client" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('login_status')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('login_status')}>
                         <span className="flex items-center">Login Status<SortIcon field="login_status" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
+                      <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="table-striped">
                     {loadingTeam ? (
                       <TableSkeletonRows />
                     ) : sortedMembers.length === 0 ? (
@@ -1530,7 +1530,7 @@ const Settings = () => {
                           ? clientsList.find(c => c.client_id === member.client_id)?.client_name || member.client_id
                           : '—';
                         return (
-                          <TableRow key={member.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
+                          <TableRow key={member.id} className={`border-border/50 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
                               <div className="flex items-center gap-2">
                                 <SDRAvatar name={member.sdr_name} photoUrl={member.profile_photo_url} size="sm" />
@@ -1556,7 +1556,7 @@ const Settings = () => {
                                 {memberInviteInfo.label}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-center">
                               {canEditTeamMembers ? (
                               <TooltipProvider>
                                 <div className="flex justify-end items-center gap-2">

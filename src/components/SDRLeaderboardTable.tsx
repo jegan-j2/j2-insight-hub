@@ -82,37 +82,32 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
           ) : (
             <div className="overflow-x-auto scrollbar-thin scroll-gradient">
               <Table>
-                <TableHeader>
-                  <TableRow 
-                    className="border-border/50 dark:!bg-[#1e293b]"
-                    style={{ backgroundColor: '#f1f5f9' }}
-                  >
-                    <TableHead className="w-16 sticky left-0 z-10 px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left bg-[#f1f5f9] dark:bg-[#1e293b]">Rank</TableHead>
-                    <TableHead className="sticky left-16 z-10 min-w-[180px] px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left bg-[#f1f5f9] dark:bg-[#1e293b]">SDR Name</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Total Dials</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Answer Rate</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">DM Conversations</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">SQLs</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Conv. Rate</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Avg Duration</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Trend</TableHead>
+                <TableHeader className="table-header-navy">
+                  <TableRow>
+                    <TableHead className="w-16 sticky left-0 z-10 px-4 py-3 text-left bg-[#0F172A]">Rank</TableHead>
+                    <TableHead className="sticky left-16 z-10 min-w-[180px] px-4 py-3 text-left bg-[#0F172A]">SDR Name</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Total Dials</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Answer Rate</TableHead>
+                    <TableHead className="px-4 py-3 text-right">DM Conversations</TableHead>
+                    <TableHead className="px-4 py-3 text-right">SQLs</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Conv. Rate</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Avg Duration</TableHead>
+                    <TableHead className="px-4 py-3 text-left">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {data.map((sdr) => {
                     const isTopPerformer = sdr.rank === 1;
                     
                     return (
                       <TableRow 
                         key={sdr.name}
-                        className={`hover:bg-yellow-500/10 transition-colors cursor-pointer ${
-                          isTopPerformer ? "bg-green-500/5" : ""
-                        }`}
+                        className="transition-colors cursor-pointer"
                       >
-                        <TableCell className="font-medium text-lg sticky left-0 bg-card z-10">
+                        <TableCell className="font-medium text-lg sticky left-0 z-10">
                           {getRankDisplay(sdr.rank)}
                         </TableCell>
-                        <TableCell className="sticky left-16 bg-card z-10">
+                        <TableCell className="sticky left-16 z-10">
                           <div 
                             className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
                             onClick={() => setSelectedSDR(sdr)}
@@ -121,16 +116,16 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                             <span className="font-medium whitespace-nowrap">{sdr.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-left">{sdr.totalDials}</TableCell>
-                        <TableCell className="text-left">
+                        <TableCell className="text-right">{sdr.totalDials}</TableCell>
+                        <TableCell className="text-right">
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
-                        <TableCell className="text-left">{sdr.totalDMs}</TableCell>
-                        <TableCell className="text-left">
+                        <TableCell className="text-right">{sdr.totalDMs}</TableCell>
+                        <TableCell className="text-right">
                           <span className="text-lg font-bold">{sdr.totalSQLs}</span>
                         </TableCell>
-                        <TableCell className="text-left">{sdr.conversionRate}%</TableCell>
-                        <TableCell className="text-left">
+                        <TableCell className="text-right">{sdr.conversionRate}%</TableCell>
+                        <TableCell className="text-right">
                           {sdr.avgDuration > 0 ? (
                             <span
                               className={`font-medium ${

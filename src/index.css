@@ -309,3 +309,49 @@ All colors MUST be HSL.
 .dark [data-slot="slider"] [data-slot="track"] {
   background-color: rgba(255, 255, 255, 0.15);
 }
+
+/* Dashboard table standards — navy headers */
+.table-header-navy tr,
+.table-header-navy tr:hover {
+  background-color: #0F172A !important;
+  border-color: #0F172A !important;
+}
+.table-header-navy th,
+.table-header-navy th button,
+.table-header-navy th span,
+.table-header-navy th a {
+  color: white !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+.table-header-navy th svg {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.dark .table-header-navy tr,
+.dark .table-header-navy tr:hover {
+  background-color: #0F172A !important;
+}
+
+/* Dashboard table standards — striped rows */
+.table-striped > tr:nth-child(even) > td {
+  background-color: #F1F5F9;
+}
+.table-striped > tr:nth-child(odd) > td {
+  background-color: #FFFFFF;
+}
+.dark .table-striped > tr:nth-child(even) > td {
+  background-color: rgba(30, 41, 59, 0.5);
+}
+.dark .table-striped > tr:nth-child(odd) > td {
+  background-color: transparent;
+}
+.table-striped > tr:hover > td {
+  background-color: #EFF6FF !important;
+}
+.dark .table-striped > tr:hover > td {
+  background-color: rgba(30, 58, 95, 0.5) !important;
+}
+.table-striped > tr > td {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}

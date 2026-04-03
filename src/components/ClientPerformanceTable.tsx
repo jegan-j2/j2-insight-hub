@@ -268,45 +268,44 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
           <div className="overflow-x-auto scrollbar-thin scroll-gradient">
             <TooltipProvider>
               <Table>
-                <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
-                  <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20" style={{ minWidth: "200px" }}>
+                <TableHeader className="table-header-navy sticky top-0 z-10" role="rowgroup">
+                  <TableRow>
+                    <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-left" style={{ minWidth: "200px" }}>
                       <SortButton field="name" label="Client" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="daysLeft" label="Days Left" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="dials" label="Dials" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="answered" label="Answered" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="answeredPercent" label="Answer Rate" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="dms" label="DM Conversations" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="sqls" label="SQLs" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-left">
                       Campaign Progress
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Action</TableHead>
+                    <TableHead className="px-4 py-3 text-center">Action</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {filteredAndSortedClients.map((client, index) => (
                     <TableRow
                       key={client.slug}
-                      className="border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
-                      style={{ animationDelay: `${600 + index * 50}ms` }}
+                      className="border-border/50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/client/${client.slug}`)}
                     >
-                      <TableCell className="sticky left-0 bg-card z-10" style={{ minWidth: "200px" }}>
+                      <TableCell className="sticky left-0 z-10" style={{ minWidth: "200px" }}>
                         <div className="flex items-center gap-3">
                           <div className="relative flex-shrink-0">
                             {client.logoUrl ? (
@@ -338,11 +337,11 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-left px-4 py-2 text-muted-foreground">-</TableCell>
+                          <TableCell className="text-right px-4 text-muted-foreground">-</TableCell>
                         );
                         const isBold = days <= 10;
                         return (
-                          <TableCell className="text-left px-4 py-2">
+                          <TableCell className="text-right px-4">
                             <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
                               {days}
                             </span>
@@ -352,11 +351,11 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                           </TableCell>
                         );
                       })()}
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dials.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answered.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answeredPercent.toFixed(1)}%</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dms.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.sqls.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.dials.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.answered.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.answeredPercent.toFixed(1)}%</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.dms.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.sqls.toLocaleString()}</TableCell>
                       <TableCell className="text-left px-4 py-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -394,7 +393,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-center">
                         <Button
                           variant="ghost"
                           size="sm"

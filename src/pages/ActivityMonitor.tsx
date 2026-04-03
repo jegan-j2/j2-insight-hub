@@ -1278,20 +1278,20 @@ const ActivityMonitor = () => {
           ) : (
             <div className="w-full overflow-x-hidden">
               <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
-                    {mode === "live" && <TableHead className="text-left px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Last Activity</TableHead>}
+                <TableHeader className="table-header-navy">
+                  <TableRow>
+                    <TableHead className="px-4 py-3 text-left" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
+                    <TableHead className="px-4 py-3 text-left"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
+                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
+                    {mode === "live" && <TableHead className="px-4 py-3 text-left">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {(() => { let dividerShown = false; return pagedSdrRows.map((row) => {
                     const recent = mode === "live" && isRecentActivity(row.lastActivity);
                     const showDivider = !dividerShown && row.dials === 0;
@@ -1340,8 +1340,8 @@ const ActivityMonitor = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>{clientNameMap[row.clientId] || row.clientId}</TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">{row.dials}</TableCell>
-                        <TableCell className="text-left px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">{row.dials}</TableCell>
+                        <TableCell className="text-right px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1351,10 +1351,10 @@ const ActivityMonitor = () => {
                             {row.answered}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
-                        <TableCell className="text-left px-4 py-2">
+                        <TableCell className="text-right px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1364,7 +1364,7 @@ const ActivityMonitor = () => {
                             {row.conversations}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-left px-4 py-2">
+                        <TableCell className="text-right px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1374,7 +1374,7 @@ const ActivityMonitor = () => {
                             {row.sqls}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">
                           {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
@@ -1444,19 +1444,19 @@ const ActivityMonitor = () => {
             ) : (
               <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">{mode === "live" ? "Time" : "Date"}</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
-                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
-                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
+                  <TableHeader className="table-header-navy sticky top-0 z-10">
+                     <TableRow>
+                      <TableHead className="py-3 text-left">{mode === "live" ? "Time" : "Date"}</TableHead>
+                      <TableHead className="py-3 text-left">Contact Person</TableHead>
+                      <TableHead className="py-3 text-left">Company</TableHead>
+                      <TableHead className="py-3 text-right">Duration</TableHead>
+                      <TableHead className="py-3 text-center">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="table-striped">
                     {drillDownData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((a, index) => (
                       <>
-                        <TableRow key={a.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
+                        <TableRow key={a.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {mode === "live"
                               ? new Date(a.activity_date).toLocaleTimeString("en-AU", {
