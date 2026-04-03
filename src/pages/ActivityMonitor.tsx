@@ -1364,7 +1364,7 @@ const ActivityMonitor = () => {
                             {row.conversations}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-left px-4 py-2">
+                        <TableCell className="text-right px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
