@@ -1453,7 +1453,7 @@ const ActivityMonitor = () => {
                       <TableHead className="py-3 text-center">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="table-striped">
                     {drillDownData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((a, index) => (
                       <>
                         <TableRow key={a.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
