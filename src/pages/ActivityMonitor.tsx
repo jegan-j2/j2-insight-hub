@@ -1456,7 +1456,7 @@ const ActivityMonitor = () => {
                   <TableBody className="table-striped">
                     {drillDownData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((a, index) => (
                       <>
-                        <TableRow key={a.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
+                        <TableRow key={a.id} className="border-border/50">
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                             {mode === "live"
                               ? new Date(a.activity_date).toLocaleTimeString("en-AU", {
