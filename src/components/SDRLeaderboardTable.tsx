@@ -102,14 +102,12 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                     return (
                       <TableRow 
                         key={sdr.name}
-                        className={`hover:bg-yellow-500/10 transition-colors cursor-pointer ${
-                          isTopPerformer ? "bg-green-500/5" : ""
-                        }`}
+                        className="transition-colors cursor-pointer"
                       >
-                        <TableCell className="font-medium text-lg sticky left-0 bg-card z-10">
+                        <TableCell className="font-medium text-lg sticky left-0 z-10">
                           {getRankDisplay(sdr.rank)}
                         </TableCell>
-                        <TableCell className="sticky left-16 bg-card z-10">
+                        <TableCell className="sticky left-16 z-10">
                           <div 
                             className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
                             onClick={() => setSelectedSDR(sdr)}
@@ -118,16 +116,16 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                             <span className="font-medium whitespace-nowrap">{sdr.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-left">{sdr.totalDials}</TableCell>
-                        <TableCell className="text-left">
+                        <TableCell className="text-right">{sdr.totalDials}</TableCell>
+                        <TableCell className="text-right">
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
-                        <TableCell className="text-left">{sdr.totalDMs}</TableCell>
-                        <TableCell className="text-left">
+                        <TableCell className="text-right">{sdr.totalDMs}</TableCell>
+                        <TableCell className="text-right">
                           <span className="text-lg font-bold">{sdr.totalSQLs}</span>
                         </TableCell>
-                        <TableCell className="text-left">{sdr.conversionRate}%</TableCell>
-                        <TableCell className="text-left">
+                        <TableCell className="text-right">{sdr.conversionRate}%</TableCell>
+                        <TableCell className="text-right">
                           {sdr.avgDuration > 0 ? (
                             <span
                               className={`font-medium ${
