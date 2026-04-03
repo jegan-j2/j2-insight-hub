@@ -432,30 +432,30 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
       <CardContent>
         <div className="overflow-x-auto scrollbar-thin scroll-gradient">
           <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 z-20 bg-[#f1f5f9] dark:bg-[#1e293b]">
+            <TableHeader className="table-header-navy">
+              <TableRow>
+                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-left">
                   <SortButton field="sqlDate" label="Booking Date" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                <TableHead className="px-4 py-3 text-left">
                   <SortButton field="clientName" label="Client" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                <TableHead className="px-4 py-3 text-left">
                   <SortButton field="contactPerson" label="Contact Person" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                <TableHead className="px-4 py-3 text-left">
                   <SortButton field="companyName" label="Company" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                <TableHead className="px-4 py-3 text-left">
                   <SortButton field="sdr" label="SDR" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                <TableHead className="px-4 py-3 text-left">
                   <SortButton field="meetingDate" label="Meeting Date" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                <TableHead className="px-4 py-3 text-left">
                   <SortButton field="meetingStatus" label="Status" />
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 200 }}>Notes</TableHead>
+                <TableHead className="px-4 py-3 text-left" style={{ minWidth: 200 }}>Notes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
