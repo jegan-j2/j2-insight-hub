@@ -268,34 +268,34 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
           <div className="overflow-x-auto scrollbar-thin scroll-gradient">
             <TooltipProvider>
               <Table>
-                <TableHeader className="sticky top-0 bg-card z-10" role="rowgroup">
-                  <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] sticky left-0 bg-card z-20" style={{ minWidth: "200px" }}>
+                <TableHeader className="table-header-navy sticky top-0 z-10" role="rowgroup">
+                  <TableRow>
+                    <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-left" style={{ minWidth: "200px" }}>
                       <SortButton field="name" label="Client" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Campaign Period</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="daysLeft" label="Days Left" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="dials" label="Dials" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="answered" label="Answered" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="answeredPercent" label="Answer Rate" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="dms" label="DM Conversations" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-right">
                       <SortButton field="sqls" label="SQLs" />
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <TableHead className="px-4 py-3 text-left">
                       Campaign Progress
                     </TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Action</TableHead>
+                    <TableHead className="px-4 py-3 text-center">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
