@@ -302,8 +302,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                   {filteredAndSortedClients.map((client, index) => (
                     <TableRow
                       key={client.slug}
-                      className="border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
-                      style={{ animationDelay: `${600 + index * 50}ms` }}
+                      className="border-border/50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/client/${client.slug}`)}
                     >
                       <TableCell className="sticky left-0 bg-card z-10" style={{ minWidth: "200px" }}>
