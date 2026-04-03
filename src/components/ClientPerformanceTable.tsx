@@ -305,7 +305,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       className="border-border/50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/client/${client.slug}`)}
                     >
-                      <TableCell className="sticky left-0 bg-card z-10" style={{ minWidth: "200px" }}>
+                      <TableCell className="sticky left-0 z-10" style={{ minWidth: "200px" }}>
                         <div className="flex items-center gap-3">
                           <div className="relative flex-shrink-0">
                             {client.logoUrl ? (
