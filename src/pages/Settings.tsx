@@ -1143,7 +1143,7 @@ const Settings = () => {
                       <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="table-striped">
                     {loadingClients ? (
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
