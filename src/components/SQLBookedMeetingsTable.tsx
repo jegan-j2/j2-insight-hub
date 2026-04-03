@@ -458,9 +458,9 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                 <TableHead className="px-4 py-3 text-left" style={{ minWidth: 200 }}>Notes</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="table-striped">
               {paginatedMeetings.map((meeting, index) => (
-                <TableRow key={meeting.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${index % 2 === 0 ? "bg-muted/5" : ""} ${updating === meeting.id ? "opacity-60" : ""}`}>
+                <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`}>
                   <TableCell className="text-foreground whitespace-nowrap sticky left-0 bg-card z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">
                     <div className="flex items-center gap-2">
