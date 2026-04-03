@@ -298,7 +298,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                     <TableHead className="px-4 py-3 text-center">Action</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {filteredAndSortedClients.map((client, index) => (
                     <TableRow
                       key={client.slug}
