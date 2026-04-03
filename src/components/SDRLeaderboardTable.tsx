@@ -95,7 +95,7 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
                     <TableHead className="px-4 py-3 text-left">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {data.map((sdr) => {
                     const isTopPerformer = sdr.rank === 1;
                     
