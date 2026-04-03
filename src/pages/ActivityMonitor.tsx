@@ -1340,7 +1340,7 @@ const ActivityMonitor = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>{clientNameMap[row.clientId] || row.clientId}</TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">{row.dials}</TableCell>
+                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-left px-4 py-2">
                           <Button
                             variant="ghost"
