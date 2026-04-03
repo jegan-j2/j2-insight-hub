@@ -337,11 +337,11 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-right px-4">{days === null ? "-" : ""}
+                          <TableCell className="text-right px-4 text-muted-foreground">-</TableCell>
                         );
                         const isBold = days <= 10;
                         return (
-                          <TableCell className="text-left px-4 py-2">
+                          <TableCell className="text-right px-4">
                             <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
                               {days}
                             </span>
@@ -351,11 +351,11 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                           </TableCell>
                         );
                       })()}
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dials.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answered.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.answeredPercent.toFixed(1)}%</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.dms.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-left">{client.sqls.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.dials.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.answered.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.answeredPercent.toFixed(1)}%</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.dms.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-right">{client.sqls.toLocaleString()}</TableCell>
                       <TableCell className="text-left px-4 py-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
