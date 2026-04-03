@@ -393,7 +393,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-center">
                         <Button
                           variant="ghost"
                           size="sm"

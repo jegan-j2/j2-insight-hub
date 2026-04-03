@@ -461,7 +461,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             <TableBody className="table-striped">
               {paginatedMeetings.map((meeting, index) => (
                 <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`}>
-                  <TableCell className="text-foreground whitespace-nowrap sticky left-0 bg-card z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
+                  <TableCell className="text-foreground whitespace-nowrap sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {meeting.clientLogo ? (
