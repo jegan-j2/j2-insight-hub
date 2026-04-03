@@ -82,20 +82,17 @@ export const SDRLeaderboardTable = ({ leaderboardData }: SDRLeaderboardTableProp
           ) : (
             <div className="overflow-x-auto scrollbar-thin scroll-gradient">
               <Table>
-                <TableHeader>
-                  <TableRow 
-                    className="border-border/50 dark:!bg-[#1e293b]"
-                    style={{ backgroundColor: '#f1f5f9' }}
-                  >
-                    <TableHead className="w-16 sticky left-0 z-10 px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left bg-[#f1f5f9] dark:bg-[#1e293b]">Rank</TableHead>
-                    <TableHead className="sticky left-16 z-10 min-w-[180px] px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left bg-[#f1f5f9] dark:bg-[#1e293b]">SDR Name</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Total Dials</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Answer Rate</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">DM Conversations</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">SQLs</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Conv. Rate</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Avg Duration</TableHead>
-                    <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Trend</TableHead>
+                <TableHeader className="table-header-navy">
+                  <TableRow>
+                    <TableHead className="w-16 sticky left-0 z-10 px-4 py-3 text-left bg-[#0F172A]">Rank</TableHead>
+                    <TableHead className="sticky left-16 z-10 min-w-[180px] px-4 py-3 text-left bg-[#0F172A]">SDR Name</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Total Dials</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Answer Rate</TableHead>
+                    <TableHead className="px-4 py-3 text-right">DM Conversations</TableHead>
+                    <TableHead className="px-4 py-3 text-right">SQLs</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Conv. Rate</TableHead>
+                    <TableHead className="px-4 py-3 text-right">Avg Duration</TableHead>
+                    <TableHead className="px-4 py-3 text-left">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
