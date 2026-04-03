@@ -1493,24 +1493,24 @@ const Settings = () => {
               </div>
               <div className="overflow-x-auto scrollbar-thin">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 dark:!bg-[#1e293b]" style={{ backgroundColor: '#f1f5f9' }}>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('sdr_name')}>
+                  <TableHeader className="table-header-navy">
+                    <TableRow>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('sdr_name')}>
                         <span className="flex items-center">Name<SortIcon field="sdr_name" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('email')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('email')}>
                         <span className="flex items-center">Email<SortIcon field="email" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('role')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('role')}>
                         <span className="flex items-center">Role<SortIcon field="role" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('client')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('client')}>
                         <span className="flex items-center">Assigned Client<SortIcon field="client" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] cursor-pointer hover:bg-muted/30 select-none" onClick={() => handleTeamSort('login_status')}>
+                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('login_status')}>
                         <span className="flex items-center">Login Status<SortIcon field="login_status" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
-                      <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-right">Actions</TableHead>
+                      <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
