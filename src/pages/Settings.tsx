@@ -1513,7 +1513,7 @@ const Settings = () => {
                       <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="table-striped">
                     {loadingTeam ? (
                       <TableSkeletonRows />
                     ) : sortedMembers.length === 0 ? (
