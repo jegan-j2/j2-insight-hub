@@ -1215,7 +1215,7 @@ const Settings = () => {
                             <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>
 
                             {/* ACTIONS */}
-                            <TableCell className="text-right">
+                            <TableCell className="text-center">
                               {canEditClients ? (
                                 <div className="flex justify-end items-center gap-1">
                                   <Tooltip>
