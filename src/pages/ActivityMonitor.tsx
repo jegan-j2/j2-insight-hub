@@ -1444,13 +1444,13 @@ const ActivityMonitor = () => {
             ) : (
               <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">{mode === "live" ? "Time" : "Date"}</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
-                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9]">Duration</TableHead>
-                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9]">Recording</TableHead>
+                  <TableHeader className="table-header-navy sticky top-0 z-10">
+                     <TableRow>
+                      <TableHead className="py-3 text-left">{mode === "live" ? "Time" : "Date"}</TableHead>
+                      <TableHead className="py-3 text-left">Contact Person</TableHead>
+                      <TableHead className="py-3 text-left">Company</TableHead>
+                      <TableHead className="py-3 text-right">Duration</TableHead>
+                      <TableHead className="py-3 text-center">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
