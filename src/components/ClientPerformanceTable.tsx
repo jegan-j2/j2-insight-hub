@@ -337,7 +337,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-left px-4 py-2 text-muted-foreground">-</TableCell>
+                          <TableCell className="text-right px-4">{days === null ? "-" : ""}
                         );
                         const isBold = days <= 10;
                         return (
