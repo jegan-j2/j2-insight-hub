@@ -1291,7 +1291,7 @@ const ActivityMonitor = () => {
                     {mode === "live" && <TableHead className="px-4 py-3 text-left">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {(() => { let dividerShown = false; return pagedSdrRows.map((row) => {
                     const recent = mode === "live" && isRecentActivity(row.lastActivity);
                     const showDivider = !dividerShown && row.dials === 0;
