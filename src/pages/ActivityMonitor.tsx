@@ -1374,7 +1374,7 @@ const ActivityMonitor = () => {
                             {row.sqls}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">
                           {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
