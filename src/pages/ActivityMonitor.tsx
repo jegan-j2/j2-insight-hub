@@ -1351,7 +1351,7 @@ const ActivityMonitor = () => {
                             {row.answered}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-left px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
                         <TableCell className="text-left px-4 py-2">
