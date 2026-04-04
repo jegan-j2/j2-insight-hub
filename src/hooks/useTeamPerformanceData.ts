@@ -146,10 +146,10 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
           name: snapshot.sdr_name,
           clientId: snapshot.client_id || '',
           initials,
-          totalDials: snapshot.dials,
-          totalAnswered: snapshot.answered,
-          totalDMs: snapshot.dms_reached,
-          totalSQLs: snapshot.sqls,
+          totalDials: snapshot.dials ?? 0,
+          totalAnswered: snapshot.answered ?? 0,
+          totalDMs: snapshot.dms_reached ?? 0,
+          totalSQLs: snapshot.sqls ?? 0,
         })
       }
 
