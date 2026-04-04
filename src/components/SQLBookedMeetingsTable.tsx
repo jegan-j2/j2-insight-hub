@@ -69,6 +69,7 @@ interface SQLBookedMeetingsTableProps {
   isLoading?: boolean;
   meetings?: SQLMeeting[];
   clients?: Client[];
+  hideSDRFilter?: boolean;
 }
 
 export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients }: SQLBookedMeetingsTableProps) => {
