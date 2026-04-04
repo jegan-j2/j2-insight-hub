@@ -36,9 +36,26 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
   const { isAdmin, isManager, isSdr } = useUserRole();
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
+  const [latestSQL, setLatestSQL] = useState<{ contact_person: string; company_name: string; booking_date: string } | null>(null);
 
   const showNotesTab = isAdmin || isManager || isSdr;
   const isSdrViewingOwn = isSdr;
+
+  // Fetch latest SQL meeting for this SDR
+  useEffect(() => {
+    const fetchLatestSQL = async () => {
+      const { data } = await supabase
+        .from("sql_meetings")
+        .select("contact_person, company_name, booking_date")
+        .eq("sdr_name", sdr.name)
+        .not("meeting_status", "eq", "cancelled")
+        .order("booking_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLatestSQL(data);
+    };
+    if (isOpen) fetchLatestSQL();
+  }, [sdr.name, isOpen]);
 
   // Fetch team averages for comparison
   useEffect(() => {
