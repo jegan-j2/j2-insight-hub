@@ -233,7 +233,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 shadow-sm rounded-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-amber-600" />
