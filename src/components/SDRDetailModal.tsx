@@ -32,7 +32,7 @@ interface SDRDetailModalProps {
 
 export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDetailModalProps) => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(globalDateRange);
-  const { isAdmin, isManager, isSdr, isClient } = useUserRole();
+  const { isAdmin, isManager, isSdr } = useUserRole();
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
   const [latestSQL, setLatestSQL] = useState<{ contact_person: string; company_name: string; booking_date: string } | null>(null);
@@ -40,7 +40,6 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
 
   const showNotesTab = isAdmin || isManager || isSdr;
   const isSdrViewingOwn = isSdr;
-  const isClientRole = isClient;
 
   const tabs = [
     { id: "overview", label: "Performance Overview", shortLabel: "Overview" },
