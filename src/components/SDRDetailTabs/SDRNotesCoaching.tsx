@@ -51,29 +51,25 @@ export const SDRNotesCoaching = ({ sdrName, isSdrView = false }: SDRNotesCoachin
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const promises: Promise<any>[] = [
-      supabase
-        .from("sdr_action_items")
-        .select("*")
-        .eq("sdr_name", sdrName)
-        .order("created_at", { ascending: false }),
-    ];
+
+    const itemsResult = await supabase
+      .from("sdr_action_items")
+      .select("*")
+      .eq("sdr_name", sdrName)
+      .order("created_at", { ascending: false });
+
+    setActionItems(itemsResult.data || []);
 
     if (!isSdrView) {
-      promises.push(
-        supabase
-          .from("sdr_coaching_notes")
-          .select("*")
-          .eq("sdr_name", sdrName)
-          .order("created_at", { ascending: false })
-      );
+      const notesResult = await supabase
+        .from("sdr_coaching_notes")
+        .select("*")
+        .eq("sdr_name", sdrName)
+        .order("created_at", { ascending: false });
+
+      setNotes(notesResult.data || []);
     }
 
-    const results = await Promise.all(promises);
-    setActionItems(results[0].data || []);
-    if (!isSdrView && results[1]) {
-      setNotes(results[1].data || []);
-    }
     setLoading(false);
   }, [sdrName, isSdrView]);
 
