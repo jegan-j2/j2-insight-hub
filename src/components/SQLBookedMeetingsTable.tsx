@@ -72,7 +72,7 @@ interface SQLBookedMeetingsTableProps {
   hideSDRFilter?: boolean;
 }
 
-export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients }: SQLBookedMeetingsTableProps) => {
+export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients, hideSDRFilter = false }: SQLBookedMeetingsTableProps) => {
   const { canEditSQL, isSdr } = usePermissions();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
