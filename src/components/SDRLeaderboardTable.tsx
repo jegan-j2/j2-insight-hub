@@ -276,7 +276,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                         </TableCell>
                         <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           <div>
-                            <span className="text-lg font-bold">{sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}</span>
+                            <span>{sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}</span>
                             {getLastSQLText(sdr)}
                           </div>
                         </TableCell>
