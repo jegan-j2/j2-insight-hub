@@ -293,7 +293,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
         </Card>
 
         {/* Conversion Funnel */}
-        <Card>
+        <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Conversion Funnel</CardTitle>
           </CardHeader>
