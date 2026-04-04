@@ -15,6 +15,7 @@ import { SDRPerformanceOverview } from "@/components/SDRDetailTabs/SDRPerformanc
 import { SDRActivityTimeline } from "@/components/SDRDetailTabs/SDRActivityTimeline";
 import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResults";
 import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
