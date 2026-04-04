@@ -71,9 +71,10 @@ interface SQLBookedMeetingsTableProps {
   meetings?: SQLMeeting[];
   clients?: Client[];
   hideSDRFilter?: boolean;
+  hideSDRColumn?: boolean;
 }
 
-export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients, hideSDRFilter = false }: SQLBookedMeetingsTableProps) => {
+export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients, hideSDRFilter = false, hideSDRColumn = false }: SQLBookedMeetingsTableProps) => {
   const { canEditSQL, isSdr } = usePermissions();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
@@ -450,9 +451,11 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                 <TableHead className="px-4 py-3 text-left">
                   <SortButton field="companyName" label="Company" />
                 </TableHead>
+                {!hideSDRColumn && (
                 <TableHead className="px-4 py-3 text-left">
                   <SortButton field="sdr" label="SDR" />
                 </TableHead>
+                )}
                 <TableHead className="px-4 py-3 text-left">
                   <SortButton field="meetingDate" label="Meeting Date" />
                 </TableHead>
@@ -480,7 +483,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   </TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
                   <TableCell className="text-foreground">{meeting.companyName}</TableCell>
-                  <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
+                  {!hideSDRColumn && <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>}
                   <TableCell className="text-foreground whitespace-nowrap">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell><StatusBadge meeting={meeting} /></TableCell>
                   <TableCell style={{ minWidth: 200 }}>
@@ -496,7 +499,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
               ))}
               {paginatedMeetings.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12">
+                  <TableCell colSpan={hideSDRColumn ? 7 : 8} className="py-12">
                     {activeFiltersCount > 0 ? (
                       <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
                     ) : (

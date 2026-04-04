@@ -2,8 +2,7 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X } from "lucide-react";
+import { X, CalendarIcon } from "lucide-react";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useState, useEffect } from "react";
 import type { DateRange } from "react-day-picker";
@@ -37,9 +36,17 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
   const [latestSQL, setLatestSQL] = useState<{ contact_person: string; company_name: string; booking_date: string } | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const showNotesTab = isAdmin || isManager || isSdr;
   const isSdrViewingOwn = isSdr;
+
+  const tabs = [
+    { id: "overview", label: "Performance Overview", shortLabel: "Overview" },
+    { id: "timeline", label: "Activity Timeline", shortLabel: "Timeline" },
+    { id: "meetings", label: "Meetings & Results", shortLabel: "Meetings" },
+    ...(showNotesTab ? [{ id: "notes", label: isSdrViewingOwn ? "My Goals" : "Notes & Coaching", shortLabel: isSdrViewingOwn ? "Goals" : "Notes" }] : []),
+  ];
 
   // Fetch latest SQL meeting for this SDR
   useEffect(() => {
@@ -64,40 +71,27 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
       const startDate = format(dateRange.from, "yyyy-MM-dd");
       const endDate = format(dateRange.to, "yyyy-MM-dd");
 
-      const { data } = await supabase
-        .from("daily_snapshots")
-        .select("sdr_name, dials, answered, dms_reached, sqls")
-        .gte("snapshot_date", startDate)
-        .lte("snapshot_date", endDate);
+      const { data } = await supabase.rpc("get_team_leaderboard", {
+        p_start_date: startDate + "T00:00:00+11:00",
+        p_end_date: endDate + "T23:59:59+11:00",
+        p_client_id: null,
+      });
 
       if (data && data.length > 0) {
-        // Group by SDR to get per-SDR totals, then average across SDRs
-        const sdrMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+        const sdrCount = data.length;
+        let totalDials = 0, totalAnswered = 0, totalDMs = 0, totalSQLs = 0;
         for (const row of data) {
-          const key = row.sdr_name || "";
-          const entry = sdrMap.get(key) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
-          entry.dials += row.dials ?? 0;
-          entry.answered += row.answered ?? 0;
-          entry.dms += row.dms_reached ?? 0;
-          entry.sqls += row.sqls ?? 0;
-          sdrMap.set(key, entry);
+          totalDials += Number(row.total_dials) || 0;
+          totalAnswered += Number(row.answered) || 0;
+          totalDMs += Number(row.dm_conversations) || 0;
+          totalSQLs += Number(row.sqls) || 0;
         }
-        const sdrCount = sdrMap.size;
-        if (sdrCount > 0) {
-          let totalDials = 0, totalAnswered = 0, totalDMs = 0, totalSQLs = 0;
-          for (const v of sdrMap.values()) {
-            totalDials += v.dials;
-            totalAnswered += v.answered;
-            totalDMs += v.dms;
-            totalSQLs += v.sqls;
-          }
-          setTeamAverages({
-            dials: Math.round(totalDials / sdrCount),
-            answered: Math.round(totalAnswered / sdrCount),
-            dms: Math.round(totalDMs / sdrCount),
-            sqls: Math.round(totalSQLs / sdrCount),
-          });
-        }
+        setTeamAverages({
+          dials: Math.round(totalDials / sdrCount),
+          answered: Math.round(totalAnswered / sdrCount),
+          dms: Math.round(totalDMs / sdrCount),
+          sqls: Math.round(totalSQLs / sdrCount),
+        });
       }
     };
     fetchTeamAvg();
@@ -105,7 +99,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-full md:max-w-[90vw] h-screen md:h-auto md:max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="w-[90vw] max-w-[1400px] h-screen md:h-auto md:max-h-[90vh] overflow-y-auto p-0 gap-0">
         {/* Header */}
         <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border sticky top-0 bg-card z-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
@@ -142,69 +136,61 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
           <div className="md:hidden mt-3 w-full">
             <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
           </div>
+          {/* Filtered period */}
+          {dateRange?.from && dateRange?.to && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+            </div>
+          )}
         </DialogHeader>
 
-        {/* Latest SQL Banner */}
-        {latestSQL && (
-          <div className="mx-4 sm:mx-6 mt-3 bg-[#ECFDF5] dark:bg-emerald-950/30 border-l-[3px] border-[#10B981] rounded-lg px-4 py-2.5 text-[13px]">
-            <span className="font-bold">🎯 Latest SQL</span>
-            <span className="text-muted-foreground"> · </span>
-            <span>{latestSQL.contact_person}</span>
-            {latestSQL.company_name && (
-              <>
-                <span className="text-muted-foreground"> at </span>
-                <span>{latestSQL.company_name}</span>
-              </>
-            )}
-            <span className="text-muted-foreground"> · </span>
-            <span>{format(parseISO(latestSQL.booking_date), "d MMM yyyy")}</span>
-          </div>
-        )}
         <div className="p-4 sm:p-6">
-          <Tabs defaultValue="overview" className="w-full">
-            <div className="overflow-x-auto scrollbar-thin -mx-4 sm:mx-0 px-4 sm:px-0">
-              <TabsList className={`grid w-full mb-4 sm:mb-6 min-w-[500px] sm:min-w-0 ${showNotesTab ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <TabsTrigger value="overview" className="text-xs sm:text-sm">
-                  <span className="hidden sm:inline">Performance Overview</span>
-                  <span className="sm:hidden">Overview</span>
-                </TabsTrigger>
-                <TabsTrigger value="timeline" className="text-xs sm:text-sm">
-                  <span className="hidden sm:inline">Activity Timeline</span>
-                  <span className="sm:hidden">Timeline</span>
-                </TabsTrigger>
-                <TabsTrigger value="meetings" className="text-xs sm:text-sm">
-                  <span className="hidden sm:inline">Meetings & Results</span>
-                  <span className="sm:hidden">Meetings</span>
-                </TabsTrigger>
-                {showNotesTab && (
-                  <TabsTrigger value="notes" className="text-xs sm:text-sm">
-                    <span className="hidden sm:inline">{isSdrViewingOwn ? "My Goals" : "Notes & Coaching"}</span>
-                    <span className="sm:hidden">{isSdrViewingOwn ? "Goals" : "Notes"}</span>
-                  </TabsTrigger>
-                )}
-              </TabsList>
+          {/* Pill-toggle tab bar */}
+          <div className="overflow-x-auto scrollbar-thin -mx-4 sm:mx-0 px-4 sm:px-0 mb-4 sm:mb-6">
+            <div className="inline-flex items-center gap-1 rounded-lg p-1 border border-border">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                      : "bg-white text-[#0f172a] hover:bg-muted/50 dark:bg-transparent dark:text-foreground"
+                  }`}
+                >
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                </button>
+              ))}
             </div>
+          </div>
 
-            <TabsContent value="overview" className="space-y-6">
-              <SDRPerformanceOverview sdr={sdr} teamAverages={teamAverages} />
-            </TabsContent>
+          {/* Tab content */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              <SDRPerformanceOverview sdr={sdr} teamAverages={teamAverages} latestSQL={latestSQL} />
+            </div>
+          )}
 
-            <TabsContent value="timeline" className="space-y-6">
+          {activeTab === "timeline" && (
+            <div className="space-y-6">
               <SDRActivityTimeline sdrName={sdr.name} />
-            </TabsContent>
+            </div>
+          )}
 
-            <TabsContent value="meetings" className="space-y-6">
+          {activeTab === "meetings" && (
+            <div className="space-y-6">
               <SDRMeetingsResults sdrName={sdr.name} />
-            </TabsContent>
+            </div>
+          )}
 
-            {showNotesTab && (
-              <TabsContent value="notes" className="space-y-6">
-                <SDRNotesCoaching sdrName={sdr.name} isSdrView={isSdrViewingOwn} />
-              </TabsContent>
-            )}
-          </Tabs>
+          {activeTab === "notes" && showNotesTab && (
+            <div className="space-y-6">
+              <SDRNotesCoaching sdrName={sdr.name} isSdrView={isSdrViewingOwn} />
+            </div>
+          )}
         </div>
-
       </DialogContent>
     </Dialog>
   );
