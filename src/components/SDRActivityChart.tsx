@@ -28,8 +28,10 @@ const COLORS = {
 
 export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("volume");
-  const data = [...(chartData || [])].sort((a, b) =>
-    viewMode === "volume" ? b.dials - a.dials : b.sqls - a.sqls
+  const data = useMemo(() =>
+    [...(chartData || [])].sort((a, b) =>
+      viewMode === "volume" ? b.dials - a.dials : b.sqls - a.sqls
+    ), [chartData, viewMode]
   );
 
   // Dynamic height: 45px per SDR + 80px for legend/padding
