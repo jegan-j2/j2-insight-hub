@@ -369,7 +369,7 @@ const Overview = () => {
     },
   ];
 
-  if (loading) return <J2Loader />;
+  if (loading && snapshots.length === 0 && clients.length === 0) return <J2Loader />;
 
   return (
     <div id="overview-content" className="space-y-6 animate-fade-in">
