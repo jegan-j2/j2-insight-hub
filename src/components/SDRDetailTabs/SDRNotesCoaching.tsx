@@ -311,7 +311,7 @@ export const SDRNotesCoaching = ({ sdrName, isSdrView = false }: SDRNotesCoachin
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddingItem(!isAddingItem)}
-                className="gap-1"
+                className="gap-1 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 border-transparent"
               >
                 <Plus className="h-4 w-4" />
                 Add Item
