@@ -7,7 +7,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
-import { SDRQuickStatsCards } from "@/components/SDRQuickStatsCards";
+import { SDRPodium } from "@/components/SDRPodium";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
