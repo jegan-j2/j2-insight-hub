@@ -23,12 +23,21 @@ interface LeaderboardEntry {
 export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientFilter?: string) => {
   const [loading, setLoading] = useState(true)
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([])
+  const [prevSnapshots, setPrevSnapshots] = useState<DailySnapshot[]>([])
   const [activityLogs, setActivityLogs] = useState<{ sdr_name: string; client_id: string; call_duration: number }[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const startDate = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : ''
   const endDate = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : ''
 
+  // Calculate previous period dates (same duration, immediately before)
+  const prevDates = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return { start: '', end: '' }
+    const duration = dateRange.to.getTime() - dateRange.from.getTime()
+    const prevEnd = new Date(dateRange.from.getTime() - 1)
+    const prevStart = new Date(prevEnd.getTime() - duration)
+    return { start: format(prevStart, 'yyyy-MM-dd'), end: format(prevEnd, 'yyyy-MM-dd') }
+  }, [dateRange])
   const fetchData = useCallback(async () => {
     if (!startDate || !endDate) return
 
@@ -59,22 +68,43 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
         activityQuery = activityQuery.eq('client_id', clientFilter)
       }
 
-      const [{ data, error: fetchError }, { data: callData }] = await Promise.all([
+      // Previous period query
+      let prevQuery = prevDates.start && prevDates.end
+        ? supabase
+            .from('daily_snapshots')
+            .select('*')
+            .gte('snapshot_date', prevDates.start)
+            .lte('snapshot_date', prevDates.end)
+        : null
+
+      if (prevQuery && clientFilter && clientFilter !== 'all') {
+        prevQuery = prevQuery.eq('client_id', clientFilter)
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const promises: any[] = [
         query.order('snapshot_date', { ascending: false }),
         activityQuery,
-      ])
+      ]
+      if (prevQuery) promises.push(prevQuery)
+
+      const results = await Promise.all(promises)
+
+      const { data, error: fetchError } = results[0]
+      const { data: callData } = results[1]
 
       if (fetchError) throw fetchError
 
       setSnapshots(data || [])
-      setActivityLogs((callData || []).filter(c => c.sdr_name !== null) as { sdr_name: string; client_id: string; call_duration: number }[])
+      setActivityLogs((callData || []).filter((c: any) => c.sdr_name !== null) as { sdr_name: string; client_id: string; call_duration: number }[])
+      setPrevSnapshots(results[2]?.data || [])
     } catch (err) {
       console.error('Error fetching team performance data:', err)
       setError('Failed to load team performance data')
     } finally {
       setLoading(false)
     }
-  }, [startDate, endDate, clientFilter])
+  }, [startDate, endDate, clientFilter, prevDates.start, prevDates.end])
 
   useEffect(() => {
     let cancelled = false;
@@ -158,6 +188,41 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
     })
   }, [snapshots, activityLogs])
 
+  // Previous period leaderboard for "Most Improved" calculation
+  const previousLeaderboard: LeaderboardEntry[] = useMemo(() => {
+    const compositeKey = (name: string, clientId: string) => `${name}|||${clientId}`
+    const grouped = prevSnapshots.reduce((acc, snapshot) => {
+      const key = compositeKey(snapshot.sdr_name, snapshot.client_id || '')
+      const existing = acc.find(item => item.key === key)
+      if (existing) {
+        existing.totalDials += snapshot.dials
+        existing.totalAnswered += snapshot.answered
+        existing.totalDMs += snapshot.dms_reached
+        existing.totalSQLs += snapshot.sqls
+      } else {
+        const nameParts = snapshot.sdr_name.split(' ')
+        const initials = nameParts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
+        acc.push({ key, name: snapshot.sdr_name, clientId: snapshot.client_id || '', initials, totalDials: snapshot.dials, totalAnswered: snapshot.answered, totalDMs: snapshot.dms_reached, totalSQLs: snapshot.sqls })
+      }
+      return acc
+    }, [] as Array<{ key: string; name: string; clientId: string; initials: string; totalDials: number; totalAnswered: number; totalDMs: number; totalSQLs: number }>)
+
+    return grouped.map((sdr, index) => ({
+      name: sdr.name,
+      clientId: sdr.clientId,
+      initials: sdr.initials,
+      totalDials: sdr.totalDials,
+      totalAnswered: sdr.totalAnswered,
+      totalDMs: sdr.totalDMs,
+      totalSQLs: sdr.totalSQLs,
+      rank: index + 1,
+      answerRate: sdr.totalDials > 0 ? (sdr.totalAnswered / sdr.totalDials * 100).toFixed(1) : '0',
+      conversionRate: sdr.totalDials > 0 ? (sdr.totalSQLs / sdr.totalDials * 100).toFixed(2) : '0',
+      trend: 0,
+      avgDuration: 0,
+    }))
+  }, [prevSnapshots])
+
   // Chart data for SDR Activity Breakdown
   const activityChartData = useMemo(() => {
     return leaderboard.map(sdr => ({
@@ -174,6 +239,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
     error,
     snapshots,
     leaderboard,
+    previousLeaderboard,
     activityChartData,
     refetch: fetchData,
   }

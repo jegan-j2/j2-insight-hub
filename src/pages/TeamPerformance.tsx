@@ -7,7 +7,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
-import { SDRQuickStatsCards } from "@/components/SDRQuickStatsCards";
+import { SDRPodium } from "@/components/SDRPodium";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
@@ -32,7 +32,7 @@ const TeamPerformance = () => {
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
   const { toast } = useToast();
-  const { loading, error, leaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
+  const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -208,16 +208,16 @@ const TeamPerformance = () => {
         />
       )}
 
-      {/* Top Section: Leaderboard + Quick Stats */}
+      {/* Podium + Leaderboard */}
       {leaderboard.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <SDRLeaderboardTable leaderboardData={leaderboard} />
-          </div>
-          <div className="lg:col-span-1">
-            <SDRQuickStatsCards leaderboardData={leaderboard} />
-          </div>
-        </div>
+        <>
+          <SDRPodium
+            leaderboardData={leaderboard}
+            clientNameMap={Object.fromEntries(clients.map(c => [c.client_id, c.client_name]))}
+            previousPeriodData={previousLeaderboard.length > 0 ? previousLeaderboard : undefined}
+          />
+          <SDRLeaderboardTable leaderboardData={leaderboard} />
+        </>
       ) : null}
 
       {/* SDR Activity Breakdown Chart - Full Width */}
