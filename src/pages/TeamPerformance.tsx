@@ -32,7 +32,7 @@ const TeamPerformance = () => {
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
   const { toast } = useToast();
-  const { loading, error, leaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
+  const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
