@@ -193,11 +193,8 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
               <span>Less</span>
               <div className="flex gap-1">
                 <div className="w-4 h-4 rounded border border-border/50" style={{ backgroundColor: "#FFFFFF" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#F1F5F9" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#CBD5E1" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#94A3B8" }} />
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#E2E8F0" }} />
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: "#64748B" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#334155" }} />
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: "#0F172A" }} />
               </div>
               <span>More</span>

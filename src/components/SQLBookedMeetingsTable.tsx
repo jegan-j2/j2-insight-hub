@@ -34,9 +34,10 @@ interface MeetingData {
 }
 
 const STATUS_OPTIONS: { value: string; label: string; color: string; icon?: typeof Check }[] = [
-  { value: "pending", label: "Pending", color: "#f59e0b" },
-  { value: "held", label: "Held", color: "#10b981", icon: Check },
-  { value: "no_show", label: "No Show", color: "#f43f5e" },
+  { value: "pending", label: "Pending", color: "#F59E0B" },
+  { value: "held", label: "Held", color: "#10B981", icon: Check },
+  { value: "no_show", label: "No Show", color: "#EF4444" },
+  { value: "cancelled", label: "Cancelled", color: "#94A3B8" },
   { value: "reschedule", label: "Reschedule", color: "#3b82f6" },
 ];
 
