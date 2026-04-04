@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { X, Download, Share2, Loader2, Mail, Link2, Download as DownloadIcon } from "lucide-react";
+import { X } from "lucide-react";
 import { format } from "date-fns";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { useState } from "react";
