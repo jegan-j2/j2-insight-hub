@@ -355,3 +355,12 @@ All colors MUST be HSL.
   padding-top: 12px !important;
   padding-bottom: 12px !important;
 }
+
+/* Smooth data transitions */
+table tbody {
+  transition: height 300ms ease-out;
+}
+.kpi-value {
+  transition: opacity 150ms ease-out;
+}
+

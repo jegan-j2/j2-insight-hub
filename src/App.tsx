@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BreakpointIndicator } from "@/components/BreakpointIndicator";
+import { NavigationProgress } from "@/components/NavigationProgress";
 import { useInactiveSDRAlerts } from "@/hooks/useInactiveSDRAlerts";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -26,8 +27,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const SlackNotificationProvider = ({ children }: { children: React.ReactNode }) => {
-  // SQL notifications now handled by database trigger (server-side)
-  // Only inactive SDR alerts need browser-based checking
   useInactiveSDRAlerts();
   return <>{children}</>;
 };
@@ -47,6 +46,7 @@ const App = () => (
           <BreakpointIndicator />
           <SlackNotificationProvider>
           <BrowserRouter>
+            <NavigationProgress />
             <Routes>
               <Route path="/" element={<div className="page-transition"><Index /></div>} />
               <Route path="/login" element={<div className="page-transition"><Login /></div>} />

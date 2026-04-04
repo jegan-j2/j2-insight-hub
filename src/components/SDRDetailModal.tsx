@@ -13,7 +13,7 @@ import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResult
 import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/lib/supabase";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
