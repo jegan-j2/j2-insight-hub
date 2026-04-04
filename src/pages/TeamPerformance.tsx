@@ -8,12 +8,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
-import { SDRPodium } from "@/components/SDRPodium";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
 import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
 import { exportToPDF } from "@/lib/pdfExport";
@@ -98,12 +97,39 @@ const TeamPerformance = () => {
     fetchClients();
   }, []);
 
+  // Compute most improved
+  const mostImproved = useMemo(() => {
+    if (!previousLeaderboard || previousLeaderboard.length === 0) return null;
+    const prevMap = new Map<string, number>();
+    for (const entry of previousLeaderboard) {
+      const key = `${entry.name}|||${entry.clientId}`;
+      prevMap.set(key, parseFloat(entry.answerRate));
+    }
+    let best: { name: string; clientId: string; improvement: number } | null = null;
+    for (const entry of leaderboard) {
+      const key = `${entry.name}|||${entry.clientId}`;
+      const prevRate = prevMap.get(key);
+      if (prevRate !== undefined && prevRate > 0) {
+        const improvement = parseFloat(entry.answerRate) - prevRate;
+        if (improvement > 0 && (!best || improvement > best.improvement)) {
+          best = { name: entry.name, clientId: entry.clientId || "", improvement };
+        }
+      }
+    }
+    return best;
+  }, [leaderboard, previousLeaderboard]);
+
+  const clientNameMap = useMemo(() =>
+    Object.fromEntries(clients.map(c => [c.client_id, c.client_name])),
+    [clients]
+  );
+
   // Only show full-page loader on first load (no cached data yet)
   if (loading && leaderboard.length === 0) return <J2Loader />;
 
   return (
     <div id="team-performance-content" className="space-y-6 animate-fade-in">
-      {/* Header — matches Campaign Overview */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
@@ -135,7 +161,7 @@ const TeamPerformance = () => {
         </div>
       </div>
 
-      {/* Date Filter Buttons — matches Campaign Overview layout */}
+      {/* Date Filter Buttons */}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           {([
@@ -212,7 +238,6 @@ const TeamPerformance = () => {
             </Select>
           </div>
         </div>
-        {/* Read-only filtered period display */}
         {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarIcon className="h-4 w-4" />
@@ -220,8 +245,6 @@ const TeamPerformance = () => {
           </div>
         )}
       </div>
-
-      {/* Client filter moved inline with date tabs above */}
 
       {/* Error State */}
       {error && (
@@ -246,23 +269,19 @@ const TeamPerformance = () => {
         />
       )}
 
-      {/* Podium + Leaderboard */}
+      {/* Leaderboard — no podium, top 3 highlighted in table */}
       {leaderboard.length > 0 ? (
         <>
-          <SDRPodium
-            leaderboardData={leaderboard}
-            clientNameMap={Object.fromEntries(clients.map(c => [c.client_id, c.client_name]))}
-            previousPeriodData={previousLeaderboard.length > 0 ? previousLeaderboard : undefined}
-          />
           <SDRLeaderboardTable
             leaderboardData={leaderboard}
-            clientNameMap={Object.fromEntries(clients.map(c => [c.client_id, c.client_name]))}
+            clientNameMap={clientNameMap}
             showClientColumn={clientFilter === "all"}
+            mostImproved={mostImproved}
           />
         </>
       ) : null}
 
-      {/* SDR Activity Breakdown Chart - Full Width */}
+      {/* SDR Activity Breakdown Chart */}
       {activityChartData.length > 0 ? (
         <SDRActivityChart chartData={activityChartData} />
       ) : null}

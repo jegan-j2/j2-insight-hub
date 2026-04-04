@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, ArrowUpDown, Users } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Users, TrendingUp } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { SDRDetailModal } from "@/components/SDRDetailModal";
 import { useDateFilter } from "@/contexts/DateFilterContext";
@@ -27,13 +27,20 @@ interface LeaderboardEntry {
 type SortKey = "totalSQLs" | "totalDials" | "totalAnswered" | "answerRate" | "totalDMs" | "conversionRate" | "avgDuration" | "name" | "clientName";
 type SortDir = "asc" | "desc";
 
+interface MostImprovedInfo {
+  name: string;
+  clientId: string;
+  improvement: number;
+}
+
 interface SDRLeaderboardTableProps {
   leaderboardData?: LeaderboardEntry[];
   clientNameMap?: Record<string, string>;
   showClientColumn?: boolean;
+  mostImproved?: MostImprovedInfo | null;
 }
 
-export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showClientColumn = true }: SDRLeaderboardTableProps) => {
+export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showClientColumn = true, mostImproved }: SDRLeaderboardTableProps) => {
   const data = leaderboardData || [];
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
   const { dateRange } = useDateFilter();
@@ -111,12 +118,14 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
 
   const getAnswerRateBadge = (rate: string) => {
     const rateNum = parseFloat(rate);
-    if (rateNum > 25) {
-      return <Badge className="bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30">{rate}%</Badge>;
-    } else if (rateNum >= 15) {
-      return <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30">{rate}%</Badge>;
+    if (rateNum === 0) {
+      return <Badge className="bg-[#FEE2E2] text-[#991B1B] border-[#FEE2E2] dark:bg-[#991B1B]/20 dark:text-red-400">{rate}%</Badge>;
+    } else if (rateNum >= 85) {
+      return <Badge className="bg-[#D1FAE5] text-[#065F46] border-[#D1FAE5] dark:bg-[#065F46]/20 dark:text-emerald-400">{rate}%</Badge>;
+    } else if (rateNum >= 70) {
+      return <Badge className="bg-[#DBEAFE] text-[#1E40AF] border-[#DBEAFE] dark:bg-[#1E40AF]/20 dark:text-blue-400">{rate}%</Badge>;
     } else {
-      return <Badge className="bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30">{rate}%</Badge>;
+      return <Badge className="bg-[#FEF3C7] text-[#92400E] border-[#FEF3C7] dark:bg-[#92400E]/20 dark:text-amber-400">{rate}%</Badge>;
     }
   };
 
@@ -127,11 +136,30 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
     return rank;
   };
 
+  const getRowStyle = (rank: number) => {
+    if (rank === 1) return "border-l-4 border-l-[#FFD700] bg-[#FFFDF0] dark:bg-[#2A2518] h-[56px]";
+    if (rank === 2) return "border-l-4 border-l-[#C0C0C0] bg-[#FAFAFA] dark:bg-[#252528] h-[56px]";
+    if (rank === 3) return "border-l-4 border-l-[#CD7F32] bg-[#FFF9F0] dark:bg-[#2A2219] h-[56px]";
+    return "h-[48px]";
+  };
+
   return (
     <>
       <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">SDR Leaderboard</CardTitle>
+          {/* Most Improved pill */}
+          {mostImproved && (
+            <div className="flex items-center gap-2 border-l-4 border-l-emerald-500 pl-3 py-1">
+              <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
+              <span className="text-sm font-semibold text-foreground">
+                Most Improved: {mostImproved.name}
+              </span>
+              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                +{mostImproved.improvement.toFixed(1)}%
+              </span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {data.length === 0 ? (
@@ -143,55 +171,107 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
           ) : (
             <div className="overflow-x-auto scrollbar-thin scroll-gradient">
               <Table>
-                <TableHeader className="table-header-navy">
+                <TableHeader>
                   <TableRow>
-                    <TableHead className="w-16 sticky left-0 z-10 px-4 py-3 text-center bg-[#0F172A] cursor-pointer select-none" onClick={() => handleSort("totalSQLs")}>
+                    <TableHead
+                      className="w-16 sticky left-0 z-10 text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("totalSQLs")}
+                    >
                       Rank
                     </TableHead>
-                    <TableHead className="sticky left-16 z-10 min-w-[180px] px-4 py-3 text-left bg-[#0F172A] cursor-pointer select-none" onClick={() => handleSort("name")}>
+                    <TableHead
+                      className="sticky left-16 z-10 min-w-[180px] text-left cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("name")}
+                    >
                       SDR Name <SortIcon column="name" />
                     </TableHead>
                     {showClientColumn && (
-                      <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleSort("clientName")}>
+                      <TableHead
+                        className="text-left cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                        style={{ padding: "12px 16px" }}
+                        onClick={() => handleSort("clientName")}
+                      >
                         Client <SortIcon column="clientName" />
                       </TableHead>
                     )}
-                    <TableHead className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => handleSort("totalDials")}>
+                    <TableHead
+                      className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("totalDials")}
+                    >
                       Total Dials <SortIcon column="totalDials" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => handleSort("totalAnswered")}>
+                    <TableHead
+                      className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("totalAnswered")}
+                    >
                       Answered <SortIcon column="totalAnswered" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => handleSort("answerRate")}>
+                    <TableHead
+                      className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("answerRate")}
+                    >
                       Answer Rate <SortIcon column="answerRate" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => handleSort("totalDMs")}>
+                    <TableHead
+                      className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("totalDMs")}
+                    >
                       DM Conversations <SortIcon column="totalDMs" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => handleSort("totalSQLs")}>
+                    <TableHead
+                      className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("totalSQLs")}
+                    >
                       SQLs <SortIcon column="totalSQLs" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => handleSort("conversionRate")}>
+                    <TableHead
+                      className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("conversionRate")}
+                    >
                       Conv. Rate <SortIcon column="conversionRate" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => handleSort("avgDuration")}>
+                    <TableHead
+                      className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]"
+                      style={{ padding: "12px 16px" }}
+                      onClick={() => handleSort("avgDuration")}
+                    >
                       Avg Talk Time <SortIcon column="avgDuration" />
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="table-striped">
-                  {sortedData.map((sdr) => {
+                <TableBody>
+                  {sortedData.map((sdr, idx) => {
                     const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
+                    const isTop3 = sdr.displayRank <= 3;
+                    const dmValue = Number(sdr.totalDMs);
+                    const convValue = Number(parseFloat(sdr.conversionRate));
 
                     return (
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
-                        className="transition-colors cursor-pointer"
+                        className={`transition-colors cursor-pointer hover:bg-[#EFF6FF] dark:hover:bg-[#1e293b] ${getRowStyle(sdr.displayRank)}`}
+                        style={{
+                          backgroundColor: isTop3 ? undefined : (idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC"),
+                        }}
                       >
-                        <TableCell className="font-medium text-lg sticky left-0 z-10 text-center">
+                        <TableCell
+                          className="font-medium text-lg sticky left-0 z-10 text-center text-[14px]"
+                          style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}
+                        >
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
-                        <TableCell className="sticky left-16 z-10 text-left">
+                        <TableCell
+                          className="sticky left-16 z-10 text-left text-[14px]"
+                          style={{ padding: "12px 16px" }}
+                        >
                           <div
                             className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
                             onClick={() => setSelectedSDR(sdr)}
@@ -201,27 +281,31 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                           </div>
                         </TableCell>
                         {showClientColumn && (
-                          <TableCell className="text-left whitespace-nowrap">{clientName}</TableCell>
+                          <TableCell className="text-left whitespace-nowrap text-[14px]" style={{ padding: "12px 16px" }}>{clientName}</TableCell>
                         )}
-                        <TableCell className="text-right">{sdr.totalDials.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{sdr.totalAnswered.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                          {sdr.totalDials.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                          {sdr.totalAnswered.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px" }}>
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
-                        <TableCell className="text-right">
-                          {sdr.totalDMs === 0
-                            ? <span className="text-muted-foreground">—</span>
-                            : sdr.totalDMs}
+                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                          {dmValue > 0
+                            ? dmValue.toLocaleString()
+                            : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           <span className="text-lg font-bold">{sdr.totalSQLs}</span>
                         </TableCell>
-                        <TableCell className="text-right">
-                          {sdr.conversionRate === "0.00" || sdr.conversionRate === "0"
-                            ? <span className="text-muted-foreground">—</span>
-                            : `${sdr.conversionRate}%`}
+                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                          {convValue > 0
+                            ? `${sdr.conversionRate}%`
+                            : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           {sdr.avgDuration > 0 ? (
                             <span
                               className={`font-medium ${
