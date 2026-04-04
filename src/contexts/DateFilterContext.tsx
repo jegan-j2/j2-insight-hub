@@ -11,6 +11,8 @@ interface DateFilterContextType {
   setFilterType: (type: FilterType) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  clientFilter: string;
+  setClientFilter: (client: string) => void;
 }
 
 const DateFilterContext = createContext<DateFilterContextType | undefined>(undefined);
