@@ -216,7 +216,11 @@ const TeamPerformance = () => {
             clientNameMap={Object.fromEntries(clients.map(c => [c.client_id, c.client_name]))}
             previousPeriodData={previousLeaderboard.length > 0 ? previousLeaderboard : undefined}
           />
-          <SDRLeaderboardTable leaderboardData={leaderboard} />
+          <SDRLeaderboardTable
+            leaderboardData={leaderboard}
+            clientNameMap={Object.fromEntries(clients.map(c => [c.client_id, c.client_name]))}
+            showClientColumn={clientFilter === "all"}
+          />
         </>
       ) : null}
 
