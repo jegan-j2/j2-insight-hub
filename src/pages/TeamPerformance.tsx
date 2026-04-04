@@ -126,11 +126,6 @@ const TeamPerformance = () => {
       {/* Header — matches Campaign Overview */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          {firstName && (
-            <p className="font-medium text-base text-muted-foreground mb-3">
-              {getGreeting()}, {firstName}!
-            </p>
-          )}
           <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
