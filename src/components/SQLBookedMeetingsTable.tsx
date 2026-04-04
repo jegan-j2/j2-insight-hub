@@ -483,7 +483,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   </TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
                   <TableCell className="text-foreground">{meeting.companyName}</TableCell>
-                  <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
+                  {!hideSDRColumn && <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>}
                   <TableCell className="text-foreground whitespace-nowrap">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell><StatusBadge meeting={meeting} /></TableCell>
                   <TableCell style={{ minWidth: 200 }}>
