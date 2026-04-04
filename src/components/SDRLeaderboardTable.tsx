@@ -256,7 +256,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                         <TableCell className="sticky left-16 z-10 text-left text-[14px]" style={{ padding: "12px 16px" }}>
                           <div className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedSDR(sdr)}>
                             <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
-                            <span className="font-medium whitespace-nowrap">{sdr.name}</span>
+                            <span className="font-normal whitespace-nowrap">{sdr.name}</span>
                           </div>
                         </TableCell>
                         {showClientColumn && (
