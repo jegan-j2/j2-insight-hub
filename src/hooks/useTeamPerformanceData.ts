@@ -68,15 +68,35 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
         activityQuery = activityQuery.eq('client_id', clientFilter)
       }
 
-      const [{ data, error: fetchError }, { data: callData }] = await Promise.all([
+      // Previous period query
+      let prevQuery = prevDates.start && prevDates.end
+        ? supabase
+            .from('daily_snapshots')
+            .select('*')
+            .gte('snapshot_date', prevDates.start)
+            .lte('snapshot_date', prevDates.end)
+        : null
+
+      if (prevQuery && clientFilter && clientFilter !== 'all') {
+        prevQuery = prevQuery.eq('client_id', clientFilter)
+      }
+
+      const promises: Promise<any>[] = [
         query.order('snapshot_date', { ascending: false }),
         activityQuery,
-      ])
+      ]
+      if (prevQuery) promises.push(prevQuery)
+
+      const results = await Promise.all(promises)
+
+      const { data, error: fetchError } = results[0]
+      const { data: callData } = results[1]
 
       if (fetchError) throw fetchError
 
       setSnapshots(data || [])
-      setActivityLogs((callData || []).filter(c => c.sdr_name !== null) as { sdr_name: string; client_id: string; call_duration: number }[])
+      setActivityLogs((callData || []).filter((c: any) => c.sdr_name !== null) as { sdr_name: string; client_id: string; call_duration: number }[])
+      setPrevSnapshots(results[2]?.data || [])
     } catch (err) {
       console.error('Error fetching team performance data:', err)
       setError('Failed to load team performance data')
