@@ -202,20 +202,20 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
     <>
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#FFFBEB" }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Phone className="h-5 w-5 text-amber-600" />
-              <div className="flex items-center gap-1 text-sm">
+              <div className="flex items-center gap-1">
                 {sdr.trend > 0 ? (
                   <>
-                    <ArrowUpRight className="h-4 w-4 text-green-600" />
-                    <span className="text-green-600 font-medium">+{sdr.trend}%</span>
+                    <ArrowUpRight className="h-3 w-3 text-green-600" />
+                    <span className="text-[12px] text-green-600 font-medium">+{sdr.trend}%</span>
                   </>
                 ) : (
                   <>
-                    <ArrowDownRight className="h-4 w-4 text-red-600" />
-                    <span className="text-red-600 font-medium">{sdr.trend}%</span>
+                    <ArrowDownRight className="h-3 w-3 text-red-600" />
+                    <span className="text-[12px] text-red-600 font-medium">{sdr.trend}%</span>
                   </>
                 )}
               </div>
@@ -225,33 +225,33 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#ECFDF5" }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <CheckCircle className="h-5 w-5 text-emerald-600" />
-              <span className="text-sm font-medium text-emerald-600">{answerRate}%</span>
+              <span className="text-[12px] font-medium text-emerald-600">{answerRate}%</span>
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.answered.toLocaleString()}</p>
             <p className="text-sm text-muted-foreground">Answered</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-teal-500/10 to-teal-600/5 border-teal-500/20">
+        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#F0FDFA" }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Mail className="h-5 w-5" style={{ color: "#14B8A6" }} />
-              <span className="text-sm font-medium" style={{ color: "#14B8A6" }}>{dmRate}%</span>
+              <span className="text-[12px] font-medium" style={{ color: "#14B8A6" }}>{dmRate}%</span>
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.dms}</p>
             <p className="text-sm text-muted-foreground">DM Conversations</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-rose-500/10 to-rose-600/5 border-rose-500/20">
+        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#FFF1F2" }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Target className="h-5 w-5" style={{ color: "#F43F5E" }} />
-              <span className="text-sm font-medium" style={{ color: "#F43F5E" }}>{conversionRate}%</span>
+              <span className="text-[12px] font-medium" style={{ color: "#F43F5E" }}>{conversionRate}%</span>
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.sqls}</p>
             <p className="text-sm text-muted-foreground">SQLs Generated</p>
@@ -262,7 +262,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 gap-6">
         {/* Performance Trend Chart */}
-        <Card>
+        <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Performance Trend (Weekly)</CardTitle>
           </CardHeader>
@@ -293,7 +293,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
         </Card>
 
         {/* Conversion Funnel */}
-        <Card>
+        <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Conversion Funnel</CardTitle>
           </CardHeader>
@@ -305,7 +305,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
 
       {/* Client Breakdown Table — only show if multiple clients */}
       {clientBreakdownData.length > 1 && (
-        <Card>
+        <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Client Breakdown</CardTitle>
           </CardHeader>

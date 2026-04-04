@@ -14,11 +14,8 @@ const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const getHeatmapStyle = (value: number, isFuture: boolean): { bg: string; text: string } => {
   if (isFuture) return { bg: "transparent", text: "" };
   if (value === 0) return { bg: "#FFFFFF", text: "#94a3b8" };
-  if (value < 30) return { bg: "#F1F5F9", text: "#0F172A" };
-  if (value < 45) return { bg: "#CBD5E1", text: "#0F172A" };
-  if (value < 55) return { bg: "#94A3B8", text: "#0F172A" };
-  if (value < 65) return { bg: "#64748B", text: "#FFFFFF" };
-  if (value < 80) return { bg: "#334155", text: "#FFFFFF" };
+  if (value <= 50) return { bg: "#E2E8F0", text: "#0F172A" };
+  if (value <= 100) return { bg: "#64748B", text: "#FFFFFF" };
   return { bg: "#0F172A", text: "#FFFFFF" };
 };
 
@@ -161,13 +158,16 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
                       <div
                         key={dayIndex}
                         className={cn(
-                          "flex-1 aspect-square rounded flex items-center justify-center text-xs font-semibold transition-all relative group",
+                          "rounded flex items-center justify-center text-[12px] font-semibold transition-all relative group",
                           isFuture && "border border-dashed border-border bg-muted/20",
                           isToday && "ring-2 ring-primary ring-offset-1 ring-offset-background",
-                          !isFuture && value > 0 && "hover:scale-110 hover:shadow-lg cursor-pointer",
+                          !isFuture && value > 0 && "hover:scale-105 hover:shadow-md cursor-pointer",
                           !isFuture && value === 0 && "border border-border/50"
                         )}
-                        style={!isFuture ? { backgroundColor: style.bg, color: style.text } : undefined}
+                        style={{
+                          width: 60, height: 60, minWidth: 60, minHeight: 60,
+                          ...(!isFuture ? { backgroundColor: style.bg, color: style.text } : {}),
+                        }}
                       >
                         {isFuture ? (
                           <span className="text-muted-foreground/50">—</span>
@@ -193,11 +193,8 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
               <span>Less</span>
               <div className="flex gap-1">
                 <div className="w-4 h-4 rounded border border-border/50" style={{ backgroundColor: "#FFFFFF" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#F1F5F9" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#CBD5E1" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#94A3B8" }} />
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#E2E8F0" }} />
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: "#64748B" }} />
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: "#334155" }} />
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: "#0F172A" }} />
               </div>
               <span>More</span>
@@ -210,7 +207,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
 
       {/* Performance Insights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm rounded-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-600" />
@@ -223,7 +220,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 shadow-sm rounded-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -236,7 +233,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 shadow-sm rounded-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-amber-600" />

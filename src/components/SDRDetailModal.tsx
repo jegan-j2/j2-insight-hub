@@ -99,7 +99,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
                 </TabsTrigger>
                 {showNotesTab && (
                   <TabsTrigger value="notes" className="text-xs sm:text-sm">
-                    <span className="hidden sm:inline">{isSdrViewingOwn ? "Development Goals" : "Notes & Coaching"}</span>
+                    <span className="hidden sm:inline">{isSdrViewingOwn ? "My Goals" : "Notes & Coaching"}</span>
                     <span className="sm:hidden">{isSdrViewingOwn ? "Goals" : "Notes"}</span>
                   </TabsTrigger>
                 )}
