@@ -50,7 +50,9 @@ export const DateFilterProvider = ({ children }: { children: ReactNode }) => {
         filterType, 
         setFilterType: handleFilterTypeChange,
         isLoading, 
-        setIsLoading 
+        setIsLoading,
+        clientFilter,
+        setClientFilter,
       }}
     >
       {children}
