@@ -81,13 +81,13 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
         prevQuery = prevQuery.eq('client_id', clientFilter)
       }
 
-      const promises: Promise<any>[] = [
+      const promises = [
         query.order('snapshot_date', { ascending: false }),
         activityQuery,
-      ]
-      if (prevQuery) promises.push(prevQuery)
+        ...(prevQuery ? [prevQuery] : []),
+      ] as const
 
-      const results = await Promise.all(promises)
+      const results = await Promise.all(promises as any[])
 
       const { data, error: fetchError } = results[0]
       const { data: callData } = results[1]
