@@ -1,10 +1,11 @@
-import { format } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, Users, Download, Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, AlertCircle, RefreshCw, Users, Download, Loader2, ChevronDown, FileText, Table2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DateRangePicker } from "@/components/DateRangePicker";
-import { useDateFilter } from "@/contexts/DateFilterContext";
+import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
 import { SDRPodium } from "@/components/SDRPodium";
@@ -19,6 +20,7 @@ import { exportToPDF } from "@/lib/pdfExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 
 interface ClientOption {
   client_id: string;
@@ -26,8 +28,7 @@ interface ClientOption {
 }
 
 const TeamPerformance = () => {
-  const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const [clientFilter, setClientFilter] = useState("all");
+  const { dateRange, setDateRange, filterType, setFilterType, clientFilter, setClientFilter } = useDateFilter();
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
@@ -35,6 +36,8 @@ const TeamPerformance = () => {
   const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
+  const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (refreshKey > 0) {
