@@ -451,9 +451,11 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                 <TableHead className="px-4 py-3 text-left">
                   <SortButton field="companyName" label="Company" />
                 </TableHead>
+                {!hideSDRColumn && (
                 <TableHead className="px-4 py-3 text-left">
                   <SortButton field="sdr" label="SDR" />
                 </TableHead>
+                )}
                 <TableHead className="px-4 py-3 text-left">
                   <SortButton field="meetingDate" label="Meeting Date" />
                 </TableHead>
