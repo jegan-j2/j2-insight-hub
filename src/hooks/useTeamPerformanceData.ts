@@ -104,7 +104,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
     } finally {
       setLoading(false)
     }
-  }, [startDate, endDate, clientFilter])
+  }, [startDate, endDate, clientFilter, prevDates.start, prevDates.end])
 
   useEffect(() => {
     let cancelled = false;
