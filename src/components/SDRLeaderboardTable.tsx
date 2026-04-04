@@ -178,9 +178,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
   };
 
   const getRowStyle = (rank: number) => {
-    if (rank === 1) return "border-l-4 border-l-[#FFD700] bg-[#FFFDF0] dark:bg-[#2A2518] h-[56px]";
-    if (rank === 2) return "border-l-4 border-l-[#C0C0C0] bg-[#FAFAFA] dark:bg-[#252528] h-[56px]";
-    if (rank === 3) return "border-l-4 border-l-[#CD7F32] bg-[#FFF9F0] dark:bg-[#2A2219] h-[56px]";
+    if (rank <= 3) return "h-[60px]";
     return "h-[48px]";
   };
 
