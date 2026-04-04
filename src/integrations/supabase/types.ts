@@ -361,6 +361,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sdr_action_items: {
+        Row: {
+          completed_date: string | null
+          created_at: string
+          created_by: string
+          due_date: string | null
+          id: string
+          sdr_name: string
+          status: string
+          title: string
+        }
+        Insert: {
+          completed_date?: string | null
+          created_at?: string
+          created_by: string
+          due_date?: string | null
+          id?: string
+          sdr_name: string
+          status?: string
+          title: string
+        }
+        Update: {
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string
+          due_date?: string | null
+          id?: string
+          sdr_name?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       sdr_alert_log: {
         Row: {
           alerted_at: string
@@ -381,6 +414,36 @@ export type Database = {
           created_at?: string | null
           id?: string
           resolved_at?: string | null
+          sdr_name?: string
+        }
+        Relationships: []
+      }
+      sdr_coaching_notes: {
+        Row: {
+          author_id: string | null
+          author_name: string
+          author_role: string
+          content: string
+          created_at: string
+          id: string
+          sdr_name: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name: string
+          author_role: string
+          content: string
+          created_at?: string
+          id?: string
+          sdr_name: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string
+          author_role?: string
+          content?: string
+          created_at?: string
+          id?: string
           sdr_name?: string
         }
         Relationships: []

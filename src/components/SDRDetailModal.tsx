@@ -15,6 +15,7 @@ import { SDRPerformanceOverview } from "@/components/SDRDetailTabs/SDRPerformanc
 import { SDRActivityTimeline } from "@/components/SDRDetailTabs/SDRActivityTimeline";
 import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResults";
 import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
@@ -37,7 +38,12 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
   const [isExporting, setIsExporting] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { toast } = useToast();
-  const conversionRate = ((sdr.sqls / sdr.dials) * 100).toFixed(2);
+  const { isAdmin, isManager, isSdr, isClient } = useUserRole();
+  const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
+
+  // Notes tab: visible for admin/manager always, SDR on own profile only, hidden for clients
+  const showNotesTab = isAdmin || isManager || isSdr;
+  const isSdrViewingOwn = isSdr; // SDR sees simplified view
 
   const handleExportPDF = () => {
     setIsExporting(true);
@@ -108,7 +114,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
         <div className="p-4 sm:p-6">
           <Tabs defaultValue="overview" className="w-full">
             <div className="overflow-x-auto scrollbar-thin -mx-4 sm:mx-0 px-4 sm:px-0">
-              <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 min-w-[500px] sm:min-w-0">
+              <TabsList className={`grid w-full mb-4 sm:mb-6 min-w-[500px] sm:min-w-0 ${showNotesTab ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <TabsTrigger value="overview" className="text-xs sm:text-sm">
                   <span className="hidden sm:inline">Performance Overview</span>
                   <span className="sm:hidden">Overview</span>
@@ -121,10 +127,12 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
                   <span className="hidden sm:inline">Meetings & Results</span>
                   <span className="sm:hidden">Meetings</span>
                 </TabsTrigger>
-                <TabsTrigger value="notes" className="text-xs sm:text-sm">
-                  <span className="hidden sm:inline">Notes & Coaching</span>
-                  <span className="sm:hidden">Notes</span>
-                </TabsTrigger>
+                {showNotesTab && (
+                  <TabsTrigger value="notes" className="text-xs sm:text-sm">
+                    <span className="hidden sm:inline">{isSdrViewingOwn ? "Development Goals" : "Notes & Coaching"}</span>
+                    <span className="sm:hidden">{isSdrViewingOwn ? "Goals" : "Notes"}</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
 
@@ -140,9 +148,11 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
               <SDRMeetingsResults sdrName={sdr.name} />
             </TabsContent>
 
-            <TabsContent value="notes" className="space-y-6">
-              <SDRNotesCoaching sdrName={sdr.name} />
-            </TabsContent>
+            {showNotesTab && (
+              <TabsContent value="notes" className="space-y-6">
+                <SDRNotesCoaching sdrName={sdr.name} isSdrView={isSdrViewingOwn} />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
 
