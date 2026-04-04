@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, AlertCircle, RefreshCw, Users, Download, Loader2, ChevronDown, FileText, Table2 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
@@ -22,6 +22,14 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour <= 11) return "Good morning";
+  if (hour >= 12 && hour <= 16) return "Good afternoon";
+  if (hour >= 17 && hour <= 20) return "Good evening";
+  return "Welcome back";
+};
+
 interface ClientOption {
   client_id: string;
   client_name: string;
@@ -32,6 +40,7 @@ const TeamPerformance = () => {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [firstName, setFirstName] = useState<string | null>(null);
   const { toast } = useToast();
   const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
@@ -46,6 +55,21 @@ const TeamPerformance = () => {
       setTimeout(() => setIsRefreshing(false), 1000);
     }
   }, [refreshKey, refetch]);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const fullName = user.user_metadata?.full_name;
+      if (fullName && typeof fullName === "string") {
+        setFirstName(fullName.split(" ")[0]);
+      } else if (user.email) {
+        const local = user.email.split("@")[0];
+        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
+      }
+    };
+    getUser();
+  }, []);
 
   const handleExportCSV = () => {
     setExporting(true);
@@ -98,56 +122,41 @@ const TeamPerformance = () => {
   if (loading) return <J2Loader />;
 
   return (
-    <div id="team-performance-content" className="space-y-4 sm:space-y-6 animate-fade-in">
-      {/* Header */}
+    <div id="team-performance-content" className="space-y-6 animate-fade-in">
+      {/* Header — matches Campaign Overview */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-            <span className="hidden sm:inline">Sales Development Team Performance</span>
-            <span className="sm:hidden">Team Performance</span>
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Monitor individual SDR performance across all clients</p>
+          {firstName && (
+            <p className="font-medium text-base text-muted-foreground mb-3">
+              {getGreeting()}, {firstName}!
+            </p>
+          )}
+          <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
+          <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    setIsRefreshing(true);
-                    refetch();
-                    manualRefresh();
-                    setTimeout(() => setIsRefreshing(false), 1000);
-                  }}
-                  aria-label="Refresh data"
-                >
-                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin text-blue-500")} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Refresh data (auto-refreshes every 5 mins)</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <Button
-            variant="outline"
-            onClick={handleExportCSV}
-            disabled={loading || exporting || leaderboard.length === 0}
-            className="gap-2 shrink-0"
-          >
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportPDF}
-            disabled={loading || exportingPDF || leaderboard.length === 0}
-            className="gap-2 shrink-0"
-          >
-            {exportingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export PDF
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                disabled={loading || leaderboard.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" />
+                Export
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportCSV}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <Table2 className="h-4 w-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -212,27 +221,29 @@ const TeamPerformance = () => {
               />
             </PopoverContent>
           </Popover>
-
-          {/* Client Filter — inline with date tabs */}
-          <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
-              <SelectValue placeholder="All Clients" />
-            </SelectTrigger>
-            <SelectContent className="z-[100] bg-card">
-              <SelectItem value="all">All Clients</SelectItem>
-              {clients.map((c) => (
-                <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
         {/* Read-only filtered period display */}
         {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarIcon className="h-4 w-4" />
-            <span>Performance data for: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
           </div>
         )}
+      </div>
+
+      {/* Client Filter — below date tabs */}
+      <div className="flex flex-wrap gap-2">
+        <Select value={clientFilter} onValueChange={setClientFilter}>
+          <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
+            <SelectValue placeholder="All Clients" />
+          </SelectTrigger>
+          <SelectContent className="z-[100] bg-card">
+            <SelectItem value="all">All Clients</SelectItem>
+            {clients.map((c) => (
+              <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Error State */}

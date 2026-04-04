@@ -623,6 +623,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_activity_breakdown: {
+        Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
+        Returns: {
+          answered: number
+          client_id: string
+          dials: number
+          dm_conversations: number
+          sdr_name: string
+          sqls: number
+        }[]
+      }
       get_invite_records: {
         Args: never
         Returns: {
@@ -634,6 +645,102 @@ export type Database = {
           invite_status: string
           role: string
           user_id: string
+        }[]
+      }
+      get_most_improved_sdr: {
+        Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
+        Returns: {
+          client_id: string
+          current_answer_rate: number
+          improvement: number
+          previous_answer_rate: number
+          sdr_name: string
+        }[]
+      }
+      get_sdr_client_breakdown: {
+        Args: { p_end_date: string; p_sdr_name: string; p_start_date: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          conv_rate: number
+          dials: number
+          sqls: number
+        }[]
+      }
+      get_sdr_heatmap: {
+        Args: {
+          p_client_id?: string
+          p_end_date: string
+          p_sdr_name: string
+          p_start_date: string
+        }
+        Returns: {
+          activity_day: string
+          day_of_week: number
+          dial_count: number
+          week_start: string
+        }[]
+      }
+      get_sdr_meetings_kpis: {
+        Args: {
+          p_client_id?: string
+          p_end_date: string
+          p_sdr_name: string
+          p_start_date: string
+        }
+        Returns: {
+          avg_days_to_meeting: number
+          meetings_held: number
+          show_up_rate: number
+          total_meetings: number
+        }[]
+      }
+      get_sdr_performance: {
+        Args: {
+          p_client_id?: string
+          p_end_date: string
+          p_sdr_name: string
+          p_start_date: string
+        }
+        Returns: {
+          answer_rate: number
+          answered: number
+          avg_talk_time_seconds: number
+          conv_rate: number
+          dm_conversations: number
+          sqls: number
+          total_dials: number
+        }[]
+      }
+      get_sdr_weekly_trend: {
+        Args: {
+          p_client_id?: string
+          p_end_date: string
+          p_sdr_name: string
+          p_start_date: string
+        }
+        Returns: {
+          answered: number
+          dials: number
+          dm_conversations: number
+          sqls: number
+          week_start: string
+        }[]
+      }
+      get_team_leaderboard: {
+        Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
+        Returns: {
+          answer_rate: number
+          answered: number
+          avg_talk_time_seconds: number
+          client_id: string
+          client_name: string
+          conv_rate: number
+          dm_conversations: number
+          rank: number
+          sdr_name: string
+          sqls: number
+          total_dials: number
         }[]
       }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
