@@ -49,20 +49,6 @@ const TeamPerformance = () => {
     }
   }, [refreshKey, refetch]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const fullName = user.user_metadata?.full_name;
-      if (fullName && typeof fullName === "string") {
-        setFirstName(fullName.split(" ")[0]);
-      } else if (user.email) {
-        const local = user.email.split("@")[0];
-        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
-      }
-    };
-    getUser();
-  }, []);
 
   const handleExportCSV = () => {
     setExporting(true);
