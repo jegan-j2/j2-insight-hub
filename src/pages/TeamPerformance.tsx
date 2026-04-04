@@ -119,7 +119,8 @@ const TeamPerformance = () => {
     fetchClients();
   }, []);
 
-  if (loading) return <J2Loader />;
+  // Only show full-page loader on first load (no cached data yet)
+  if (loading && leaderboard.length === 0) return <J2Loader />;
 
   return (
     <div id="team-performance-content" className="space-y-6 animate-fade-in">
