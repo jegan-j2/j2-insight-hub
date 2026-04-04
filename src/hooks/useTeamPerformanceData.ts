@@ -188,6 +188,41 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
     })
   }, [snapshots, activityLogs])
 
+  // Previous period leaderboard for "Most Improved" calculation
+  const previousLeaderboard: LeaderboardEntry[] = useMemo(() => {
+    const compositeKey = (name: string, clientId: string) => `${name}|||${clientId}`
+    const grouped = prevSnapshots.reduce((acc, snapshot) => {
+      const key = compositeKey(snapshot.sdr_name, snapshot.client_id || '')
+      const existing = acc.find(item => item.key === key)
+      if (existing) {
+        existing.totalDials += snapshot.dials
+        existing.totalAnswered += snapshot.answered
+        existing.totalDMs += snapshot.dms_reached
+        existing.totalSQLs += snapshot.sqls
+      } else {
+        const nameParts = snapshot.sdr_name.split(' ')
+        const initials = nameParts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
+        acc.push({ key, name: snapshot.sdr_name, clientId: snapshot.client_id || '', initials, totalDials: snapshot.dials, totalAnswered: snapshot.answered, totalDMs: snapshot.dms_reached, totalSQLs: snapshot.sqls })
+      }
+      return acc
+    }, [] as Array<{ key: string; name: string; clientId: string; initials: string; totalDials: number; totalAnswered: number; totalDMs: number; totalSQLs: number }>)
+
+    return grouped.map((sdr, index) => ({
+      name: sdr.name,
+      clientId: sdr.clientId,
+      initials: sdr.initials,
+      totalDials: sdr.totalDials,
+      totalAnswered: sdr.totalAnswered,
+      totalDMs: sdr.totalDMs,
+      totalSQLs: sdr.totalSQLs,
+      rank: index + 1,
+      answerRate: sdr.totalDials > 0 ? (sdr.totalAnswered / sdr.totalDials * 100).toFixed(1) : '0',
+      conversionRate: sdr.totalDials > 0 ? (sdr.totalSQLs / sdr.totalDials * 100).toFixed(2) : '0',
+      trend: 0,
+      avgDuration: 0,
+    }))
+  }, [prevSnapshots])
+
   // Chart data for SDR Activity Breakdown
   const activityChartData = useMemo(() => {
     return leaderboard.map(sdr => ({
@@ -204,6 +239,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
     error,
     snapshots,
     leaderboard,
+    previousLeaderboard,
     activityChartData,
     refetch: fetchData,
   }
