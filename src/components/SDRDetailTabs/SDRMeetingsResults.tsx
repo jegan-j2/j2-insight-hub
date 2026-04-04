@@ -119,6 +119,7 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
         meetings={meetings}
         clients={clients}
         isLoading={loading}
+        hideSDRFilter
       />
     </>
   );
