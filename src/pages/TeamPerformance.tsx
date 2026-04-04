@@ -22,13 +22,6 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour <= 11) return "Good morning";
-  if (hour >= 12 && hour <= 16) return "Good afternoon";
-  if (hour >= 17 && hour <= 20) return "Good evening";
-  return "Welcome back";
-};
 
 interface ClientOption {
   client_id: string;
