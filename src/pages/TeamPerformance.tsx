@@ -241,20 +241,7 @@ const TeamPerformance = () => {
         )}
       </div>
 
-      {/* Client Filter — below date tabs */}
-      <div className="flex flex-wrap gap-2">
-        <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
-            <SelectValue placeholder="All Clients" />
-          </SelectTrigger>
-          <SelectContent className="z-[100] bg-card">
-            <SelectItem value="all">All Clients</SelectItem>
-            {clients.map((c) => (
-              <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Client filter moved inline with date tabs above */}
 
       {/* Error State */}
       {error && (
