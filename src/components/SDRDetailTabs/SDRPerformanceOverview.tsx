@@ -262,7 +262,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 gap-6">
         {/* Performance Trend Chart */}
-        <Card>
+        <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Performance Trend (Weekly)</CardTitle>
           </CardHeader>
