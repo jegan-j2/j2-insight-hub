@@ -25,6 +25,7 @@ export const DateFilterProvider = ({ children }: { children: ReactNode }) => {
   });
   const [filterType, setFilterType] = useState<FilterType>("thisMonth");
   const [isLoading, setIsLoading] = useState(false);
+  const [clientFilter, setClientFilter] = useState("all");
 
   // Log date changes for testing
   const handleDateChange = (range: DateRange | undefined) => {
