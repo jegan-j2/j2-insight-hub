@@ -308,12 +308,7 @@ const TeamPerformance = () => {
         </>
       ) : null}
 
-      {/* SDR Activity Breakdown Chart */}
-      {activityChartData.length > 0 ? (
-        <SDRActivityChart chartData={activityChartData} />
-      ) : null}
-
-      {/* Team Totals Footer Bar */}
+      {/* Team Totals Bar — between table and chart */}
       {leaderboard.length > 0 && (
         <div className="bg-[#F8FAFC] dark:bg-slate-800 border-t border-[#E2E8F0] dark:border-slate-700 rounded-t-lg px-6 py-4">
           <div className="flex flex-wrap items-center gap-4 sm:gap-0 sm:justify-between">
@@ -351,6 +346,11 @@ const TeamPerformance = () => {
           </div>
         </div>
       )}
+
+      {/* SDR Activity Breakdown Chart */}
+      {activityChartData.length > 0 ? (
+        <SDRActivityChart chartData={activityChartData} />
+      ) : null}
     </div>
   );
 };
