@@ -14,11 +14,8 @@ const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const getHeatmapStyle = (value: number, isFuture: boolean): { bg: string; text: string } => {
   if (isFuture) return { bg: "transparent", text: "" };
   if (value === 0) return { bg: "#FFFFFF", text: "#94a3b8" };
-  if (value < 30) return { bg: "#F1F5F9", text: "#0F172A" };
-  if (value < 45) return { bg: "#CBD5E1", text: "#0F172A" };
-  if (value < 55) return { bg: "#94A3B8", text: "#0F172A" };
-  if (value < 65) return { bg: "#64748B", text: "#FFFFFF" };
-  if (value < 80) return { bg: "#334155", text: "#FFFFFF" };
+  if (value <= 50) return { bg: "#E2E8F0", text: "#0F172A" };
+  if (value <= 100) return { bg: "#64748B", text: "#FFFFFF" };
   return { bg: "#0F172A", text: "#FFFFFF" };
 };
 
