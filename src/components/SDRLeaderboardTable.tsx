@@ -285,10 +285,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                         </TableCell>
                         <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           {sdr.avgDuration > 0 ? (
-                            <span
-                              className={`font-medium ${sdr.avgDuration < 30 ? "text-muted-foreground" : sdr.avgDuration < 120 ? "text-orange-500" : "text-green-500"}`}
-                              title={`${Math.round(sdr.avgDuration)} seconds avg`}
-                            >
+                            <span title={`${Math.round(sdr.avgDuration)} seconds avg`}>
                               {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s
                             </span>
                           ) : (
