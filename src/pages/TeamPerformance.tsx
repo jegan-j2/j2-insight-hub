@@ -158,7 +158,7 @@ const TeamPerformance = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <p className="text-sm text-[#0f172a] dark:text-slate-300 mb-1">{melbourneGreeting}</p>
+          <p className="text-[15px] text-[#0f172a] dark:text-slate-300 mb-1">{melbourneGreeting}</p>
           <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
