@@ -144,7 +144,22 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
           </div>
         </DialogHeader>
 
-        {/* Tabs Content */}
+        {/* Latest SQL Banner */}
+        {latestSQL && (
+          <div className="mx-4 sm:mx-6 mt-3 bg-[#ECFDF5] dark:bg-emerald-950/30 border-l-[3px] border-[#10B981] rounded-lg px-4 py-2.5 text-[13px]">
+            <span className="font-bold">🎯 Latest SQL</span>
+            <span className="text-muted-foreground"> · </span>
+            <span>{latestSQL.contact_person}</span>
+            {latestSQL.company_name && (
+              <>
+                <span className="text-muted-foreground"> at </span>
+                <span>{latestSQL.company_name}</span>
+              </>
+            )}
+            <span className="text-muted-foreground"> · </span>
+            <span>{format(parseISO(latestSQL.booking_date), "d MMM yyyy")}</span>
+          </div>
+        )}
         <div className="p-4 sm:p-6">
           <Tabs defaultValue="overview" className="w-full">
             <div className="overflow-x-auto scrollbar-thin -mx-4 sm:mx-0 px-4 sm:px-0">
