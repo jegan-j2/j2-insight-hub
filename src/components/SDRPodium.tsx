@@ -86,10 +86,10 @@ export const SDRPodium = ({ leaderboardData, clientNameMap, previousPeriodData }
             <div
               key={`${sdr.name}-${sdr.clientId}`}
               className={`
-                w-full md:w-[220px] bg-white dark:bg-[#0f172a] rounded-xl shadow-md
+                w-full md:w-[220px] bg-white dark:bg-[#0f172a] rounded-lg shadow-sm
                 ${medal.border}
                 ${isFirst ? "md:pb-2 md:-mt-4" : ""}
-                transition-all duration-200 hover:shadow-lg
+                transition-all duration-200
               `}
             >
               <div className="flex flex-col items-center p-5 gap-3">

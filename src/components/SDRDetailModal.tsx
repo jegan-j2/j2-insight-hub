@@ -40,6 +40,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
 
   const showNotesTab = isAdmin || isManager || isSdr;
   const isSdrViewingOwn = isSdr;
+  const isClientRole = isClient;
 
   const tabs = [
     { id: "overview", label: "Performance Overview", shortLabel: "Overview" },
