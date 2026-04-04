@@ -157,7 +157,7 @@ const TeamPerformance = () => {
 
       {/* Date Filter Buttons — matches Campaign Overview layout */}
       <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {([
             { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },
             { label: "Last 30 Days", type: "last30days" as FilterType, range: { from: subDays(new Date(), 30), to: new Date() } },
@@ -216,6 +216,21 @@ const TeamPerformance = () => {
               />
             </PopoverContent>
           </Popover>
+
+          {/* Client Filter — on same row, right side */}
+          <div className="ml-auto">
+            <Select value={clientFilter} onValueChange={setClientFilter}>
+              <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
+                <SelectValue placeholder="All Clients" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-card">
+                <SelectItem value="all">All Clients</SelectItem>
+                {clients.map((c) => (
+                  <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {/* Read-only filtered period display */}
         {dateRange?.from && dateRange?.to && (
