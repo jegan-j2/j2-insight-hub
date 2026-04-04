@@ -499,7 +499,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
               ))}
               {paginatedMeetings.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12">
+                  <TableCell colSpan={hideSDRColumn ? 7 : 8} className="py-12">
                     {activeFiltersCount > 0 ? (
                       <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
                     ) : (
