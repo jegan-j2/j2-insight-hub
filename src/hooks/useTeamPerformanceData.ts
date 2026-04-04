@@ -134,10 +134,10 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
       const existing = acc.find(item => item.key === key)
 
       if (existing) {
-        existing.totalDials += snapshot.dials
-        existing.totalAnswered += snapshot.answered
-        existing.totalDMs += snapshot.dms_reached
-        existing.totalSQLs += snapshot.sqls
+        existing.totalDials += snapshot.dials ?? 0
+        existing.totalAnswered += snapshot.answered ?? 0
+        existing.totalDMs += snapshot.dms_reached ?? 0
+        existing.totalSQLs += snapshot.sqls ?? 0
       } else {
         const nameParts = snapshot.sdr_name.split(' ')
         const initials = nameParts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
