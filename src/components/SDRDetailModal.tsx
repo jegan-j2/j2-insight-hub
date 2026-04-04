@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X } from "lucide-react";
 import { DateRangePicker } from "@/components/DateRangePicker";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { DateRange } from "react-day-picker";
 import { SDRPerformanceOverview } from "@/components/SDRDetailTabs/SDRPerformanceOverview";
 import { SDRActivityTimeline } from "@/components/SDRDetailTabs/SDRActivityTimeline";
 import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResults";
 import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/lib/supabase";
+import { format } from "date-fns";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
@@ -33,10 +35,56 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
   const [dateRange, setDateRange] = useState<DateRange | undefined>(globalDateRange);
   const { isAdmin, isManager, isSdr } = useUserRole();
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
+  const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
 
-  // Notes tab: visible for admin/manager always, SDR on own profile only, hidden for clients
   const showNotesTab = isAdmin || isManager || isSdr;
-  const isSdrViewingOwn = isSdr; // SDR sees simplified view
+  const isSdrViewingOwn = isSdr;
+
+  // Fetch team averages for comparison
+  useEffect(() => {
+    const fetchTeamAvg = async () => {
+      if (!dateRange?.from || !dateRange?.to) return;
+      const startDate = format(dateRange.from, "yyyy-MM-dd");
+      const endDate = format(dateRange.to, "yyyy-MM-dd");
+
+      const { data } = await supabase
+        .from("daily_snapshots")
+        .select("sdr_name, dials, answered, dms_reached, sqls")
+        .gte("snapshot_date", startDate)
+        .lte("snapshot_date", endDate);
+
+      if (data && data.length > 0) {
+        // Group by SDR to get per-SDR totals, then average across SDRs
+        const sdrMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+        for (const row of data) {
+          const key = row.sdr_name || "";
+          const entry = sdrMap.get(key) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
+          entry.dials += row.dials ?? 0;
+          entry.answered += row.answered ?? 0;
+          entry.dms += row.dms_reached ?? 0;
+          entry.sqls += row.sqls ?? 0;
+          sdrMap.set(key, entry);
+        }
+        const sdrCount = sdrMap.size;
+        if (sdrCount > 0) {
+          let totalDials = 0, totalAnswered = 0, totalDMs = 0, totalSQLs = 0;
+          for (const v of sdrMap.values()) {
+            totalDials += v.dials;
+            totalAnswered += v.answered;
+            totalDMs += v.dms;
+            totalSQLs += v.sqls;
+          }
+          setTeamAverages({
+            dials: Math.round(totalDials / sdrCount),
+            answered: Math.round(totalAnswered / sdrCount),
+            dms: Math.round(totalDMs / sdrCount),
+            sqls: Math.round(totalSQLs / sdrCount),
+          });
+        }
+      }
+    };
+    fetchTeamAvg();
+  }, [dateRange]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -74,7 +122,6 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
               </Button>
             </div>
           </div>
-          {/* Mobile Date Picker */}
           <div className="md:hidden mt-3 w-full">
             <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
           </div>
@@ -107,7 +154,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
             </div>
 
             <TabsContent value="overview" className="space-y-6">
-              <SDRPerformanceOverview sdr={sdr} />
+              <SDRPerformanceOverview sdr={sdr} teamAverages={teamAverages} />
             </TabsContent>
 
             <TabsContent value="timeline" className="space-y-6">

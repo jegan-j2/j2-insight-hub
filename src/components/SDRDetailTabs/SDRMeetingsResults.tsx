@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Calendar, TrendingUp } from "lucide-react";
+import { CheckCircle, Calendar, TrendingUp, Target } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { differenceInDays } from "date-fns";
@@ -35,7 +35,6 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
     fetchData();
   }, [fetchData]);
 
-  // Subscribe to realtime changes for this SDR
   useEffect(() => {
     const channel = supabase
       .channel("sdr-meetings-realtime")
@@ -49,7 +48,6 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
     return () => { supabase.removeChannel(channel); };
   }, [sdrName, fetchData]);
 
-  // KPIs — exclude cancelled
   const kpis = useMemo(() => {
     const eligible = meetings.filter((m) => m.meeting_status !== "cancelled");
     const heldOrNoShow = eligible.filter((m) => m.meeting_status === "held" || m.meeting_status === "no_show");
@@ -77,11 +75,31 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
     };
   }, [meetings]);
 
+  const hasMeetings = meetings.length > 0;
+
+  if (loading) {
+    return <div className="text-center text-sm text-muted-foreground py-8">Loading…</div>;
+  }
+
+  if (!hasMeetings) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <Target className="h-12 w-12 text-muted-foreground/40 mb-4" />
+        <p className="text-[16px] font-semibold text-[#0F172A] dark:text-foreground mb-1">
+          No SQL meetings booked yet
+        </p>
+        <p className="text-[13px] text-muted-foreground text-center max-w-sm">
+          Meetings will appear here when this SDR books their first SQL
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm rounded-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
@@ -91,7 +109,7 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 shadow-sm rounded-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="h-5 w-5 text-blue-600" />
@@ -103,7 +121,7 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 shadow-sm rounded-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -114,7 +132,6 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
         </Card>
       </div>
 
-      {/* SQL Meetings Table — exact mirror of Campaign Overview table */}
       <SQLBookedMeetingsTable
         meetings={meetings}
         clients={clients}

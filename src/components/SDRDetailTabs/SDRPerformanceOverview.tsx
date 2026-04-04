@@ -15,6 +15,12 @@ interface SDRPerformanceOverviewProps {
     sqls: number;
     trend: number;
   };
+  teamAverages?: {
+    dials: number;
+    answered: number;
+    dms: number;
+    sqls: number;
+  };
 }
 
 interface Snapshot {
@@ -60,41 +66,9 @@ const ConversionFunnel = ({ levels }: { levels: { label: string; count: number; 
           return (
             <g key={level.label}>
               <polygon points={points} fill={level.color} opacity={0.85} rx={4} />
-              {/* Label left */}
-              <text
-                x={topLeft - 8}
-                y={y + levelHeight / 2 + 1}
-                textAnchor="end"
-                fill="hsl(var(--foreground))"
-                fontSize={12}
-                fontWeight={500}
-                dominantBaseline="middle"
-              >
-                {level.label}
-              </text>
-              {/* Count center */}
-              <text
-                x={containerWidth / 2}
-                y={y + levelHeight / 2 + 1}
-                textAnchor="middle"
-                fill="white"
-                fontSize={16}
-                fontWeight={700}
-                dominantBaseline="middle"
-              >
-                {level.count.toLocaleString()}
-              </text>
-              {/* Percentage right */}
-              <text
-                x={topRight + 8}
-                y={y + levelHeight / 2 + 1}
-                textAnchor="start"
-                fill="hsl(var(--muted-foreground))"
-                fontSize={12}
-                dominantBaseline="middle"
-              >
-                {level.pctOfPrev}
-              </text>
+              <text x={topLeft - 8} y={y + levelHeight / 2 + 1} textAnchor="end" fill="hsl(var(--foreground))" fontSize={12} fontWeight={500} dominantBaseline="middle">{level.label}</text>
+              <text x={containerWidth / 2} y={y + levelHeight / 2 + 1} textAnchor="middle" fill="white" fontSize={16} fontWeight={700} dominantBaseline="middle">{level.count.toLocaleString()}</text>
+              <text x={topRight + 8} y={y + levelHeight / 2 + 1} textAnchor="start" fill="hsl(var(--muted-foreground))" fontSize={12} dominantBaseline="middle">{level.pctOfPrev}</text>
             </g>
           );
         })}
@@ -103,7 +77,22 @@ const ConversionFunnel = ({ levels }: { levels: { label: string; count: number; 
   );
 };
 
-export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => {
+const TeamAvgLine = ({ value, teamAvg, formatter }: { value: number; teamAvg: number; formatter?: (v: number) => string }) => {
+  const fmt = formatter || ((v: number) => v.toLocaleString());
+  if (teamAvg === 0 && value === 0) return null;
+  const isAbove = value > teamAvg;
+  const isBelow = value < teamAvg;
+
+  return (
+    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+      {isAbove && <ArrowUpRight className="h-3 w-3 text-emerald-500" />}
+      {isBelow && <ArrowDownRight className="h-3 w-3 text-red-500" />}
+      Team avg: {fmt(teamAvg)}
+    </p>
+  );
+};
+
+export const SDRPerformanceOverview = ({ sdr, teamAverages }: SDRPerformanceOverviewProps) => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [clientNames, setClientNames] = useState<Record<string, string>>({});
 
@@ -127,7 +116,6 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
     fetchData();
   }, [sdr.name]);
 
-  // Performance Trend: group by week
   const performanceTrendData = useMemo(() => {
     const weekMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
     snapshots.forEach((s) => {
@@ -142,7 +130,6 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
     return Array.from(weekMap.entries()).map(([week, data]) => ({ week, ...data }));
   }, [snapshots]);
 
-  // Client Breakdown: group by client_id
   const clientBreakdownData = useMemo(() => {
     const clientMap = new Map<string, { dials: number; sqls: number }>();
     snapshots.forEach((s) => {
@@ -161,7 +148,6 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
     }));
   }, [snapshots, clientNames]);
 
-  // Conversion Funnel
   const funnelLevels = useMemo(() => {
     const totals = snapshots.reduce(
       (acc, s) => {
@@ -173,11 +159,8 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
       },
       { dials: 0, answered: 0, dms: 0, sqls: 0 }
     );
-
     const pct = (num: number, den: number) => den > 0 ? ((num / den) * 100).toFixed(1) + "%" : "0.0%";
-
     const hasDMs = totals.dms > 0;
-
     if (hasDMs) {
       return [
         { label: "Dials", count: totals.dials, color: METRIC_COLORS.dials, pctOfPrev: "100%" },
@@ -185,18 +168,19 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
         { label: "DM Conversations", count: totals.dms, color: METRIC_COLORS.dms, pctOfPrev: pct(totals.dms, totals.answered) },
         { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.dms) },
       ];
-    } else {
-      return [
-        { label: "Dials", count: totals.dials, color: METRIC_COLORS.dials, pctOfPrev: "100%" },
-        { label: "Answered", count: totals.answered, color: METRIC_COLORS.answered, pctOfPrev: pct(totals.answered, totals.dials) },
-        { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.answered) },
-      ];
     }
+    return [
+      { label: "Dials", count: totals.dials, color: METRIC_COLORS.dials, pctOfPrev: "100%" },
+      { label: "Answered", count: totals.answered, color: METRIC_COLORS.answered, pctOfPrev: pct(totals.answered, totals.dials) },
+      { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.answered) },
+    ];
   }, [snapshots]);
 
   const answerRate = sdr.dials > 0 ? ((sdr.answered / sdr.dials) * 100).toFixed(1) : "0";
   const dmRate = sdr.dials > 0 ? ((sdr.dms / sdr.dials) * 100).toFixed(1) : "0";
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0";
+
+  const ta = teamAverages;
 
   return (
     <>
@@ -222,6 +206,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.dials.toLocaleString()}</p>
             <p className="text-sm text-muted-foreground">Total Dials</p>
+            {ta && <TeamAvgLine value={sdr.dials} teamAvg={ta.dials} />}
           </CardContent>
         </Card>
 
@@ -233,6 +218,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.answered.toLocaleString()}</p>
             <p className="text-sm text-muted-foreground">Answered</p>
+            {ta && <TeamAvgLine value={sdr.answered} teamAvg={ta.answered} />}
           </CardContent>
         </Card>
 
@@ -244,6 +230,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.dms}</p>
             <p className="text-sm text-muted-foreground">DM Conversations</p>
+            {ta && <TeamAvgLine value={sdr.dms} teamAvg={ta.dms} />}
           </CardContent>
         </Card>
 
@@ -255,13 +242,13 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
             </div>
             <p className="text-3xl font-bold text-foreground">{sdr.sqls}</p>
             <p className="text-sm text-muted-foreground">SQLs Generated</p>
+            {ta && <TeamAvgLine value={sdr.sqls} teamAvg={ta.sqls} />}
           </CardContent>
         </Card>
       </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 gap-6">
-        {/* Performance Trend Chart */}
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Performance Trend (Weekly)</CardTitle>
@@ -274,11 +261,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
                   <XAxis dataKey="week" className="text-xs" tickLine={false} />
                   <YAxis className="text-xs" tickLine={false} domain={[0, 'auto']} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
                     labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
                   />
                   <Legend />
@@ -292,7 +275,6 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
           </CardContent>
         </Card>
 
-        {/* Conversion Funnel */}
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Conversion Funnel</CardTitle>
@@ -303,7 +285,6 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
         </Card>
       </div>
 
-      {/* Client Breakdown Table — only show if multiple clients */}
       {clientBreakdownData.length > 1 && (
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
