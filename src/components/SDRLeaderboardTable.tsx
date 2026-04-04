@@ -178,9 +178,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
   };
 
   const getRowStyle = (rank: number) => {
-    if (rank === 1) return "border-l-4 border-l-[#FFD700] bg-[#FFFDF0] dark:bg-[#2A2518] h-[56px]";
-    if (rank === 2) return "border-l-4 border-l-[#C0C0C0] bg-[#FAFAFA] dark:bg-[#252528] h-[56px]";
-    if (rank === 3) return "border-l-4 border-l-[#CD7F32] bg-[#FFF9F0] dark:bg-[#2A2219] h-[56px]";
+    if (rank <= 3) return "h-[60px]";
     return "h-[48px]";
   };
 
@@ -193,7 +191,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
       return <span className="text-[11px] text-muted-foreground italic block mt-0.5">No SQLs yet</span>;
     }
     const daysAgo = differenceInDays(new Date(), new Date(lastDate));
-    return <span className="text-[11px] text-muted-foreground block mt-0.5">Last: {daysAgo}d ago</span>;
+    return <span className="text-[11px] text-muted-foreground block mt-0.5">Last SQL: {daysAgo} days ago</span>;
   };
 
   return (
@@ -250,15 +248,15 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
                         className={`transition-colors cursor-pointer hover:bg-[#EFF6FF] dark:hover:bg-[#1e293b] ${getRowStyle(sdr.displayRank)}`}
-                        style={{ backgroundColor: isTop3 ? undefined : (idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC") }}
+                        style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
                       >
-                        <TableCell className="font-medium text-lg sticky left-0 z-10 text-center text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="sticky left-0 z-10 text-center text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
                         <TableCell className="sticky left-16 z-10 text-left text-[14px]" style={{ padding: "12px 16px" }}>
                           <div className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedSDR(sdr)}>
                             <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
-                            <span className="font-medium whitespace-nowrap">{sdr.name}</span>
+                            <span className="font-normal whitespace-nowrap">{sdr.name}</span>
                           </div>
                         </TableCell>
                         {showClientColumn && (
@@ -278,7 +276,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                         </TableCell>
                         <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           <div>
-                            <span className="text-lg font-bold">{sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}</span>
+                            <span>{sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}</span>
                             {getLastSQLText(sdr)}
                           </div>
                         </TableCell>
@@ -287,10 +285,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                         </TableCell>
                         <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           {sdr.avgDuration > 0 ? (
-                            <span
-                              className={`font-medium ${sdr.avgDuration < 30 ? "text-muted-foreground" : sdr.avgDuration < 120 ? "text-orange-500" : "text-green-500"}`}
-                              title={`${Math.round(sdr.avgDuration)} seconds avg`}
-                            >
+                            <span title={`${Math.round(sdr.avgDuration)} seconds avg`}>
                               {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s
                             </span>
                           ) : (

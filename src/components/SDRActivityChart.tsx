@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
 import { EmptyState } from "@/components/EmptyState";
@@ -28,7 +28,11 @@ const COLORS = {
 
 export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("volume");
-  const data = [...(chartData || [])].sort((a, b) => b.sqls - a.sqls);
+  const data = useMemo(() =>
+    [...(chartData || [])].sort((a, b) =>
+      viewMode === "volume" ? b.dials - a.dials : b.sqls - a.sqls
+    ), [chartData, viewMode]
+  );
 
   // Dynamic height: 45px per SDR + 80px for legend/padding
   const chartHeight = Math.max(400, data.length * 45 + 80);
