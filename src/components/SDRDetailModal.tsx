@@ -31,38 +31,12 @@ interface SDRDetailModalProps {
 
 export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDetailModalProps) => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(globalDateRange);
-  const [isExporting, setIsExporting] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const { toast } = useToast();
-  const { isAdmin, isManager, isSdr, isClient } = useUserRole();
+  const { isAdmin, isManager, isSdr } = useUserRole();
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
 
   // Notes tab: visible for admin/manager always, SDR on own profile only, hidden for clients
   const showNotesTab = isAdmin || isManager || isSdr;
   const isSdrViewingOwn = isSdr; // SDR sees simplified view
-
-  const handleExportPDF = () => {
-    setIsExporting(true);
-    
-    // Simulate PDF generation
-    setTimeout(() => {
-      setIsExporting(false);
-      toast({
-        title: "PDF report generated!",
-        description: "PDF generation will be available once backend is connected",
-        className: "border-primary/30",
-      });
-    }, 2000);
-  };
-
-  const handleShareOption = (option: string) => {
-    toast({
-      title: "Coming soon",
-      description: `${option} sharing will be enabled after backend integration`,
-      className: "border-primary/30",
-    });
-    setIsShareModalOpen(false);
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
