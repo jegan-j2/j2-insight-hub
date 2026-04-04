@@ -158,13 +158,16 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
                       <div
                         key={dayIndex}
                         className={cn(
-                          "flex-1 aspect-square rounded flex items-center justify-center text-xs font-semibold transition-all relative group",
+                          "rounded flex items-center justify-center text-[12px] font-semibold transition-all relative group",
                           isFuture && "border border-dashed border-border bg-muted/20",
                           isToday && "ring-2 ring-primary ring-offset-1 ring-offset-background",
-                          !isFuture && value > 0 && "hover:scale-110 hover:shadow-lg cursor-pointer",
+                          !isFuture && value > 0 && "hover:scale-105 hover:shadow-md cursor-pointer",
                           !isFuture && value === 0 && "border border-border/50"
                         )}
-                        style={!isFuture ? { backgroundColor: style.bg, color: style.text } : undefined}
+                        style={{
+                          width: 60, height: 60, minWidth: 60, minHeight: 60,
+                          ...(!isFuture ? { backgroundColor: style.bg, color: style.text } : {}),
+                        }}
                       >
                         {isFuture ? (
                           <span className="text-muted-foreground/50">—</span>
