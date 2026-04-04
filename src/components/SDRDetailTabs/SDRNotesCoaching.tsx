@@ -250,6 +250,7 @@ export const SDRNotesCoaching = ({ sdrName, isSdrView = false }: SDRNotesCoachin
                 <Button
                   onClick={handleSaveNote}
                   disabled={!noteContent.trim() || isSaving}
+                  className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
                 >
                   {isSaving ? (
                     <>
