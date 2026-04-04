@@ -305,7 +305,7 @@ export const SDRPerformanceOverview = ({ sdr }: SDRPerformanceOverviewProps) => 
 
       {/* Client Breakdown Table — only show if multiple clients */}
       {clientBreakdownData.length > 1 && (
-        <Card>
+        <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Client Breakdown</CardTitle>
           </CardHeader>
