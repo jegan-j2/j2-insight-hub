@@ -22,13 +22,6 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour <= 11) return "Good morning";
-  if (hour >= 12 && hour <= 16) return "Good afternoon";
-  if (hour >= 17 && hour <= 20) return "Good evening";
-  return "Welcome back";
-};
 
 interface ClientOption {
   client_id: string;
@@ -40,7 +33,7 @@ const TeamPerformance = () => {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
-  const [firstName, setFirstName] = useState<string | null>(null);
+  
   const { toast } = useToast();
   const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
@@ -56,20 +49,6 @@ const TeamPerformance = () => {
     }
   }, [refreshKey, refetch]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const fullName = user.user_metadata?.full_name;
-      if (fullName && typeof fullName === "string") {
-        setFirstName(fullName.split(" ")[0]);
-      } else if (user.email) {
-        const local = user.email.split("@")[0];
-        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
-      }
-    };
-    getUser();
-  }, []);
 
   const handleExportCSV = () => {
     setExporting(true);
@@ -119,18 +98,14 @@ const TeamPerformance = () => {
     fetchClients();
   }, []);
 
-  if (loading) return <J2Loader />;
+  // Only show full-page loader on first load (no cached data yet)
+  if (loading && leaderboard.length === 0) return <J2Loader />;
 
   return (
     <div id="team-performance-content" className="space-y-6 animate-fade-in">
       {/* Header — matches Campaign Overview */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          {firstName && (
-            <p className="font-medium text-base text-muted-foreground mb-3">
-              {getGreeting()}, {firstName}!
-            </p>
-          )}
           <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
@@ -162,7 +137,7 @@ const TeamPerformance = () => {
 
       {/* Date Filter Buttons — matches Campaign Overview layout */}
       <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {([
             { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },
             { label: "Last 30 Days", type: "last30days" as FilterType, range: { from: subDays(new Date(), 30), to: new Date() } },
@@ -221,6 +196,21 @@ const TeamPerformance = () => {
               />
             </PopoverContent>
           </Popover>
+
+          {/* Client Filter — on same row, right side */}
+          <div className="ml-auto">
+            <Select value={clientFilter} onValueChange={setClientFilter}>
+              <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
+                <SelectValue placeholder="All Clients" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-card">
+                <SelectItem value="all">All Clients</SelectItem>
+                {clients.map((c) => (
+                  <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {/* Read-only filtered period display */}
         {dateRange?.from && dateRange?.to && (
@@ -231,20 +221,7 @@ const TeamPerformance = () => {
         )}
       </div>
 
-      {/* Client Filter — below date tabs */}
-      <div className="flex flex-wrap gap-2">
-        <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
-            <SelectValue placeholder="All Clients" />
-          </SelectTrigger>
-          <SelectContent className="z-[100] bg-card">
-            <SelectItem value="all">All Clients</SelectItem>
-            {clients.map((c) => (
-              <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Client filter moved inline with date tabs above */}
 
       {/* Error State */}
       {error && (

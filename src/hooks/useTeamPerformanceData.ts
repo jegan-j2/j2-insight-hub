@@ -134,10 +134,10 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
       const existing = acc.find(item => item.key === key)
 
       if (existing) {
-        existing.totalDials += snapshot.dials
-        existing.totalAnswered += snapshot.answered
-        existing.totalDMs += snapshot.dms_reached
-        existing.totalSQLs += snapshot.sqls
+        existing.totalDials += snapshot.dials ?? 0
+        existing.totalAnswered += snapshot.answered ?? 0
+        existing.totalDMs += snapshot.dms_reached ?? 0
+        existing.totalSQLs += snapshot.sqls ?? 0
       } else {
         const nameParts = snapshot.sdr_name.split(' ')
         const initials = nameParts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
@@ -146,10 +146,10 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
           name: snapshot.sdr_name,
           clientId: snapshot.client_id || '',
           initials,
-          totalDials: snapshot.dials,
-          totalAnswered: snapshot.answered,
-          totalDMs: snapshot.dms_reached,
-          totalSQLs: snapshot.sqls,
+          totalDials: snapshot.dials ?? 0,
+          totalAnswered: snapshot.answered ?? 0,
+          totalDMs: snapshot.dms_reached ?? 0,
+          totalSQLs: snapshot.sqls ?? 0,
         })
       }
 
@@ -195,14 +195,14 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
       const key = compositeKey(snapshot.sdr_name, snapshot.client_id || '')
       const existing = acc.find(item => item.key === key)
       if (existing) {
-        existing.totalDials += snapshot.dials
-        existing.totalAnswered += snapshot.answered
-        existing.totalDMs += snapshot.dms_reached
-        existing.totalSQLs += snapshot.sqls
+        existing.totalDials += snapshot.dials ?? 0
+        existing.totalAnswered += snapshot.answered ?? 0
+        existing.totalDMs += snapshot.dms_reached ?? 0
+        existing.totalSQLs += snapshot.sqls ?? 0
       } else {
         const nameParts = snapshot.sdr_name.split(' ')
         const initials = nameParts.map(p => p[0]).join('').toUpperCase().slice(0, 2)
-        acc.push({ key, name: snapshot.sdr_name, clientId: snapshot.client_id || '', initials, totalDials: snapshot.dials, totalAnswered: snapshot.answered, totalDMs: snapshot.dms_reached, totalSQLs: snapshot.sqls })
+        acc.push({ key, name: snapshot.sdr_name, clientId: snapshot.client_id || '', initials, totalDials: snapshot.dials ?? 0, totalAnswered: snapshot.answered ?? 0, totalDMs: snapshot.dms_reached ?? 0, totalSQLs: snapshot.sqls ?? 0 })
       }
       return acc
     }, [] as Array<{ key: string; name: string; clientId: string; initials: string; totalDials: number; totalAnswered: number; totalDMs: number; totalSQLs: number }>)

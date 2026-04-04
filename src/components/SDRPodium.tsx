@@ -59,7 +59,7 @@ export const SDRPodium = ({ leaderboardData, clientNameMap, previousPeriodData }
 
   if (top3.length === 0) return null;
 
-  // Reorder for podium display: #2, #1, #3
+  // Reorder for podium display: #2 (left), #1 (center), #3 (right)
   const podiumOrder = top3.length >= 3
     ? [top3[1], top3[0], top3[2]]
     : top3.length === 2

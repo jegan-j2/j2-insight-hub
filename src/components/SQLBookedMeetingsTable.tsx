@@ -69,9 +69,10 @@ interface SQLBookedMeetingsTableProps {
   isLoading?: boolean;
   meetings?: SQLMeeting[];
   clients?: Client[];
+  hideSDRFilter?: boolean;
 }
 
-export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients }: SQLBookedMeetingsTableProps) => {
+export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients, hideSDRFilter = false }: SQLBookedMeetingsTableProps) => {
   const { canEditSQL, isSdr } = usePermissions();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
@@ -372,15 +373,17 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                 ))}
               </SelectContent>
             </Select>
-            <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
-                <SelectValue placeholder="All SDRs" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border z-50">
-                <SelectItem value="all">All SDRs</SelectItem>
-                {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {!hideSDRFilter && (
+              <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
+                  <SelectValue placeholder="All SDRs" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="all">All SDRs</SelectItem>
+                  {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
             <Button variant="outline" size="sm" onClick={() => setShowMoreFilters(!showMoreFilters)}
               className={cn("gap-2 min-h-[40px]", showMoreFilters && "bg-muted")}>
               <Filter className="h-4 w-4" /> More Filters
