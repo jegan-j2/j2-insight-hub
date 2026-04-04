@@ -250,7 +250,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                         className={`transition-colors cursor-pointer hover:bg-[#EFF6FF] dark:hover:bg-[#1e293b] ${getRowStyle(sdr.displayRank)}`}
                         style={{ backgroundColor: isTop3 ? undefined : (idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC") }}
                       >
-                        <TableCell className="font-medium text-lg sticky left-0 z-10 text-center text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="sticky left-0 z-10 text-center text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
                         <TableCell className="sticky left-16 z-10 text-left text-[14px]" style={{ padding: "12px 16px" }}>
