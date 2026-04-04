@@ -13,7 +13,7 @@ import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResult
 import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/lib/supabase";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
@@ -36,9 +36,26 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
   const { isAdmin, isManager, isSdr } = useUserRole();
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
+  const [latestSQL, setLatestSQL] = useState<{ contact_person: string; company_name: string; booking_date: string } | null>(null);
 
   const showNotesTab = isAdmin || isManager || isSdr;
   const isSdrViewingOwn = isSdr;
+
+  // Fetch latest SQL meeting for this SDR
+  useEffect(() => {
+    const fetchLatestSQL = async () => {
+      const { data } = await supabase
+        .from("sql_meetings")
+        .select("contact_person, company_name, booking_date")
+        .eq("sdr_name", sdr.name)
+        .not("meeting_status", "eq", "cancelled")
+        .order("booking_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLatestSQL(data);
+    };
+    if (isOpen) fetchLatestSQL();
+  }, [sdr.name, isOpen]);
 
   // Fetch team averages for comparison
   useEffect(() => {
@@ -127,7 +144,22 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
           </div>
         </DialogHeader>
 
-        {/* Tabs Content */}
+        {/* Latest SQL Banner */}
+        {latestSQL && (
+          <div className="mx-4 sm:mx-6 mt-3 bg-[#ECFDF5] dark:bg-emerald-950/30 border-l-[3px] border-[#10B981] rounded-lg px-4 py-2.5 text-[13px]">
+            <span className="font-bold">🎯 Latest SQL</span>
+            <span className="text-muted-foreground"> · </span>
+            <span>{latestSQL.contact_person}</span>
+            {latestSQL.company_name && (
+              <>
+                <span className="text-muted-foreground"> at </span>
+                <span>{latestSQL.company_name}</span>
+              </>
+            )}
+            <span className="text-muted-foreground"> · </span>
+            <span>{format(parseISO(latestSQL.booking_date), "d MMM yyyy")}</span>
+          </div>
+        )}
         <div className="p-4 sm:p-6">
           <Tabs defaultValue="overview" className="w-full">
             <div className="overflow-x-auto scrollbar-thin -mx-4 sm:mx-0 px-4 sm:px-0">
