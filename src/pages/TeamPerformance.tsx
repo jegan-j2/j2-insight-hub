@@ -312,6 +312,45 @@ const TeamPerformance = () => {
       {activityChartData.length > 0 ? (
         <SDRActivityChart chartData={activityChartData} />
       ) : null}
+
+      {/* Team Totals Footer Bar */}
+      {leaderboard.length > 0 && (
+        <div className="bg-[#F8FAFC] dark:bg-slate-800 border-t border-[#E2E8F0] dark:border-slate-700 rounded-t-lg px-6 py-4">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-0 sm:justify-between">
+            <span className="text-[13px] font-bold text-[#0f172a] dark:text-white">Team Totals:</span>
+            <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
+            <div className="text-center">
+              <span className="block text-[12px] text-muted-foreground">Total Dials</span>
+              <span className="block text-[14px] font-bold text-[#0f172a] dark:text-white">{teamTotals.dials.toLocaleString()}</span>
+            </div>
+            <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
+            <div className="text-center">
+              <span className="block text-[12px] text-muted-foreground">Answered</span>
+              <span className="block text-[14px] font-bold text-[#0f172a] dark:text-white">{teamTotals.answered.toLocaleString()}</span>
+            </div>
+            <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
+            <div className="text-center">
+              <span className="block text-[12px] text-muted-foreground">Avg Answer Rate</span>
+              <span className="block text-[14px] font-bold text-[#0f172a] dark:text-white">{teamTotals.answerRate}%</span>
+            </div>
+            <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
+            <div className="text-center">
+              <span className="block text-[12px] text-muted-foreground">DM Conversations</span>
+              <span className="block text-[14px] font-bold text-[#0f172a] dark:text-white">{teamTotals.dms.toLocaleString()}</span>
+            </div>
+            <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
+            <div className="text-center">
+              <span className="block text-[12px] text-muted-foreground">SQLs</span>
+              <span className="block text-[14px] font-bold text-[#0f172a] dark:text-white">{teamTotals.sqls.toLocaleString()}</span>
+            </div>
+            <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
+            <div className="text-center">
+              <span className="block text-[12px] text-muted-foreground">Team Conv. Rate</span>
+              <span className="block text-[14px] font-bold text-[#0f172a] dark:text-white">{teamTotals.convRate}%</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
