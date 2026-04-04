@@ -11,6 +11,8 @@ interface DateFilterContextType {
   setFilterType: (type: FilterType) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  clientFilter: string;
+  setClientFilter: (client: string) => void;
 }
 
 const DateFilterContext = createContext<DateFilterContextType | undefined>(undefined);
@@ -23,6 +25,7 @@ export const DateFilterProvider = ({ children }: { children: ReactNode }) => {
   });
   const [filterType, setFilterType] = useState<FilterType>("thisMonth");
   const [isLoading, setIsLoading] = useState(false);
+  const [clientFilter, setClientFilter] = useState("all");
 
   // Log date changes for testing
   const handleDateChange = (range: DateRange | undefined) => {
@@ -47,7 +50,9 @@ export const DateFilterProvider = ({ children }: { children: ReactNode }) => {
         filterType, 
         setFilterType: handleFilterTypeChange,
         isLoading, 
-        setIsLoading 
+        setIsLoading,
+        clientFilter,
+        setClientFilter,
       }}
     >
       {children}

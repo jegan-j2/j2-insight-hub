@@ -1,10 +1,11 @@
-import { format } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarDaysIcon, AlertCircle, RefreshCw, Users, Download, Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, AlertCircle, RefreshCw, Users, Download, Loader2, ChevronDown, FileText, Table2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DateRangePicker } from "@/components/DateRangePicker";
-import { useDateFilter } from "@/contexts/DateFilterContext";
+import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
 import { SDRPodium } from "@/components/SDRPodium";
@@ -19,6 +20,7 @@ import { exportToPDF } from "@/lib/pdfExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 
 interface ClientOption {
   client_id: string;
@@ -26,8 +28,7 @@ interface ClientOption {
 }
 
 const TeamPerformance = () => {
-  const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
-  const [clientFilter, setClientFilter] = useState("all");
+  const { dateRange, setDateRange, filterType, setFilterType, clientFilter, setClientFilter } = useDateFilter();
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
@@ -35,6 +36,8 @@ const TeamPerformance = () => {
   const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
+  const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (refreshKey > 0) {
@@ -148,32 +151,72 @@ const TeamPerformance = () => {
         </div>
       </div>
 
-      {/* Date Range Picker with Quick Filters */}
-      <div className="space-y-3">
-        <DateRangePicker 
-          date={dateRange} 
-          onDateChange={setDateRange}
-          filterType={filterType}
-          onFilterTypeChange={setFilterType}
-          className="w-full"
-        />
-        
-        {/* Selected Date Range Display and Client Filter */}
-        <div className="flex flex-col gap-3">
-          {dateRange?.from && dateRange?.to && (
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-muted/20 border border-border rounded-lg px-3 sm:px-4 py-2 transition-all duration-200">
-              <CalendarDaysIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="truncate">
-                <span className="hidden sm:inline">Performance data for: {format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
-                <span className="sm:hidden">{format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}</span>
-              </span>
-            </div>
-          )}
-          
-          {/* Client Filter */}
+      {/* Date Filter Buttons — matches Campaign Overview layout */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          {([
+            { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },
+            { label: "Last 30 Days", type: "last30days" as FilterType, range: { from: subDays(new Date(), 30), to: new Date() } },
+            { label: "This Month", type: "thisMonth" as FilterType, range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) } },
+            { label: "Last Month", type: "lastMonth" as FilterType, range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
+          ]).map((filter) => {
+            const isActive = filterType === filter.type && dateRange?.from && dateRange?.to && isSameDay(dateRange.from, filter.range.from) && isSameDay(dateRange.to, filter.range.to);
+            return (
+              <Button
+                key={filter.type}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setDateRange(filter.range); setFilterType(filter.type); setCustomRange(undefined); }}
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  isActive
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                {filter.label}
+              </Button>
+            );
+          })}
+          <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={filterType === "custom" ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  filterType === "custom"
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                Custom <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-card border-border z-[100]" align="start" sideOffset={8}>
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={new Date()}
+                selected={customRange}
+                onSelect={(range) => {
+                  setCustomRange(range);
+                  if (range?.from && range?.to) {
+                    setDateRange(range);
+                    setFilterType("custom");
+                    setCustomPopoverOpen(false);
+                  }
+                }}
+                numberOfMonths={2}
+                className="pointer-events-auto p-3"
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Client Filter — inline with date tabs */}
           <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className="w-full sm:w-[200px] min-h-[44px]">
-              <SelectValue placeholder="Filter by client" />
+            <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
+              <SelectValue placeholder="All Clients" />
             </SelectTrigger>
             <SelectContent className="z-[100] bg-card">
               <SelectItem value="all">All Clients</SelectItem>
@@ -183,6 +226,13 @@ const TeamPerformance = () => {
             </SelectContent>
           </Select>
         </div>
+        {/* Read-only filtered period display */}
+        {dateRange?.from && dateRange?.to && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Performance data for: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+          </div>
+        )}
       </div>
 
       {/* Error State */}
