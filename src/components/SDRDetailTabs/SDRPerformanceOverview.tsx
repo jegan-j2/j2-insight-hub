@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Phone, CheckCircle, Mail, Target } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Phone, PhoneCall, MessageSquare, Target } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { startOfWeek, format } from "date-fns";
 
@@ -21,6 +21,7 @@ interface SDRPerformanceOverviewProps {
     dms: number;
     sqls: number;
   };
+  latestSQL?: { contact_person: string; company_name: string; booking_date: string } | null;
 }
 
 interface Snapshot {
@@ -49,7 +50,7 @@ const ConversionFunnel = ({ levels }: { levels: { label: string; count: number; 
 
   return (
     <div className="flex justify-center py-4">
-      <svg width={containerWidth} height={totalHeight} viewBox={`0 0 ${containerWidth} ${totalHeight}`}>
+      <svg width="100%" height={totalHeight} viewBox={`0 0 ${containerWidth} ${totalHeight}`} preserveAspectRatio="xMidYMid meet">
         {levels.map((level, i) => {
           const widthPct = 1 - i * (0.6 / (levels.length - 1 || 1));
           const nextWidthPct = i < levels.length - 1 ? 1 - (i + 1) * (0.6 / (levels.length - 1 || 1)) : widthPct * 0.7;
@@ -77,22 +78,34 @@ const ConversionFunnel = ({ levels }: { levels: { label: string; count: number; 
   );
 };
 
-const TeamAvgLine = ({ value, teamAvg, formatter }: { value: number; teamAvg: number; formatter?: (v: number) => string }) => {
+interface TeamAvgInlineProps {
+  label: string;
+  value: number;
+  teamAvg: number;
+  formatter?: (v: number) => string;
+}
+
+const TeamAvgInline = ({ label, value, teamAvg, formatter }: TeamAvgInlineProps) => {
   const fmt = formatter || ((v: number) => v.toLocaleString());
-  if (teamAvg === 0 && value === 0) return null;
   const isAbove = value > teamAvg;
   const isBelow = value < teamAvg;
 
   return (
-    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-      {isAbove && <ArrowUpRight className="h-3 w-3 text-emerald-500" />}
-      {isBelow && <ArrowDownRight className="h-3 w-3 text-red-500" />}
-      Team avg: {fmt(teamAvg)}
+    <p className="text-[13px] text-muted-foreground flex items-center gap-1 flex-wrap">
+      <span>{label}</span>
+      {teamAvg > 0 || value > 0 ? (
+        <>
+          <span>·</span>
+          {isAbove && <ArrowUpRight className="h-3 w-3 text-emerald-500 shrink-0" />}
+          {isBelow && <ArrowDownRight className="h-3 w-3 text-red-500 shrink-0" />}
+          <span className="text-[11px]">Team avg: {fmt(teamAvg)}</span>
+        </>
+      ) : null}
     </p>
   );
 };
 
-export const SDRPerformanceOverview = ({ sdr, teamAverages }: SDRPerformanceOverviewProps) => {
+export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerformanceOverviewProps) => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [clientNames, setClientNames] = useState<Record<string, string>>({});
 
@@ -176,79 +189,109 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages }: SDRPerformanceOver
     ];
   }, [snapshots]);
 
-  const answerRate = sdr.dials > 0 ? ((sdr.answered / sdr.dials) * 100).toFixed(1) : "0";
-  const dmRate = sdr.dials > 0 ? ((sdr.dms / sdr.dials) * 100).toFixed(1) : "0";
-  const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0";
-
   const ta = teamAverages;
 
   return (
     <>
-      {/* KPI Cards */}
+      {/* KPI Cards — Activity Monitor style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#FFFBEB" }}>
+        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Phone className="h-5 w-5 text-amber-600" />
-              <div className="flex items-center gap-1">
-                {sdr.trend > 0 ? (
-                  <>
-                    <ArrowUpRight className="h-3 w-3 text-green-600" />
-                    <span className="text-[12px] text-green-600 font-medium">+{sdr.trend}%</span>
-                  </>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.dials.toLocaleString()}</p>
+                {ta ? (
+                  <TeamAvgInline label="Total Dials" value={sdr.dials} teamAvg={ta.dials} />
                 ) : (
-                  <>
-                    <ArrowDownRight className="h-3 w-3 text-red-600" />
-                    <span className="text-[12px] text-red-600 font-medium">{sdr.trend}%</span>
-                  </>
+                  <p className="text-[13px] text-muted-foreground">Total Dials</p>
                 )}
               </div>
+              <div className="h-9 w-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
+                <Phone className="h-5 w-5 text-amber-500" />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{sdr.dials.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground">Total Dials</p>
-            {ta && <TeamAvgLine value={sdr.dials} teamAvg={ta.dials} />}
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#ECFDF5" }}>
+        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
-              <span className="text-[12px] font-medium text-emerald-600">{answerRate}%</span>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.answered.toLocaleString()}</p>
+                {ta ? (
+                  <TeamAvgInline label="Answered" value={sdr.answered} teamAvg={ta.answered} />
+                ) : (
+                  <p className="text-[13px] text-muted-foreground">Answered</p>
+                )}
+              </div>
+              <div className="h-9 w-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
+                <PhoneCall className="h-5 w-5 text-emerald-500" />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{sdr.answered.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground">Answered</p>
-            {ta && <TeamAvgLine value={sdr.answered} teamAvg={ta.answered} />}
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#F0FDFA" }}>
+        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Mail className="h-5 w-5" style={{ color: "#14B8A6" }} />
-              <span className="text-[12px] font-medium" style={{ color: "#14B8A6" }}>{dmRate}%</span>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.dms}</p>
+                {ta ? (
+                  <TeamAvgInline label="DM Conversations" value={sdr.dms} teamAvg={ta.dms} />
+                ) : (
+                  <p className="text-[13px] text-muted-foreground">DM Conversations</p>
+                )}
+              </div>
+              <div className="h-9 w-9 rounded-lg bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center shrink-0">
+                <MessageSquare className="h-5 w-5" style={{ color: "#14B8A6" }} />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{sdr.dms}</p>
-            <p className="text-sm text-muted-foreground">DM Conversations</p>
-            {ta && <TeamAvgLine value={sdr.dms} teamAvg={ta.dms} />}
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm rounded-lg" style={{ backgroundColor: "#FFF1F2" }}>
+        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Target className="h-5 w-5" style={{ color: "#F43F5E" }} />
-              <span className="text-[12px] font-medium" style={{ color: "#F43F5E" }}>{conversionRate}%</span>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.sqls}</p>
+                {ta ? (
+                  <TeamAvgInline label="SQLs Generated" value={sdr.sqls} teamAvg={ta.sqls} />
+                ) : (
+                  <p className="text-[13px] text-muted-foreground">SQLs Generated</p>
+                )}
+              </div>
+              <div className="h-9 w-9 rounded-lg bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center shrink-0">
+                <Target className="h-5 w-5" style={{ color: "#F43F5E" }} />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">{sdr.sqls}</p>
-            <p className="text-sm text-muted-foreground">SQLs Generated</p>
-            {ta && <TeamAvgLine value={sdr.sqls} teamAvg={ta.sqls} />}
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 gap-6">
+      {/* Latest SQL Banner — below KPI cards */}
+      {latestSQL ? (
+        <div className="bg-[#ECFDF5] dark:bg-emerald-950/30 border-l-[3px] border-[#10B981] rounded-lg px-4 py-2.5 text-[13px]">
+          <span className="font-bold">🎯 Latest SQL</span>
+          <span className="text-muted-foreground"> · </span>
+          <span>{latestSQL.contact_person}</span>
+          {latestSQL.company_name && (
+            <>
+              <span className="text-muted-foreground"> at </span>
+              <span>{latestSQL.company_name}</span>
+            </>
+          )}
+          <span className="text-muted-foreground"> · </span>
+          <span>{format(new Date(latestSQL.booking_date + "T00:00:00"), "d MMM yyyy")}</span>
+        </div>
+      ) : (
+        <div className="bg-[#ECFDF5] dark:bg-emerald-950/30 border-l-[3px] border-[#10B981] rounded-lg px-4 py-2.5 text-[13px]">
+          <span className="font-bold">🎯</span>
+          <span className="text-muted-foreground"> Waiting for {sdr.name}'s first SQL to be booked...</span>
+        </div>
+      )}
+
+      {/* Side by side: Performance Trend + Conversion Funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Performance Trend (Weekly)</CardTitle>

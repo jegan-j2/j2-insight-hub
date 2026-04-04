@@ -9,7 +9,8 @@ interface SDRActivityTimelineProps {
   sdrName: string;
 }
 
-const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const fullDayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const fullDayPlurals = ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays"];
 
 const getHeatmapStyle = (value: number, isFuture: boolean): { bg: string; text: string } => {
   if (isFuture) return { bg: "transparent", text: "" };
@@ -108,7 +109,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
     const consistencyScore = totalWorkingDays > 0 ? (daysWithMin50 / totalWorkingDays) * 100 : 0;
 
     return {
-      mostActiveDay: dayLabels[mostActiveDay],
+      mostActiveDay,
       mostActiveDayAvg: mostActiveDayAvg.toFixed(1),
       avgDailyDials: totalWorkingDays > 0 ? (totalDials / totalWorkingDays).toFixed(1) : "0",
       bestWeekLabel: weeks[bestWeekIdx]?.label || "—",
@@ -127,12 +128,12 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 overflow-visible">
-            {/* Day labels */}
-            <div className="flex gap-2">
-              <div className="w-20" />
-              {dayLabels.map((day) => (
-                <div key={day} className="flex-1 text-center text-xs text-muted-foreground font-medium">
+          <div className="space-y-3 overflow-visible w-full">
+            {/* Day headers — CSS grid 5 equal columns */}
+            <div className="grid gap-2" style={{ gridTemplateColumns: "80px repeat(5, 1fr)" }}>
+              <div />
+              {fullDayLabels.map((day) => (
+                <div key={day} className="text-center text-xs text-muted-foreground font-medium">
                   {day}
                 </div>
               ))}
@@ -143,8 +144,8 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
               <div className="text-center text-sm text-muted-foreground py-8">Loading…</div>
             ) : (
               weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex gap-2 items-center">
-                  <div className="w-20 text-xs text-muted-foreground font-medium">
+                <div key={weekIndex} className="grid gap-2" style={{ gridTemplateColumns: "80px repeat(5, 1fr)" }}>
+                  <div className="text-xs text-muted-foreground font-medium flex items-center">
                     {week.label}
                   </div>
                   {week.dates.map((date, dayIndex) => {
@@ -158,14 +159,14 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
                       <div
                         key={dayIndex}
                         className={cn(
-                          "rounded flex items-center justify-center text-[12px] font-semibold transition-all relative group",
+                          "rounded flex items-center justify-center text-[13px] font-semibold transition-all relative group",
                           isFuture && "border border-dashed border-border bg-muted/20",
                           isToday && "ring-2 ring-primary ring-offset-1 ring-offset-background",
                           !isFuture && value > 0 && "hover:scale-105 hover:shadow-md cursor-pointer",
                           !isFuture && value === 0 && "border border-border/50"
                         )}
                         style={{
-                          width: 60, height: 60, minWidth: 60, minHeight: 60,
+                          height: 56,
                           ...(!isFuture ? { backgroundColor: style.bg, color: style.text } : {}),
                         }}
                       >
@@ -215,7 +216,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-foreground mb-1">{insights.mostActiveDay}s</p>
+            <p className="text-2xl font-bold text-foreground mb-1">{fullDayPlurals[insights.mostActiveDay]}</p>
             <p className="text-sm text-muted-foreground">Average: {insights.mostActiveDayAvg} dials</p>
           </CardContent>
         </Card>
@@ -242,23 +243,10 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              {/* Circular progress */}
               <div className="relative h-14 w-14 shrink-0">
                 <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
-                  <circle
-                    cx="18" cy="18" r="15.9"
-                    fill="none"
-                    stroke="hsl(var(--border))"
-                    strokeWidth="3"
-                  />
-                  <circle
-                    cx="18" cy="18" r="15.9"
-                    fill="none"
-                    stroke="#F59E0B"
-                    strokeWidth="3"
-                    strokeDasharray={`${insights.consistencyScore} ${100 - insights.consistencyScore}`}
-                    strokeLinecap="round"
-                  />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="hsl(var(--border))" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F59E0B" strokeWidth="3" strokeDasharray={`${insights.consistencyScore} ${100 - insights.consistencyScore}`} strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-xs font-bold text-foreground">{Math.round(insights.consistencyScore)}%</span>
@@ -283,7 +271,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Most Active Day</span>
-              <span className="text-lg font-bold text-foreground">{insights.mostActiveDay}s</span>
+              <span className="text-lg font-bold text-foreground">{fullDayPlurals[insights.mostActiveDay]}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Peak Performance Week</span>
