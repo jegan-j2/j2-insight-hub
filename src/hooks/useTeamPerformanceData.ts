@@ -23,12 +23,21 @@ interface LeaderboardEntry {
 export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientFilter?: string) => {
   const [loading, setLoading] = useState(true)
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([])
+  const [prevSnapshots, setPrevSnapshots] = useState<DailySnapshot[]>([])
   const [activityLogs, setActivityLogs] = useState<{ sdr_name: string; client_id: string; call_duration: number }[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const startDate = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : ''
   const endDate = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : ''
 
+  // Calculate previous period dates (same duration, immediately before)
+  const prevDates = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return { start: '', end: '' }
+    const duration = dateRange.to.getTime() - dateRange.from.getTime()
+    const prevEnd = new Date(dateRange.from.getTime() - 1)
+    const prevStart = new Date(prevEnd.getTime() - duration)
+    return { start: format(prevStart, 'yyyy-MM-dd'), end: format(prevEnd, 'yyyy-MM-dd') }
+  }, [dateRange])
   const fetchData = useCallback(async () => {
     if (!startDate || !endDate) return
 
