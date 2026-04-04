@@ -207,7 +207,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
 
       {/* Performance Insights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm rounded-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-600" />
