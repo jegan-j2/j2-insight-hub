@@ -158,7 +158,7 @@ const TeamPerformance = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <p className="text-sm text-[#0f172a] dark:text-slate-300 mb-1">{melbourneGreeting}</p>
+          <p className="text-[15px] text-[#0f172a] dark:text-slate-300 mb-1">{melbourneGreeting}</p>
           <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
@@ -207,7 +207,7 @@ const TeamPerformance = () => {
                 className={cn(
                   "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                   isActive
-                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
                     : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
                 )}
               >
@@ -223,7 +223,7 @@ const TeamPerformance = () => {
                 className={cn(
                   "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                   filterType === "custom"
-                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
                     : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
                 )}
               >

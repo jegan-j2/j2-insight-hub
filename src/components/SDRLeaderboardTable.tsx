@@ -159,14 +159,14 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
 
   const getAnswerRateBadge = (rate: string) => {
     const rateNum = parseFloat(rate);
-    if (rateNum === 0) {
-      return <Badge className="bg-[#FEE2E2] text-[#991B1B] border-[#FEE2E2] dark:bg-[#991B1B]/20 dark:text-red-400">{rate}%</Badge>;
-    } else if (rateNum >= 85) {
+    if (rateNum >= 85) {
       return <Badge className="bg-[#D1FAE5] text-[#065F46] border-[#D1FAE5] dark:bg-[#065F46]/20 dark:text-emerald-400">{rate}%</Badge>;
     } else if (rateNum >= 70) {
       return <Badge className="bg-[#DBEAFE] text-[#1E40AF] border-[#DBEAFE] dark:bg-[#1E40AF]/20 dark:text-blue-400">{rate}%</Badge>;
-    } else {
+    } else if (rateNum >= 50) {
       return <Badge className="bg-[#FEF3C7] text-[#92400E] border-[#FEF3C7] dark:bg-[#92400E]/20 dark:text-amber-400">{rate}%</Badge>;
+    } else {
+      return <Badge className="bg-[#FEE2E2] text-[#991B1B] border-[#FEE2E2] dark:bg-[#991B1B]/20 dark:text-red-400">{rate}%</Badge>;
     }
   };
 
