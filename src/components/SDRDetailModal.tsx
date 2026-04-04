@@ -38,7 +38,12 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
   const [isExporting, setIsExporting] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { toast } = useToast();
-  const conversionRate = ((sdr.sqls / sdr.dials) * 100).toFixed(2);
+  const { isAdmin, isManager, isSdr, isClient } = useUserRole();
+  const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
+
+  // Notes tab: visible for admin/manager always, SDR on own profile only, hidden for clients
+  const showNotesTab = isAdmin || isManager || isSdr;
+  const isSdrViewingOwn = isSdr; // SDR sees simplified view
 
   const handleExportPDF = () => {
     setIsExporting(true);
