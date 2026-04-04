@@ -191,7 +191,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
       return <span className="text-[11px] text-muted-foreground italic block mt-0.5">No SQLs yet</span>;
     }
     const daysAgo = differenceInDays(new Date(), new Date(lastDate));
-    return <span className="text-[11px] text-muted-foreground block mt-0.5">Last: {daysAgo}d ago</span>;
+    return <span className="text-[11px] text-muted-foreground block mt-0.5">Last SQL: {daysAgo} days ago</span>;
   };
 
   return (
