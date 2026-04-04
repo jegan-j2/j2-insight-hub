@@ -125,6 +125,31 @@ const TeamPerformance = () => {
     [clients]
   );
 
+  // Melbourne timezone greeting
+  const melbourneGreeting = useMemo(() => {
+    const now = new Date();
+    const melb = toZonedTime(now, "Australia/Melbourne");
+    const hour = melb.getHours();
+    if (hour >= 5 && hour < 12) return "Good morning";
+    if (hour >= 12 && hour < 17) return "Good afternoon";
+    if (hour >= 17 && hour < 21) return "Good evening";
+    return "Welcome back";
+  }, []);
+
+  // Team totals
+  const teamTotals = useMemo(() => {
+    let dials = 0, answered = 0, dms = 0, sqls = 0;
+    for (const sdr of leaderboard) {
+      dials += Number(sdr.totalDials) || 0;
+      answered += Number(sdr.totalAnswered) || 0;
+      dms += Number(sdr.totalDMs) || 0;
+      sqls += Number(sdr.totalSQLs) || 0;
+    }
+    const answerRate = dials > 0 ? ((answered / dials) * 100).toFixed(1) : "0.0";
+    const convRate = dials > 0 ? ((sqls / dials) * 100).toFixed(1) : "0.0";
+    return { dials, answered, answerRate, dms, sqls, convRate };
+  }, [leaderboard]);
+
   // Only show full-page loader on first load (no cached data yet)
   if (loading && leaderboard.length === 0) return <J2Loader />;
 
@@ -133,6 +158,7 @@ const TeamPerformance = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
+          <p className="text-sm text-[#0f172a] dark:text-slate-300 mb-1">{melbourneGreeting}</p>
           <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
