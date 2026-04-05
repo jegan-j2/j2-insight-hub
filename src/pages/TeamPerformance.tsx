@@ -366,6 +366,32 @@ const TeamPerformance = () => {
         </>
       ) : null}
 
+      {/* Team Pace Indicator — only for This Month */}
+      {paceData && leaderboard.length > 0 && (
+        <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3">
+          <p className="text-[13px] text-[#0f172a] dark:text-slate-200">
+            📊 <span className="font-semibold">Monthly Pace:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by month end
+          </p>
+          {targetSQLs && targetSQLs > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                <span>{paceData.totalSQLs} of {targetSQLs} target SQLs</span>
+                <span>{Math.min(100, Math.round((paceData.totalSQLs / targetSQLs) * 100))}%</span>
+              </div>
+              <div className="w-full h-2 bg-[#E2E8F0] dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (paceData.totalSQLs / targetSQLs) * 100)}%`,
+                    backgroundColor: (paceData.totalSQLs / targetSQLs) >= 0.8 ? "#10B981" : (paceData.totalSQLs / targetSQLs) >= 0.5 ? "#F59E0B" : "#EF4444",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Team Totals Bar — between table and chart */}
       {leaderboard.length > 0 && (
         <div className="bg-[#F8FAFC] dark:bg-slate-800 border-t border-[#E2E8F0] dark:border-slate-700 rounded-t-lg px-6 py-4">
