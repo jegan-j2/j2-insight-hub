@@ -134,6 +134,11 @@ const TeamPerformance = () => {
     [clients]
   );
 
+  const selectedClient = useMemo(() => {
+    if (!clientFilter || clientFilter === "all") return null;
+    return clients.find(c => c.client_id === clientFilter) || null;
+  }, [clientFilter, clients]);
+
   // Melbourne timezone greeting
   const [firstName, setFirstName] = useState<string | null>(null);
   useEffect(() => {
