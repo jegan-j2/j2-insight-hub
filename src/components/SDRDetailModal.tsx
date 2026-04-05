@@ -31,6 +31,7 @@ interface SDRDetailModalProps {
   };
   globalDateRange?: DateRange;
   campaignDates?: { start: string; end: string } | null;
+  parentFilterType?: string;
 }
 
 const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; end: string } | null): DateRange => {
