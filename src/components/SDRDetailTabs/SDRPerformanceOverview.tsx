@@ -93,14 +93,17 @@ const TeamAvgInline = ({ label, value, teamAvg, formatter }: TeamAvgInlineProps)
   const isBelow = value < teamAvg;
 
   return (
-    <p className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
-      <span>{label}</span>
-      <span>·</span>
-      {isAbove && <span className="text-emerald-500">↗</span>}
-      {isBelow && <span className="text-red-500">↘</span>}
-      {!isAbove && !isBelow && <span>→</span>}
-      <span>Team avg: {fmt(teamAvg)}</span>
-    </p>
+    <div className="mt-1">
+      <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+        <span>{label}</span>
+        <span>·</span>
+        {isAbove && <span className="text-emerald-500">↗</span>}
+        {isBelow && <span className="text-red-500">↘</span>}
+        {!isAbove && !isBelow && <span>→</span>}
+      </p>
+      <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+      <p className="text-[11px] text-muted-foreground">Team avg: {fmt(teamAvg)}</p>
+    </div>
   );
 };
 
