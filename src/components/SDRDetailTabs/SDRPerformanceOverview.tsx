@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ArrowUpRight, ArrowDownRight, Phone, PhoneCall, MessageSquare, Target } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { startOfWeek, format, isWithinInterval } from "date-fns";
+import { startOfWeek, format, isWithinInterval, differenceInDays, eachDayOfInterval } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
 interface SDRPerformanceOverviewProps {
@@ -110,6 +110,7 @@ const TeamAvgInline = ({ label, value, teamAvg, formatter }: TeamAvgInlineProps)
 export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange }: SDRPerformanceOverviewProps) => {
   const [allSnapshots, setAllSnapshots] = useState<Snapshot[]>([]);
   const [clientNames, setClientNames] = useState<Record<string, string>>({});
+  const [lastSQLDate, setLastSQLDate] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,6 +130,22 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
       }
     };
     fetchData();
+  }, [sdr.name]);
+
+  // Fetch last SQL date for this SDR
+  useEffect(() => {
+    const fetchLastSQL = async () => {
+      const { data } = await supabase
+        .from("sql_meetings")
+        .select("booking_date")
+        .eq("sdr_name", sdr.name)
+        .not("meeting_status", "eq", "cancelled")
+        .order("booking_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLastSQLDate(data?.booking_date ?? null);
+    };
+    fetchLastSQL();
   }, [sdr.name]);
 
   // Filter snapshots by date range
@@ -154,19 +171,45 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
     );
   }, [snapshots]);
 
+  // Determine if we should show daily vs weekly trend
+  const isShortRange = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return false;
+    return differenceInDays(dateRange.to, dateRange.from) <= 7;
+  }, [dateRange]);
+
   const performanceTrendData = useMemo(() => {
-    const weekMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+    if (isShortRange && dateRange?.from && dateRange?.to) {
+      // Daily data points for Last 7 Days
+      const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+      return days.map(day => {
+        const key = format(day, "yyyy-MM-dd");
+        const daySnapshots = snapshots.filter(s => s.snapshot_date === key);
+        return {
+          week: format(day, "EEE, MMM d"),
+          dials: daySnapshots.reduce((sum, s) => sum + (s.dials || 0), 0),
+          answered: daySnapshots.reduce((sum, s) => sum + (s.answered || 0), 0),
+          dms: daySnapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0),
+          sqls: daySnapshots.reduce((sum, s) => sum + (s.sqls || 0), 0),
+        };
+      });
+    }
+    // Weekly aggregation
+    const weekMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number; sortKey: string }>();
     snapshots.forEach((s) => {
-      const weekStart = format(startOfWeek(new Date(s.snapshot_date), { weekStartsOn: 1 }), "MMM dd");
-      const entry = weekMap.get(weekStart) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
+      const ws = startOfWeek(new Date(s.snapshot_date + "T00:00:00"), { weekStartsOn: 1 });
+      const weekLabel = format(ws, "MMM dd");
+      const sortKey = format(ws, "yyyy-MM-dd");
+      const entry = weekMap.get(weekLabel) || { dials: 0, answered: 0, dms: 0, sqls: 0, sortKey };
       entry.dials += s.dials || 0;
       entry.answered += s.answered || 0;
       entry.dms += s.dms_reached || 0;
       entry.sqls += s.sqls || 0;
-      weekMap.set(weekStart, entry);
+      weekMap.set(weekLabel, entry);
     });
-    return Array.from(weekMap.entries()).map(([week, data]) => ({ week, ...data }));
-  }, [snapshots]);
+    return Array.from(weekMap.entries())
+      .sort((a, b) => a[1].sortKey.localeCompare(b[1].sortKey))
+      .map(([week, data]) => ({ week, dials: data.dials, answered: data.answered, dms: data.dms, sqls: data.sqls }));
+  }, [snapshots, isShortRange, dateRange]);
 
   const clientBreakdownData = useMemo(() => {
     const clientMap = new Map<string, { dials: number; sqls: number }>();
@@ -207,6 +250,13 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
 
   const ta = teamAverages;
   const kpi = filteredKPIs;
+
+  // Days since last SQL
+  const daysSinceLastSQL = useMemo(() => {
+    if (lastSQLDate === undefined) return undefined; // loading
+    if (lastSQLDate === null) return null; // never
+    return differenceInDays(new Date(), new Date(lastSQLDate));
+  }, [lastSQLDate]);
 
   return (
     <>
@@ -276,6 +326,12 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
                 ) : (
                   <p className="text-[13px] text-muted-foreground">SQLs Generated</p>
                 )}
+                {/* Days since last SQL note */}
+                {kpi.sqls === 0 && daysSinceLastSQL !== undefined && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {daysSinceLastSQL === null ? "No SQLs booked yet" : `Last SQL: ${daysSinceLastSQL}d ago`}
+                  </p>
+                )}
               </div>
               <div className="h-9 w-9 rounded-lg bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center shrink-0">
                 <Target className="h-5 w-5" style={{ color: "#F43F5E" }} />
@@ -311,7 +367,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
       <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
-            <CardTitle>Performance Trend (Weekly)</CardTitle>
+            <CardTitle>Performance Trend ({isShortRange ? "Daily" : "Weekly"})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="w-full h-[300px]">
