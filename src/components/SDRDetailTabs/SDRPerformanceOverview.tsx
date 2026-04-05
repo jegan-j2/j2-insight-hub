@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ArrowUpRight, ArrowDownRight, Phone, PhoneCall, MessageSquare, Target, Percent } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { startOfWeek, format, isWithinInterval, differenceInDays, eachDayOfInterval } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
 interface SDRPerformanceOverviewProps {
@@ -15,6 +15,7 @@ interface SDRPerformanceOverviewProps {
     dms: number;
     sqls: number;
     trend: number;
+    clientId?: string;
   };
   teamAverages?: {
     dials: number;
@@ -24,16 +25,7 @@ interface SDRPerformanceOverviewProps {
   };
   latestSQL?: { contact_person: string; company_name: string; booking_date: string } | null;
   dateRange?: DateRange;
-}
-
-interface Snapshot {
-  snapshot_date: string;
-  client_id: string | null;
-  dials: number | null;
-  answered: number | null;
-  dms_reached: number | null;
-  mqls: number | null;
-  sqls: number | null;
+  clientId?: string;
 }
 
 const METRIC_COLORS = {
@@ -107,160 +99,126 @@ const TeamAvgInline = ({ label, value, teamAvg, formatter }: TeamAvgInlineProps)
   );
 };
 
-export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange }: SDRPerformanceOverviewProps) => {
-  const [allSnapshots, setAllSnapshots] = useState<Snapshot[]>([]);
-  const [clientNames, setClientNames] = useState<Record<string, string>>({});
+export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange, clientId }: SDRPerformanceOverviewProps) => {
+  const effectiveClientId = clientId || sdr.clientId || null;
+
+  // KPI data from get_sdr_performance RPC
+  const [kpi, setKpi] = useState({ dials: 0, answered: 0, dms: 0, sqls: 0, answerRate: 0, convRate: 0, avgTalkTime: 0 });
+  // Trend data from get_sdr_weekly_trend RPC
+  const [trendData, setTrendData] = useState<{ week_start: string; dials: number; answered: number; dm_conversations: number; sqls: number }[]>([]);
+  // Client breakdown from get_sdr_client_breakdown RPC
+  const [clientBreakdown, setClientBreakdown] = useState<{ client_id: string; client_name: string; dials: number; sqls: number; conv_rate: number }[]>([]);
   const [lastSQLDate, setLastSQLDate] = useState<string | null | undefined>(undefined);
 
+  const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : null;
+  const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : null;
+
+  // Fetch all data via RPCs
   useEffect(() => {
-    const fetchData = async () => {
-      const [{ data: snaps }, { data: clients }] = await Promise.all([
-        supabase
-          .from("daily_snapshots")
-          .select("snapshot_date, client_id, dials, answered, dms_reached, mqls, sqls")
-          .eq("sdr_name", sdr.name)
-          .order("snapshot_date", { ascending: true }),
-        supabase.from("clients").select("client_id, client_name"),
+    if (!startDate || !endDate) return;
+    const fetchAll = async () => {
+      const params = {
+        p_sdr_name: sdr.name,
+        p_start_date: startDate + "T00:00:00+11:00",
+        p_end_date: endDate + "T23:59:59+11:00",
+        p_client_id: effectiveClientId,
+      };
+
+      const [perfRes, trendRes, breakdownRes] = await Promise.all([
+        supabase.rpc("get_sdr_performance", params),
+        supabase.rpc("get_sdr_weekly_trend", params),
+        supabase.rpc("get_sdr_client_breakdown", {
+          p_sdr_name: sdr.name,
+          p_start_date: startDate + "T00:00:00+11:00",
+          p_end_date: endDate + "T23:59:59+11:00",
+        }),
       ]);
-      if (snaps) setAllSnapshots(snaps);
-      if (clients) {
-        const map: Record<string, string> = {};
-        for (const c of clients) map[c.client_id] = c.client_name;
-        setClientNames(map);
+
+      if (perfRes.data && perfRes.data.length > 0) {
+        const r = perfRes.data[0];
+        setKpi({
+          dials: Number(r.total_dials) || 0,
+          answered: Number(r.answered) || 0,
+          dms: Number(r.dm_conversations) || 0,
+          sqls: Number(r.sqls) || 0,
+          answerRate: Number(r.answer_rate) || 0,
+          convRate: Number(r.conv_rate) || 0,
+          avgTalkTime: Number(r.avg_talk_time_seconds) || 0,
+        });
+      } else {
+        setKpi({ dials: 0, answered: 0, dms: 0, sqls: 0, answerRate: 0, convRate: 0, avgTalkTime: 0 });
+      }
+
+      if (trendRes.data) {
+        setTrendData(trendRes.data as any[]);
+      } else {
+        setTrendData([]);
+      }
+
+      if (breakdownRes.data) {
+        setClientBreakdown(breakdownRes.data as any[]);
+      } else {
+        setClientBreakdown([]);
       }
     };
-    fetchData();
-  }, [sdr.name]);
+    fetchAll();
+  }, [sdr.name, startDate, endDate, effectiveClientId]);
 
-  // Fetch last SQL date for this SDR
+  // Fetch last SQL date for this SDR (global, not filtered by period)
   useEffect(() => {
     const fetchLastSQL = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("sql_meetings")
         .select("booking_date")
         .eq("sdr_name", sdr.name)
-        .not("meeting_status", "eq", "cancelled")
+        .not("meeting_status", "eq", "cancelled");
+      if (effectiveClientId) query = query.eq("client_id", effectiveClientId);
+      const { data } = await query
         .order("booking_date", { ascending: false })
         .limit(1)
         .maybeSingle();
       setLastSQLDate(data?.booking_date ?? null);
     };
     fetchLastSQL();
-  }, [sdr.name]);
+  }, [sdr.name, effectiveClientId]);
 
-  // Filter snapshots by date range
-  const snapshots = useMemo(() => {
-    if (!dateRange?.from || !dateRange?.to) return allSnapshots;
-    return allSnapshots.filter((s) => {
-      const d = new Date(s.snapshot_date + "T00:00:00");
-      return isWithinInterval(d, { start: dateRange.from!, end: dateRange.to! });
-    });
-  }, [allSnapshots, dateRange]);
-
-  // Compute KPI totals from filtered snapshots
-  const filteredKPIs = useMemo(() => {
-    return snapshots.reduce(
-      (acc, s) => {
-        acc.dials += s.dials || 0;
-        acc.answered += s.answered || 0;
-        acc.dms += s.dms_reached || 0;
-        acc.sqls += s.sqls || 0;
-        return acc;
-      },
-      { dials: 0, answered: 0, dms: 0, sqls: 0 }
-    );
-  }, [snapshots]);
-
-  // Determine if we should show daily vs weekly trend
-  // Use daily view when range is short OR when only 1 week of weekly data exists
-  const weekCount = useMemo(() => {
-    const weekMap = new Set<string>();
-    snapshots.forEach((s) => {
-      const ws = startOfWeek(new Date(s.snapshot_date + "T00:00:00"), { weekStartsOn: 1 });
-      weekMap.add(format(ws, "yyyy-MM-dd"));
-    });
-    return weekMap.size;
-  }, [snapshots]);
-
+  // Determine daily vs weekly view
   const isShortRange = useMemo(() => {
     if (!dateRange?.from || !dateRange?.to) return false;
-    return differenceInDays(dateRange.to, dateRange.from) <= 7 || weekCount <= 1;
-  }, [dateRange, weekCount]);
+    const days = differenceInDays(dateRange.to, dateRange.from);
+    return days <= 7 || trendData.length <= 1;
+  }, [dateRange, trendData]);
 
+  // Build performance trend chart data
   const performanceTrendData = useMemo(() => {
-    if (isShortRange && dateRange?.from && dateRange?.to) {
-      // Daily data points — cap at today, skip weekends
-      const endDate = dateRange.to > new Date() ? new Date() : dateRange.to;
-      const days = eachDayOfInterval({ start: dateRange.from, end: endDate })
-        .filter(d => d.getDay() !== 0 && d.getDay() !== 6); // Mon-Fri only
-      return days.map(day => {
-        const key = format(day, "yyyy-MM-dd");
-        const daySnapshots = snapshots.filter(s => s.snapshot_date === key);
-        return {
-          week: format(day, "EEE, MMM d"),
-          dials: daySnapshots.reduce((sum, s) => sum + (s.dials || 0), 0),
-          answered: daySnapshots.reduce((sum, s) => sum + (s.answered || 0), 0),
-          dms: daySnapshots.reduce((sum, s) => sum + (s.dms_reached || 0), 0),
-          sqls: daySnapshots.reduce((sum, s) => sum + (s.sqls || 0), 0),
-        };
-      });
-    }
-    // Weekly aggregation
-    const weekMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number; sortKey: string }>();
-    snapshots.forEach((s) => {
-      const ws = startOfWeek(new Date(s.snapshot_date + "T00:00:00"), { weekStartsOn: 1 });
-      const weekLabel = format(ws, "MMM dd");
-      const sortKey = format(ws, "yyyy-MM-dd");
-      const entry = weekMap.get(weekLabel) || { dials: 0, answered: 0, dms: 0, sqls: 0, sortKey };
-      entry.dials += s.dials || 0;
-      entry.answered += s.answered || 0;
-      entry.dms += s.dms_reached || 0;
-      entry.sqls += s.sqls || 0;
-      weekMap.set(weekLabel, entry);
-    });
-    return Array.from(weekMap.entries())
-      .sort((a, b) => a[1].sortKey.localeCompare(b[1].sortKey))
-      .map(([week, data]) => ({ week, dials: data.dials, answered: data.answered, dms: data.dms, sqls: data.sqls }));
-  }, [snapshots, isShortRange, dateRange]);
-
-  const clientBreakdownData = useMemo(() => {
-    const clientMap = new Map<string, { dials: number; sqls: number }>();
-    snapshots.forEach((s) => {
-      const cid = s.client_id || "Unknown";
-      const entry = clientMap.get(cid) || { dials: 0, sqls: 0 };
-      entry.dials += s.dials || 0;
-      entry.sqls += s.sqls || 0;
-      clientMap.set(cid, entry);
-    });
-    return Array.from(clientMap.entries()).map(([client, data]) => ({
-      client,
-      clientName: clientNames[client] || client,
-      dials: data.dials,
-      sqls: data.sqls,
-      conversionRate: data.dials > 0 ? ((data.sqls / data.dials) * 100).toFixed(2) + "%" : "0%",
+    if (trendData.length === 0) return [];
+    return trendData.map((w) => ({
+      week: format(new Date(w.week_start + "T00:00:00"), isShortRange ? "EEE, MMM d" : "MMM dd"),
+      dials: Number(w.dials) || 0,
+      answered: Number(w.answered) || 0,
+      dms: Number(w.dm_conversations) || 0,
+      sqls: Number(w.sqls) || 0,
     }));
-  }, [snapshots, clientNames]);
+  }, [trendData, isShortRange]);
 
   const funnelLevels = useMemo(() => {
-    const totals = filteredKPIs;
     const pct = (num: number, den: number) => den > 0 ? ((num / den) * 100).toFixed(1) + "%" : "0.0%";
     return [
-      { label: "Dials", count: totals.dials, color: METRIC_COLORS.dials, pctOfPrev: "100%" },
-      { label: "Answered", count: totals.answered, color: METRIC_COLORS.answered, pctOfPrev: pct(totals.answered, totals.dials) },
-      { label: "DM Conversations", count: totals.dms, color: METRIC_COLORS.dms, pctOfPrev: pct(totals.dms, totals.answered) },
-      { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.dms) },
+      { label: "Dials", count: kpi.dials, color: METRIC_COLORS.dials, pctOfPrev: "100%" },
+      { label: "Answered", count: kpi.answered, color: METRIC_COLORS.answered, pctOfPrev: pct(kpi.answered, kpi.dials) },
+      { label: "DM Conversations", count: kpi.dms, color: METRIC_COLORS.dms, pctOfPrev: pct(kpi.dms, kpi.answered) },
+      { label: "SQLs", count: kpi.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(kpi.sqls, kpi.dms) },
     ];
-  }, [filteredKPIs]);
+  }, [kpi]);
 
   const ta = teamAverages;
-  const kpi = filteredKPIs;
-  const answerRate = kpi.dials > 0 ? ((kpi.answered / kpi.dials) * 100).toFixed(1) : "0.0";
+  const answerRate = kpi.answerRate.toFixed(1);
   const teamAnswerRate = ta && ta.dials > 0 ? (ta.answered / ta.dials) * 100 : 0;
 
   // Days since last SQL
   const daysSinceLastSQL = useMemo(() => {
-    if (lastSQLDate === undefined) return undefined; // loading
-    if (lastSQLDate === null) return null; // never
+    if (lastSQLDate === undefined) return undefined;
+    if (lastSQLDate === null) return null;
     return differenceInDays(new Date(), new Date(lastSQLDate));
   }, [lastSQLDate]);
 
@@ -304,7 +262,6 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
           </CardContent>
         </Card>
 
-        {/* Answer Rate card */}
         <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
@@ -365,7 +322,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
         </Card>
       </div>
 
-      {/* Latest SQL Banner — below KPI cards */}
+      {/* Latest SQL Banner */}
       {latestSQL ? (
         <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-lg px-4 py-2.5 text-[13px]">
           <span className="font-bold">🎯 Latest SQL</span>
@@ -391,27 +348,31 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
-            <CardTitle>Performance Trend ({isShortRange ? "Daily" : "Weekly"})</CardTitle>
+            <CardTitle>Performance Trend ({trendData.length <= 1 ? "Daily" : "Weekly"})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="w-full h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={performanceTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis dataKey="week" className="text-xs" tickLine={false} />
-                  <YAxis className="text-xs" tickLine={false} domain={[0, 'auto']} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
-                    labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
-                  />
-                  <Legend />
-                  <Line type="monotone" dataKey="dials" stroke={METRIC_COLORS.dials} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.dials }} activeDot={{ r: 6 }} name="Dials" />
-                  <Line type="monotone" dataKey="answered" stroke={METRIC_COLORS.answered} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.answered }} activeDot={{ r: 6 }} name="Answered" />
-                  <Line type="monotone" dataKey="dms" stroke={METRIC_COLORS.dms} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.dms }} activeDot={{ r: 6 }} name="DMs" />
-                  <Line type="monotone" dataKey="sqls" stroke={METRIC_COLORS.sqls} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.sqls }} activeDot={{ r: 6 }} name="SQLs" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {performanceTrendData.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">No data for this period</div>
+            ) : (
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={performanceTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                    <XAxis dataKey="week" className="text-xs" tickLine={false} />
+                    <YAxis className="text-xs" tickLine={false} domain={[0, 'auto']} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                      labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="dials" stroke={METRIC_COLORS.dials} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.dials }} activeDot={{ r: 6 }} name="Dials" />
+                    <Line type="monotone" dataKey="answered" stroke={METRIC_COLORS.answered} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.answered }} activeDot={{ r: 6 }} name="Answered" />
+                    <Line type="monotone" dataKey="dms" stroke={METRIC_COLORS.dms} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.dms }} activeDot={{ r: 6 }} name="DMs" />
+                    <Line type="monotone" dataKey="sqls" stroke={METRIC_COLORS.sqls} strokeWidth={2} dot={{ r: 3, fill: METRIC_COLORS.sqls }} activeDot={{ r: 6 }} name="SQLs" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -425,7 +386,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
         </Card>
       </div>
 
-      {clientBreakdownData.length > 1 && (
+      {clientBreakdown.length > 1 && (
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Client Breakdown</CardTitle>
@@ -441,12 +402,12 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
                 </TableRow>
               </TableHeader>
               <TableBody className="table-striped">
-                {clientBreakdownData.map((client) => (
-                  <TableRow key={client.client}>
-                    <TableCell className="font-medium text-left">{client.clientName}</TableCell>
-                    <TableCell className="text-center">{client.dials.toLocaleString()}</TableCell>
-                    <TableCell className="text-center">{client.sqls}</TableCell>
-                    <TableCell className="text-center">{client.conversionRate}</TableCell>
+                {clientBreakdown.map((row) => (
+                  <TableRow key={row.client_id}>
+                    <TableCell className="font-medium text-left">{row.client_name || row.client_id}</TableCell>
+                    <TableCell className="text-center">{Number(row.dials).toLocaleString()}</TableCell>
+                    <TableCell className="text-center">{Number(row.sqls)}</TableCell>
+                    <TableCell className="text-center">{Number(row.conv_rate).toFixed(2)}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

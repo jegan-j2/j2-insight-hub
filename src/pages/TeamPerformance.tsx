@@ -467,7 +467,7 @@ const TeamPerformance = () => {
       {paceData && leaderboard.length > 0 && (
         <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3">
           <p className="text-[13px] text-[#0f172a] dark:text-slate-200">
-            📊 <span className="font-semibold">{paceData.label}:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by {paceData.endLabel}
+            <span className="font-semibold">{paceData.label}:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by {paceData.endLabel}
           </p>
           {targetSQLs && targetSQLs > 0 && (
             <div className="mt-2">
@@ -480,7 +480,7 @@ const TeamPerformance = () => {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(100, (paceData.totalSQLs / targetSQLs) * 100)}%`,
-                    backgroundColor: (paceData.totalSQLs / targetSQLs) >= 0.8 ? "#10B981" : (paceData.totalSQLs / targetSQLs) >= 0.5 ? "#F59E0B" : "#EF4444",
+                    backgroundColor: paceData.runRate >= 0.8 ? "#10B981" : paceData.runRate >= 0.5 ? "#F59E0B" : "#EF4444",
                   }}
                 />
               </div>

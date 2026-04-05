@@ -10,28 +10,32 @@ import type { DateRange } from "react-day-picker";
 interface SDRMeetingsResultsProps {
   sdrName: string;
   dateRange?: DateRange;
+  clientId?: string;
 }
 
-export const SDRMeetingsResults = ({ sdrName, dateRange }: SDRMeetingsResultsProps) => {
+export const SDRMeetingsResults = ({ sdrName, dateRange, clientId }: SDRMeetingsResultsProps) => {
   const [allMeetings, setAllMeetings] = useState<SQLMeeting[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    let mtgQuery = supabase
+      .from("sql_meetings")
+      .select("*")
+      .eq("sdr_name", sdrName)
+      .order("booking_date", { ascending: false });
+    if (clientId) mtgQuery = mtgQuery.eq("client_id", clientId);
+
     const [{ data: mtgs }, { data: cls }] = await Promise.all([
-      supabase
-        .from("sql_meetings")
-        .select("*")
-        .eq("sdr_name", sdrName)
-        .order("booking_date", { ascending: false }),
+      mtgQuery,
       supabase.from("clients").select("*"),
     ]);
 
     if (mtgs) setAllMeetings(mtgs as unknown as SQLMeeting[]);
     if (cls) setClients(cls as unknown as Client[]);
     setLoading(false);
-  }, [sdrName]);
+  }, [sdrName, clientId]);
 
   useEffect(() => {
     fetchData();
