@@ -27,6 +27,9 @@ interface ClientOption {
   client_id: string;
   client_name: string;
   logo_url: string | null;
+  campaign_start: string | null;
+  campaign_end: string | null;
+  target_sqls: number | null;
 }
 
 const TeamPerformance = () => {
