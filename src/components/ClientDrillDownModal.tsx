@@ -65,19 +65,19 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
             </div>
           ) : (
             <Table>
-              <TableHeader>
-              <TableRow className="bg-[#f1f5f9] dark:bg-[#1e293b]">
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Date</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact Person</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Company</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Duration</TableHead>
+              <TableHeader className="table-header-navy">
+              <TableRow>
+                  <TableHead className="px-4 py-3 text-left">Date</TableHead>
+                  <TableHead className="px-4 py-3 text-left">Contact Person</TableHead>
+                  <TableHead className="px-4 py-3 text-left">Company</TableHead>
+                  <TableHead className="px-4 py-3 text-left">Duration</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="table-striped">
                 {paginated.map((record, index) => {
                   const dur = formatDuration(record.call_duration);
                   return (
-                    <TableRow key={record.id} className={`border-border/50 hover:bg-muted/20 ${index % 2 === 0 ? "bg-muted/5" : ""}`}>
+                    <TableRow key={record.id}>
                       <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
                         {format(new Date(record.activity_date), "MMM dd, yyyy")}
                       </TableCell>
