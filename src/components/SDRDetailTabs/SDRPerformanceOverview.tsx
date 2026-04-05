@@ -250,6 +250,8 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
 
   const ta = teamAverages;
   const kpi = filteredKPIs;
+  const answerRate = kpi.dials > 0 ? ((kpi.answered / kpi.dials) * 100).toFixed(1) : "0.0";
+  const teamAnswerRate = ta && ta.dials > 0 ? (ta.answered / ta.dials) * 100 : 0;
 
   // Days since last SQL
   const daysSinceLastSQL = useMemo(() => {
