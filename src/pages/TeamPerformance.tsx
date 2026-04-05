@@ -1,4 +1,4 @@
-import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay, eachDayOfInterval, isWeekend } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -167,6 +167,44 @@ const TeamPerformance = () => {
     return { dials, answered, answerRate, dms, sqls, convRate };
   }, [leaderboard]);
 
+  // Team pace indicator — only for "This Month"
+  const [targetSQLs, setTargetSQLs] = useState<number | null>(null);
+  useEffect(() => {
+    if (filterType !== "thisMonth") { setTargetSQLs(null); return; }
+    const fetchTargets = async () => {
+      const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
+      if (cid) {
+        const { data } = await supabase.from("clients").select("target_sqls").eq("client_id", cid).maybeSingle();
+        setTargetSQLs(data?.target_sqls ?? null);
+      } else {
+        const { data } = await supabase.from("clients").select("target_sqls").eq("status", "active");
+        if (data) {
+          const total = data.reduce((s, c) => s + (c.target_sqls || 0), 0);
+          setTargetSQLs(total > 0 ? total : null);
+        }
+      }
+    };
+    fetchTargets();
+  }, [filterType, clientFilter]);
+
+  const paceData = useMemo(() => {
+    if (filterType !== "thisMonth") return null;
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const today = now > monthEnd ? monthEnd : now;
+    
+    const allWorkingDays = eachDayOfInterval({ start: monthStart, end: monthEnd }).filter(d => !isWeekend(d));
+    const elapsedWorkingDays = eachDayOfInterval({ start: monthStart, end: today }).filter(d => !isWeekend(d)).length;
+    const totalWorkingDays = allWorkingDays.length;
+    
+    const totalSQLs = teamTotals.sqls;
+    const runRate = elapsedWorkingDays > 0 ? totalSQLs / elapsedWorkingDays : 0;
+    const projected = Math.round(runRate * totalWorkingDays);
+    
+    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, runRate, projected };
+  }, [filterType, teamTotals.sqls]);
+
   // Only show full-page loader on first load (no cached data yet)
   if (loading && leaderboard.length === 0) return <J2Loader />;
 
@@ -327,6 +365,32 @@ const TeamPerformance = () => {
           />
         </>
       ) : null}
+
+      {/* Team Pace Indicator — only for This Month */}
+      {paceData && leaderboard.length > 0 && (
+        <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3">
+          <p className="text-[13px] text-[#0f172a] dark:text-slate-200">
+            📊 <span className="font-semibold">Monthly Pace:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by month end
+          </p>
+          {targetSQLs && targetSQLs > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                <span>{paceData.totalSQLs} of {targetSQLs} target SQLs</span>
+                <span>{Math.min(100, Math.round((paceData.totalSQLs / targetSQLs) * 100))}%</span>
+              </div>
+              <div className="w-full h-2 bg-[#E2E8F0] dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (paceData.totalSQLs / targetSQLs) * 100)}%`,
+                    backgroundColor: (paceData.totalSQLs / targetSQLs) >= 0.8 ? "#10B981" : (paceData.totalSQLs / targetSQLs) >= 0.5 ? "#F59E0B" : "#EF4444",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Team Totals Bar — between table and chart */}
       {leaderboard.length > 0 && (

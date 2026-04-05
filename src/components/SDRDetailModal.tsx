@@ -192,9 +192,9 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              {/* Filtered period — below date tabs, right-aligned */}
+              {/* Filtered period — below date tabs, left-aligned */}
               {dateRange?.from && dateRange?.to && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground justify-end">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground justify-start">
                   <CalendarIcon className="h-4 w-4" />
                   <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
                 </div>
