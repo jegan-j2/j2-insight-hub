@@ -2,16 +2,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Calendar, TrendingUp, Target } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, format, isWithinInterval } from "date-fns";
 import { SQLBookedMeetingsTable } from "@/components/SQLBookedMeetingsTable";
 import type { SQLMeeting, Client } from "@/lib/supabase-types";
+import type { DateRange } from "react-day-picker";
 
 interface SDRMeetingsResultsProps {
   sdrName: string;
+  dateRange?: DateRange;
 }
 
-export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
-  const [meetings, setMeetings] = useState<SQLMeeting[]>([]);
+export const SDRMeetingsResults = ({ sdrName, dateRange }: SDRMeetingsResultsProps) => {
+  const [allMeetings, setAllMeetings] = useState<SQLMeeting[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +28,7 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
       supabase.from("clients").select("*"),
     ]);
 
-    if (mtgs) setMeetings(mtgs as unknown as SQLMeeting[]);
+    if (mtgs) setAllMeetings(mtgs as unknown as SQLMeeting[]);
     if (cls) setClients(cls as unknown as Client[]);
     setLoading(false);
   }, [sdrName]);
@@ -47,6 +49,15 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
 
     return () => { supabase.removeChannel(channel); };
   }, [sdrName, fetchData]);
+
+  // Filter meetings by date range based on booking_date
+  const meetings = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return allMeetings;
+    return allMeetings.filter((m) => {
+      const d = new Date(m.booking_date + "T00:00:00");
+      return isWithinInterval(d, { start: dateRange.from!, end: dateRange.to! });
+    });
+  }, [allMeetings, dateRange]);
 
   const kpis = useMemo(() => {
     const eligible = meetings.filter((m) => m.meeting_status !== "cancelled");
@@ -99,7 +110,7 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
     <>
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm rounded-lg">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
@@ -109,7 +120,7 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 shadow-sm rounded-lg">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="h-5 w-5 text-blue-600" />
@@ -121,7 +132,7 @@ export const SDRMeetingsResults = ({ sdrName }: SDRMeetingsResultsProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 shadow-sm rounded-lg">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-5 w-5 text-purple-600" />
