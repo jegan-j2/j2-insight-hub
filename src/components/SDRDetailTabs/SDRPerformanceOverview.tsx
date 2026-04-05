@@ -189,8 +189,10 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
 
   const performanceTrendData = useMemo(() => {
     if (isShortRange && dateRange?.from && dateRange?.to) {
-      // Daily data points for Last 7 Days
-      const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+      // Daily data points — cap at today, skip weekends
+      const endDate = dateRange.to > new Date() ? new Date() : dateRange.to;
+      const days = eachDayOfInterval({ start: dateRange.from, end: endDate })
+        .filter(d => d.getDay() !== 0 && d.getDay() !== 6); // Mon-Fri only
       return days.map(day => {
         const key = format(day, "yyyy-MM-dd");
         const daySnapshots = snapshots.filter(s => s.snapshot_date === key);
