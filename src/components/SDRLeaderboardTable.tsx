@@ -280,6 +280,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
           }}
           globalDateRange={dateRange}
           campaignDates={campaignDates}
+          parentFilterType={filterType}
         />
       )}
     </>
