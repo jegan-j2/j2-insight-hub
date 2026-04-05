@@ -45,7 +45,7 @@ interface SDRLeaderboardTableProps {
 export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clientLogoMap = {}, showClientColumn = true, mostImproved, campaignDates }: SDRLeaderboardTableProps) => {
   const data = leaderboardData || [];
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
-  const { dateRange } = useDateFilter();
+  const { dateRange, filterType } = useDateFilter();
   const [photoMap, setPhotoMap] = useState<Record<string, string | null>>({});
   const [sortKey, setSortKey] = useState<SortKey>("totalSQLs");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
