@@ -13,7 +13,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/lib/supabase";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
-type FilterPreset = "last7days" | "last30days" | "thisMonth" | "lastMonth";
+type FilterPreset = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
@@ -29,9 +29,10 @@ interface SDRDetailModalProps {
     trend: number;
   };
   globalDateRange?: DateRange;
+  campaignDates?: { start: string; end: string } | null;
 }
 
-const getPresetRange = (preset: FilterPreset): DateRange => {
+const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; end: string } | null): DateRange => {
   const now = new Date();
   switch (preset) {
     case "last7days":
@@ -43,6 +44,12 @@ const getPresetRange = (preset: FilterPreset): DateRange => {
     case "lastMonth": {
       const prev = subMonths(now, 1);
       return { from: startOfMonth(prev), to: endOfMonth(prev) };
+    }
+    case "campaign": {
+      if (campaignDates?.start && campaignDates?.end) {
+        return { from: new Date(campaignDates.start + "T00:00:00"), to: new Date(campaignDates.end + "T00:00:00") };
+      }
+      return { from: startOfMonth(now), to: endOfMonth(now) };
     }
   }
 };
