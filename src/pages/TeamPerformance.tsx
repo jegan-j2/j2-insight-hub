@@ -462,11 +462,11 @@ const TeamPerformance = () => {
         </div>
       )}
 
-      {/* Team Pace Indicator — only for This Month, below Team Totals */}
+      {/* Team Pace Indicator — for This Month or Campaign, below Team Totals */}
       {paceData && leaderboard.length > 0 && (
         <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3">
           <p className="text-[13px] text-[#0f172a] dark:text-slate-200">
-            📊 <span className="font-semibold">Monthly Pace:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by month end
+            📊 <span className="font-semibold">{paceData.label}:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by {paceData.endLabel}
           </p>
           {targetSQLs && targetSQLs > 0 && (
             <div className="mt-2">
