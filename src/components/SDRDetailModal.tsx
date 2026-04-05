@@ -148,7 +148,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
       }
     };
     fetchTeamAvg();
-  }, [dateRange, sdr.name]);
+  }, [dateRange, sdr.name, sdr.clientId]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
