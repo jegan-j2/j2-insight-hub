@@ -43,8 +43,8 @@ const ConversionFunnel = ({ levels }: { levels: { label: string; count: number; 
   const totalHeight = levels.length * levelHeight + (levels.length - 1) * gap;
 
   return (
-    <div className="flex justify-center py-4">
-      <svg width="100%" height={totalHeight} viewBox={`0 0 ${containerWidth} ${totalHeight}`} preserveAspectRatio="xMidYMid meet">
+    <div className="flex justify-center py-4 overflow-visible">
+      <svg width="100%" height={totalHeight} viewBox={`0 0 ${containerWidth} ${totalHeight}`} preserveAspectRatio="xMidYMid meet" style={{ overflow: 'visible' }}>
         {levels.map((level, i) => {
           const widthPct = 1 - i * (0.6 / (levels.length - 1 || 1));
           const nextWidthPct = i < levels.length - 1 ? 1 - (i + 1) * (0.6 / (levels.length - 1 || 1)) : widthPct * 0.7;
@@ -376,11 +376,11 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm rounded-lg">
+        <Card className="shadow-sm rounded-lg overflow-visible">
           <CardHeader>
             <CardTitle>Conversion Funnel</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-visible pb-6">
             <ConversionFunnel levels={funnelLevels} />
           </CardContent>
         </Card>

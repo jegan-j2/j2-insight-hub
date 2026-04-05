@@ -32,9 +32,16 @@ interface ClientOption {
   target_sqls: number | null;
 }
 
+interface ClientLookup {
+  client_id: string;
+  client_name: string;
+  logo_url: string | null;
+}
+
 const TeamPerformance = () => {
   const { dateRange, setDateRange, filterType, setFilterType, clientFilter, setClientFilter } = useDateFilter();
   const [clients, setClients] = useState<ClientOption[]>([]);
+  const [allClients, setAllClients] = useState<ClientLookup[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
   
@@ -92,12 +99,19 @@ const TeamPerformance = () => {
   useEffect(() => {
     document.title = "J2 Insights Dashboard - Team Performance";
     const fetchClients = async () => {
+      // Active clients for dropdown
       const { data } = await supabase
         .from("clients")
         .select("client_id, client_name, logo_url, campaign_start, campaign_end, target_sqls")
         .eq("status", "active")
         .order("client_name");
       if (data) setClients(data);
+      // ALL clients (incl. inactive) for logo/name lookups
+      const { data: all } = await supabase
+        .from("clients")
+        .select("client_id, client_name, logo_url")
+        .order("client_name");
+      if (all) setAllClients(all);
     };
     fetchClients();
   }, []);
@@ -125,13 +139,13 @@ const TeamPerformance = () => {
   }, [leaderboard, previousLeaderboard]);
 
   const clientNameMap = useMemo(() =>
-    Object.fromEntries(clients.map(c => [c.client_id, c.client_name])),
-    [clients]
+    Object.fromEntries(allClients.map(c => [c.client_id, c.client_name])),
+    [allClients]
   );
 
   const clientLogoMap = useMemo(() =>
-    Object.fromEntries(clients.map(c => [c.client_id, c.logo_url || ""])),
-    [clients]
+    Object.fromEntries(allClients.map(c => [c.client_id, c.logo_url || ""])),
+    [allClients]
   );
 
   const selectedClient = useMemo(() => {
@@ -480,7 +494,13 @@ const TeamPerformance = () => {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(100, (paceData.totalSQLs / targetSQLs) * 100)}%`,
-                    backgroundColor: paceData.runRate >= 0.8 ? "#10B981" : paceData.runRate >= 0.5 ? "#F59E0B" : "#EF4444",
+                    backgroundColor: (() => {
+                      const requiredDailyRate = targetSQLs / paceData.totalWorkingDays;
+                      const pacePercentage = requiredDailyRate > 0 ? (paceData.runRate / requiredDailyRate) * 100 : 0;
+                      if (pacePercentage >= 71) return "#10B981";
+                      if (pacePercentage >= 51) return "#F59E0B";
+                      return "#EF4444";
+                    })(),
                   }}
                 />
               </div>
