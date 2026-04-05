@@ -176,23 +176,23 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                   <col style={{ width: "85px" }} />
                   <col style={{ width: "90px" }} />
                 </colgroup>
-                <TableHeader>
+                <TableHeader className="table-header-navy">
                   <TableRow>
-                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalSQLs")}>Rank</TableHead>
-                    <TableHead className="text-left cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("name")}>SDR Name <SortIcon column="name" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalSQLs")}>Rank</TableHead>
+                    <TableHead className="text-left cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("name")}>SDR Name <SortIcon column="name" /></TableHead>
                     {showClientColumn && (
-                      <TableHead className="text-left cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("clientName")}>Client <SortIcon column="clientName" /></TableHead>
+                      <TableHead className="text-left cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("clientName")}>Client <SortIcon column="clientName" /></TableHead>
                     )}
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalDials")}>Total Dials <SortIcon column="totalDials" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalAnswered")}>Answered <SortIcon column="totalAnswered" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("answerRate")}>Answer Rate <SortIcon column="answerRate" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalDMs")}>DM Conv. <SortIcon column="totalDMs" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalSQLs")}>SQLs <SortIcon column="totalSQLs" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("conversionRate")}>Conv. Rate <SortIcon column="conversionRate" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[13px] h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("avgDuration")}>Avg Talk <SortIcon column="avgDuration" /></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalDials")}>Total Dials <SortIcon column="totalDials" /></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalAnswered")}>Answered <SortIcon column="totalAnswered" /></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("answerRate")}>Answer Rate <SortIcon column="answerRate" /></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalDMs")}>DM Conv. <SortIcon column="totalDMs" /></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("totalSQLs")}>SQLs <SortIcon column="totalSQLs" /></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("conversionRate")}>Conv. Rate <SortIcon column="conversionRate" /></TableHead>
+                    <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("avgDuration")}>Avg Talk <SortIcon column="avgDuration" /></TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {sortedData.map((sdr, idx) => {
                     const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
                     const dmValue = Number(sdr.totalDMs);
@@ -201,40 +201,40 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                     return (
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
-                        className="transition-colors cursor-pointer hover:bg-[#EFF6FF] dark:hover:bg-[#1e293b]"
-                        style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC", height: "48px" }}
+                        className="transition-colors cursor-pointer"
+                        style={{ height: "48px" }}
                       >
-                        <TableCell className="text-center text-[13px]" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-center" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
-                        <TableCell className="text-left text-[13px]" style={{ padding: cellPad }}>
+                        <TableCell className="text-left" style={{ padding: cellPad }}>
                           <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedSDR(sdr)}>
                             <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
                             <span className="font-normal whitespace-nowrap truncate">{sdr.name}</span>
                           </div>
                         </TableCell>
                         {showClientColumn && (
-                          <TableCell className="text-left whitespace-nowrap truncate text-[13px]" style={{ padding: cellPad }}>{clientName}</TableCell>
+                          <TableCell className="text-left whitespace-nowrap truncate" style={{ padding: cellPad }}>{clientName}</TableCell>
                         )}
-                        <TableCell className="text-right text-[13px]" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalDials.toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right text-[13px]" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalAnswered.toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right text-[13px]" style={{ padding: cellPad }}>
+                        <TableCell className="text-right" style={{ padding: cellPad }}>
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
-                        <TableCell className="text-right text-[13px]" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {dmValue > 0 ? dmValue.toLocaleString() : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right text-[13px]" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}
                         </TableCell>
-                        <TableCell className="text-right text-[13px]" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {convValue > 0 ? `${sdr.conversionRate}%` : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right text-[13px]" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.avgDuration > 0 ? (
                             <span title={`${Math.round(sdr.avgDuration)} seconds avg`}>
                               {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s

@@ -126,6 +126,22 @@ const TeamPerformance = () => {
   );
 
   // Melbourne timezone greeting
+  const [firstName, setFirstName] = useState<string | null>(null);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
+      if (fullName && typeof fullName === "string") {
+        setFirstName(fullName.split(" ")[0]);
+      } else if (user.email) {
+        const local = user.email.split("@")[0];
+        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
+      }
+    };
+    getUser();
+  }, []);
+
   const melbourneGreeting = useMemo(() => {
     const now = new Date();
     const melb = toZonedTime(now, "Australia/Melbourne");
@@ -158,7 +174,7 @@ const TeamPerformance = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <p className="text-[15px] text-[#0f172a] dark:text-slate-300 mb-1">{melbourneGreeting}</p>
+          <p className="text-[15px] text-[#0f172a] dark:text-slate-300 mb-1">{melbourneGreeting}{firstName ? `, ${firstName}!` : "!"}</p>
           <h1 className="text-3xl font-bold text-foreground mb-2">Sales Development Team Performance</h1>
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
@@ -250,10 +266,15 @@ const TeamPerformance = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Client Filter — on same row, right side */}
+          {/* Client Filter — on same row, right side, matching date tab styling */}
           <div className="ml-auto">
             <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className="w-[180px] min-h-[44px] text-xs sm:text-sm">
+              <SelectTrigger className={cn(
+                "w-[180px] min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                clientFilter !== "all"
+                  ? "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+                  : "bg-transparent text-foreground border border-border hover:bg-muted/50 dark:bg-[#1E293B] dark:border-[#334155] dark:text-slate-200"
+              )}>
                 <SelectValue placeholder="All Clients" />
               </SelectTrigger>
               <SelectContent className="z-[100] bg-card">
