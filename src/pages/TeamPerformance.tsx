@@ -419,6 +419,7 @@ const TeamPerformance = () => {
             clientLogoMap={clientLogoMap}
             showClientColumn={clientFilter === "all"}
             mostImproved={mostImproved}
+            campaignDates={selectedClient?.campaign_start && selectedClient?.campaign_end ? { start: selectedClient.campaign_start, end: selectedClient.campaign_end } : null}
           />
         </>
       ) : null}
