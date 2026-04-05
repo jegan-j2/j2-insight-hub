@@ -94,7 +94,7 @@ const TeamPerformance = () => {
     const fetchClients = async () => {
       const { data } = await supabase
         .from("clients")
-        .select("client_id, client_name, logo_url")
+        .select("client_id, client_name, logo_url, campaign_start, campaign_end, target_sqls")
         .eq("status", "active")
         .order("client_name");
       if (data) setClients(data);
