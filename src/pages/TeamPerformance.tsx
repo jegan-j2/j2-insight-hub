@@ -494,7 +494,13 @@ const TeamPerformance = () => {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(100, (paceData.totalSQLs / targetSQLs) * 100)}%`,
-                    backgroundColor: paceData.runRate >= 0.8 ? "#10B981" : paceData.runRate >= 0.5 ? "#F59E0B" : "#EF4444",
+                    backgroundColor: (() => {
+                      const requiredDailyRate = targetSQLs / paceData.totalWorkingDays;
+                      const pacePercentage = requiredDailyRate > 0 ? (paceData.runRate / requiredDailyRate) * 100 : 0;
+                      if (pacePercentage >= 71) return "#10B981";
+                      if (pacePercentage >= 51) return "#F59E0B";
+                      return "#EF4444";
+                    })(),
                   }}
                 />
               </div>
