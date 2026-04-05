@@ -41,14 +41,14 @@ export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
     <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
       <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
         <CardTitle className="text-xl font-semibold">SDR Activity Breakdown</CardTitle>
-        <div className="flex items-center gap-1 rounded-lg p-1 border border-border">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
-            className={`h-7 text-xs px-3 ${
+            className={`h-7 text-xs px-3 rounded-full ${
               viewMode === "volume"
                 ? "bg-[#0f172a] text-white hover:bg-[#0f172a] hover:text-white dark:bg-white dark:text-[#0f172a]"
-                : "bg-white text-[#0f172a] border border-border hover:bg-muted/50 dark:bg-transparent dark:text-foreground"
+                : "bg-white text-[#0f172a] hover:bg-muted/50 dark:bg-transparent dark:text-foreground"
             }`}
             onClick={() => setViewMode("volume")}
           >
@@ -57,10 +57,10 @@ export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`h-7 text-xs px-3 ${
+            className={`h-7 text-xs px-3 rounded-full ${
               viewMode === "outcomes"
                 ? "bg-[#0f172a] text-white hover:bg-[#0f172a] hover:text-white dark:bg-white dark:text-[#0f172a]"
-                : "bg-white text-[#0f172a] border border-border hover:bg-muted/50 dark:bg-transparent dark:text-foreground"
+                : "bg-white text-[#0f172a] hover:bg-muted/50 dark:bg-transparent dark:text-foreground"
             }`}
             onClick={() => setViewMode("outcomes")}
           >

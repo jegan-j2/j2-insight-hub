@@ -271,9 +271,7 @@ const TeamPerformance = () => {
             <Select value={clientFilter} onValueChange={setClientFilter}>
               <SelectTrigger className={cn(
                 "w-[180px] min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200",
-                clientFilter !== "all"
-                  ? "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
-                  : "bg-transparent text-foreground border border-border hover:bg-muted/50 dark:bg-[#1E293B] dark:border-[#334155] dark:text-slate-200"
+                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
               )}>
                 <SelectValue placeholder="All Clients" />
               </SelectTrigger>
