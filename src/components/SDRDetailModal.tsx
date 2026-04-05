@@ -204,7 +204,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
               {dateRange?.from && dateRange?.to && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground self-start">
                   <CalendarIcon className="h-4 w-4" />
-                  <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+                  <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}{activePreset === "campaign" ? " (Campaign)" : ""}</span>
                 </div>
               )}
             </div>
