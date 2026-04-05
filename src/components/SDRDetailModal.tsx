@@ -49,7 +49,12 @@ const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; e
     }
     case "campaign": {
       if (campaignDates?.start && campaignDates?.end) {
-        return { from: new Date(campaignDates.start + "T00:00:00"), to: new Date(campaignDates.end + "T00:00:00") };
+        try {
+          return { from: new Date(campaignDates.start + "T00:00:00"), to: new Date(campaignDates.end + "T00:00:00") };
+        } catch {
+          console.warn("Invalid campaign dates:", campaignDates);
+          return { from: startOfMonth(now), to: endOfMonth(now) };
+        }
       }
       return { from: startOfMonth(now), to: endOfMonth(now) };
     }
@@ -62,7 +67,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
   
   useEffect(() => {
     if (campaignDatesProp) {
-      setFetchedCampaignDates(null); // Use prop instead
+      setFetchedCampaignDates(null);
       return;
     }
     if (!sdr.clientId || !isOpen) return;
@@ -84,7 +89,6 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
   const defaultPreset: FilterPreset = parentFilterType === "campaign" && campaignDates ? "campaign" : "thisMonth";
   const [activePreset, setActivePreset] = useState<FilterPreset>(defaultPreset);
   
-  // Reset preset when modal reopens with different parent filter
   useEffect(() => {
     if (isOpen) {
       setActivePreset(parentFilterType === "campaign" && campaignDates ? "campaign" : "thisMonth");
@@ -101,6 +105,13 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
   const showNotesTab = isAdmin || isManager || isSdr;
   const isSdrViewingOwn = isSdr;
 
+  // Log warning if clientId missing
+  useEffect(() => {
+    if (isOpen && !sdr.clientId) {
+      console.warn(`SDRDetailModal opened for "${sdr.name}" without clientId — falling back to all clients`);
+    }
+  }, [isOpen, sdr.clientId, sdr.name]);
+
   const tabs = [
     { id: "overview", label: "Performance Overview", shortLabel: "Overview" },
     { id: "timeline", label: "Activity Timeline", shortLabel: "Timeline" },
@@ -116,28 +127,30 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
     ...(campaignDates?.start && campaignDates?.end ? [{ id: "campaign" as FilterPreset, label: "Campaign" }] : []),
   ];
 
-  // Fetch latest SQL meeting within filtered period
+  // Fetch latest SQL meeting within filtered period + client
   useEffect(() => {
     const fetchLatestSQL = async () => {
       if (!dateRange?.from || !dateRange?.to) return;
       const startDate = format(dateRange.from, "yyyy-MM-dd");
       const endDate = format(dateRange.to, "yyyy-MM-dd");
-      const { data } = await supabase
+      let query = supabase
         .from("sql_meetings")
         .select("contact_person, company_name, booking_date")
         .eq("sdr_name", sdr.name)
         .not("meeting_status", "eq", "cancelled")
         .gte("booking_date", startDate)
-        .lte("booking_date", endDate)
+        .lte("booking_date", endDate);
+      if (sdr.clientId) query = query.eq("client_id", sdr.clientId);
+      const { data } = await query
         .order("booking_date", { ascending: false })
         .limit(1)
         .maybeSingle();
       setLatestSQL(data);
     };
     if (isOpen) fetchLatestSQL();
-  }, [sdr.name, isOpen, dateRange]);
+  }, [sdr.name, sdr.clientId, isOpen, dateRange]);
 
-  // Fetch team averages for comparison
+  // Fetch team averages for comparison — filtered by SDR's client
   useEffect(() => {
     const fetchTeamAvg = async () => {
       if (!dateRange?.from || !dateRange?.to) return;
@@ -166,7 +179,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
           sqls: Math.round(totalSQLs / sdrCount),
         });
 
-        // Dynamic badges: find this SDR's row and compute rank/stats
+        // Dynamic badges: rank within same client team
         const sorted = [...data].sort((a, b) => (Number(b.sqls) || 0) - (Number(a.sqls) || 0) || (Number(b.total_dials) || 0) - (Number(a.total_dials) || 0));
         const sdrRow = sorted.find((r: any) => r.sdr_name === sdr.name);
         const sdrRank = sorted.findIndex((r: any) => r.sdr_name === sdr.name) + 1;
@@ -178,11 +191,16 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
             sqls: s,
             convRate: d > 0 ? ((s / d) * 100).toFixed(2) : "0.00",
           });
+        } else {
+          setDynamicStats(null);
         }
+      } else {
+        setTeamAverages(undefined);
+        setDynamicStats(null);
       }
     };
-    fetchTeamAvg();
-  }, [dateRange, sdr.name, sdr.clientId]);
+    if (isOpen) fetchTeamAvg();
+  }, [dateRange, sdr.name, sdr.clientId, isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -235,7 +253,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              {/* Filtered period — below date tabs, left-aligned */}
+              {/* Filtered period — below date tabs */}
               {dateRange?.from && dateRange?.to && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground self-start">
                   <CalendarIcon className="h-4 w-4" />
@@ -270,19 +288,19 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
           {/* Tab content */}
           {activeTab === "overview" && (
             <div className="space-y-6">
-              <SDRPerformanceOverview sdr={sdr} teamAverages={teamAverages} latestSQL={latestSQL} dateRange={dateRange} />
+              <SDRPerformanceOverview sdr={sdr} teamAverages={teamAverages} latestSQL={latestSQL} dateRange={dateRange} clientId={sdr.clientId} />
             </div>
           )}
 
           {activeTab === "timeline" && (
             <div className="space-y-6">
-              <SDRActivityTimeline sdrName={sdr.name} dateRange={dateRange} />
+              <SDRActivityTimeline sdrName={sdr.name} dateRange={dateRange} clientId={sdr.clientId} />
             </div>
           )}
 
           {activeTab === "meetings" && (
             <div className="space-y-6">
-              <SDRMeetingsResults sdrName={sdr.name} dateRange={dateRange} />
+              <SDRMeetingsResults sdrName={sdr.name} dateRange={dateRange} clientId={sdr.clientId} />
             </div>
           )}
 

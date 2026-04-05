@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Calendar, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
-import { startOfWeek, format, isAfter, isSameDay, addDays, eachWeekOfInterval, endOfWeek, isBefore } from "date-fns";
+import { format, isAfter, isSameDay, addDays, eachWeekOfInterval } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
 interface SDRActivityTimelineProps {
   sdrName: string;
   dateRange?: DateRange;
+  clientId?: string;
 }
 
 const fullDayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -22,7 +23,7 @@ const getHeatmapStyle = (value: number, isFuture: boolean): { bg: string; text: 
   return { bg: "#0F172A", text: "#FFFFFF" };
 };
 
-export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineProps) => {
+export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivityTimelineProps) => {
   const [dialsByDate, setDialsByDate] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
@@ -34,47 +35,51 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
   // Build weeks from dateRange (Mon-Fri only)
   const weeks = useMemo(() => {
     if (!dateRange?.from || !dateRange?.to) return [];
-    const weekStarts = eachWeekOfInterval(
-      { start: dateRange.from, end: dateRange.to },
-      { weekStartsOn: 1 }
-    );
-    return weekStarts.map((ws) => {
-      const dates = Array.from({ length: 5 }, (_, d) => addDays(ws, d)); // Mon-Fri
-      const fri = dates[4];
-      const label = `${format(dates[0], "MMM d")} – ${format(fri, "d")}`;
-      // If month changes mid-week, show full month on Friday
-      const labelFormatted = dates[0].getMonth() !== fri.getMonth()
-        ? `${format(dates[0], "MMM d")} – ${format(fri, "MMM d")}`
-        : `${format(dates[0], "MMM d")} – ${format(fri, "d")}`;
-      return { label: labelFormatted, dates };
-    });
+    try {
+      const weekStarts = eachWeekOfInterval(
+        { start: dateRange.from, end: dateRange.to },
+        { weekStartsOn: 1 }
+      );
+      return weekStarts.map((ws) => {
+        const dates = Array.from({ length: 5 }, (_, d) => addDays(ws, d)); // Mon-Fri
+        const fri = dates[4];
+        const labelFormatted = dates[0].getMonth() !== fri.getMonth()
+          ? `${format(dates[0], "MMM d")} – ${format(fri, "MMM d")}`
+          : `${format(dates[0], "MMM d")} – ${format(fri, "d")}`;
+        return { label: labelFormatted, dates };
+      });
+    } catch {
+      return [];
+    }
   }, [dateRange]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (weeks.length === 0) return;
+      if (weeks.length === 0 || !dateRange?.from || !dateRange?.to) return;
       setLoading(true);
-      const earliest = weeks[0].dates[0];
-      const latest = weeks[weeks.length - 1].dates[4];
 
-      const { data } = await supabase
-        .from("daily_snapshots")
-        .select("snapshot_date, dials")
-        .eq("sdr_name", sdrName)
-        .gte("snapshot_date", format(earliest, "yyyy-MM-dd"))
-        .lte("snapshot_date", format(latest, "yyyy-MM-dd"));
+      const startDate = format(dateRange.from, "yyyy-MM-dd");
+      const endDate = format(dateRange.to, "yyyy-MM-dd");
+
+      const { data } = await supabase.rpc("get_sdr_heatmap", {
+        p_sdr_name: sdrName,
+        p_start_date: startDate + "T00:00:00+11:00",
+        p_end_date: endDate + "T23:59:59+11:00",
+        p_client_id: clientId || null,
+      });
 
       const map: Record<string, number> = {};
       if (data) {
-        for (const row of data) {
-          map[row.snapshot_date] = (map[row.snapshot_date] || 0) + (row.dials ?? 0);
+        for (const row of data as any[]) {
+          const key = row.activity_day;
+          map[key] = (map[key] || 0) + (Number(row.dial_count) || 0);
         }
       }
       setDialsByDate(map);
       setLoading(false);
     };
     fetchData();
-  }, [sdrName, weeks]);
+  }, [sdrName, weeks, dateRange, clientId]);
 
   const insights = useMemo(() => {
     const dayTotals = Array(5).fill(0);
@@ -139,7 +144,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
         </CardHeader>
         <CardContent>
           <div className="space-y-3 overflow-visible w-full">
-            {/* Day headers — CSS grid 5 equal columns */}
+            {/* Day headers */}
             <div className="grid gap-2" style={{ gridTemplateColumns: "120px repeat(5, 1fr)" }}>
               <div />
               {fullDayLabels.map((day) => (
