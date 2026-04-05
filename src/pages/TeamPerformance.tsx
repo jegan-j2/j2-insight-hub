@@ -167,6 +167,44 @@ const TeamPerformance = () => {
     return { dials, answered, answerRate, dms, sqls, convRate };
   }, [leaderboard]);
 
+  // Team pace indicator — only for "This Month"
+  const [targetSQLs, setTargetSQLs] = useState<number | null>(null);
+  useEffect(() => {
+    if (filterType !== "thisMonth") { setTargetSQLs(null); return; }
+    const fetchTargets = async () => {
+      const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
+      if (cid) {
+        const { data } = await supabase.from("clients").select("target_sqls").eq("client_id", cid).maybeSingle();
+        setTargetSQLs(data?.target_sqls ?? null);
+      } else {
+        const { data } = await supabase.from("clients").select("target_sqls").eq("status", "active");
+        if (data) {
+          const total = data.reduce((s, c) => s + (c.target_sqls || 0), 0);
+          setTargetSQLs(total > 0 ? total : null);
+        }
+      }
+    };
+    fetchTargets();
+  }, [filterType, clientFilter]);
+
+  const paceData = useMemo(() => {
+    if (filterType !== "thisMonth") return null;
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const today = now > monthEnd ? monthEnd : now;
+    
+    const allWorkingDays = eachDayOfInterval({ start: monthStart, end: monthEnd }).filter(d => !isWeekend(d));
+    const elapsedWorkingDays = eachDayOfInterval({ start: monthStart, end: today }).filter(d => !isWeekend(d)).length;
+    const totalWorkingDays = allWorkingDays.length;
+    
+    const totalSQLs = teamTotals.sqls;
+    const runRate = elapsedWorkingDays > 0 ? totalSQLs / elapsedWorkingDays : 0;
+    const projected = Math.round(runRate * totalWorkingDays);
+    
+    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, runRate, projected };
+  }, [filterType, teamTotals.sqls]);
+
   // Only show full-page loader on first load (no cached data yet)
   if (loading && leaderboard.length === 0) return <J2Loader />;
 
