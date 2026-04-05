@@ -226,15 +226,15 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                     <TableHead className="w-16 sticky left-0 z-10 text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalSQLs")}>Rank</TableHead>
                     <TableHead className="sticky left-16 z-10 min-w-[180px] text-left cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("name")}>SDR Name <SortIcon column="name" /></TableHead>
                     {showClientColumn && (
-                      <TableHead className="text-left cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("clientName")}>Client <SortIcon column="clientName" /></TableHead>
+                      <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("clientName")}>Client <SortIcon column="clientName" /></TableHead>
                     )}
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalDials")}>Total Dials <SortIcon column="totalDials" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalAnswered")}>Answered <SortIcon column="totalAnswered" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("answerRate")}>Answer Rate <SortIcon column="answerRate" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalDMs")}>DM Conversations <SortIcon column="totalDMs" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalSQLs")}>SQLs <SortIcon column="totalSQLs" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("conversionRate")}>Conv. Rate <SortIcon column="conversionRate" /></TableHead>
-                    <TableHead className="text-right cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("avgDuration")}>Avg Talk Time <SortIcon column="avgDuration" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalDials")}>Total Dials <SortIcon column="totalDials" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalAnswered")}>Answered <SortIcon column="totalAnswered" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("answerRate")}>Answer Rate <SortIcon column="answerRate" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalDMs")}>DM Conversations <SortIcon column="totalDMs" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("totalSQLs")}>SQLs <SortIcon column="totalSQLs" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("conversionRate")}>Conv. Rate <SortIcon column="conversionRate" /></TableHead>
+                    <TableHead className="text-center cursor-pointer select-none bg-[#0F172A] text-white font-bold text-[14px] h-[44px]" style={{ padding: "12px 16px" }} onClick={() => handleSort("avgDuration")}>Avg Talk Time <SortIcon column="avgDuration" /></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -243,47 +243,48 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                     const isTop3 = sdr.displayRank <= 3;
                     const dmValue = Number(sdr.totalDMs);
                     const convValue = Number(parseFloat(sdr.conversionRate));
+                    const rowPadding = isTop3 ? "16px" : "12px 16px";
 
                     return (
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
-                        className={`transition-colors cursor-pointer hover:bg-[#EFF6FF] dark:hover:bg-[#1e293b] ${getRowStyle(sdr.displayRank)}`}
-                        style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
+                        className="transition-colors cursor-pointer hover:bg-[#EFF6FF] dark:hover:bg-[#1e293b]"
+                        style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC", minHeight: isTop3 ? '60px' : '48px' }}
                       >
-                        <TableCell className="sticky left-0 z-10 text-center text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="sticky left-0 z-10 text-center text-[14px]" style={{ padding: rowPadding, fontVariantNumeric: "tabular-nums" }}>
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
-                        <TableCell className="sticky left-16 z-10 text-left text-[14px]" style={{ padding: "12px 16px" }}>
+                        <TableCell className="sticky left-16 z-10 text-left text-[14px]" style={{ padding: rowPadding }}>
                           <div className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedSDR(sdr)}>
                             <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
                             <span className="font-normal whitespace-nowrap">{sdr.name}</span>
                           </div>
                         </TableCell>
                         {showClientColumn && (
-                          <TableCell className="text-left whitespace-nowrap text-[14px]" style={{ padding: "12px 16px" }}>{clientName}</TableCell>
+                          <TableCell className="text-center whitespace-nowrap text-[14px]" style={{ padding: rowPadding }}>{clientName}</TableCell>
                         )}
-                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-center text-[14px]" style={{ padding: rowPadding, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalDials.toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-center text-[14px]" style={{ padding: rowPadding, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalAnswered.toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px" }}>
+                        <TableCell className="text-center text-[14px]" style={{ padding: rowPadding }}>
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
-                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-center text-[14px]" style={{ padding: rowPadding, fontVariantNumeric: "tabular-nums" }}>
                           {dmValue > 0 ? dmValue.toLocaleString() : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-center text-[14px]" style={{ padding: rowPadding, fontVariantNumeric: "tabular-nums" }}>
                           <div>
                             <span>{sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}</span>
                             {getLastSQLText(sdr)}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-center text-[14px]" style={{ padding: rowPadding, fontVariantNumeric: "tabular-nums" }}>
                           {convValue > 0 ? `${sdr.conversionRate}%` : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right text-[14px]" style={{ padding: "12px 16px", fontVariantNumeric: "tabular-nums" }}>
+                        <TableCell className="text-center text-[14px]" style={{ padding: rowPadding, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.avgDuration > 0 ? (
                             <span title={`${Math.round(sdr.avgDuration)} seconds avg`}>
                               {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s
