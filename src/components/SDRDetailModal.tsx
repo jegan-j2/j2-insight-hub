@@ -51,7 +51,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
   const [activePreset, setActivePreset] = useState<FilterPreset>("thisMonth");
   const dateRange = useMemo(() => getPresetRange(activePreset), [activePreset]);
   const { isAdmin, isManager, isSdr } = useUserRole();
-  const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
+  const [dynamicStats, setDynamicStats] = useState<{ rank: number; sqls: number; convRate: string } | null>(null);
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
   const [latestSQL, setLatestSQL] = useState<{ contact_person: string; company_name: string; booking_date: string } | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
@@ -73,21 +73,26 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
     { id: "lastMonth", label: "Last Month" },
   ];
 
-  // Fetch latest SQL meeting for this SDR
+  // Fetch latest SQL meeting within filtered period
   useEffect(() => {
     const fetchLatestSQL = async () => {
+      if (!dateRange?.from || !dateRange?.to) return;
+      const startDate = format(dateRange.from, "yyyy-MM-dd");
+      const endDate = format(dateRange.to, "yyyy-MM-dd");
       const { data } = await supabase
         .from("sql_meetings")
         .select("contact_person, company_name, booking_date")
         .eq("sdr_name", sdr.name)
         .not("meeting_status", "eq", "cancelled")
+        .gte("booking_date", startDate)
+        .lte("booking_date", endDate)
         .order("booking_date", { ascending: false })
         .limit(1)
         .maybeSingle();
       setLatestSQL(data);
     };
     if (isOpen) fetchLatestSQL();
-  }, [sdr.name, isOpen]);
+  }, [sdr.name, isOpen, dateRange]);
 
   // Fetch team averages for comparison
   useEffect(() => {
@@ -117,10 +122,24 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
           dms: Math.round(totalDMs / sdrCount),
           sqls: Math.round(totalSQLs / sdrCount),
         });
+
+        // Dynamic badges: find this SDR's row and compute rank/stats
+        const sorted = [...data].sort((a, b) => (Number(b.sqls) || 0) - (Number(a.sqls) || 0) || (Number(b.total_dials) || 0) - (Number(a.total_dials) || 0));
+        const sdrRow = sorted.find((r: any) => r.sdr_name === sdr.name);
+        const sdrRank = sorted.findIndex((r: any) => r.sdr_name === sdr.name) + 1;
+        if (sdrRow) {
+          const d = Number(sdrRow.total_dials) || 0;
+          const s = Number(sdrRow.sqls) || 0;
+          setDynamicStats({
+            rank: sdrRank || sdr.rank,
+            sqls: s,
+            convRate: d > 0 ? ((s / d) * 100).toFixed(2) : "0.00",
+          });
+        }
       }
     };
     fetchTeamAvg();
-  }, [dateRange]);
+  }, [dateRange, sdr.name]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -139,13 +158,13 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate">{sdr.name}</h2>
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs sm:text-sm">
-                    Rank: #{sdr.rank}
+                    Rank: #{dynamicStats?.rank ?? sdr.rank}
                   </Badge>
                   <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30 text-xs sm:text-sm">
-                    {sdr.sqls} SQLs
+                    {dynamicStats?.sqls ?? sdr.sqls} SQLs
                   </Badge>
                   <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-xs sm:text-sm hidden sm:inline-flex">
-                    {conversionRate}% Conversion
+                    {dynamicStats?.convRate ?? (sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00")}% Conversion
                   </Badge>
                 </div>
               </div>

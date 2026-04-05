@@ -133,7 +133,8 @@ const TeamPerformance = () => {
       if (!user) return;
       const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
       if (fullName && typeof fullName === "string") {
-        setFirstName(fullName.split(" ")[0]);
+        const raw = fullName.split(/[\s\-]/)[0];
+        setFirstName(raw.charAt(0).toUpperCase() + raw.slice(1));
       } else if (user.email) {
         const local = user.email.split("@")[0];
         setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
@@ -349,7 +350,7 @@ const TeamPerformance = () => {
             </div>
             <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
             <div className="text-center">
-              <span className="block text-[12px] text-muted-foreground">DM Conversations</span>
+              <span className="block text-[12px] text-muted-foreground">DM Conv.</span>
               <span className="block text-[14px] font-bold text-[#0f172a] dark:text-white">{teamTotals.dms.toLocaleString()}</span>
             </div>
             <div className="hidden sm:block w-px h-5 bg-[#E2E8F0] dark:bg-slate-600" />
