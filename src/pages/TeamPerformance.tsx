@@ -181,10 +181,10 @@ const TeamPerformance = () => {
     return { dials, answered, answerRate, dms, sqls, convRate };
   }, [leaderboard]);
 
-  // Team pace indicator — only for "This Month"
+  // Team pace indicator — for "This Month" or "Campaign"
   const [targetSQLs, setTargetSQLs] = useState<number | null>(null);
   useEffect(() => {
-    if (filterType !== "thisMonth") { setTargetSQLs(null); return; }
+    if (filterType !== "thisMonth" && filterType !== "campaign") { setTargetSQLs(null); return; }
     const fetchTargets = async () => {
       const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
       if (cid) {
@@ -202,22 +202,34 @@ const TeamPerformance = () => {
   }, [filterType, clientFilter]);
 
   const paceData = useMemo(() => {
-    if (filterType !== "thisMonth") return null;
+    if (filterType !== "thisMonth" && filterType !== "campaign") return null;
     const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-    const today = now > monthEnd ? monthEnd : now;
+
+    let periodStart: Date, periodEnd: Date;
+    if (filterType === "campaign" && selectedClient?.campaign_start && selectedClient?.campaign_end) {
+      periodStart = new Date(selectedClient.campaign_start + "T00:00:00");
+      periodEnd = new Date(selectedClient.campaign_end + "T00:00:00");
+    } else {
+      periodStart = startOfMonth(now);
+      periodEnd = endOfMonth(now);
+    }
+
+    const today = now > periodEnd ? periodEnd : now;
+    if (today < periodStart) return null;
     
-    const allWorkingDays = eachDayOfInterval({ start: monthStart, end: monthEnd }).filter(d => !isWeekend(d));
-    const elapsedWorkingDays = eachDayOfInterval({ start: monthStart, end: today }).filter(d => !isWeekend(d)).length;
+    const allWorkingDays = eachDayOfInterval({ start: periodStart, end: periodEnd }).filter(d => !isWeekend(d));
+    const elapsedWorkingDays = eachDayOfInterval({ start: periodStart, end: today }).filter(d => !isWeekend(d)).length;
     const totalWorkingDays = allWorkingDays.length;
     
     const totalSQLs = teamTotals.sqls;
     const runRate = elapsedWorkingDays > 0 ? totalSQLs / elapsedWorkingDays : 0;
     const projected = Math.round(runRate * totalWorkingDays);
     
-    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, runRate, projected };
-  }, [filterType, teamTotals.sqls]);
+    const label = filterType === "campaign" ? "Campaign Pace" : "Monthly Pace";
+    const endLabel = filterType === "campaign" ? "campaign end" : "month end";
+    
+    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, runRate, projected, label, endLabel };
+  }, [filterType, teamTotals.sqls, selectedClient]);
 
   // Only show full-page loader on first load (no cached data yet)
   if (loading && leaderboard.length === 0) return <J2Loader />;
