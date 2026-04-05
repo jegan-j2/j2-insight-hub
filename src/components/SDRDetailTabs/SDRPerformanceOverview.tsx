@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Phone, PhoneCall, MessageSquare, Target } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Phone, PhoneCall, MessageSquare, Target, Percent } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { startOfWeek, format, isWithinInterval, differenceInDays, eachDayOfInterval } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -250,6 +250,8 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
 
   const ta = teamAverages;
   const kpi = filteredKPIs;
+  const answerRate = kpi.dials > 0 ? ((kpi.answered / kpi.dials) * 100).toFixed(1) : "0.0";
+  const teamAnswerRate = ta && ta.dials > 0 ? (ta.answered / ta.dials) * 100 : 0;
 
   // Days since last SQL
   const daysSinceLastSQL = useMemo(() => {
@@ -261,7 +263,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
   return (
     <>
       {/* KPI Cards — plain white, Activity Monitor style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
@@ -298,6 +300,25 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
           </CardContent>
         </Card>
 
+        {/* Answer Rate card */}
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{answerRate}%</p>
+                {ta ? (
+                  <TeamAvgInline label="Answer Rate" value={parseFloat(answerRate)} teamAvg={teamAnswerRate} formatter={(v) => v.toFixed(1) + "%"} />
+                ) : (
+                  <p className="text-[13px] text-muted-foreground">Answer Rate</p>
+                )}
+              </div>
+              <div className="h-9 w-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                <Percent className="h-5 w-5 text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
@@ -326,7 +347,6 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
                 ) : (
                   <p className="text-[13px] text-muted-foreground">SQLs Generated</p>
                 )}
-                {/* Days since last SQL note */}
                 {kpi.sqls === 0 && daysSinceLastSQL !== undefined && (
                   <p className="text-[11px] text-muted-foreground mt-1">
                     {daysSinceLastSQL === null ? "No SQLs booked yet" : `Last SQL: ${daysSinceLastSQL}d ago`}
