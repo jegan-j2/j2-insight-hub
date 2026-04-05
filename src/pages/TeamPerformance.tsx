@@ -238,11 +238,12 @@ const TeamPerformance = () => {
     const totalSQLs = teamTotals.sqls;
     const runRate = elapsedWorkingDays > 0 ? totalSQLs / elapsedWorkingDays : 0;
     const projected = Math.round(runRate * totalWorkingDays);
+    const remainingWorkingDays = Math.max(0, totalWorkingDays - elapsedWorkingDays);
     
     const label = filterType === "campaign" ? "Campaign Pace" : "Monthly Pace";
     const endLabel = filterType === "campaign" ? "campaign end" : "month end";
     
-    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, runRate, projected, label, endLabel };
+    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, remainingWorkingDays, runRate, projected, label, endLabel };
   }, [filterType, teamTotals.sqls, selectedClient]);
 
   // Only show full-page loader on first load (no cached data yet)
@@ -480,14 +481,26 @@ const TeamPerformance = () => {
       {/* Team Pace Indicator — for This Month or Campaign, below Team Totals */}
       {paceData && leaderboard.length > 0 && (
         <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3">
-          <p className="text-[13px] text-[#0f172a] dark:text-slate-200">
-            <span className="font-semibold">{paceData.label}:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by {paceData.endLabel}
+          <p className="text-[13px] text-foreground">
+            <span className="font-semibold">{paceData.label}:</span>
+            {" "}Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} by {paceData.endLabel}
+            {targetSQLs && targetSQLs > 0 && (() => {
+              const needPerDay = paceData.remainingWorkingDays > 0
+                ? ((targetSQLs - paceData.totalSQLs) / paceData.remainingWorkingDays)
+                : 0;
+              if (paceData.totalSQLs >= targetSQLs) {
+                return <span className="text-[#10B981] font-semibold"> · 🎯 Target reached!</span>;
+              }
+              if (paceData.remainingWorkingDays > 0) {
+                return <> · Need {needPerDay.toFixed(2)}/day to hit target</>;
+              }
+              return null;
+            })()}
           </p>
           {targetSQLs && targetSQLs > 0 && (
             <div className="mt-2">
               <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-                <span>{paceData.totalSQLs} of {targetSQLs} target SQLs</span>
-                <span>{Math.min(100, Math.round((paceData.totalSQLs / targetSQLs) * 100))}%</span>
+                <span>{paceData.totalSQLs} of {targetSQLs} target SQLs · {Math.min(100, Math.round((paceData.totalSQLs / targetSQLs) * 100))}%</span>
               </div>
               <div className="w-full h-2 bg-[#E2E8F0] dark:bg-slate-700 rounded-full overflow-hidden">
                 <div
