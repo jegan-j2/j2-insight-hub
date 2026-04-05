@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Calendar, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
-import { startOfWeek, subWeeks, format, isAfter, isSameDay, addDays } from "date-fns";
+import { startOfWeek, format, isAfter, isSameDay, addDays, eachWeekOfInterval, endOfWeek, isBefore } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 interface SDRActivityTimelineProps {
   sdrName: string;
+  dateRange?: DateRange;
 }
 
 const fullDayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -20,7 +22,7 @@ const getHeatmapStyle = (value: number, isFuture: boolean): { bg: string; text: 
   return { bg: "#0F172A", text: "#FFFFFF" };
 };
 
-export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
+export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineProps) => {
   const [dialsByDate, setDialsByDate] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
@@ -29,20 +31,28 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
     return new Date(str);
   }, []);
 
-  // Build 4 weeks (Mon-Fri only)
+  // Build weeks from dateRange (Mon-Fri only)
   const weeks = useMemo(() => {
-    const result: { label: string; dates: Date[] }[] = [];
-    for (let i = 3; i >= 0; i--) {
-      const weekStart = startOfWeek(subWeeks(melbourneNow, i), { weekStartsOn: 1 });
-      const dates = Array.from({ length: 5 }, (_, d) => addDays(weekStart, d)); // Mon-Fri
-      const label = format(dates[0], "MMM d");
-      result.push({ label, dates });
-    }
-    return result;
-  }, [melbourneNow]);
+    if (!dateRange?.from || !dateRange?.to) return [];
+    const weekStarts = eachWeekOfInterval(
+      { start: dateRange.from, end: dateRange.to },
+      { weekStartsOn: 1 }
+    );
+    return weekStarts.map((ws) => {
+      const dates = Array.from({ length: 5 }, (_, d) => addDays(ws, d)); // Mon-Fri
+      const fri = dates[4];
+      const label = `${format(dates[0], "MMM d")} – ${format(fri, "d")}`;
+      // If month changes mid-week, show full month on Friday
+      const labelFormatted = dates[0].getMonth() !== fri.getMonth()
+        ? `${format(dates[0], "MMM d")} – ${format(fri, "MMM d")}`
+        : `${format(dates[0], "MMM d")} – ${format(fri, "d")}`;
+      return { label: labelFormatted, dates };
+    });
+  }, [dateRange]);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (weeks.length === 0) return;
       setLoading(true);
       const earliest = weeks[0].dates[0];
       const latest = weeks[weeks.length - 1].dates[4];
@@ -124,13 +134,13 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            <CardTitle>Activity Heatmap (Last 4 Weeks)</CardTitle>
+            <CardTitle>Activity Heatmap</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 overflow-visible w-full">
             {/* Day headers — CSS grid 5 equal columns */}
-            <div className="grid gap-2" style={{ gridTemplateColumns: "80px repeat(5, 1fr)" }}>
+            <div className="grid gap-2" style={{ gridTemplateColumns: "120px repeat(5, 1fr)" }}>
               <div />
               {fullDayLabels.map((day) => (
                 <div key={day} className="text-center text-xs text-muted-foreground font-medium">
@@ -144,7 +154,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
               <div className="text-center text-sm text-muted-foreground py-8">Loading…</div>
             ) : (
               weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="grid gap-2" style={{ gridTemplateColumns: "80px repeat(5, 1fr)" }}>
+                <div key={weekIndex} className="grid gap-2" style={{ gridTemplateColumns: "120px repeat(5, 1fr)" }}>
                   <div className="text-xs text-muted-foreground font-medium flex items-center">
                     {week.label}
                   </div>
@@ -208,7 +218,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
 
       {/* Performance Insights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-sm rounded-lg">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-600" />
@@ -221,7 +231,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 shadow-sm rounded-lg">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -234,7 +244,7 @@ export const SDRActivityTimeline = ({ sdrName }: SDRActivityTimelineProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 shadow-sm rounded-lg">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-amber-600" />

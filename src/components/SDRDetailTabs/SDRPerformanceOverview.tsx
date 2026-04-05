@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ArrowUpRight, ArrowDownRight, Phone, PhoneCall, MessageSquare, Target } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { startOfWeek, format } from "date-fns";
+import { startOfWeek, format, isWithinInterval } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 interface SDRPerformanceOverviewProps {
   sdr: {
@@ -22,6 +23,7 @@ interface SDRPerformanceOverviewProps {
     sqls: number;
   };
   latestSQL?: { contact_person: string; company_name: string; booking_date: string } | null;
+  dateRange?: DateRange;
 }
 
 interface Snapshot {
@@ -105,8 +107,8 @@ const TeamAvgInline = ({ label, value, teamAvg, formatter }: TeamAvgInlineProps)
   );
 };
 
-export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerformanceOverviewProps) => {
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange }: SDRPerformanceOverviewProps) => {
+  const [allSnapshots, setAllSnapshots] = useState<Snapshot[]>([]);
   const [clientNames, setClientNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -119,7 +121,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerf
           .order("snapshot_date", { ascending: true }),
         supabase.from("clients").select("client_id, client_name"),
       ]);
-      if (snaps) setSnapshots(snaps);
+      if (snaps) setAllSnapshots(snaps);
       if (clients) {
         const map: Record<string, string> = {};
         for (const c of clients) map[c.client_id] = c.client_name;
@@ -128,6 +130,29 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerf
     };
     fetchData();
   }, [sdr.name]);
+
+  // Filter snapshots by date range
+  const snapshots = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return allSnapshots;
+    return allSnapshots.filter((s) => {
+      const d = new Date(s.snapshot_date + "T00:00:00");
+      return isWithinInterval(d, { start: dateRange.from!, end: dateRange.to! });
+    });
+  }, [allSnapshots, dateRange]);
+
+  // Compute KPI totals from filtered snapshots
+  const filteredKPIs = useMemo(() => {
+    return snapshots.reduce(
+      (acc, s) => {
+        acc.dials += s.dials || 0;
+        acc.answered += s.answered || 0;
+        acc.dms += s.dms_reached || 0;
+        acc.sqls += s.sqls || 0;
+        return acc;
+      },
+      { dials: 0, answered: 0, dms: 0, sqls: 0 }
+    );
+  }, [snapshots]);
 
   const performanceTrendData = useMemo(() => {
     const weekMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
@@ -162,16 +187,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerf
   }, [snapshots, clientNames]);
 
   const funnelLevels = useMemo(() => {
-    const totals = snapshots.reduce(
-      (acc, s) => {
-        acc.dials += s.dials || 0;
-        acc.answered += s.answered || 0;
-        acc.dms += s.dms_reached || 0;
-        acc.sqls += s.sqls || 0;
-        return acc;
-      },
-      { dials: 0, answered: 0, dms: 0, sqls: 0 }
-    );
+    const totals = filteredKPIs;
     const pct = (num: number, den: number) => den > 0 ? ((num / den) * 100).toFixed(1) + "%" : "0.0%";
     const hasDMs = totals.dms > 0;
     if (hasDMs) {
@@ -187,21 +203,22 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerf
       { label: "Answered", count: totals.answered, color: METRIC_COLORS.answered, pctOfPrev: pct(totals.answered, totals.dials) },
       { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.answered) },
     ];
-  }, [snapshots]);
+  }, [filteredKPIs]);
 
   const ta = teamAverages;
+  const kpi = filteredKPIs;
 
   return (
     <>
-      {/* KPI Cards — Activity Monitor style */}
+      {/* KPI Cards — plain white, Activity Monitor style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.dials.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.dials.toLocaleString()}</p>
                 {ta ? (
-                  <TeamAvgInline label="Total Dials" value={sdr.dials} teamAvg={ta.dials} />
+                  <TeamAvgInline label="Total Dials" value={kpi.dials} teamAvg={ta.dials} />
                 ) : (
                   <p className="text-[13px] text-muted-foreground">Total Dials</p>
                 )}
@@ -213,13 +230,13 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerf
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.answered.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.answered.toLocaleString()}</p>
                 {ta ? (
-                  <TeamAvgInline label="Answered" value={sdr.answered} teamAvg={ta.answered} />
+                  <TeamAvgInline label="Answered" value={kpi.answered} teamAvg={ta.answered} />
                 ) : (
                   <p className="text-[13px] text-muted-foreground">Answered</p>
                 )}
@@ -231,13 +248,13 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerf
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.dms}</p>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.dms.toLocaleString()}</p>
                 {ta ? (
-                  <TeamAvgInline label="DM Conversations" value={sdr.dms} teamAvg={ta.dms} />
+                  <TeamAvgInline label="DM Conversations" value={kpi.dms} teamAvg={ta.dms} />
                 ) : (
                   <p className="text-[13px] text-muted-foreground">DM Conversations</p>
                 )}
@@ -249,13 +266,13 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL }: SDRPerf
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm rounded-lg bg-card border border-[#E2E8F0] dark:border-border">
+        <Card className="shadow-sm rounded-lg bg-white dark:bg-card border border-[#E2E8F0] dark:border-border">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{sdr.sqls}</p>
+                <p className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.sqls.toLocaleString()}</p>
                 {ta ? (
-                  <TeamAvgInline label="SQLs Generated" value={sdr.sqls} teamAvg={ta.sqls} />
+                  <TeamAvgInline label="SQLs Generated" value={kpi.sqls} teamAvg={ta.sqls} />
                 ) : (
                   <p className="text-[13px] text-muted-foreground">SQLs Generated</p>
                 )}

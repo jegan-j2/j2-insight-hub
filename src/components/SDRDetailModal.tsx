@@ -3,8 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, CalendarIcon } from "lucide-react";
-import { DateRangePicker } from "@/components/DateRangePicker";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 import { SDRPerformanceOverview } from "@/components/SDRDetailTabs/SDRPerformanceOverview";
 import { SDRActivityTimeline } from "@/components/SDRDetailTabs/SDRActivityTimeline";
@@ -12,7 +11,9 @@ import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResult
 import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/lib/supabase";
-import { format, parseISO } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+
+type FilterPreset = "last7days" | "last30days" | "thisMonth" | "lastMonth";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
@@ -30,8 +31,25 @@ interface SDRDetailModalProps {
   globalDateRange?: DateRange;
 }
 
+const getPresetRange = (preset: FilterPreset): DateRange => {
+  const now = new Date();
+  switch (preset) {
+    case "last7days":
+      return { from: subDays(now, 6), to: now };
+    case "last30days":
+      return { from: subDays(now, 29), to: now };
+    case "thisMonth":
+      return { from: startOfMonth(now), to: endOfMonth(now) };
+    case "lastMonth": {
+      const prev = subMonths(now, 1);
+      return { from: startOfMonth(prev), to: endOfMonth(prev) };
+    }
+  }
+};
+
 export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDetailModalProps) => {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(globalDateRange);
+  const [activePreset, setActivePreset] = useState<FilterPreset>("thisMonth");
+  const dateRange = useMemo(() => getPresetRange(activePreset), [activePreset]);
   const { isAdmin, isManager, isSdr } = useUserRole();
   const conversionRate = sdr.dials > 0 ? ((sdr.sqls / sdr.dials) * 100).toFixed(2) : "0.00";
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
@@ -46,6 +64,13 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
     { id: "timeline", label: "Activity Timeline", shortLabel: "Timeline" },
     { id: "meetings", label: "Meetings & Results", shortLabel: "Meetings" },
     ...(showNotesTab ? [{ id: "notes", label: isSdrViewingOwn ? "My Goals" : "Notes & Coaching", shortLabel: isSdrViewingOwn ? "Goals" : "Notes" }] : []),
+  ];
+
+  const datePresets: { id: FilterPreset; label: string }[] = [
+    { id: "last7days", label: "Last 7 Days" },
+    { id: "last30days", label: "Last 30 Days" },
+    { id: "thisMonth", label: "This Month" },
+    { id: "lastMonth", label: "Last Month" },
   ];
 
   // Fetch latest SQL meeting for this SDR
@@ -125,18 +150,30 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
-              <div className="hidden md:block">
-                <DateRangePicker date={dateRange} onDateChange={setDateRange} />
-              </div>
               <Button variant="ghost" size="icon" onClick={onClose} className="min-h-[44px] min-w-[44px]">
                 <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
-          <div className="md:hidden mt-3 w-full">
-            <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
+
+          {/* Date filter tabs */}
+          <div className="mt-3 flex flex-wrap items-center gap-1">
+            {datePresets.map((preset) => (
+              <button
+                key={preset.id}
+                onClick={() => setActivePreset(preset.id)}
+                className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                  activePreset === preset.id
+                    ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                    : "bg-white text-[#0f172a] hover:bg-muted/50 dark:bg-transparent dark:text-foreground border border-border"
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
-          {/* Filtered period */}
+
+          {/* Filtered period — below date tabs */}
           {dateRange?.from && dateRange?.to && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
               <CalendarIcon className="h-4 w-4" />
@@ -169,19 +206,19 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
           {/* Tab content */}
           {activeTab === "overview" && (
             <div className="space-y-6">
-              <SDRPerformanceOverview sdr={sdr} teamAverages={teamAverages} latestSQL={latestSQL} />
+              <SDRPerformanceOverview sdr={sdr} teamAverages={teamAverages} latestSQL={latestSQL} dateRange={dateRange} />
             </div>
           )}
 
           {activeTab === "timeline" && (
             <div className="space-y-6">
-              <SDRActivityTimeline sdrName={sdr.name} />
+              <SDRActivityTimeline sdrName={sdr.name} dateRange={dateRange} />
             </div>
           )}
 
           {activeTab === "meetings" && (
             <div className="space-y-6">
-              <SDRMeetingsResults sdrName={sdr.name} />
+              <SDRMeetingsResults sdrName={sdr.name} dateRange={dateRange} />
             </div>
           )}
 
