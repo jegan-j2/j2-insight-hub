@@ -54,9 +54,9 @@ const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; e
   }
 };
 
-export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDetailModalProps) => {
+export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaignDates }: SDRDetailModalProps) => {
   const [activePreset, setActivePreset] = useState<FilterPreset>("thisMonth");
-  const dateRange = useMemo(() => getPresetRange(activePreset), [activePreset]);
+  const dateRange = useMemo(() => getPresetRange(activePreset, campaignDates), [activePreset, campaignDates]);
   const { isAdmin, isManager, isSdr } = useUserRole();
   const [dynamicStats, setDynamicStats] = useState<{ rank: number; sqls: number; convRate: string } | null>(null);
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
@@ -78,6 +78,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
     { id: "last30days", label: "Last 30 Days" },
     { id: "thisMonth", label: "This Month" },
     { id: "lastMonth", label: "Last Month" },
+    ...(campaignDates?.start && campaignDates?.end ? [{ id: "campaign" as FilterPreset, label: "Campaign" }] : []),
   ];
 
   // Fetch latest SQL meeting within filtered period
