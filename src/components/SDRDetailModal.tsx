@@ -31,6 +31,7 @@ interface SDRDetailModalProps {
   };
   globalDateRange?: DateRange;
   campaignDates?: { start: string; end: string } | null;
+  parentFilterType?: string;
 }
 
 const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; end: string } | null): DateRange => {
@@ -55,8 +56,41 @@ const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; e
   }
 };
 
-export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaignDates }: SDRDetailModalProps) => {
-  const [activePreset, setActivePreset] = useState<FilterPreset>("thisMonth");
+export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaignDates: campaignDatesProp, parentFilterType }: SDRDetailModalProps) => {
+  // Auto-fetch campaign dates from SDR's client if not passed as prop
+  const [fetchedCampaignDates, setFetchedCampaignDates] = useState<{ start: string; end: string } | null>(null);
+  
+  useEffect(() => {
+    if (campaignDatesProp) {
+      setFetchedCampaignDates(null); // Use prop instead
+      return;
+    }
+    if (!sdr.clientId || !isOpen) return;
+    const fetchCampaign = async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("campaign_start, campaign_end")
+        .eq("client_id", sdr.clientId!)
+        .maybeSingle();
+      if (data?.campaign_start && data?.campaign_end) {
+        setFetchedCampaignDates({ start: data.campaign_start, end: data.campaign_end });
+      }
+    };
+    fetchCampaign();
+  }, [sdr.clientId, isOpen, campaignDatesProp]);
+
+  const campaignDates = campaignDatesProp || fetchedCampaignDates;
+
+  const defaultPreset: FilterPreset = parentFilterType === "campaign" && campaignDates ? "campaign" : "thisMonth";
+  const [activePreset, setActivePreset] = useState<FilterPreset>(defaultPreset);
+  
+  // Reset preset when modal reopens with different parent filter
+  useEffect(() => {
+    if (isOpen) {
+      setActivePreset(parentFilterType === "campaign" && campaignDates ? "campaign" : "thisMonth");
+    }
+  }, [isOpen, parentFilterType, campaignDates]);
+
   const dateRange = useMemo(() => getPresetRange(activePreset, campaignDates), [activePreset, campaignDates]);
   const { isAdmin, isManager, isSdr } = useUserRole();
   const [dynamicStats, setDynamicStats] = useState<{ rank: number; sqls: number; convRate: string } | null>(null);
