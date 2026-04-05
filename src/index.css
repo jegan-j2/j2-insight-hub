@@ -321,7 +321,7 @@ All colors MUST be HSL.
 .table-header-navy th span,
 .table-header-navy th a {
   color: white !important;
-  font-size: 11px !important;
+  font-size: 14px !important;
   font-weight: 700 !important;
 }
 .table-header-navy th svg {
@@ -329,31 +329,60 @@ All colors MUST be HSL.
 }
 .dark .table-header-navy tr,
 .dark .table-header-navy tr:hover {
-  background-color: #0F172A !important;
+  background: linear-gradient(180deg, #1E293B 0%, #162032 100%) !important;
+  border-color: #334155 !important;
+}
+.dark .table-header-navy th,
+.dark .table-header-navy th button,
+.dark .table-header-navy th span,
+.dark .table-header-navy th a {
+  color: white !important;
 }
 
 /* Dashboard table standards — striped rows */
 .table-striped > tr:nth-child(even) > td {
-  background-color: #F1F5F9;
+  background-color: #F8FAFC;
 }
 .table-striped > tr:nth-child(odd) > td {
   background-color: #FFFFFF;
 }
 .dark .table-striped > tr:nth-child(even) > td {
-  background-color: rgba(30, 41, 59, 0.5);
+  background-color: #1A2332 !important;
 }
 .dark .table-striped > tr:nth-child(odd) > td {
-  background-color: transparent;
+  background-color: #0F172A !important;
 }
 .table-striped > tr:hover > td {
   background-color: #EFF6FF !important;
 }
 .dark .table-striped > tr:hover > td {
-  background-color: rgba(30, 58, 95, 0.5) !important;
+  background-color: #1E293B !important;
 }
 .table-striped > tr > td {
   padding-top: 12px !important;
   padding-bottom: 12px !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+.dark .table-striped > tr > td {
+  color: #E2E8F0 !important;
+}
+
+/* Global table body dark mode text */
+.dark table tbody td {
+  color: #E2E8F0;
+}
+
+/* Global table font standardization */
+table thead th {
+  font-size: 14px;
+  font-weight: 700;
+  height: 44px;
+}
+table tbody td {
+  font-size: 14px;
+  font-weight: 400;
+  height: 48px;
 }
 
 /* Smooth data transitions */
