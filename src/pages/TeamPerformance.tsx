@@ -26,6 +26,7 @@ import type { DateRange } from "react-day-picker";
 interface ClientOption {
   client_id: string;
   client_name: string;
+  logo_url: string | null;
 }
 
 const TeamPerformance = () => {
@@ -90,7 +91,7 @@ const TeamPerformance = () => {
     const fetchClients = async () => {
       const { data } = await supabase
         .from("clients")
-        .select("client_id, client_name")
+        .select("client_id, client_name, logo_url")
         .eq("status", "active")
         .order("client_name");
       if (data) setClients(data);
@@ -122,6 +123,11 @@ const TeamPerformance = () => {
 
   const clientNameMap = useMemo(() =>
     Object.fromEntries(clients.map(c => [c.client_id, c.client_name])),
+    [clients]
+  );
+
+  const clientLogoMap = useMemo(() =>
+    Object.fromEntries(clients.map(c => [c.client_id, c.logo_url || ""])),
     [clients]
   );
 
@@ -317,7 +323,16 @@ const TeamPerformance = () => {
               <SelectContent className="z-[100] bg-card">
                 <SelectItem value="all">All Clients</SelectItem>
                 {clients.map((c) => (
-                  <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
+                  <SelectItem key={c.client_id} value={c.client_id}>
+                    <span className="flex items-center gap-2">
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                      )}
+                      {c.client_name}
+                    </span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -360,6 +375,7 @@ const TeamPerformance = () => {
           <SDRLeaderboardTable
             leaderboardData={leaderboard}
             clientNameMap={clientNameMap}
+            clientLogoMap={clientLogoMap}
             showClientColumn={clientFilter === "all"}
             mostImproved={mostImproved}
           />
@@ -433,7 +449,7 @@ const TeamPerformance = () => {
 
       {/* SDR Activity Breakdown Chart */}
       {activityChartData.length > 0 ? (
-        <SDRActivityChart chartData={activityChartData} />
+        <SDRActivityChart chartData={activityChartData} clientLogoMap={clientLogoMap} />
       ) : null}
     </div>
   );
