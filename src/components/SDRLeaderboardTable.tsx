@@ -226,13 +226,13 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
                         <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
-                          {dmValue > 0 ? dmValue.toLocaleString() : <span className="text-muted-foreground">—</span>}
+                          {dmValue.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
-                          {sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}
+                          {sdr.totalSQLs.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
-                          {convValue > 0 ? `${sdr.conversionRate}%` : <span className="text-muted-foreground">—</span>}
+                          {sdr.conversionRate}%
                         </TableCell>
                         <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.avgDuration > 0 ? (
