@@ -192,7 +192,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                     <TableHead className="text-right cursor-pointer select-none h-[44px]" style={{ padding: cellPad }} onClick={() => handleSort("avgDuration")}>Avg Talk <SortIcon column="avgDuration" /></TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="table-striped">
                   {sortedData.map((sdr, idx) => {
                     const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
                     const dmValue = Number(sdr.totalDMs);
@@ -201,40 +201,40 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                     return (
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
-                        className="transition-colors cursor-pointer hover:bg-[#EFF6FF] dark:hover:bg-[#1E293B]"
-                        style={{ backgroundColor: idx % 2 === 0 ? undefined : undefined, height: "48px" }}
+                        className="transition-colors cursor-pointer"
+                        style={{ height: "48px" }}
                       >
-                        <TableCell className="text-center dark:text-slate-200" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums", backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-center" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
-                        <TableCell className="text-left dark:text-slate-200" style={{ padding: cellPad, backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-left" style={{ padding: cellPad }}>
                           <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedSDR(sdr)}>
                             <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
                             <span className="font-normal whitespace-nowrap truncate">{sdr.name}</span>
                           </div>
                         </TableCell>
                         {showClientColumn && (
-                          <TableCell className="text-left whitespace-nowrap truncate dark:text-slate-200" style={{ padding: cellPad, backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>{clientName}</TableCell>
+                          <TableCell className="text-left whitespace-nowrap truncate" style={{ padding: cellPad }}>{clientName}</TableCell>
                         )}
-                        <TableCell className="text-right dark:text-slate-200" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums", backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalDials.toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right dark:text-slate-200" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums", backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalAnswered.toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right dark:text-slate-200" style={{ padding: cellPad, backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad }}>
                           {getAnswerRateBadge(sdr.answerRate)}
                         </TableCell>
-                        <TableCell className="text-right dark:text-slate-200" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums", backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {dmValue > 0 ? dmValue.toLocaleString() : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right dark:text-slate-200" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums", backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalSQLs === 0 ? <span className="text-muted-foreground">—</span> : sdr.totalSQLs}
                         </TableCell>
-                        <TableCell className="text-right dark:text-slate-200" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums", backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {convValue > 0 ? `${sdr.conversionRate}%` : <span className="text-muted-foreground">—</span>}
                         </TableCell>
-                        <TableCell className="text-right dark:text-slate-200" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums", backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                        <TableCell className="text-right" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.avgDuration > 0 ? (
                             <span title={`${Math.round(sdr.avgDuration)} seconds avg`}>
                               {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s
