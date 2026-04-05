@@ -182,6 +182,8 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
                       >
                         {isFuture ? (
                           <span className="text-muted-foreground/50">—</span>
+                        ) : value === 0 ? (
+                          <span style={{ color: "#94a3b8" }}>0</span>
                         ) : (
                           value.toString()
                         )}
@@ -256,10 +258,10 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
               <div className="relative h-14 w-14 shrink-0">
                 <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
                   <circle cx="18" cy="18" r="15.9" fill="none" stroke="hsl(var(--border))" strokeWidth="3" />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F59E0B" strokeWidth="3" strokeDasharray={`${insights.consistencyScore} ${100 - insights.consistencyScore}`} strokeLinecap="round" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke={insights.consistencyScore >= 80 ? "#10B981" : insights.consistencyScore >= 50 ? "#F59E0B" : "#EF4444"} strokeWidth="3" strokeDasharray={`${insights.consistencyScore} ${100 - insights.consistencyScore}`} strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold text-foreground">{Math.round(insights.consistencyScore)}%</span>
+                  <span className="text-xs font-bold" style={{ color: insights.consistencyScore >= 80 ? "#10B981" : insights.consistencyScore >= 50 ? "#F59E0B" : "#EF4444" }}>{Math.round(insights.consistencyScore)}%</span>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">Working days with 80+ dials</p>

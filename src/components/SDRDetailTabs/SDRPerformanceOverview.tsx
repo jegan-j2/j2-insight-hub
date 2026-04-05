@@ -172,15 +172,27 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
   }, [snapshots]);
 
   // Determine if we should show daily vs weekly trend
+  // Use daily view when range is short OR when only 1 week of weekly data exists
+  const weekCount = useMemo(() => {
+    const weekMap = new Set<string>();
+    snapshots.forEach((s) => {
+      const ws = startOfWeek(new Date(s.snapshot_date + "T00:00:00"), { weekStartsOn: 1 });
+      weekMap.add(format(ws, "yyyy-MM-dd"));
+    });
+    return weekMap.size;
+  }, [snapshots]);
+
   const isShortRange = useMemo(() => {
     if (!dateRange?.from || !dateRange?.to) return false;
-    return differenceInDays(dateRange.to, dateRange.from) <= 7;
-  }, [dateRange]);
+    return differenceInDays(dateRange.to, dateRange.from) <= 7 || weekCount <= 1;
+  }, [dateRange, weekCount]);
 
   const performanceTrendData = useMemo(() => {
     if (isShortRange && dateRange?.from && dateRange?.to) {
-      // Daily data points for Last 7 Days
-      const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+      // Daily data points — cap at today, skip weekends
+      const endDate = dateRange.to > new Date() ? new Date() : dateRange.to;
+      const days = eachDayOfInterval({ start: dateRange.from, end: endDate })
+        .filter(d => d.getDay() !== 0 && d.getDay() !== 6); // Mon-Fri only
       return days.map(day => {
         const key = format(day, "yyyy-MM-dd");
         const daySnapshots = snapshots.filter(s => s.snapshot_date === key);
@@ -232,19 +244,11 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
   const funnelLevels = useMemo(() => {
     const totals = filteredKPIs;
     const pct = (num: number, den: number) => den > 0 ? ((num / den) * 100).toFixed(1) + "%" : "0.0%";
-    const hasDMs = totals.dms > 0;
-    if (hasDMs) {
-      return [
-        { label: "Dials", count: totals.dials, color: METRIC_COLORS.dials, pctOfPrev: "100%" },
-        { label: "Answered", count: totals.answered, color: METRIC_COLORS.answered, pctOfPrev: pct(totals.answered, totals.dials) },
-        { label: "DM Conversations", count: totals.dms, color: METRIC_COLORS.dms, pctOfPrev: pct(totals.dms, totals.answered) },
-        { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.dms) },
-      ];
-    }
     return [
       { label: "Dials", count: totals.dials, color: METRIC_COLORS.dials, pctOfPrev: "100%" },
       { label: "Answered", count: totals.answered, color: METRIC_COLORS.answered, pctOfPrev: pct(totals.answered, totals.dials) },
-      { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.answered) },
+      { label: "DM Conversations", count: totals.dms, color: METRIC_COLORS.dms, pctOfPrev: pct(totals.dms, totals.answered) },
+      { label: "SQLs", count: totals.sqls, color: METRIC_COLORS.sqls, pctOfPrev: pct(totals.sqls, totals.dms) },
     ];
   }, [filteredKPIs]);
 
@@ -384,7 +388,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
       )}
 
       {/* Side by side: Performance Trend + Conversion Funnel */}
-      <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Performance Trend ({isShortRange ? "Daily" : "Weekly"})</CardTitle>
