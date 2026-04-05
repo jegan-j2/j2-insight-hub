@@ -284,6 +284,27 @@ const TeamPerformance = () => {
               </Button>
             );
           })}
+          {/* Campaign tab — only when a specific client is selected */}
+          {selectedClient?.campaign_start && selectedClient?.campaign_end && (() => {
+            const campStart = new Date(selectedClient.campaign_start + "T00:00:00");
+            const campEnd = new Date(selectedClient.campaign_end + "T00:00:00");
+            const isActive = filterType === "campaign";
+            return (
+              <Button
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setDateRange({ from: campStart, to: campEnd }); setFilterType("campaign" as FilterType); setCustomRange(undefined); }}
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  isActive
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                Campaign
+              </Button>
+            );
+          })()}
           <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -346,10 +367,10 @@ const TeamPerformance = () => {
             </Select>
           </div>
         </div>
-        {dateRange?.from && dateRange?.to && (
+         {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarIcon className="h-4 w-4" />
-            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}{filterType === "campaign" ? " (Campaign)" : ""}</span>
           </div>
         )}
       </div>
