@@ -196,7 +196,6 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                   {sortedData.map((sdr, idx) => {
                     const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
                     const dmValue = Number(sdr.totalDMs);
-                    const convValue = Number(parseFloat(sdr.conversionRate));
 
                     return (
                       <TableRow
