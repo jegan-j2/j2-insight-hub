@@ -128,6 +128,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
         {/* Header */}
         <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border sticky top-0 bg-card z-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            {/* Left: Avatar + name + badges */}
             <div className="flex items-center gap-3 sm:gap-4 flex-1 w-full sm:w-auto">
               <Avatar className="h-12 w-12 sm:h-16 sm:w-16 shrink-0">
                 <AvatarFallback className="text-base sm:text-lg bg-primary/20 text-primary">
@@ -149,37 +150,38 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
-              <Button variant="ghost" size="icon" onClick={onClose} className="min-h-[44px] min-w-[44px]">
-                <X className="h-5 w-5" />
-              </Button>
+
+            {/* Right: Date tabs + close button */}
+            <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1">
+                  {datePresets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => setActivePreset(preset.id)}
+                      className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                        activePreset === preset.id
+                          ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                          : "bg-white text-[#0f172a] hover:bg-muted/50 dark:bg-transparent dark:text-foreground border border-border"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+                <Button variant="ghost" size="icon" onClick={onClose} className="min-h-[44px] min-w-[44px] shrink-0">
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              {/* Filtered period — below date tabs, right-aligned */}
+              {dateRange?.from && dateRange?.to && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Date filter tabs */}
-          <div className="mt-3 flex flex-wrap items-center gap-1">
-            {datePresets.map((preset) => (
-              <button
-                key={preset.id}
-                onClick={() => setActivePreset(preset.id)}
-                className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                  activePreset === preset.id
-                    ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
-                    : "bg-white text-[#0f172a] hover:bg-muted/50 dark:bg-transparent dark:text-foreground border border-border"
-                }`}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Filtered period — below date tabs */}
-          {dateRange?.from && dateRange?.to && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
-            </div>
-          )}
         </DialogHeader>
 
         <div className="p-4 sm:p-6">
