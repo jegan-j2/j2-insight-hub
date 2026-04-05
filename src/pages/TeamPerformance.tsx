@@ -27,6 +27,9 @@ interface ClientOption {
   client_id: string;
   client_name: string;
   logo_url: string | null;
+  campaign_start: string | null;
+  campaign_end: string | null;
+  target_sqls: number | null;
 }
 
 const TeamPerformance = () => {
@@ -91,7 +94,7 @@ const TeamPerformance = () => {
     const fetchClients = async () => {
       const { data } = await supabase
         .from("clients")
-        .select("client_id, client_name, logo_url")
+        .select("client_id, client_name, logo_url, campaign_start, campaign_end, target_sqls")
         .eq("status", "active")
         .order("client_name");
       if (data) setClients(data);
@@ -130,6 +133,11 @@ const TeamPerformance = () => {
     Object.fromEntries(clients.map(c => [c.client_id, c.logo_url || ""])),
     [clients]
   );
+
+  const selectedClient = useMemo(() => {
+    if (!clientFilter || clientFilter === "all") return null;
+    return clients.find(c => c.client_id === clientFilter) || null;
+  }, [clientFilter, clients]);
 
   // Melbourne timezone greeting
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -173,10 +181,10 @@ const TeamPerformance = () => {
     return { dials, answered, answerRate, dms, sqls, convRate };
   }, [leaderboard]);
 
-  // Team pace indicator — only for "This Month"
+  // Team pace indicator — for "This Month" or "Campaign"
   const [targetSQLs, setTargetSQLs] = useState<number | null>(null);
   useEffect(() => {
-    if (filterType !== "thisMonth") { setTargetSQLs(null); return; }
+    if (filterType !== "thisMonth" && filterType !== "campaign") { setTargetSQLs(null); return; }
     const fetchTargets = async () => {
       const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
       if (cid) {
@@ -194,22 +202,34 @@ const TeamPerformance = () => {
   }, [filterType, clientFilter]);
 
   const paceData = useMemo(() => {
-    if (filterType !== "thisMonth") return null;
+    if (filterType !== "thisMonth" && filterType !== "campaign") return null;
     const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-    const today = now > monthEnd ? monthEnd : now;
+
+    let periodStart: Date, periodEnd: Date;
+    if (filterType === "campaign" && selectedClient?.campaign_start && selectedClient?.campaign_end) {
+      periodStart = new Date(selectedClient.campaign_start + "T00:00:00");
+      periodEnd = new Date(selectedClient.campaign_end + "T00:00:00");
+    } else {
+      periodStart = startOfMonth(now);
+      periodEnd = endOfMonth(now);
+    }
+
+    const today = now > periodEnd ? periodEnd : now;
+    if (today < periodStart) return null;
     
-    const allWorkingDays = eachDayOfInterval({ start: monthStart, end: monthEnd }).filter(d => !isWeekend(d));
-    const elapsedWorkingDays = eachDayOfInterval({ start: monthStart, end: today }).filter(d => !isWeekend(d)).length;
+    const allWorkingDays = eachDayOfInterval({ start: periodStart, end: periodEnd }).filter(d => !isWeekend(d));
+    const elapsedWorkingDays = eachDayOfInterval({ start: periodStart, end: today }).filter(d => !isWeekend(d)).length;
     const totalWorkingDays = allWorkingDays.length;
     
     const totalSQLs = teamTotals.sqls;
     const runRate = elapsedWorkingDays > 0 ? totalSQLs / elapsedWorkingDays : 0;
     const projected = Math.round(runRate * totalWorkingDays);
     
-    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, runRate, projected };
-  }, [filterType, teamTotals.sqls]);
+    const label = filterType === "campaign" ? "Campaign Pace" : "Monthly Pace";
+    const endLabel = filterType === "campaign" ? "campaign end" : "month end";
+    
+    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, runRate, projected, label, endLabel };
+  }, [filterType, teamTotals.sqls, selectedClient]);
 
   // Only show full-page loader on first load (no cached data yet)
   if (loading && leaderboard.length === 0) return <J2Loader />;
@@ -276,6 +296,27 @@ const TeamPerformance = () => {
               </Button>
             );
           })}
+          {/* Campaign tab — only when a specific client is selected */}
+          {selectedClient?.campaign_start && selectedClient?.campaign_end && (() => {
+            const campStart = new Date(selectedClient.campaign_start + "T00:00:00");
+            const campEnd = new Date(selectedClient.campaign_end + "T00:00:00");
+            const isActive = filterType === "campaign";
+            return (
+              <Button
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setDateRange({ from: campStart, to: campEnd }); setFilterType("campaign" as FilterType); setCustomRange(undefined); }}
+                className={cn(
+                  "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                  isActive
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                Campaign
+              </Button>
+            );
+          })()}
           <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -338,10 +379,10 @@ const TeamPerformance = () => {
             </Select>
           </div>
         </div>
-        {dateRange?.from && dateRange?.to && (
+         {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarIcon className="h-4 w-4" />
-            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}{filterType === "campaign" ? " (Campaign)" : ""}</span>
           </div>
         )}
       </div>
@@ -378,6 +419,7 @@ const TeamPerformance = () => {
             clientLogoMap={clientLogoMap}
             showClientColumn={clientFilter === "all"}
             mostImproved={mostImproved}
+            campaignDates={selectedClient?.campaign_start && selectedClient?.campaign_end ? { start: selectedClient.campaign_start, end: selectedClient.campaign_end } : null}
           />
         </>
       ) : null}
@@ -421,11 +463,11 @@ const TeamPerformance = () => {
         </div>
       )}
 
-      {/* Team Pace Indicator — only for This Month, below Team Totals */}
+      {/* Team Pace Indicator — for This Month or Campaign, below Team Totals */}
       {paceData && leaderboard.length > 0 && (
         <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3">
           <p className="text-[13px] text-[#0f172a] dark:text-slate-200">
-            📊 <span className="font-semibold">Monthly Pace:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by month end
+            📊 <span className="font-semibold">{paceData.label}:</span> {paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} SQLs by {paceData.endLabel}
           </p>
           {targetSQLs && targetSQLs > 0 && (
             <div className="mt-2">

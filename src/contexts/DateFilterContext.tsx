@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import { startOfMonth, endOfMonth } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
-export type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "custom";
+export type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "custom" | "campaign";
 
 interface DateFilterContextType {
   dateRange: DateRange | undefined;

@@ -13,7 +13,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/lib/supabase";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
-type FilterPreset = "last7days" | "last30days" | "thisMonth" | "lastMonth";
+type FilterPreset = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign";
 
 interface SDRDetailModalProps {
   isOpen: boolean;
@@ -29,9 +29,10 @@ interface SDRDetailModalProps {
     trend: number;
   };
   globalDateRange?: DateRange;
+  campaignDates?: { start: string; end: string } | null;
 }
 
-const getPresetRange = (preset: FilterPreset): DateRange => {
+const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; end: string } | null): DateRange => {
   const now = new Date();
   switch (preset) {
     case "last7days":
@@ -44,12 +45,18 @@ const getPresetRange = (preset: FilterPreset): DateRange => {
       const prev = subMonths(now, 1);
       return { from: startOfMonth(prev), to: endOfMonth(prev) };
     }
+    case "campaign": {
+      if (campaignDates?.start && campaignDates?.end) {
+        return { from: new Date(campaignDates.start + "T00:00:00"), to: new Date(campaignDates.end + "T00:00:00") };
+      }
+      return { from: startOfMonth(now), to: endOfMonth(now) };
+    }
   }
 };
 
-export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDetailModalProps) => {
+export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaignDates }: SDRDetailModalProps) => {
   const [activePreset, setActivePreset] = useState<FilterPreset>("thisMonth");
-  const dateRange = useMemo(() => getPresetRange(activePreset), [activePreset]);
+  const dateRange = useMemo(() => getPresetRange(activePreset, campaignDates), [activePreset, campaignDates]);
   const { isAdmin, isManager, isSdr } = useUserRole();
   const [dynamicStats, setDynamicStats] = useState<{ rank: number; sqls: number; convRate: string } | null>(null);
   const [teamAverages, setTeamAverages] = useState<{ dials: number; answered: number; dms: number; sqls: number } | undefined>();
@@ -71,6 +78,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
     { id: "last30days", label: "Last 30 Days" },
     { id: "thisMonth", label: "This Month" },
     { id: "lastMonth", label: "Last Month" },
+    ...(campaignDates?.start && campaignDates?.end ? [{ id: "campaign" as FilterPreset, label: "Campaign" }] : []),
   ];
 
   // Fetch latest SQL meeting within filtered period
@@ -196,7 +204,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange }: SDRDet
               {dateRange?.from && dateRange?.to && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground self-start">
                   <CalendarIcon className="h-4 w-4" />
-                  <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+                  <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}{activePreset === "campaign" ? " (Campaign)" : ""}</span>
                 </div>
               )}
             </div>

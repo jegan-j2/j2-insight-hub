@@ -39,9 +39,10 @@ interface SDRLeaderboardTableProps {
   clientLogoMap?: Record<string, string>;
   showClientColumn?: boolean;
   mostImproved?: MostImprovedInfo | null;
+  campaignDates?: { start: string; end: string } | null;
 }
 
-export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clientLogoMap = {}, showClientColumn = true, mostImproved }: SDRLeaderboardTableProps) => {
+export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clientLogoMap = {}, showClientColumn = true, mostImproved, campaignDates }: SDRLeaderboardTableProps) => {
   const data = leaderboardData || [];
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
   const { dateRange } = useDateFilter();
@@ -277,6 +278,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
             trend: selectedSDR.trend,
           }}
           globalDateRange={dateRange}
+          campaignDates={campaignDates}
         />
       )}
     </>
