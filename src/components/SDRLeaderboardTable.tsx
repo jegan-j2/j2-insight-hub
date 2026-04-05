@@ -276,6 +276,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
             dms: selectedSDR.totalDMs,
             sqls: selectedSDR.totalSQLs,
             trend: selectedSDR.trend,
+            clientId: selectedSDR.clientId,
           }}
           globalDateRange={dateRange}
           campaignDates={campaignDates}

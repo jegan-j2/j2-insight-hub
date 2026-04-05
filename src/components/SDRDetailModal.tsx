@@ -27,6 +27,7 @@ interface SDRDetailModalProps {
     dms: number;
     sqls: number;
     trend: number;
+    clientId?: string;
   };
   globalDateRange?: DateRange;
   campaignDates?: { start: string; end: string } | null;
@@ -112,7 +113,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
       const { data } = await supabase.rpc("get_team_leaderboard", {
         p_start_date: startDate + "T00:00:00+11:00",
         p_end_date: endDate + "T23:59:59+11:00",
-        p_client_id: null,
+        p_client_id: sdr.clientId || null,
       });
 
       if (data && data.length > 0) {
@@ -147,7 +148,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
       }
     };
     fetchTeamAvg();
-  }, [dateRange, sdr.name]);
+  }, [dateRange, sdr.name, sdr.clientId]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
