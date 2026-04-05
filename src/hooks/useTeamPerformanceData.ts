@@ -114,15 +114,34 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
   const leaderboard: LeaderboardEntry[] = useMemo(() => mapRpcToLeaderboard(rpcData), [rpcData])
   const previousLeaderboard: LeaderboardEntry[] = useMemo(() => mapRpcToLeaderboard(prevRpcData), [prevRpcData])
 
+  // Build chart data with client name appended for SDRs appearing in multiple rows
   const activityChartData = useMemo(() => {
-    return leaderboard.map(sdr => ({
-      name: sdr.name,
-      dials: sdr.totalDials,
-      answered: sdr.totalAnswered,
-      dms: sdr.totalDMs,
-      sqls: sdr.totalSQLs,
-    }))
-  }, [leaderboard])
+    // Count how many rows each SDR name appears in
+    const nameCounts = new Map<string, number>()
+    for (const sdr of leaderboard) {
+      nameCounts.set(sdr.name, (nameCounts.get(sdr.name) || 0) + 1)
+    }
+    // Find client names from rpcData
+    const clientNameFromRpc = new Map<string, string>()
+    for (const row of rpcData) {
+      if (row.client_name && row.client_id) {
+        clientNameFromRpc.set(row.client_id, row.client_name)
+      }
+    }
+    return leaderboard.map(sdr => {
+      const isDuplicate = (nameCounts.get(sdr.name) || 0) > 1
+      const clientLabel = isDuplicate && sdr.clientId
+        ? clientNameFromRpc.get(sdr.clientId) || sdr.clientId
+        : ''
+      return {
+        name: isDuplicate && clientLabel ? `${sdr.name} (${clientLabel})` : sdr.name,
+        dials: sdr.totalDials,
+        answered: sdr.totalAnswered,
+        dms: sdr.totalDMs,
+        sqls: sdr.totalSQLs,
+      }
+    })
+  }, [leaderboard, rpcData])
 
   return {
     loading,

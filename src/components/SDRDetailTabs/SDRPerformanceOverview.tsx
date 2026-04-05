@@ -367,7 +367,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
 
       {/* Latest SQL Banner — below KPI cards */}
       {latestSQL ? (
-        <div className="bg-[#ECFDF5] dark:bg-emerald-950/30 border-l-[3px] border-[#10B981] rounded-lg px-4 py-2.5 text-[13px]">
+        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-lg px-4 py-2.5 text-[13px]">
           <span className="font-bold">🎯 Latest SQL</span>
           <span className="text-muted-foreground"> · </span>
           <span>{latestSQL.contact_person}</span>
@@ -381,9 +381,9 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
           <span>{format(new Date(latestSQL.booking_date + "T00:00:00"), "d MMM yyyy")}</span>
         </div>
       ) : (
-        <div className="bg-[#ECFDF5] dark:bg-emerald-950/30 border-l-[3px] border-[#10B981] rounded-lg px-4 py-2.5 text-[13px]">
+        <div className="bg-white dark:bg-card border border-[#E2E8F0] dark:border-border rounded-lg px-4 py-2.5 text-[13px]">
           <span className="font-bold">🎯</span>
-          <span className="text-muted-foreground"> Waiting for {sdr.name}'s first SQL to be booked...</span>
+          <span className="text-muted-foreground"> Waiting for {sdr.name}'s first SQL this period...</span>
         </div>
       )}
 
@@ -435,18 +435,18 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
               <TableHeader className="table-header-navy">
                 <TableRow>
                   <TableHead className="text-left">Client</TableHead>
-                  <TableHead className="text-right">Dials</TableHead>
-                  <TableHead className="text-right">SQLs</TableHead>
-                  <TableHead className="text-right">Conversion Rate</TableHead>
+                  <TableHead className="text-center">Dials</TableHead>
+                  <TableHead className="text-center">SQLs</TableHead>
+                  <TableHead className="text-center">Conversion Rate</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="table-striped">
                 {clientBreakdownData.map((client) => (
                   <TableRow key={client.client}>
                     <TableCell className="font-medium text-left">{client.clientName}</TableCell>
-                    <TableCell className="text-right">{client.dials.toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-bold">{client.sqls}</TableCell>
-                    <TableCell className="text-right">{client.conversionRate}</TableCell>
+                    <TableCell className="text-center">{client.dials.toLocaleString()}</TableCell>
+                    <TableCell className="text-center">{client.sqls}</TableCell>
+                    <TableCell className="text-center">{client.conversionRate}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

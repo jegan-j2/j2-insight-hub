@@ -119,7 +119,7 @@ export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
                 </>
               ) : (
                 <>
-                  <Bar dataKey="dms" fill={COLORS.dms} name="DM Conversations" radius={[0, 4, 4, 0]} barSize={16}>
+                  <Bar dataKey="dms" fill={COLORS.dms} name="DM Conv." radius={[0, 4, 4, 0]} barSize={16}>
                     <LabelList dataKey="dms" position="right" style={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                   </Bar>
                   <Bar dataKey="sqls" fill={COLORS.sqls} name="SQLs" radius={[0, 4, 4, 0]} barSize={16}>
