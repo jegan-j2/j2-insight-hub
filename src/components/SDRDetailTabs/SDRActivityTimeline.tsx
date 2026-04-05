@@ -81,7 +81,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
     const dayCounts = Array(5).fill(0);
     let totalDials = 0;
     let totalWorkingDays = 0;
-    let daysWithMin50 = 0;
+    let daysWithMin80 = 0;
     let bestWeekIdx = 0;
     let bestWeekTotal = 0;
 
@@ -96,7 +96,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
           dayCounts[di] += 1;
           totalDials += val;
           totalWorkingDays += 1;
-          if (val >= 50) daysWithMin50 += 1;
+          if (val >= 80) daysWithMin80 += 1;
         }
         weekTotal += val;
       });
@@ -116,7 +116,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
       }
     }
 
-    const consistencyScore = totalWorkingDays > 0 ? (daysWithMin50 / totalWorkingDays) * 100 : 0;
+    const consistencyScore = totalWorkingDays > 0 ? (daysWithMin80 / totalWorkingDays) * 100 : 0;
 
     return {
       mostActiveDay,
@@ -262,7 +262,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
                   <span className="text-xs font-bold text-foreground">{Math.round(insights.consistencyScore)}%</span>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Working days with 50+ dials</p>
+              <p className="text-xs text-muted-foreground">Working days with 80+ dials</p>
             </div>
           </CardContent>
         </Card>
@@ -288,7 +288,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
               <span className="text-lg font-bold text-foreground">{insights.bestWeekLabel}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Consistency (50+ dials days)</span>
+              <span className="text-sm text-muted-foreground">Consistency (80+ dials days)</span>
               <span className="text-lg font-bold text-foreground">{Math.round(insights.consistencyScore)}%</span>
             </div>
           </div>
