@@ -135,6 +135,7 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
         : ''
       return {
         name: isDuplicate && clientLabel ? `${sdr.name} (${clientLabel})` : sdr.name,
+        clientId: sdr.clientId,
         dials: sdr.totalDials,
         answered: sdr.totalAnswered,
         dms: sdr.totalDMs,

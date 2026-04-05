@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 
 interface ChartDataEntry {
   name: string;
+  clientId?: string;
   dials: number;
   answered: number;
   dms: number;
@@ -15,6 +16,7 @@ interface ChartDataEntry {
 
 interface SDRActivityChartProps {
   chartData?: ChartDataEntry[];
+  clientLogoMap?: Record<string, string>;
 }
 
 type ViewMode = "volume" | "outcomes";
@@ -26,13 +28,22 @@ const COLORS = {
   sqls: "#F43F5E",
 };
 
-export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
+export const SDRActivityChart = ({ chartData, clientLogoMap = {} }: SDRActivityChartProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("volume");
   const data = useMemo(() =>
     [...(chartData || [])].sort((a, b) =>
       viewMode === "volume" ? b.dials - a.dials : b.sqls - a.sqls
     ), [chartData, viewMode]
   );
+
+  // Build a map from chart name to clientId for logo lookup
+  const nameToClientId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const d of (chartData || [])) {
+      if (d.clientId) map[d.name] = d.clientId;
+    }
+    return map;
+  }, [chartData]);
 
   // Dynamic height: 45px per SDR + 80px for legend/padding
   const chartHeight = Math.max(400, data.length * 45 + 80);
@@ -90,10 +101,27 @@ export const SDRActivityChart = ({ chartData }: SDRActivityChartProps) => {
                 type="category"
                 dataKey="name"
                 className="text-xs"
-                width={150}
+                width={170}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                tick={(props: any) => {
+                  const { x, y, payload } = props;
+                  const name = payload.value;
+                  const cid = nameToClientId[name];
+                  const logoUrl = cid ? clientLogoMap[cid] : "";
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      {logoUrl ? (
+                        <foreignObject x={-170} y={-8} width={16} height={16}>
+                          <img src={logoUrl} alt="" style={{ width: 12, height: 12, borderRadius: 2, objectFit: "contain" }} />
+                        </foreignObject>
+                      ) : null}
+                      <text x={logoUrl ? -150 : -5} y={0} dy={4} textAnchor={logoUrl ? "start" : "end"} fill="hsl(var(--foreground))" fontSize={12}>
+                        {name}
+                      </text>
+                    </g>
+                  );
+                }}
               />
               <Tooltip
                 contentStyle={{

@@ -36,11 +36,12 @@ interface MostImprovedInfo {
 interface SDRLeaderboardTableProps {
   leaderboardData?: LeaderboardEntry[];
   clientNameMap?: Record<string, string>;
+  clientLogoMap?: Record<string, string>;
   showClientColumn?: boolean;
   mostImproved?: MostImprovedInfo | null;
 }
 
-export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showClientColumn = true, mostImproved }: SDRLeaderboardTableProps) => {
+export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clientLogoMap = {}, showClientColumn = true, mostImproved }: SDRLeaderboardTableProps) => {
   const data = leaderboardData || [];
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
   const { dateRange } = useDateFilter();
@@ -213,7 +214,16 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, showC
                           </div>
                         </TableCell>
                         {showClientColumn && (
-                          <TableCell className="text-left whitespace-nowrap truncate" style={{ padding: cellPad }}>{clientName}</TableCell>
+                          <TableCell className="text-left whitespace-nowrap truncate" style={{ padding: cellPad }}>
+                            <span className="flex items-center gap-1.5">
+                              {clientLogoMap[sdr.clientId || ""] ? (
+                                <img src={clientLogoMap[sdr.clientId || ""]} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                              ) : clientName ? (
+                                <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{clientName.charAt(0)}</span>
+                              ) : null}
+                              <span className="truncate">{clientName}</span>
+                            </span>
+                          </TableCell>
                         )}
                         <TableCell className="text-center" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {sdr.totalDials.toLocaleString()}
