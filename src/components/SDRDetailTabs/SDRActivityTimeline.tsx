@@ -181,7 +181,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange }: SDRActivityTimelineP
                         }}
                       >
                         {isFuture ? (
-                          <span className="text-muted-foreground/50">—</span>
+                          <span className="text-muted-foreground/30 text-[11px]">—</span>
                         ) : value === 0 ? (
                           <span style={{ color: "#94a3b8", fontWeight: 400 }}>0</span>
                         ) : (
