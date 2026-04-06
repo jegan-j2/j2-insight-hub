@@ -331,6 +331,7 @@ All colors MUST be HSL.
 .dark .table-header-navy tr:hover {
   background: linear-gradient(180deg, #1E293B 0%, #162032 100%) !important;
   border-color: #334155 !important;
+  border-bottom: 1px solid #334155 !important;
 }
 .dark .table-header-navy th,
 .dark .table-header-navy th button,
