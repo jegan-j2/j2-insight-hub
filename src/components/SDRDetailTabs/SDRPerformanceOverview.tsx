@@ -119,8 +119,8 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
     const fetchAll = async () => {
       const params = {
         p_sdr_name: sdr.name,
-        p_start_date: startDate + "T00:00:00+11:00",
-        p_end_date: endDate + "T23:59:59+11:00",
+        p_start_date: melbourneStartOfDay(startDate),
+        p_end_date: melbourneEndOfDay(endDate),
         p_client_id: effectiveClientId,
       };
 
@@ -129,8 +129,8 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
         supabase.rpc("get_sdr_weekly_trend", params),
         supabase.rpc("get_sdr_client_breakdown", {
           p_sdr_name: sdr.name,
-          p_start_date: startDate + "T00:00:00+11:00",
-          p_end_date: endDate + "T23:59:59+11:00",
+          p_start_date: melbourneStartOfDay(startDate),
+          p_end_date: melbourneEndOfDay(endDate),
         }),
       ]);
 

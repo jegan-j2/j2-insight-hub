@@ -159,8 +159,8 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
       const endDate = format(dateRange.to, "yyyy-MM-dd");
 
       const { data } = await supabase.rpc("get_team_leaderboard", {
-        p_start_date: startDate + "T00:00:00+11:00",
-        p_end_date: endDate + "T23:59:59+11:00",
+        p_start_date: melbourneStartOfDay(startDate),
+        p_end_date: melbourneEndOfDay(endDate),
         p_client_id: sdr.clientId || null,
       });
 
