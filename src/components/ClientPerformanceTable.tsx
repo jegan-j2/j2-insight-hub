@@ -357,41 +357,52 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.dms.toLocaleString()}</TableCell>
                       <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.sqls.toLocaleString()}</TableCell>
                       <TableCell className="text-left px-4 py-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex flex-col gap-1.5 min-w-[130px] cursor-default">
-                              <Progress value={client.elapsedPercent} className="h-2" />
-                              <span className="text-xs text-muted-foreground text-center">
-                                {client.elapsedPercent.toFixed(0)}% of campaign
-                              </span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            {(() => {
-                              const signal = client.signal;
-                              const color = signal === "red"
-                                ? "text-rose-500"
-                                : signal === "amber"
-                                ? "text-amber-500"
-                                : "text-emerald-500";
-                              const message = signal === "red"
-                                ? "At risk - behind pace"
-                                : signal === "amber"
-                                ? "Needs attention - slightly behind"
-                                : "On track";
-                              return (
-                                <div className="flex flex-col gap-1 text-xs">
-                                  <span className={`font-semibold ${color}`}>
-                                    {message}
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    {client.sqls} / {client.target} SQLs achieved
-                                  </span>
+                        {client.target === 0 ? (
+                          <span className="text-xs text-muted-foreground italic">No target set</span>
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex flex-col gap-1.5 min-w-[150px] cursor-default">
+                                <div className="relative w-full h-5 overflow-hidden rounded-full bg-secondary">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all flex items-center justify-center",
+                                      client.signal === "red" ? "bg-[#EF4444]" : client.signal === "amber" ? "bg-[#F59E0B]" : "bg-[#10B981]"
+                                    )}
+                                    style={{ width: `${Math.min(client.progress, 100)}%` }}
+                                  >
+                                    {client.progress >= 15 && (
+                                      <span className="text-[10px] font-semibold text-white leading-none">
+                                        {client.progress.toFixed(0)}%
+                                      </span>
+                                    )}
+                                  </div>
+                                  {client.progress < 15 && (
+                                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-muted-foreground leading-none">
+                                      {client.progress.toFixed(0)}%
+                                    </span>
+                                  )}
                                 </div>
-                              );
-                            })()}
-                          </TooltipContent>
-                        </Tooltip>
+                                <span className="text-xs text-muted-foreground text-center">
+                                  {client.sqls} of {client.target} SQLs
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <div className="flex flex-col gap-1 text-xs">
+                                <span className="font-semibold">
+                                  {client.sqls.toLocaleString()} of {client.target.toLocaleString()} SQLs booked — {client.progress.toFixed(0)}% of target
+                                </span>
+                                <span className={cn(
+                                  "font-medium",
+                                  client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : "text-emerald-500"
+                                )}>
+                                  {client.signal === "red" ? "At risk — behind pace" : client.signal === "amber" ? "Needs attention — slightly behind" : "On track"}
+                                </span>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
