@@ -110,6 +110,12 @@ export const SDRMeetingsResults = ({ sdrName, dateRange, clientId }: SDRMeetings
     );
   }
 
+  const allPending = useMemo(() => {
+    const eligible = meetings.filter((m) => m.meeting_status !== "cancelled");
+    const heldOrNoShow = eligible.filter((m) => m.meeting_status === "held" || m.meeting_status === "no_show");
+    return heldOrNoShow.length === 0 && eligible.length > 0;
+  }, [meetings]);
+
   return (
     <>
       {/* KPI Cards */}
@@ -121,6 +127,9 @@ export const SDRMeetingsResults = ({ sdrName, dateRange, clientId }: SDRMeetings
               <p className="text-sm text-muted-foreground">Meeting Show-up Rate</p>
             </div>
             <p className="text-3xl font-bold text-foreground">{kpis.showUpRate}%</p>
+            {allPending && (
+              <p className="text-[11px] text-muted-foreground italic mt-1">No meetings marked as held yet</p>
+            )}
           </CardContent>
         </Card>
 
