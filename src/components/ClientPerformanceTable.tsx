@@ -433,7 +433,8 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                 </TableBody>
               </Table>
             </TooltipProvider>
-          </div>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
