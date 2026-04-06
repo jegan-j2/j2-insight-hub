@@ -268,13 +268,14 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
             description="Client data will appear once clients are added to the database"
           />
         ) : (
-          <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> On track</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> At risk</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Behind</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" /> No activity</span>
-          </div>
-          <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+          <>
+            <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> On track</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> At risk</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Behind</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" /> No activity</span>
+            </div>
+            <div className="overflow-x-auto scrollbar-thin scroll-gradient">
             <TooltipProvider>
               <Table>
                 <TableHeader className="table-header-navy sticky top-0 z-10" role="rowgroup">
