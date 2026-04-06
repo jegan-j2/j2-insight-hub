@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
+import { melbourneStartOfDay, melbourneEndOfDay } from '@/lib/melbourneTime'
 import type { DateRange } from 'react-day-picker'
 import { useRealtimeSubscription } from './useRealtimeSubscription'
 

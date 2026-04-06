@@ -4,6 +4,7 @@ import { TrendingUp, Calendar, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { format, isAfter, isSameDay, addDays, eachWeekOfInterval } from "date-fns";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import type { DateRange } from "react-day-picker";
 
 interface SDRActivityTimelineProps {

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, CalendarIcon } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import type { DateRange } from "react-day-picker";
 import { SDRPerformanceOverview } from "@/components/SDRDetailTabs/SDRPerformanceOverview";
 import { SDRActivityTimeline } from "@/components/SDRDetailTabs/SDRActivityTimeline";

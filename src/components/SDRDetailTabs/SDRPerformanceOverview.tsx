@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { ArrowUpRight, ArrowDownRight, Phone, PhoneCall, MessageSquare, Target, Percent } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { format, differenceInDays } from "date-fns";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import type { DateRange } from "react-day-picker";
 
 interface SDRPerformanceOverviewProps {
