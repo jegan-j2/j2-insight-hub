@@ -385,7 +385,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
         </Card>
       </div>
 
-      {clientBreakdown.length > 1 && (
+      {clientBreakdown.length > 1 && !effectiveClientId && (
         <Card className="shadow-sm rounded-lg">
           <CardHeader>
             <CardTitle>Client Breakdown</CardTitle>

@@ -487,13 +487,17 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   <TableCell className="text-foreground whitespace-nowrap">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell><StatusBadge meeting={meeting} /></TableCell>
                   <TableCell style={{ minWidth: 200 }}>
-                    <Input
-                      defaultValue={meeting.clientNotes}
-                      onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
-                      placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
-                      disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
-                      className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
-                    />
+                    {isSdr || !canEditSQL(meeting.clientId) ? (
+                      <span className="text-sm text-foreground">{meeting.clientNotes || ""}</span>
+                    ) : (
+                      <Input
+                        defaultValue={meeting.clientNotes}
+                        onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
+                        placeholder="Add notes..."
+                        disabled={updating === meeting.id}
+                        className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
