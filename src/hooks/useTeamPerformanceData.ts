@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
+import { melbourneStartOfDay, melbourneEndOfDay } from '@/lib/melbourneTime'
 import type { DateRange } from 'react-day-picker'
 import { useRealtimeSubscription } from './useRealtimeSubscription'
 
@@ -65,14 +66,14 @@ export const useTeamPerformanceData = (dateRange: DateRange | undefined, clientF
 
       const [currentResult, prevResult] = await Promise.all([
         supabase.rpc('get_team_leaderboard', {
-          p_start_date: startDate + 'T00:00:00+11:00',
-          p_end_date: endDate + 'T23:59:59+11:00',
+          p_start_date: melbourneStartOfDay(startDate),
+          p_end_date: melbourneEndOfDay(endDate),
           p_client_id: clientId,
         }),
         prevDates.start && prevDates.end
           ? supabase.rpc('get_team_leaderboard', {
-              p_start_date: prevDates.start + 'T00:00:00+11:00',
-              p_end_date: prevDates.end + 'T23:59:59+11:00',
+              p_start_date: melbourneStartOfDay(prevDates.start),
+              p_end_date: melbourneEndOfDay(prevDates.end),
               p_client_id: clientId,
             })
           : Promise.resolve({ data: [], error: null }),

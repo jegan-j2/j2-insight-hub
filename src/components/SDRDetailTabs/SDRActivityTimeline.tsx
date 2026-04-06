@@ -4,6 +4,7 @@ import { TrendingUp, Calendar, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { format, isAfter, isSameDay, addDays, eachWeekOfInterval } from "date-fns";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import type { DateRange } from "react-day-picker";
 
 interface SDRActivityTimelineProps {
@@ -63,8 +64,8 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
 
       const { data } = await supabase.rpc("get_sdr_heatmap", {
         p_sdr_name: sdrName,
-        p_start_date: startDate + "T00:00:00+11:00",
-        p_end_date: endDate + "T23:59:59+11:00",
+        p_start_date: melbourneStartOfDay(startDate),
+        p_end_date: melbourneEndOfDay(endDate),
         p_client_id: clientId || null,
       });
 
