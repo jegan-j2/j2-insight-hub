@@ -52,7 +52,7 @@ export const SDRActivityChart = ({ chartData, clientLogoMap = {} }: SDRActivityC
     <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
       <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
         <CardTitle className="text-xl font-semibold">SDR Activity Breakdown</CardTitle>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0">
           <Button
             variant="ghost"
             size="sm"

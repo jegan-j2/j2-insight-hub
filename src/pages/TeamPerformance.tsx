@@ -486,48 +486,52 @@ const TeamPerformance = () => {
         <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3 space-y-2">
           {/* Line 1: SQL Pace */}
           {targetSQLs && targetSQLs > 0 && paceData.totalSQLs >= targetSQLs ? (
-            <p className="text-[13px] text-[#10B981] font-semibold">🎯 Target reached!</p>
+            <p className="text-[13px] text-[#10B981] font-semibold">🎯 Target reached! {paceData.totalSQLs} of {targetSQLs} SQLs</p>
           ) : (
             <p className="text-[13px] text-foreground">
               <span className="font-semibold">{paceData.label}:</span>
-              {" "}{paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} by {paceData.endLabel}
+              {" "}{paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days | Run rate: {paceData.runRate.toFixed(2)} SQLs/day | Projected: {paceData.projected} by {paceData.endLabel}
               {targetSQLs && targetSQLs > 0 && (() => {
-                if (paceData.remainingWorkingDays > 0) {
+                if (paceData.remainingWorkingDays > 5) {
                   const needPerDay = (targetSQLs - paceData.totalSQLs) / paceData.remainingWorkingDays;
-                  return <> · Need {needPerDay.toFixed(2)}/day to hit target</>;
+                  return <> | Need {needPerDay.toFixed(2)}/day to hit target</>;
+                }
+                if (paceData.remainingWorkingDays > 0) {
+                  const pct = Math.min(100, Math.round((paceData.projected / targetSQLs) * 100));
+                  return <> | Projected: {paceData.projected} of {targetSQLs} target ({pct}%)</>;
                 }
                 return null;
               })()}
             </p>
           )}
-          {/* Progress bar */}
+          {/* Line 2: Day progress */}
+          <p className="text-[12px] text-muted-foreground">
+            Day {paceData.elapsedWorkingDays} of {paceData.totalWorkingDays} working days ({paceData.totalWorkingDays > 0 ? Math.round((paceData.elapsedWorkingDays / paceData.totalWorkingDays) * 100) : 0}% of {filterType === "campaign" ? "campaign" : "month"} elapsed)
+          </p>
+          {/* Line 3: Progress bar */}
           {targetSQLs && targetSQLs > 0 && (
             <div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-                <span>{paceData.totalSQLs} of {targetSQLs} target SQLs · {Math.min(100, Math.round((paceData.totalSQLs / targetSQLs) * 100))}%</span>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-[#E2E8F0] dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, (paceData.totalSQLs / targetSQLs) * 100)}%`,
+                      backgroundColor: (() => {
+                        const requiredDailyRate = targetSQLs / paceData.totalWorkingDays;
+                        const pacePercentage = requiredDailyRate > 0 ? (paceData.runRate / requiredDailyRate) * 100 : 0;
+                        if (pacePercentage >= 71) return "#10B981";
+                        if (pacePercentage >= 51) return "#F59E0B";
+                        return "#EF4444";
+                      })(),
+                    }}
+                  />
+                </div>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{Math.min(100, Math.round((paceData.totalSQLs / targetSQLs) * 100))}%</span>
               </div>
-              <div className="w-full h-2 bg-[#E2E8F0] dark:bg-slate-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(100, (paceData.totalSQLs / targetSQLs) * 100)}%`,
-                    backgroundColor: (() => {
-                      const requiredDailyRate = targetSQLs / paceData.totalWorkingDays;
-                      const pacePercentage = requiredDailyRate > 0 ? (paceData.runRate / requiredDailyRate) * 100 : 0;
-                      if (pacePercentage >= 71) return "#10B981";
-                      if (pacePercentage >= 51) return "#F59E0B";
-                      return "#EF4444";
-                    })(),
-                  }}
-                />
-              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">{paceData.totalSQLs} of {targetSQLs} target SQLs</p>
             </div>
           )}
-          {/* Line 2: Dial Pace */}
-          <p className="text-[13px] text-foreground">
-            <span className="font-semibold">Dial Pace:</span>
-            {" "}{paceData.totalDials.toLocaleString()} dials across {paceData.activeSDRs} SDRs · {paceData.dialsPerSDRPerDay.toFixed(1)} dials/SDR/day
-          </p>
         </div>
       )}
 
