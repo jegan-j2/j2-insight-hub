@@ -345,89 +345,97 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                         {formatCampaignPeriod(client.campaignStart, client.campaignEnd)}
                       </TableCell>
-                      {(() => {
-                        const days = client.daysLeft;
-                        if (days === null) return (
-                          <TableCell className="text-center px-4 text-muted-foreground">-</TableCell>
-                        );
-                        const isBold = days <= 10;
-                        return (
-                          <TableCell className="text-center px-4">
-                            <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
-                              {days}
-                            </span>
-                            <span className={`text-sm ml-1 ${isBold ? "font-bold text-foreground" : "text-muted-foreground"}`}>
-                              {days === 1 ? "day" : "days"}
-                            </span>
-                          </TableCell>
-                        );
-                      })()}
-                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.dials.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.answered.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.answeredPercent.toFixed(1)}%</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.dms.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.sqls.toLocaleString()}</TableCell>
-                      <TableCell className="text-left px-4 py-2">
-                        {client.target === 0 ? (
-                          <span className="text-xs text-muted-foreground italic">No target set</span>
-                        ) : (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex flex-col gap-1.5 min-w-[150px] cursor-default">
-                                <div className="relative w-full h-5 overflow-hidden rounded-full bg-secondary">
-                                  <div
-                                    className={cn(
-                                      "h-full rounded-full transition-all flex items-center justify-center",
-                                      client.signal === "red" ? "bg-[#EF4444]" : client.signal === "amber" ? "bg-[#F59E0B]" : "bg-[#10B981]"
-                                    )}
-                                    style={{ width: `${Math.min(client.progress, 100)}%` }}
-                                  >
-                                    {client.progress >= 15 && (
-                                      <span className="text-[10px] font-semibold text-white leading-none">
-                                        {client.progress.toFixed(0)}%
-                                      </span>
-                                    )}
-                                  </div>
-                                  {client.progress < 15 && (
-                                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-muted-foreground leading-none">
-                                      {client.progress.toFixed(0)}%
+                      {client.dials === 0 ? (
+                        <TableCell colSpan={8} className="text-sm text-muted-foreground italic text-center py-4">
+                          Campaign active — no calls recorded yet
+                        </TableCell>
+                      ) : (
+                        <>
+                          {(() => {
+                            const days = client.daysLeft;
+                            if (days === null) return (
+                              <TableCell className="text-center px-4 text-muted-foreground">-</TableCell>
+                            );
+                            const isBold = days <= 10;
+                            return (
+                              <TableCell className="text-center px-4">
+                                <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
+                                  {days}
+                                </span>
+                                <span className={`text-sm ml-1 ${isBold ? "font-bold text-foreground" : "text-muted-foreground"}`}>
+                                  {days === 1 ? "day" : "days"}
+                                </span>
+                              </TableCell>
+                            );
+                          })()}
+                          <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.dials.toLocaleString()}</TableCell>
+                          <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.answered.toLocaleString()}</TableCell>
+                          <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.answeredPercent.toFixed(1)}%</TableCell>
+                          <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.dms.toLocaleString()}</TableCell>
+                          <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.sqls.toLocaleString()}</TableCell>
+                          <TableCell className="text-left px-4 py-2">
+                            {client.target === 0 ? (
+                              <span className="text-xs text-muted-foreground italic">No target set</span>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex flex-col gap-1.5 min-w-[150px] cursor-default">
+                                    <div className="relative w-full h-5 overflow-hidden rounded-full bg-secondary">
+                                      <div
+                                        className={cn(
+                                          "h-full rounded-full transition-all flex items-center justify-center",
+                                          client.signal === "red" ? "bg-[#EF4444]" : client.signal === "amber" ? "bg-[#F59E0B]" : "bg-[#10B981]"
+                                        )}
+                                        style={{ width: `${Math.min(client.progress, 100)}%` }}
+                                      >
+                                        {client.progress >= 15 && (
+                                          <span className="text-[10px] font-semibold text-white leading-none">
+                                            {client.progress.toFixed(0)}%
+                                          </span>
+                                        )}
+                                      </div>
+                                      {client.progress < 15 && (
+                                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-muted-foreground leading-none">
+                                          {client.progress.toFixed(0)}%
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-xs text-muted-foreground text-center">
+                                      {client.sqls} of {client.target} SQLs
                                     </span>
-                                  )}
-                                </div>
-                                <span className="text-xs text-muted-foreground text-center">
-                                  {client.sqls} of {client.target} SQLs
-                                </span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                              <div className="flex flex-col gap-1 text-xs">
-                                <span className="font-semibold">
-                                  {client.sqls.toLocaleString()} of {client.target.toLocaleString()} SQLs booked — {client.progress.toFixed(0)}% of target
-                                </span>
-                                <span className={cn(
-                                  "font-medium",
-                                  client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : client.signal === "grey" ? "text-gray-400" : "text-emerald-500"
-                                )}>
-                                  {client.signal === "red" ? "Behind — at risk" : client.signal === "amber" ? "At risk — slightly behind" : client.signal === "grey" ? "No activity recorded" : "On track"}
-                                </span>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/client/${client.slug}`);
-                          }}
-                        >
-                          View →
-                        </Button>
-                      </TableCell>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <div className="flex flex-col gap-1 text-xs">
+                                    <span className="font-semibold">
+                                      {client.sqls.toLocaleString()} of {client.target.toLocaleString()} SQLs booked — {client.progress.toFixed(0)}% of target
+                                    </span>
+                                    <span className={cn(
+                                      "font-medium",
+                                      client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : client.signal === "grey" ? "text-gray-400" : "text-emerald-500"
+                                    )}>
+                                      {client.signal === "red" ? "Behind — at risk" : client.signal === "amber" ? "At risk — slightly behind" : client.signal === "grey" ? "No activity recorded" : "On track"}
+                                    </span>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/client/${client.slug}`);
+                              }}
+                            >
+                              View →
+                            </Button>
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
