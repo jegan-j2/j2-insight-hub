@@ -92,6 +92,12 @@ export const SDRMeetingsResults = ({ sdrName, dateRange, clientId }: SDRMeetings
 
   const hasMeetings = meetings.length > 0;
 
+  const allPending = useMemo(() => {
+    const eligible = meetings.filter((m) => m.meeting_status !== "cancelled");
+    const heldOrNoShow = eligible.filter((m) => m.meeting_status === "held" || m.meeting_status === "no_show");
+    return heldOrNoShow.length === 0 && eligible.length > 0;
+  }, [meetings]);
+
   if (loading) {
     return <div className="text-center text-sm text-muted-foreground py-8">Loading…</div>;
   }
@@ -109,12 +115,6 @@ export const SDRMeetingsResults = ({ sdrName, dateRange, clientId }: SDRMeetings
       </div>
     );
   }
-
-  const allPending = useMemo(() => {
-    const eligible = meetings.filter((m) => m.meeting_status !== "cancelled");
-    const heldOrNoShow = eligible.filter((m) => m.meeting_status === "held" || m.meeting_status === "no_show");
-    return heldOrNoShow.length === 0 && eligible.length > 0;
-  }, [meetings]);
 
   return (
     <>
