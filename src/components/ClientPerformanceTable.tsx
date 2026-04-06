@@ -226,7 +226,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-2 py-1"
+      className="flex items-center justify-center gap-1 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-2 py-1"
       aria-label={`Sort by ${label}`}
     >
       {label}
@@ -274,22 +274,22 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       <SortButton field="name" label="Client" />
                     </TableHead>
                     <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>
-                    <TableHead className="px-4 py-3 text-right">
+                    <TableHead className="px-4 py-3 text-center">
                       <SortButton field="daysLeft" label="Days Left" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right">
+                    <TableHead className="px-4 py-3 text-center">
                       <SortButton field="dials" label="Dials" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right">
+                    <TableHead className="px-4 py-3 text-center">
                       <SortButton field="answered" label="Answered" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right">
+                    <TableHead className="px-4 py-3 text-center">
                       <SortButton field="answeredPercent" label="Answer Rate" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right">
+                    <TableHead className="px-4 py-3 text-center">
                       <SortButton field="dms" label="DM Conversations" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-right">
+                    <TableHead className="px-4 py-3 text-center">
                       <SortButton field="sqls" label="SQLs" />
                     </TableHead>
                     <TableHead className="px-4 py-3 text-left">
@@ -337,11 +337,11 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                       {(() => {
                         const days = client.daysLeft;
                         if (days === null) return (
-                          <TableCell className="text-right px-4 text-muted-foreground">-</TableCell>
+                          <TableCell className="text-center px-4 text-muted-foreground">-</TableCell>
                         );
                         const isBold = days <= 10;
                         return (
-                          <TableCell className="text-right px-4">
+                          <TableCell className="text-center px-4">
                             <span className={`text-sm ${isBold ? "font-bold text-foreground" : "font-normal text-muted-foreground"}`}>
                               {days}
                             </span>
@@ -351,11 +351,11 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                           </TableCell>
                         );
                       })()}
-                      <TableCell className="text-sm font-medium text-foreground text-right">{client.dials.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-right">{client.answered.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-right">{client.answeredPercent.toFixed(1)}%</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-right">{client.dms.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm font-medium text-foreground text-right">{client.sqls.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.dials.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.answered.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.answeredPercent.toFixed(1)}%</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.dms.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm font-medium text-foreground text-center tabular-nums">{client.sqls.toLocaleString()}</TableCell>
                       <TableCell className="text-left px-4 py-2">
                         <Tooltip>
                           <TooltipTrigger asChild>

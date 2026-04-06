@@ -258,7 +258,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 hover:text-foreground transition-colors"
+      className="flex items-center justify-center gap-1 hover:text-foreground transition-colors"
     >
       {label}
       {sortField === field ? (
@@ -439,7 +439,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
           <Table>
             <TableHeader className="table-header-navy">
               <TableRow>
-                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-left">
+                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-center">
                   <SortButton field="sqlDate" label="Booking Date" />
                 </TableHead>
                 <TableHead className="px-4 py-3 text-left">
@@ -456,10 +456,10 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   <SortButton field="sdr" label="SDR" />
                 </TableHead>
                 )}
-                <TableHead className="px-4 py-3 text-left">
+                <TableHead className="px-4 py-3 text-center">
                   <SortButton field="meetingDate" label="Meeting Date" />
                 </TableHead>
-                <TableHead className="px-4 py-3 text-left">
+                <TableHead className="px-4 py-3 text-center">
                   <SortButton field="meetingStatus" label="Status" />
                 </TableHead>
                 <TableHead className="px-4 py-3 text-left" style={{ minWidth: 200 }}>Notes</TableHead>
@@ -468,7 +468,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             <TableBody className="table-striped">
               {paginatedMeetings.map((meeting, index) => (
                 <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`}>
-                  <TableCell className="text-foreground whitespace-nowrap sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
+                  <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {meeting.clientLogo ? (
@@ -484,8 +484,8 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   <TableCell className="text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
                   <TableCell className="text-foreground">{meeting.companyName}</TableCell>
                   {!hideSDRColumn && <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>}
-                  <TableCell className="text-foreground whitespace-nowrap">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
-                  <TableCell><StatusBadge meeting={meeting} /></TableCell>
+                  <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
+                  <TableCell className="text-center"><StatusBadge meeting={meeting} /></TableCell>
                   <TableCell style={{ minWidth: 200 }}>
                     {isSdr || !canEditSQL(meeting.clientId) ? (
                       <span className="text-sm text-foreground">{meeting.clientNotes || ""}</span>
