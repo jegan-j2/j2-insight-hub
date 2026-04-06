@@ -32,7 +32,7 @@ interface ClientData {
   campaignEnd: string | null;
   daysLeft: number | null;
   elapsedPercent: number;
-  signal: "red" | "amber" | null;
+  signal: "red" | "amber" | "green" | "grey";
 }
 
 interface ClientPerformanceTableProps {
@@ -104,15 +104,17 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
   const getHealthSignal = (
     elapsedPercent: number,
     sqls: number,
-    target: number
-  ): "red" | "amber" | null => {
-    if (target === 0 || elapsedPercent === 0) return null;
+    target: number,
+    dials: number
+  ): "red" | "amber" | "green" | "grey" => {
+    if (dials === 0) return "grey";
+    if (target === 0 || elapsedPercent === 0) return "green";
     const expectedSQLs = target * (elapsedPercent / 100);
-    if (expectedSQLs === 0) return null;
+    if (expectedSQLs === 0) return "green";
     const achievementPercent = (sqls / expectedSQLs) * 100;
     if (elapsedPercent > 60 && achievementPercent < 60) return "red";
     if (elapsedPercent > 40 && achievementPercent < 80) return "amber";
-    return null;
+    return "green";
   };
 
   const formatCampaignPeriod = (start: string | null, end: string | null): string => {
@@ -184,7 +186,8 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
         signal: getHealthSignal(
           getCampaignElapsed(campStart, campEnd),
           totalSQLs,
-          target
+          target,
+          totalDials
         ),
       };
     });
@@ -265,7 +268,14 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
             description="Client data will appear once clients are added to the database"
           />
         ) : (
-          <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+          <>
+            <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> On track</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> At risk</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Behind</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" /> No activity</span>
+            </div>
+            <div className="overflow-x-auto scrollbar-thin scroll-gradient">
             <TooltipProvider>
               <Table>
                 <TableHeader className="table-header-navy sticky top-0 z-10" role="rowgroup">
@@ -321,12 +331,13 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                                 </span>
                               </div>
                             )}
-                            {client.signal === "red" && (
-                              <span className="absolute bottom-0 left-0 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#0f172a]" />
-                            )}
-                            {client.signal === "amber" && (
-                              <span className="absolute bottom-0 left-0 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-white dark:border-[#0f172a]" />
-                            )}
+                            <span className={cn(
+                              "absolute bottom-0 left-0 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#0f172a]",
+                              client.signal === "red" && "bg-rose-500",
+                              client.signal === "amber" && "bg-amber-500",
+                              client.signal === "green" && "bg-emerald-500",
+                              client.signal === "grey" && "bg-gray-400"
+                            )} />
                           </div>
                           <span className="font-medium text-foreground whitespace-nowrap">{client.name}</span>
                         </div>
@@ -395,9 +406,9 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                                 </span>
                                 <span className={cn(
                                   "font-medium",
-                                  client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : "text-emerald-500"
+                                  client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : client.signal === "grey" ? "text-gray-400" : "text-emerald-500"
                                 )}>
-                                  {client.signal === "red" ? "At risk — behind pace" : client.signal === "amber" ? "Needs attention — slightly behind" : "On track"}
+                                  {client.signal === "red" ? "Behind — at risk" : client.signal === "amber" ? "At risk — slightly behind" : client.signal === "grey" ? "No activity recorded" : "On track"}
                                 </span>
                               </div>
                             </TooltipContent>
@@ -422,7 +433,8 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                 </TableBody>
               </Table>
             </TooltipProvider>
-          </div>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
