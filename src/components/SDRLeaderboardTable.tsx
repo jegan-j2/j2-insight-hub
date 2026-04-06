@@ -148,10 +148,7 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
             <div className="flex items-center gap-2 border-l-4 border-l-emerald-500 pl-3 py-1">
               <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
               <span className="text-sm font-semibold text-foreground">
-                Most Improved: {mostImproved.name}
-              </span>
-              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                +{mostImproved.improvement.toFixed(1)}%
+                Most Improved: {mostImproved.name} · <span className="text-emerald-600 dark:text-emerald-400">Answer Rate +{mostImproved.improvement.toFixed(1)}%</span>
               </span>
             </div>
           )}
