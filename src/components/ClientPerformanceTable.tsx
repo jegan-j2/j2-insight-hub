@@ -406,9 +406,9 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
                                 </span>
                                 <span className={cn(
                                   "font-medium",
-                                  client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : "text-emerald-500"
+                                  client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : client.signal === "grey" ? "text-gray-400" : "text-emerald-500"
                                 )}>
-                                  {client.signal === "red" ? "At risk — behind pace" : client.signal === "amber" ? "Needs attention — slightly behind" : "On track"}
+                                  {client.signal === "red" ? "Behind — at risk" : client.signal === "amber" ? "At risk — slightly behind" : client.signal === "grey" ? "No activity recorded" : "On track"}
                                 </span>
                               </div>
                             </TooltipContent>
