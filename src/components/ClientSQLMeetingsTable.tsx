@@ -226,7 +226,7 @@ export const ClientSQLMeetingsTable = ({ clientSlug, dateRange, meetings }: Clie
           <Table>
             <TableHeader className="table-header-navy">
               <TableRow>
-                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-left">
+                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] dark:bg-[#1E293B] text-left">
                   <SortButton field="sqlDate" label="SQL Date" />
                 </TableHead>
                 <TableHead className="px-4 py-3 text-left">
