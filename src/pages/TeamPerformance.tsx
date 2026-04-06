@@ -483,25 +483,26 @@ const TeamPerformance = () => {
 
       {/* Team Pace Indicator — for This Month or Campaign, below Team Totals */}
       {paceData && leaderboard.length > 0 && (
-        <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3">
-          <p className="text-[13px] text-foreground">
-            <span className="font-semibold">{paceData.label}:</span>
-            {" "}Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} by {paceData.endLabel}
-            {targetSQLs && targetSQLs > 0 && (() => {
-              const needPerDay = paceData.remainingWorkingDays > 0
-                ? ((targetSQLs - paceData.totalSQLs) / paceData.remainingWorkingDays)
-                : 0;
-              if (paceData.totalSQLs >= targetSQLs) {
-                return <span className="text-[#10B981] font-semibold"> · 🎯 Target reached!</span>;
-              }
-              if (paceData.remainingWorkingDays > 0) {
-                return <> · Need {needPerDay.toFixed(2)}/day to hit target</>;
-              }
-              return null;
-            })()}
-          </p>
+        <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3 space-y-2">
+          {/* Line 1: SQL Pace */}
+          {targetSQLs && targetSQLs > 0 && paceData.totalSQLs >= targetSQLs ? (
+            <p className="text-[13px] text-[#10B981] font-semibold">🎯 Target reached!</p>
+          ) : (
+            <p className="text-[13px] text-foreground">
+              <span className="font-semibold">{paceData.label}:</span>
+              {" "}{paceData.totalSQLs} SQLs in {paceData.elapsedWorkingDays} working days · Run rate: {paceData.runRate.toFixed(2)} SQLs/day · Projected: {paceData.projected} by {paceData.endLabel}
+              {targetSQLs && targetSQLs > 0 && (() => {
+                if (paceData.remainingWorkingDays > 0) {
+                  const needPerDay = (targetSQLs - paceData.totalSQLs) / paceData.remainingWorkingDays;
+                  return <> · Need {needPerDay.toFixed(2)}/day to hit target</>;
+                }
+                return null;
+              })()}
+            </p>
+          )}
+          {/* Progress bar */}
           {targetSQLs && targetSQLs > 0 && (
-            <div className="mt-2">
+            <div>
               <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
                 <span>{paceData.totalSQLs} of {targetSQLs} target SQLs · {Math.min(100, Math.round((paceData.totalSQLs / targetSQLs) * 100))}%</span>
               </div>
@@ -522,6 +523,11 @@ const TeamPerformance = () => {
               </div>
             </div>
           )}
+          {/* Line 2: Dial Pace */}
+          <p className="text-[13px] text-foreground">
+            <span className="font-semibold">Dial Pace:</span>
+            {" "}{paceData.totalDials.toLocaleString()} dials across {paceData.activeSDRs} SDRs · {paceData.dialsPerSDRPerDay.toFixed(1)} dials/SDR/day
+          </p>
         </div>
       )}
 
