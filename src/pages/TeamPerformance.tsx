@@ -236,15 +236,18 @@ const TeamPerformance = () => {
     const totalWorkingDays = allWorkingDays.length;
     
     const totalSQLs = teamTotals.sqls;
+    const totalDials = teamTotals.dials;
+    const activeSDRs = leaderboard.length;
     const runRate = elapsedWorkingDays > 0 ? totalSQLs / elapsedWorkingDays : 0;
     const projected = Math.round(runRate * totalWorkingDays);
     const remainingWorkingDays = Math.max(0, totalWorkingDays - elapsedWorkingDays);
+    const dialsPerSDRPerDay = elapsedWorkingDays > 0 && activeSDRs > 0 ? totalDials / elapsedWorkingDays / activeSDRs : 0;
     
     const label = filterType === "campaign" ? "Campaign Pace" : "Monthly Pace";
     const endLabel = filterType === "campaign" ? "campaign end" : "month end";
     
-    return { totalSQLs, elapsedWorkingDays, totalWorkingDays, remainingWorkingDays, runRate, projected, label, endLabel };
-  }, [filterType, teamTotals.sqls, selectedClient]);
+    return { totalSQLs, totalDials, activeSDRs, elapsedWorkingDays, totalWorkingDays, remainingWorkingDays, runRate, projected, dialsPerSDRPerDay, label, endLabel };
+  }, [filterType, teamTotals.sqls, teamTotals.dials, leaderboard.length, selectedClient]);
 
   // Only show full-page loader on first load (no cached data yet)
   if (loading && leaderboard.length === 0) return <J2Loader />;
