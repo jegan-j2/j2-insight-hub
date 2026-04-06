@@ -270,7 +270,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
               <Table>
                 <TableHeader className="table-header-navy sticky top-0 z-10" role="rowgroup">
                   <TableRow>
-                    <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-left" style={{ minWidth: "200px" }}>
+                    <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] dark:bg-[#1E293B] text-left" style={{ minWidth: "200px" }}>
                       <SortButton field="name" label="Client" />
                     </TableHead>
                     <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>

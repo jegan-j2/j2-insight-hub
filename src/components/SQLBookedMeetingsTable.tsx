@@ -439,7 +439,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
           <Table>
             <TableHeader className="table-header-navy">
               <TableRow>
-                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] text-center">
+                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] dark:bg-[#1E293B] text-center">
                   <SortButton field="sqlDate" label="Booking Date" />
                 </TableHead>
                 <TableHead className="px-4 py-3 text-left">
