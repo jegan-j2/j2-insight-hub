@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowUpDown, ArrowUp, ArrowDown, Search, DatabaseZap } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, DatabaseZap, FileText, Table2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toCSV, downloadCSV, formatNumberForCSV } from "@/lib/csvExport";
+import * as XLSX from "xlsx-js-style";
 import type { DailySnapshot } from "@/lib/supabase-types";
 
 type SortField = "name" | "dials" | "answered" | "answeredPercent" | "dms" | "sqls" | "progress" | "daysLeft" | "campaignPeriod";
