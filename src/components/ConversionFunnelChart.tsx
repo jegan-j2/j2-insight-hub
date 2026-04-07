@@ -6,6 +6,7 @@ interface ConversionFunnelChartProps {
   answered: number;
   dmConversations: number;
   sqls: number;
+  sqlPulse?: boolean;
 }
 
 const TIERS = [
@@ -24,6 +25,7 @@ export const ConversionFunnelChart = ({
   answered,
   dmConversations,
   sqls,
+  sqlPulse = false,
 }: ConversionFunnelChartProps) => {
   const [tooltip, setTooltip] = useState<{
     visible: boolean;

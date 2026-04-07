@@ -632,6 +632,7 @@ const Overview = () => {
             answered={kpis.totalAnswered}
             dmConversations={kpis.totalConversations}
             sqls={kpis.totalSQLs}
+            sqlPulse={sqlPulse}
           />
         </div>
 
