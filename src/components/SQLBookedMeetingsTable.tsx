@@ -501,7 +501,13 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                       <span className="font-medium">{meeting.clientName}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {meeting.contactPerson && meeting.companyName && meeting.contactPerson.trim().toLowerCase() === meeting.companyName.trim().toLowerCase() ? (
+                      <span className="text-muted-foreground italic">Name pending</span>
+                    ) : (
+                      <span className="text-foreground">{meeting.contactPerson}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-foreground">{meeting.companyName}</TableCell>
                   {!hideSDRColumn && <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>}
                   <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
