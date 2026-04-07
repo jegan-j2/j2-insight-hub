@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -58,6 +58,17 @@ const Overview = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
+  const [sqlPulse, setSqlPulse] = useState(false);
+  const prevSqlCountRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (prevSqlCountRef.current !== null && kpis.totalSQLs > prevSqlCountRef.current) {
+      setSqlPulse(true);
+      const timer = setTimeout(() => setSqlPulse(false), 1500);
+      return () => clearTimeout(timer);
+    }
+    prevSqlCountRef.current = kpis.totalSQLs;
+  }, [kpis.totalSQLs]);
 
   const activeClientCount = useMemo(() =>
     new Set(snapshots?.map(s => s.client_id) ?? []).size, [snapshots]);
@@ -498,7 +509,10 @@ const Overview = () => {
           {kpiCards.map((kpi) => (
             <Card
               key={kpi.title}
-              className="bg-card border-border hover:shadow-md transition-all duration-300 overflow-hidden group"
+              className={cn(
+                "bg-card border-border hover:shadow-md transition-all duration-300 overflow-hidden group",
+                kpi.title === "Total SQLs" && sqlPulse && "ring-2 ring-emerald-500/60 animate-[pulse_0.75s_ease-in-out_2]"
+              )}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -618,6 +632,7 @@ const Overview = () => {
             answered={kpis.totalAnswered}
             dmConversations={kpis.totalConversations}
             sqls={kpis.totalSQLs}
+            sqlPulse={sqlPulse}
           />
         </div>
 

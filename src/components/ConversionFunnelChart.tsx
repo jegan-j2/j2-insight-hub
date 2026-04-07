@@ -6,6 +6,7 @@ interface ConversionFunnelChartProps {
   answered: number;
   dmConversations: number;
   sqls: number;
+  sqlPulse?: boolean;
 }
 
 const TIERS = [
@@ -24,6 +25,7 @@ export const ConversionFunnelChart = ({
   answered,
   dmConversations,
   sqls,
+  sqlPulse = false,
 }: ConversionFunnelChartProps) => {
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
@@ -101,6 +103,16 @@ export const ConversionFunnelChart = ({
                   fill={tier.color}
                   className="transition-opacity hover:opacity-90"
                 />
+                {tier.key === "sqls" && sqlPulse && (
+                  <polygon
+                    points={tier.points}
+                    fill="none"
+                    stroke="#10B981"
+                    strokeWidth={3}
+                    className="animate-[pulse_0.75s_ease-in-out_2]"
+                    opacity={0.8}
+                  />
+                )}
                 {/* Label */}
                 <text
                   x={SVG_WIDTH / 2}
