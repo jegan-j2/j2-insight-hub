@@ -9,6 +9,7 @@ import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handsha
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "react-router-dom";
 import { CallActivityChart } from "@/components/CallActivityChart";
 import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
 import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
