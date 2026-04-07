@@ -779,17 +779,11 @@ const Settings = () => {
         try {
           const roleMap: Record<string, string> = { 'Admin': 'admin', 'Manager': 'manager', 'SDR': 'sdr' };
           const rlsRole = roleMap[memberForm.role] || memberForm.role.toLowerCase();
-          const { data: inviteRecords } = await supabase.rpc('get_invite_records');
-          const match = inviteRecords?.find((r: any) => r.email?.toLowerCase() === memberForm.email.toLowerCase());
-          if (match) {
-            await supabase
-              .from('user_roles')
-              .update({
-                role: rlsRole,
-                client_id: rlsRole === 'admin' ? 'admin' : (rlsRole === 'manager' ? null : memberForm.client_id || null),
-              })
-              .eq('id', match.id);
-          }
+          await supabase.rpc('sync_user_role', {
+            p_email: memberForm.email,
+            p_role: rlsRole,
+            p_client_id: memberForm.client_id || null
+          });
         } catch (syncErr) {
           console.error('Error syncing user_roles:', syncErr);
         }
@@ -810,17 +804,11 @@ const Settings = () => {
         try {
           const roleMap: Record<string, string> = { 'Admin': 'admin', 'Manager': 'manager', 'SDR': 'sdr' };
           const rlsRole = roleMap[memberForm.role] || memberForm.role.toLowerCase();
-          const { data: inviteRecords } = await supabase.rpc('get_invite_records');
-          const match = inviteRecords?.find((r: any) => r.email?.toLowerCase() === memberForm.email.toLowerCase());
-          if (match) {
-            await supabase
-              .from('user_roles')
-              .update({
-                role: rlsRole,
-                client_id: rlsRole === 'admin' ? 'admin' : (rlsRole === 'manager' ? null : memberForm.client_id || null),
-              })
-              .eq('id', match.id);
-          }
+          await supabase.rpc('sync_user_role', {
+            p_email: memberForm.email,
+            p_role: rlsRole,
+            p_client_id: memberForm.client_id || null
+          });
         } catch (syncErr) {
           console.error('Error syncing user_roles:', syncErr);
         }
