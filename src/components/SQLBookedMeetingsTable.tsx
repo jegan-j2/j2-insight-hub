@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2 } from "lucide-react";
-import { format, isWithinInterval, parseISO } from "date-fns";
+import { format, isWithinInterval, parseISO, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { TableSkeleton } from "@/components/LoadingSkeletons";
@@ -271,37 +271,57 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     </button>
   );
 
+  const isOverdue = (meeting: MeetingData) =>
+    meeting.meetingStatus.toLowerCase() === "pending" &&
+    isBefore(meeting.meetingDate, startOfDay(new Date()));
+
   const StatusBadge = ({ meeting }: { meeting: MeetingData }) => {
     const config = getStatusConfig(meeting.meetingStatus);
     const canEdit = !isSdr && canEditSQL(meeting.clientId);
-    const badge = (
-      <Badge className="gap-1 text-white text-xs cursor-default" style={{ backgroundColor: config.color }}>
-        {config.icon && <config.icon className="h-3 w-3" />}
-        {config.label}
-      </Badge>
+    const overdue = isOverdue(meeting);
+
+    const badgeContent = (
+      <div className="flex items-center gap-1.5">
+        <Badge className="gap-1 text-white text-xs cursor-default" style={{ backgroundColor: config.color }}>
+          {config.icon && <config.icon className="h-3 w-3" />}
+          {config.label}
+        </Badge>
+        {overdue && (
+          <Badge className="text-[10px] px-1.5 py-0 h-5 text-white cursor-default" style={{ backgroundColor: "#F59E0B" }}>
+            Overdue
+          </Badge>
+        )}
+      </div>
     );
 
-    if (!canEdit || updating === meeting.id) return badge;
+    if (!canEdit || updating === meeting.id) return badgeContent;
 
     return (
-      <Select value={meeting.meetingStatus} onValueChange={(v) => handleStatusChange(meeting, v)}>
-        <SelectTrigger className="border-0 bg-transparent p-0 h-auto w-auto shadow-none focus:ring-0 [&>svg]:hidden">
-          <Badge className="gap-1 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity" style={{ backgroundColor: config.color }}>
-            {config.icon && <config.icon className="h-3 w-3" />}
-            {config.label}
+      <div className="flex items-center justify-center gap-1.5">
+        <Select value={meeting.meetingStatus} onValueChange={(v) => handleStatusChange(meeting, v)}>
+          <SelectTrigger className="border-0 bg-transparent p-0 h-auto w-auto shadow-none focus:ring-0 [&>svg]:hidden">
+            <Badge className="gap-1 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity" style={{ backgroundColor: config.color }}>
+              {config.icon && <config.icon className="h-3 w-3" />}
+              {config.label}
+            </Badge>
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border z-50">
+            {STATUS_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.color }} />
+                  {opt.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {overdue && (
+          <Badge className="text-[10px] px-1.5 py-0 h-5 text-white cursor-default" style={{ backgroundColor: "#F59E0B" }}>
+            Overdue
           </Badge>
-        </SelectTrigger>
-        <SelectContent className="bg-popover border-border z-50">
-          {STATUS_OPTIONS.map(opt => (
-            <SelectItem key={opt.value} value={opt.value}>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.color }} />
-                {opt.label}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        )}
+      </div>
     );
   };
 
@@ -467,7 +487,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             </TableHeader>
             <TableBody className="table-striped">
               {paginatedMeetings.map((meeting, index) => (
-                <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`}>
+                <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`} style={isOverdue(meeting) ? { borderLeft: "3px solid #F59E0B" } : undefined}>
                   <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
                   <TableCell className="text-foreground whitespace-nowrap">
                     <div className="flex items-center gap-2">
