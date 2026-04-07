@@ -744,6 +744,10 @@ export type Database = {
         }[]
       }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      sync_user_role: {
+        Args: { p_client_id?: string; p_email: string; p_role: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
