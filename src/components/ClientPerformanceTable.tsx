@@ -304,15 +304,33 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle className="text-foreground">Client Performance</CardTitle>
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-background/50 border-border"
-              aria-label="Search clients"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-background/50 border-border"
+                aria-label="Search clients"
+              />
+            </div>
+            <Button
+              size="sm"
+              onClick={handleExportCSV}
+              className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-1.5 shrink-0"
+            >
+              <FileText className="h-4 w-4" />
+              CSV
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleExportExcel}
+              className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-1.5 shrink-0"
+            >
+              <Table2 className="h-4 w-4" />
+              Excel
+            </Button>
           </div>
         </div>
       </CardHeader>
