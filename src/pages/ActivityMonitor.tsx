@@ -42,6 +42,7 @@ interface SqlMeetingRow {
   hubspot_engagement_id?: string | null;
   recording_url?: string | null;
   call_duration?: number | null;
+  activity_date?: string | null;
 }
 
 interface SnapshotRow {
@@ -774,19 +775,19 @@ const ActivityMonitor = () => {
           const engagementIds = sqlData
             .map(s => s.hubspot_engagement_id)
             .filter((id): id is string => !!id);
-          const engagementMap = new Map<string, { recording_url: string | null; call_duration: number | null }>();
+          const engagementMap = new Map<string, { recording_url: string | null; call_duration: number | null; activity_date: string | null }>();
           if (engagementIds.length > 0) {
             const { data: engData } = await supabase
               .from("activity_log")
-              .select("hubspot_engagement_id, recording_url, call_duration")
-              .in("hubspot_engagement_id", engagementIds)
-              .not("recording_url", "is", null);
+              .select("hubspot_engagement_id, recording_url, call_duration, activity_date")
+              .in("hubspot_engagement_id", engagementIds);
             if (engData) {
               for (const row of engData) {
                 if (row.hubspot_engagement_id && !engagementMap.has(row.hubspot_engagement_id)) {
                   engagementMap.set(row.hubspot_engagement_id, {
                     recording_url: row.recording_url,
                     call_duration: row.call_duration,
+                    activity_date: row.activity_date,
                   });
                 }
               }
@@ -798,14 +799,13 @@ const ActivityMonitor = () => {
             .filter(s => !s.hubspot_engagement_id || !engagementMap.has(s.hubspot_engagement_id))
             .map(s => s.contact_person?.trim())
             .filter((n): n is string => !!n);
-          const nameMap = new Map<string, { recording_url: string | null; call_duration: number | null }>();
+          const nameMap = new Map<string, { recording_url: string | null; call_duration: number | null; activity_date: string | null }>();
           if (fallbackNames.length > 0) {
             const { data: nameData } = await supabase
               .from("activity_log")
-              .select("contact_name, recording_url, call_duration")
+              .select("contact_name, recording_url, call_duration, activity_date")
               .eq("sdr_name", sdrName)
               .ilike("call_outcome", "connected")
-              .not("recording_url", "is", null)
               .in("contact_name", fallbackNames)
               .order("call_duration", { ascending: false });
             if (nameData) {
@@ -815,6 +815,7 @@ const ActivityMonitor = () => {
                   nameMap.set(key, {
                     recording_url: row.recording_url,
                     call_duration: row.call_duration,
+                    activity_date: row.activity_date,
                   });
                 }
               }
@@ -825,25 +826,28 @@ const ActivityMonitor = () => {
           for (const sql of sqlData) {
             let recording_url: string | null = null;
             let call_duration: number | null = null;
+            let activity_date: string | null = null;
 
             if (sql.hubspot_engagement_id && engagementMap.has(sql.hubspot_engagement_id)) {
               const match = engagementMap.get(sql.hubspot_engagement_id)!;
               recording_url = match.recording_url;
               call_duration = match.call_duration;
+              activity_date = match.activity_date;
             } else if (sql.contact_person) {
               const match = nameMap.get(sql.contact_person.trim().toLowerCase());
               if (match) {
                 recording_url = match.recording_url;
                 call_duration = match.call_duration;
+                activity_date = match.activity_date;
               }
             }
 
-            enrichedSqlData.push({ ...sql, recording_url, call_duration });
+            enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date });
           }
         }
         enrichedSqlData.sort((a, b) =>
-          new Date(b.created_at || b.booking_date).getTime() -
-          new Date(a.created_at || a.booking_date).getTime()
+          new Date(b.activity_date || b.created_at || b.booking_date).getTime() -
+          new Date(a.activity_date || a.created_at || a.booking_date).getTime()
         );
         setDrillDownSqlData(enrichedSqlData);
       }
@@ -1547,7 +1551,7 @@ const ActivityMonitor = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">{mode === "live" ? "Time Booked" : "Date Booked"}</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">{mode === "live" ? "Call Time" : "Call Date"}</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Contact Person</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Company</TableHead>
                       <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[18%]">Meeting Date</TableHead>
@@ -1555,19 +1559,21 @@ const ActivityMonitor = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => (
+                    {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
+                      const displayDate = m.activity_date || m.created_at;
+                      return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
                           <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                            {m.created_at
+                            {displayDate
                               ? (mode === "live"
-                                ? new Date(m.created_at).toLocaleTimeString("en-AU", {
+                                ? new Date(displayDate).toLocaleTimeString("en-AU", {
                                     timeZone: "Australia/Melbourne",
                                     hour: "numeric",
                                     minute: "2-digit",
                                     hour12: true,
                                   }).replace(' am', ' AM').replace(' pm', ' PM')
-                                : new Date(m.created_at).toLocaleDateString("en-AU", {
+                                : new Date(displayDate).toLocaleDateString("en-AU", {
                                     timeZone: "Australia/Melbourne",
                                     month: "short",
                                     day: "numeric",
@@ -1620,7 +1626,8 @@ const ActivityMonitor = () => {
                           </TableRow>
                         )}
                       </>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
