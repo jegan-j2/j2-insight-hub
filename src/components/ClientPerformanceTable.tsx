@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowUpDown, ArrowUp, ArrowDown, Search, DatabaseZap } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, DatabaseZap, FileText, Table2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toCSV, downloadCSV, formatNumberForCSV } from "@/lib/csvExport";
+import * as XLSX from "xlsx-js-style";
 import type { DailySnapshot } from "@/lib/supabase-types";
 
 type SortField = "name" | "dials" | "answered" | "answeredPercent" | "dms" | "sqls" | "progress" | "daysLeft" | "campaignPeriod";
@@ -56,6 +58,60 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const navigate = useNavigate();
+
+  const formatCampaignPeriodExport = (start: string | null, end: string | null): string => {
+    if (!start || !end) return "-";
+    return `${format(new Date(start), "MMM d")} – ${format(new Date(end), "MMM d")}`;
+  };
+
+  const exportRows = (data: ClientData[]) =>
+    data.map((c) => [
+      c.name,
+      formatCampaignPeriodExport(c.campaignStart, c.campaignEnd),
+      c.daysLeft !== null ? c.daysLeft : "-",
+      c.dials,
+      c.answered,
+      `${c.answeredPercent.toFixed(1)}%`,
+      c.dms,
+      c.sqls,
+      c.target > 0 ? `${c.progress.toFixed(1)}%` : "No target",
+    ]);
+
+  const exportHeaders = ["Client", "Campaign Period", "Days Left", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Campaign Progress %"];
+
+  const handleExportCSV = () => {
+    const csv = toCSV(exportHeaders, exportRows(filteredAndSortedClients));
+    downloadCSV(csv, `client-performance-${format(new Date(), "yyyy-MM-dd")}.csv`);
+  };
+
+  const handleExportExcel = () => {
+    const rows = exportRows(filteredAndSortedClients);
+    const ws = XLSX.utils.aoa_to_sheet([exportHeaders, ...rows]);
+
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 12 },
+      fill: { fgColor: { rgb: "0F172A" } },
+      alignment: { horizontal: "center" as const },
+    };
+    exportHeaders.forEach((_, i) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: i })];
+      if (cell) cell.s = headerStyle;
+    });
+
+    rows.forEach((row, ri) => {
+      const fill = ri % 2 === 0 ? { fgColor: { rgb: "F1F5F9" } } : undefined;
+      row.forEach((_, ci) => {
+        const cell = ws[XLSX.utils.encode_cell({ r: ri + 1, c: ci })];
+        if (cell && fill) cell.s = { fill };
+      });
+    });
+
+    ws["!cols"] = [{ wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 18 }, { wch: 8 }, { wch: 18 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Client Performance");
+    XLSX.writeFile(wb, `client-performance-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+  };
 
   const getWorkingDaysLeft = (endDate: string | null): number | null => {
     if (!endDate) return null;
@@ -248,15 +304,33 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle className="text-foreground">Client Performance</CardTitle>
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-background/50 border-border"
-              aria-label="Search clients"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-background/50 border-border"
+                aria-label="Search clients"
+              />
+            </div>
+            <Button
+              size="sm"
+              onClick={handleExportCSV}
+              className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-1.5 shrink-0"
+            >
+              <FileText className="h-4 w-4" />
+              CSV
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleExportExcel}
+              className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-1.5 shrink-0"
+            >
+              <Table2 className="h-4 w-4" />
+              Excel
+            </Button>
           </div>
         </div>
       </CardHeader>
