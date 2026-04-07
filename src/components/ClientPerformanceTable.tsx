@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 import type { DmRecord, SqlRecord } from "@/hooks/useOverviewData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
