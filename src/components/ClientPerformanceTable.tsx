@@ -349,7 +349,86 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Behind</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" /> No activity</span>
             </div>
-            <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {filteredAndSortedClients.map((client) => (
+                <div
+                  key={client.slug}
+                  className="rounded-lg border border-border bg-card p-4 cursor-pointer active:scale-[0.98] transition-transform"
+                  onClick={() => navigate(`/client/${client.slug}`)}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="relative flex-shrink-0">
+                      {client.logoUrl ? (
+                        <img src={client.logoUrl} alt={client.name} className="w-9 h-9 rounded-full object-contain bg-white" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                          <span className="text-xs font-bold text-white">{client.name.substring(0, 2).toUpperCase()}</span>
+                        </div>
+                      )}
+                      <span className={cn(
+                        "absolute bottom-0 left-0 w-2.5 h-2.5 rounded-full border-2 border-card",
+                        client.signal === "red" && "bg-rose-500",
+                        client.signal === "amber" && "bg-amber-500",
+                        client.signal === "green" && "bg-emerald-500",
+                        client.signal === "grey" && "bg-gray-400"
+                      )} />
+                    </div>
+                    <span className="font-semibold text-foreground text-sm">{client.name}</span>
+                  </div>
+
+                  {client.dials === 0 ? (
+                    <p className="text-sm text-muted-foreground italic text-center py-2">Campaign active — no calls recorded yet</p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-foreground tabular-nums">{client.dials.toLocaleString()}</p>
+                          <p className="text-[11px] text-muted-foreground">Dials</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-foreground tabular-nums">{client.answeredPercent.toFixed(1)}%</p>
+                          <p className="text-[11px] text-muted-foreground">Answer Rate</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-foreground tabular-nums">{client.sqls.toLocaleString()}</p>
+                          <p className="text-[11px] text-muted-foreground">SQLs</p>
+                        </div>
+                      </div>
+
+                      {client.target > 0 ? (
+                        <div className="space-y-1">
+                          <div className="relative w-full h-4 overflow-hidden rounded-full bg-secondary">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all flex items-center justify-center",
+                                client.signal === "red" ? "bg-[#EF4444]" : client.signal === "amber" ? "bg-[#F59E0B]" : "bg-[#10B981]"
+                              )}
+                              style={{ width: `${Math.min(client.progress, 100)}%` }}
+                            >
+                              {client.progress >= 20 && (
+                                <span className="text-[9px] font-semibold text-white leading-none">{client.progress.toFixed(0)}%</span>
+                              )}
+                            </div>
+                            {client.progress < 20 && (
+                              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-muted-foreground leading-none">
+                                {client.progress.toFixed(0)}%
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground text-center">{client.sqls} of {client.target} SQLs</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic text-center">No target set</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto scrollbar-thin scroll-gradient">
             <TooltipProvider>
               <Table>
                 <TableHeader className="table-header-navy sticky top-0 z-10" role="rowgroup">
