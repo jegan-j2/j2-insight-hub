@@ -1626,7 +1626,8 @@ const ActivityMonitor = () => {
                           </TableRow>
                         )}
                       </>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
