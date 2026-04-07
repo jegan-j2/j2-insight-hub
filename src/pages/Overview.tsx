@@ -509,7 +509,10 @@ const Overview = () => {
           {kpiCards.map((kpi) => (
             <Card
               key={kpi.title}
-              className="bg-card border-border hover:shadow-md transition-all duration-300 overflow-hidden group"
+              className={cn(
+                "bg-card border-border hover:shadow-md transition-all duration-300 overflow-hidden group",
+                kpi.title === "Total SQLs" && sqlPulse && "ring-2 ring-emerald-500/60 animate-[pulse_0.75s_ease-in-out_2]"
+              )}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
