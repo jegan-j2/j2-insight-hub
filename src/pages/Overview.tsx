@@ -9,6 +9,7 @@ import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handsha
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "react-router-dom";
 import { CallActivityChart } from "@/components/CallActivityChart";
 import { ConversionFunnelChart } from "@/components/ConversionFunnelChart";
 import { ClientPerformanceTable } from "@/components/ClientPerformanceTable";
@@ -32,9 +33,84 @@ const getGreeting = () => {
   return "Welcome back";
 };
 
+const FILTER_TYPE_TO_PARAM: Record<FilterType, string> = {
+  last7days: "last-7-days",
+  last30days: "last-30-days",
+  thisMonth: "this-month",
+  lastMonth: "last-month",
+  custom: "custom",
+  campaign: "campaign",
+};
+const PARAM_TO_FILTER_TYPE: Record<string, FilterType> = Object.fromEntries(
+  Object.entries(FILTER_TYPE_TO_PARAM).map(([k, v]) => [v, k as FilterType])
+) as Record<string, FilterType>;
+
+const getDateRangeForFilter = (ft: FilterType): DateRange | undefined => {
+  switch (ft) {
+    case "last7days": return { from: subDays(new Date(), 7), to: new Date() };
+    case "last30days": return { from: subDays(new Date(), 30), to: new Date() };
+    case "thisMonth": return { from: startOfMonth(new Date()), to: endOfMonth(new Date()) };
+    case "lastMonth": return { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) };
+    default: return undefined;
+  }
+};
+
 const Overview = () => {
-  const { dateRange, setDateRange, filterType, setFilterType } = useDateFilter();
+  const { dateRange, setDateRange, filterType, setFilterType, clientFilter, setClientFilter } = useDateFilter();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [firstName, setFirstName] = useState<string | null>(null);
+  const initializedFromUrl = useRef(false);
+
+  // Restore filter state from URL on mount
+  useEffect(() => {
+    if (initializedFromUrl.current) return;
+    initializedFromUrl.current = true;
+
+    const periodParam = searchParams.get("period");
+    const clientParam = searchParams.get("client");
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+
+    if (periodParam && PARAM_TO_FILTER_TYPE[periodParam]) {
+      const ft = PARAM_TO_FILTER_TYPE[periodParam];
+      if (ft === "custom" && fromParam && toParam) {
+        const from = new Date(fromParam);
+        const to = new Date(toParam);
+        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+          setFilterType("custom");
+          setDateRange({ from, to });
+        }
+      } else {
+        const range = getDateRangeForFilter(ft);
+        if (range) {
+          setFilterType(ft);
+          setDateRange(range);
+        }
+      }
+    }
+
+    if (clientParam) {
+      setClientFilter(clientParam);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync filter state to URL params
+  useEffect(() => {
+    if (!initializedFromUrl.current) return;
+    const params = new URLSearchParams();
+    const periodSlug = FILTER_TYPE_TO_PARAM[filterType];
+    if (periodSlug && filterType !== "thisMonth") {
+      params.set("period", periodSlug);
+    }
+    if (filterType === "custom" && dateRange?.from && dateRange?.to) {
+      params.set("from", format(dateRange.from, "yyyy-MM-dd"));
+      params.set("to", format(dateRange.to, "yyyy-MM-dd"));
+    }
+    if (clientFilter && clientFilter !== "all") {
+      params.set("client", clientFilter);
+    }
+    setSearchParams(params, { replace: true });
+  }, [filterType, dateRange, clientFilter, setSearchParams]);
 
   useEffect(() => {
     const getUser = async () => {
