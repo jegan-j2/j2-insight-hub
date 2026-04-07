@@ -58,6 +58,17 @@ const Overview = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
+  const [sqlPulse, setSqlPulse] = useState(false);
+  const prevSqlCountRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (prevSqlCountRef.current !== null && kpis.totalSQLs > prevSqlCountRef.current) {
+      setSqlPulse(true);
+      const timer = setTimeout(() => setSqlPulse(false), 1500);
+      return () => clearTimeout(timer);
+    }
+    prevSqlCountRef.current = kpis.totalSQLs;
+  }, [kpis.totalSQLs]);
 
   const activeClientCount = useMemo(() =>
     new Set(snapshots?.map(s => s.client_id) ?? []).size, [snapshots]);
