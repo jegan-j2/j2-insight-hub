@@ -774,6 +774,26 @@ const Settings = () => {
           })
           .eq('id', editingMember.id);
         if (error) throw error;
+
+        // Sync role to user_roles table for RLS
+        try {
+          const roleMap: Record<string, string> = { 'Admin': 'admin', 'Manager': 'manager', 'SDR': 'sdr' };
+          const rlsRole = roleMap[memberForm.role] || memberForm.role.toLowerCase();
+          const { data: inviteRecords } = await supabase.rpc('get_invite_records');
+          const match = inviteRecords?.find((r: any) => r.email?.toLowerCase() === memberForm.email.toLowerCase());
+          if (match) {
+            await supabase
+              .from('user_roles')
+              .update({
+                role: rlsRole,
+                client_id: rlsRole === 'admin' ? 'admin' : (rlsRole === 'manager' ? null : memberForm.client_id || null),
+              })
+              .eq('id', match.id);
+          }
+        } catch (syncErr) {
+          console.error('Error syncing user_roles:', syncErr);
+        }
+
         toast({ title: "Team member updated", description: `${memberForm.sdr_name} has been updated.`, className: "border-[#10b981] text-[#10b981]" });
       } else {
         const { error } = await supabase
@@ -785,6 +805,26 @@ const Settings = () => {
             client_id: memberForm.client_id || null,
           });
         if (error) throw error;
+
+        // Sync role to user_roles if record already exists
+        try {
+          const roleMap: Record<string, string> = { 'Admin': 'admin', 'Manager': 'manager', 'SDR': 'sdr' };
+          const rlsRole = roleMap[memberForm.role] || memberForm.role.toLowerCase();
+          const { data: inviteRecords } = await supabase.rpc('get_invite_records');
+          const match = inviteRecords?.find((r: any) => r.email?.toLowerCase() === memberForm.email.toLowerCase());
+          if (match) {
+            await supabase
+              .from('user_roles')
+              .update({
+                role: rlsRole,
+                client_id: rlsRole === 'admin' ? 'admin' : (rlsRole === 'manager' ? null : memberForm.client_id || null),
+              })
+              .eq('id', match.id);
+          }
+        } catch (syncErr) {
+          console.error('Error syncing user_roles:', syncErr);
+        }
+
         toast({ title: "Team member added", description: `${memberForm.sdr_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
       }
       setIsTeamDialogOpen(false);
