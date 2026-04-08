@@ -437,16 +437,19 @@ const ActivityMonitor = () => {
 
       const [activityData, sqlRes, snapshotRes] = await Promise.all([
         fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) => {
+          let filtered = q;
+          if (activeClientFilter) filtered = filtered.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
-            return q.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp);
+            return filtered.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp);
           }
-          return q.or(buildDateOrFilter(dates, "activity_date"));
+          return filtered.or(buildDateOrFilter(dates, "activity_date"));
         }, "activity_date"),
         (() => {
           let q = supabase
             .from("sql_meetings")
             .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id, meeting_status")
             .in("meeting_status", ["pending", "held", "reschedule"]);
+          if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
             q = q.gte("created_at", startTimestamp).lte("created_at", endTimestamp);
           } else {
@@ -454,11 +457,15 @@ const ActivityMonitor = () => {
           }
           return q;
         })(),
-        supabase
-          .from("daily_snapshots")
-          .select("sdr_name, client_id, dms_reached")
-          .gte("snapshot_date", firstDate)
-          .lte("snapshot_date", lastDate),
+        (() => {
+          let q = supabase
+            .from("daily_snapshots")
+            .select("sdr_name, client_id, dms_reached")
+            .gte("snapshot_date", firstDate)
+            .lte("snapshot_date", lastDate);
+          if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
+          return q;
+        })(),
       ]);
 
       if (import.meta.env.DEV) console.log("📊 Historical results:", {
