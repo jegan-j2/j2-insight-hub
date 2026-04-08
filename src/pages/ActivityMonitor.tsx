@@ -755,6 +755,7 @@ const ActivityMonitor = () => {
             .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id")
             .eq("sdr_name", sdrName)
             .ilike("call_outcome", "connected");
+          if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
             const startHour = String(timeRange[0]).padStart(2, "0");
             const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
