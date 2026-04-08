@@ -335,14 +335,11 @@ const ActivityMonitor = () => {
   }, [histDate, dateMode, selectedWeekdays]);
 
   const fetchLatestSqlLive = useCallback(async () => {
-    const startOfDay = todayMelbourne + "T00:00:00";
-    const endOfDay = todayMelbourne + "T23:59:59";
     let query = supabase
       .from("sql_meetings")
-      .select("sdr_name, company_name, client_id, created_at")
+      .select("sdr_name, company_name, client_id, created_at, booking_date")
       .in("meeting_status", ["pending", "held", "reschedule"])
-      .gte("created_at", startOfDay)
-      .lte("created_at", endOfDay)
+      .eq("booking_date", todayMelbourne)
       .order("created_at", { ascending: false })
       .limit(1);
     if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
@@ -378,8 +375,7 @@ const ActivityMonitor = () => {
         .from("sql_meetings")
         .select("sdr_name, client_id, meeting_status")
         .in("meeting_status", ["pending", "held", "reschedule"])
-        .gte("created_at", todayMelbourne + "T00:00:00")
-        .lte("created_at", todayMelbourne + "T23:59:59");
+        .eq("booking_date", todayMelbourne);
       if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
 
       const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([snapQ, actQ, sqlQ]);
@@ -450,13 +446,13 @@ const ActivityMonitor = () => {
         (() => {
           let q = supabase
             .from("sql_meetings")
-            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id, meeting_status")
+            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, client_id")
             .in("meeting_status", ["pending", "held", "reschedule"]);
           if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
-            q = q.gte("created_at", startTimestamp).lte("created_at", endTimestamp);
+            q = q.eq("booking_date", firstDate);
           } else {
-            q = q.or(buildDateOrFilter(dates, "created_at"));
+            q = q.gte("booking_date", firstDate).lte("booking_date", lastDate);
           }
           return q;
         })(),
@@ -479,7 +475,7 @@ const ActivityMonitor = () => {
       });
 
       setActivities(activityData);
-      setHistSqlMeetings(sqlRes.data || []);
+      setHistSqlMeetings((sqlRes.data || []).map((r: any) => ({ ...r, meeting_time: r.meeting_time ?? null, client_notes: r.client_notes ?? null })) as SqlMeetingRow[]);
       setSnapshots(snapshotRes.data?.map(s => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || []);
 
       // Latest SQL in period
