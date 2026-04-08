@@ -69,6 +69,7 @@ interface ActivityRow {
   meeting_scheduled_date: string | null;
   client_id: string | null;
   recording_url: string | null;
+  hubspot_engagement_id?: string | null;
 }
 
 interface SDRRow {
@@ -706,7 +707,7 @@ const ActivityMonitor = () => {
           const endTs2 = `${todayMelbourne}T23:59:59`;
           let query = supabase
             .from("activity_log")
-            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker")
+            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id")
             .eq("sdr_name", sdrName)
             .ilike("call_outcome", "connected")
             .gte("activity_date", startTs)
@@ -714,7 +715,10 @@ const ActivityMonitor = () => {
             .order("activity_date", { ascending: false });
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
-          const sorted = (data || []).sort((a, b) => {
+          const sorted = (data || []).map(r => ({
+            ...r,
+            recording_url: r.recording_url || (r.hubspot_engagement_id ? `https://api-na2.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/243030925/engagement/${r.hubspot_engagement_id}` : null),
+          })).sort((a, b) => {
             const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
             const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
             if (dateB !== dateA) return dateB - dateA;
@@ -725,7 +729,7 @@ const ActivityMonitor = () => {
           const dates = dateRangeInfo.dates;
           let query = supabase
             .from("activity_log")
-            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker")
+            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id")
             .eq("sdr_name", sdrName)
             .ilike("call_outcome", "connected");
           if (dates.length === 1) {
@@ -738,7 +742,10 @@ const ActivityMonitor = () => {
           query = query.order("activity_date", { ascending: false });
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
-          const sorted = (data || []).sort((a, b) => {
+          const sorted = (data || []).map(r => ({
+            ...r,
+            recording_url: r.recording_url || (r.hubspot_engagement_id ? `https://api-na2.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/243030925/engagement/${r.hubspot_engagement_id}` : null),
+          })).sort((a, b) => {
             const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
             const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
             if (dateB !== dateA) return dateB - dateA;
@@ -842,6 +849,11 @@ const ActivityMonitor = () => {
                 call_duration = match.call_duration;
                 activity_date = match.activity_date;
               }
+            }
+
+            // Fallback: construct recording URL from engagement ID if still null
+            if (!recording_url && sql.hubspot_engagement_id) {
+              recording_url = `https://api-na2.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/243030925/engagement/${sql.hubspot_engagement_id}`;
             }
 
             enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date });
