@@ -186,11 +186,13 @@ const ActivityMonitor = () => {
 
       const { data: clients } = await supabase
         .from("clients")
-        .select("client_id, client_name");
+        .select("client_id, client_name, logo_url, status")
+        .order("client_name");
       if (clients) {
         const map: Record<string, string> = {};
         for (const c of clients) map[c.client_id] = c.client_name;
         setClientNameMap(map);
+        setClientOptions(clients.filter(c => c.status === "active").map(c => ({ client_id: c.client_id, client_name: c.client_name, logo_url: c.logo_url })));
       }
     };
     fetchPhotosAndMembers();
