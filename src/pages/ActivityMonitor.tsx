@@ -1608,16 +1608,33 @@ const ActivityMonitor = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">{mode === "live" ? "Call Time" : "Call Date"}</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Contact Person</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Company</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[18%]">Meeting Date</TableHead>
-                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Recording</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">{mode === "live" ? "Booking Time" : "Booking Date"}</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Contact Person</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Company</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Meeting Date</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[10%]">Status</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">Notes</TableHead>
+                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
                       const displayDate = m.activity_date || m.created_at;
+                      const meetingDateStr = m.meeting_date
+                        ? (() => {
+                            const dateFormatted = format(new Date(m.meeting_date + "T00:00:00"), "d MMM yyyy");
+                            return m.meeting_time ? `${dateFormatted}, ${m.meeting_time}` : dateFormatted;
+                          })()
+                        : "—";
+                      const statusConfig = (() => {
+                        const s = m.meeting_status || "pending";
+                        const map: Record<string, { label: string; color: string }> = {
+                          pending: { label: "Pending", color: "#f59e0b" },
+                          held: { label: "Held", color: "#10b981" },
+                          reschedule: { label: "Reschedule", color: "#3b82f6" },
+                        };
+                        return map[s] || { label: s, color: "#94a3b8" };
+                      })();
                       return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
@@ -1641,9 +1658,13 @@ const ActivityMonitor = () => {
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{m.company_name || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {m.meeting_date ? format(new Date(m.meeting_date), "MMM d, yyyy") : "—"}
+                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">{meetingDateStr}</TableCell>
+                          <TableCell>
+                            <Badge className="text-white text-xs" style={{ backgroundColor: statusConfig.color }}>
+                              {statusConfig.label}
+                            </Badge>
                           </TableCell>
+                          <TableCell className="text-muted-foreground text-sm truncate" title={m.client_notes || ""}>{m.client_notes || "—"}</TableCell>
                           <TableCell className="text-center">
                             {m.recording_url ? (
                               <Button
@@ -1665,7 +1686,7 @@ const ActivityMonitor = () => {
                         </TableRow>
                         {playingRecordingId === m.id && m.recording_url && (
                           <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={5} className="py-3">
+                            <TableCell colSpan={7} className="py-3">
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">
