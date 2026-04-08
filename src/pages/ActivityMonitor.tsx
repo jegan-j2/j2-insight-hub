@@ -40,6 +40,9 @@ interface SqlMeetingRow {
   company_name: string | null;
   booking_date: string;
   meeting_date: string | null;
+  meeting_time: string | null;
+  meeting_status: string | null;
+  client_notes: string | null;
   created_at: string | null;
   hubspot_engagement_id?: string | null;
   recording_url?: string | null;
@@ -332,14 +335,11 @@ const ActivityMonitor = () => {
   }, [histDate, dateMode, selectedWeekdays]);
 
   const fetchLatestSqlLive = useCallback(async () => {
-    const startOfDay = todayMelbourne + "T00:00:00";
-    const endOfDay = todayMelbourne + "T23:59:59";
     let query = supabase
       .from("sql_meetings")
-      .select("sdr_name, company_name, client_id, created_at")
+      .select("sdr_name, company_name, client_id, created_at, booking_date")
       .in("meeting_status", ["pending", "held", "reschedule"])
-      .gte("created_at", startOfDay)
-      .lte("created_at", endOfDay)
+      .eq("booking_date", todayMelbourne)
       .order("created_at", { ascending: false })
       .limit(1);
     if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
@@ -375,8 +375,7 @@ const ActivityMonitor = () => {
         .from("sql_meetings")
         .select("sdr_name, client_id, meeting_status")
         .in("meeting_status", ["pending", "held", "reschedule"])
-        .gte("created_at", todayMelbourne + "T00:00:00")
-        .lte("created_at", todayMelbourne + "T23:59:59");
+        .eq("booking_date", todayMelbourne);
       if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
 
       const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([snapQ, actQ, sqlQ]);
@@ -447,13 +446,13 @@ const ActivityMonitor = () => {
         (() => {
           let q = supabase
             .from("sql_meetings")
-            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id, meeting_status")
+            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, client_id")
             .in("meeting_status", ["pending", "held", "reschedule"]);
           if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
-            q = q.gte("created_at", startTimestamp).lte("created_at", endTimestamp);
+            q = q.eq("booking_date", firstDate);
           } else {
-            q = q.or(buildDateOrFilter(dates, "created_at"));
+            q = q.gte("booking_date", firstDate).lte("booking_date", lastDate);
           }
           return q;
         })(),
@@ -476,7 +475,7 @@ const ActivityMonitor = () => {
       });
 
       setActivities(activityData);
-      setHistSqlMeetings(sqlRes.data || []);
+      setHistSqlMeetings((sqlRes.data || []).map((r: any) => ({ ...r, meeting_time: r.meeting_time ?? null, client_notes: r.client_notes ?? null })) as SqlMeetingRow[]);
       setSnapshots(snapshotRes.data?.map(s => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || []);
 
       // Latest SQL in period
@@ -780,27 +779,23 @@ const ActivityMonitor = () => {
       } else if (metric === "sqls") {
         let sqlQuery = supabase
           .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id, client_id")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, contact_email, hubspot_engagement_id, client_id")
           .eq("sdr_name", sdrName)
           .in("meeting_status", ["pending", "held", "reschedule"]);
         if (activeClientFilter) sqlQuery = sqlQuery.eq("client_id", activeClientFilter);
 
         if (mode === "live") {
-          sqlQuery = sqlQuery
-            .gte("created_at", `${todayMelbourne}T00:00:00`)
-            .lte("created_at", `${todayMelbourne}T23:59:59`);
+          sqlQuery = sqlQuery.eq("booking_date", todayMelbourne);
         } else {
           const dates = dateRangeInfo.dates;
           if (dates.length === 1) {
-            const startHour = String(timeRange[0]).padStart(2, "0");
-            const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-            sqlQuery = sqlQuery.gte("created_at", `${dates[0]}T${startHour}:00:00`).lte("created_at", `${dates[0]}T${endTs}`);
+            sqlQuery = sqlQuery.eq("booking_date", dates[0]);
           } else {
-            sqlQuery = sqlQuery.or(buildDateOrFilter(dates, "created_at"));
+            sqlQuery = sqlQuery.gte("booking_date", dates[0]).lte("booking_date", dates[dates.length - 1]);
           }
         }
 
-        const { data: sqlData } = await sqlQuery.order("created_at", { ascending: false });
+        const { data: sqlData } = await sqlQuery.order("booking_date", { ascending: false });
 
         // Batch-fetch recordings: 2 queries instead of N+1
         const enrichedSqlData: SqlMeetingRow[] = [];
@@ -881,7 +876,7 @@ const ActivityMonitor = () => {
               recording_url = `https://api-na2.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/243030925/engagement/${sql.hubspot_engagement_id}`;
             }
 
-            enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date });
+            enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date, meeting_time: sql.meeting_time ?? null, meeting_status: sql.meeting_status ?? null, client_notes: sql.client_notes ?? null });
           }
         }
         enrichedSqlData.sort((a, b) =>
@@ -1482,7 +1477,7 @@ const ActivityMonitor = () => {
 
       {/* Drill-down Modal */}
       <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="bg-card border-border sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>
               {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Answered Calls" : drillDown?.metric === "conversations" ? "DM Conversations" : "SQL Meetings"}
@@ -1613,16 +1608,33 @@ const ActivityMonitor = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader className="sticky top-0 z-10 bg-card">
                      <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">{mode === "live" ? "Call Time" : "Call Date"}</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Contact Person</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[22%]">Company</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[18%]">Meeting Date</TableHead>
-                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Recording</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">{mode === "live" ? "Booking Time" : "Booking Date"}</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Contact Person</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Company</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Meeting Date</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[10%]">Status</TableHead>
+                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">Notes</TableHead>
+                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
                       const displayDate = m.activity_date || m.created_at;
+                      const meetingDateStr = m.meeting_date
+                        ? (() => {
+                            const dateFormatted = format(new Date(m.meeting_date + "T00:00:00"), "d MMM yyyy");
+                            return m.meeting_time ? `${dateFormatted}, ${m.meeting_time}` : dateFormatted;
+                          })()
+                        : "—";
+                      const statusConfig = (() => {
+                        const s = m.meeting_status || "pending";
+                        const map: Record<string, { label: string; color: string }> = {
+                          pending: { label: "Pending", color: "#f59e0b" },
+                          held: { label: "Held", color: "#10b981" },
+                          reschedule: { label: "Reschedule", color: "#3b82f6" },
+                        };
+                        return map[s] || { label: s, color: "#94a3b8" };
+                      })();
                       return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
@@ -1646,9 +1658,13 @@ const ActivityMonitor = () => {
                           </TableCell>
                           <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{m.company_name || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {m.meeting_date ? format(new Date(m.meeting_date), "MMM d, yyyy") : "—"}
+                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">{meetingDateStr}</TableCell>
+                          <TableCell>
+                            <Badge className="text-white text-xs" style={{ backgroundColor: statusConfig.color }}>
+                              {statusConfig.label}
+                            </Badge>
                           </TableCell>
+                          <TableCell className="text-muted-foreground text-sm truncate" title={m.client_notes || ""}>{m.client_notes || "—"}</TableCell>
                           <TableCell className="text-center">
                             {m.recording_url ? (
                               <Button
@@ -1670,7 +1686,7 @@ const ActivityMonitor = () => {
                         </TableRow>
                         {playingRecordingId === m.id && m.recording_url && (
                           <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={5} className="py-3">
+                            <TableCell colSpan={7} className="py-3">
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">
