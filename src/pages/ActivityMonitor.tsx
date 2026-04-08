@@ -40,6 +40,9 @@ interface SqlMeetingRow {
   company_name: string | null;
   booking_date: string;
   meeting_date: string | null;
+  meeting_time: string | null;
+  meeting_status: string | null;
+  client_notes: string | null;
   created_at: string | null;
   hubspot_engagement_id?: string | null;
   recording_url?: string | null;
