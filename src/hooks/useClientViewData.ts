@@ -154,6 +154,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         .from("sql_meetings")
         .select("*")
         .eq("client_id", clientId)
+        .in("meeting_status", ["pending", "held", "reschedule"])
         .order("booking_date", { ascending: false });
       if (startDate) meetingQuery = meetingQuery.gte("booking_date", startDate);
       if (endDate) meetingQuery = meetingQuery.lte("booking_date", endDate);

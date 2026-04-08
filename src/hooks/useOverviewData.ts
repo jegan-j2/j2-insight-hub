@@ -133,6 +133,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       let meetingQuery = supabase
         .from("sql_meetings")
         .select("*")
+        .in("meeting_status", ["pending", "held", "reschedule"])
         .order("booking_date", { ascending: false });
 
       if (startDate) meetingQuery = meetingQuery.gte("booking_date", startDate);

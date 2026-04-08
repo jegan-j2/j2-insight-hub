@@ -328,6 +328,7 @@ const ActivityMonitor = () => {
     const { data } = await supabase
       .from("sql_meetings")
       .select("sdr_name, company_name, client_id, created_at")
+      .in("meeting_status", ["pending", "held", "reschedule"])
       .gte("created_at", startOfDay)
       .lte("created_at", endOfDay)
       .order("created_at", { ascending: false })
@@ -749,7 +750,8 @@ const ActivityMonitor = () => {
         let sqlQuery = supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id, client_id")
-          .eq("sdr_name", sdrName);
+          .eq("sdr_name", sdrName)
+          .in("meeting_status", ["pending", "held", "reschedule"]);
 
         if (mode === "live") {
           sqlQuery = sqlQuery
