@@ -214,8 +214,13 @@ const ActivityMonitor = () => {
         .order("client_name");
       if (clients) {
         const map: Record<string, string> = {};
-        for (const c of clients) map[c.client_id] = c.client_name;
+        const logoMap: Record<string, string | null> = {};
+        for (const c of clients) {
+          map[c.client_id] = c.client_name;
+          logoMap[c.client_id] = c.logo_url;
+        }
         setClientNameMap(map);
+        setClientLogoMap(logoMap);
         setClientOptions(clients.filter(c => c.status === "active").map(c => ({ client_id: c.client_id, client_name: c.client_name, logo_url: c.logo_url })));
       }
     };
