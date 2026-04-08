@@ -158,6 +158,7 @@ const ActivityMonitor = () => {
   const [sdrPhotoMap, setSdrPhotoMap] = useState<Record<string, string | null>>({});
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [clientNameMap, setClientNameMap] = useState<Record<string, string>>({});
+  const [clientLogoMap, setClientLogoMap] = useState<Record<string, string | null>>({});
   const [allTeamMembers, setAllTeamMembers] = useState<{sdr_name: string, client_id: string, status: string | null}[]>([]);
   const [sdrPage, setSdrPage] = useState(0);
   const [drillPage, setDrillPage] = useState(0);
@@ -213,8 +214,13 @@ const ActivityMonitor = () => {
         .order("client_name");
       if (clients) {
         const map: Record<string, string> = {};
-        for (const c of clients) map[c.client_id] = c.client_name;
+        const logoMap: Record<string, string | null> = {};
+        for (const c of clients) {
+          map[c.client_id] = c.client_name;
+          logoMap[c.client_id] = c.logo_url;
+        }
         setClientNameMap(map);
+        setClientLogoMap(logoMap);
         setClientOptions(clients.filter(c => c.status === "active").map(c => ({ client_id: c.client_id, client_name: c.client_name, logo_url: c.logo_url })));
       }
     };
@@ -1430,7 +1436,14 @@ const ActivityMonitor = () => {
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>{clientNameMap[row.clientId] || row.clientId}</TableCell>
+                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>
+                          <span className="flex items-center gap-1.5">
+                            {clientLogoMap[row.clientId] ? (
+                              <img src={clientLogoMap[row.clientId]!} alt="" className="w-5 h-5 rounded-full object-contain flex-shrink-0" />
+                            ) : null}
+                            <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
+                          </span>
+                        </TableCell>
                         <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-right px-4 py-2">
                           <Button
