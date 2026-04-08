@@ -735,6 +735,7 @@ const ActivityMonitor = () => {
             .gte("activity_date", startTs)
             .lte("activity_date", endTs2)
             .order("activity_date", { ascending: false });
+          if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
           const sorted = (data || []).map(r => ({
