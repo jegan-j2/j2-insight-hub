@@ -659,6 +659,7 @@ const ActivityMonitor = () => {
     // In live mode (today): show all active team members even if no activity
     if (mode === "live") {
       for (const member of allTeamMembers) {
+        if (activeClientFilter && member.client_id !== activeClientFilter) continue;
         const key = compositeKey(member.sdr_name, member.client_id || "");
         if (member.status === "active" && !map.has(key)) {
           map.set(key, {
