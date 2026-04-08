@@ -334,7 +334,7 @@ const ActivityMonitor = () => {
   const fetchLatestSqlLive = useCallback(async () => {
     const startOfDay = todayMelbourne + "T00:00:00";
     const endOfDay = todayMelbourne + "T23:59:59";
-    const { data } = await supabase
+    let query = supabase
       .from("sql_meetings")
       .select("sdr_name, company_name, client_id, created_at")
       .in("meeting_status", ["pending", "held", "reschedule"])
@@ -342,13 +342,15 @@ const ActivityMonitor = () => {
       .lte("created_at", endOfDay)
       .order("created_at", { ascending: false })
       .limit(1);
+    if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
+    const { data } = await query;
     setLatestSql(data?.[0] ? {
       sdrName: data[0].sdr_name || "",
       companyName: data[0].company_name || "",
       clientId: data[0].client_id || "",
       createdAt: data[0].created_at,
     } : null);
-  }, [todayMelbourne]);
+  }, [todayMelbourne, activeClientFilter]);
 
   // LIVE fetch
   const fetchLiveData = useCallback(async () => {
