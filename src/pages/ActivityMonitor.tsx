@@ -328,6 +328,7 @@ const ActivityMonitor = () => {
     const { data } = await supabase
       .from("sql_meetings")
       .select("sdr_name, company_name, client_id, created_at")
+      .in("meeting_status", ["pending", "held", "reschedule"])
       .gte("created_at", startOfDay)
       .lte("created_at", endOfDay)
       .order("created_at", { ascending: false })
