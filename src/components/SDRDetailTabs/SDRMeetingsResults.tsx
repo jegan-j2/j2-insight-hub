@@ -24,6 +24,7 @@ export const SDRMeetingsResults = ({ sdrName, dateRange, clientId }: SDRMeetings
       .from("sql_meetings")
       .select("*")
       .eq("sdr_name", sdrName)
+      .in("meeting_status", ["pending", "held", "reschedule"])
       .order("booking_date", { ascending: false });
     if (clientId) mtgQuery = mtgQuery.eq("client_id", clientId);
 

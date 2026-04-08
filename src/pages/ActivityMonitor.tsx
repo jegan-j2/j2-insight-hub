@@ -749,7 +749,8 @@ const ActivityMonitor = () => {
         let sqlQuery = supabase
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id, client_id")
-          .eq("sdr_name", sdrName);
+          .eq("sdr_name", sdrName)
+          .in("meeting_status", ["pending", "held", "reschedule"]);
 
         if (mode === "live") {
           sqlQuery = sqlQuery
