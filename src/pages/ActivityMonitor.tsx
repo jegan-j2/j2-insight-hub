@@ -698,7 +698,7 @@ const ActivityMonitor = () => {
     });
 
     return rows;
-  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers, clientNameMap]);
+  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers, clientNameMap, activeClientFilter]);
 
   useEffect(() => { setSdrPage(0); }, [sdrRows]);
 
