@@ -599,8 +599,7 @@ const ActivityMonitor = () => {
         liveSqlCounts.set(key, (liveSqlCounts.get(key) || 0) + 1);
       }
       for (const [key, row] of map.entries()) {
-        const liveCount = liveSqlCounts.get(key);
-        if (liveCount !== undefined) row.sqls = liveCount;
+        row.sqls = liveSqlCounts.get(key) || 0;
       }
     } else {
       const sqlCountByKey = new Map<string, number>();
