@@ -497,7 +497,7 @@ const ActivityMonitor = () => {
     } finally {
       setLoading(false);
     }
-  }, [dateRangeInfo, timeRange, mode]);
+  }, [dateRangeInfo, timeRange, mode, activeClientFilter]);
 
   useEffect(() => {
     document.title = "J2 Insights Dashboard - Activity Monitor";
