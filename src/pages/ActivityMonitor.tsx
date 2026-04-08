@@ -115,6 +115,7 @@ const ALL_DAYS: AllDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0 };
 
 const ActivityMonitor = () => {
+  const { clientFilter, setClientFilter } = useDateFilter();
   const [mode, setMode] = useState<Mode>("live");
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
@@ -144,9 +145,12 @@ const ActivityMonitor = () => {
     clientId: string;
     createdAt: string;
   } | null>(null);
+  const [clientOptions, setClientOptions] = useState<{client_id: string; client_name: string; logo_url: string | null}[]>([]);
 
   const SDR_PAGE_SIZE = 15;
   const DRILL_PAGE_SIZE = 15;
+
+  const activeClientFilter = clientFilter && clientFilter !== "all" ? clientFilter : null;
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
