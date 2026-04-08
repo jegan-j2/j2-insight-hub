@@ -357,24 +357,29 @@ const ActivityMonitor = () => {
     if (mode !== "live") return;
     setLoading(true);
     try {
-      const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([
-        supabase
-          .from("daily_snapshots")
-          .select("sdr_name, client_id, dials, answered, dms_reached, sqls, answer_rate")
-          .eq("snapshot_date", todayMelbourne),
-        supabase
-          .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url")
-          .gte("activity_date", todayMelbourne + "T00:00:00")
-          .lte("activity_date", todayMelbourne + "T23:59:59")
-          .order("activity_date", { ascending: false }),
-        supabase
-          .from("sql_meetings")
-          .select("sdr_name, client_id, meeting_status")
-          .in("meeting_status", ["pending", "held", "reschedule"])
-          .gte("created_at", todayMelbourne + "T00:00:00")
-          .lte("created_at", todayMelbourne + "T23:59:59"),
-      ]);
+      let snapQ = supabase
+        .from("daily_snapshots")
+        .select("sdr_name, client_id, dials, answered, dms_reached, sqls, answer_rate")
+        .eq("snapshot_date", todayMelbourne);
+      if (activeClientFilter) snapQ = snapQ.eq("client_id", activeClientFilter);
+
+      let actQ = supabase
+        .from("activity_log")
+        .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url")
+        .gte("activity_date", todayMelbourne + "T00:00:00")
+        .lte("activity_date", todayMelbourne + "T23:59:59")
+        .order("activity_date", { ascending: false });
+      if (activeClientFilter) actQ = actQ.eq("client_id", activeClientFilter);
+
+      let sqlQ = supabase
+        .from("sql_meetings")
+        .select("sdr_name, client_id, meeting_status")
+        .in("meeting_status", ["pending", "held", "reschedule"])
+        .gte("created_at", todayMelbourne + "T00:00:00")
+        .lte("created_at", todayMelbourne + "T23:59:59");
+      if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
+
+      const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([snapQ, actQ, sqlQ]);
       if (snapshotRes.data) setSnapshots(snapshotRes.data);
       if (activityRes.data) setActivities(activityRes.data);
       if (liveSqlRes.data) setHistSqlMeetings(liveSqlRes.data as any);
@@ -383,7 +388,7 @@ const ActivityMonitor = () => {
     } finally {
       setLoading(false);
     }
-  }, [todayMelbourne, mode]);
+  }, [todayMelbourne, mode, activeClientFilter]);
 
   // Helper to fetch all rows with pagination (bypasses 1000-row default limit)
   const fetchAllRows = async <T,>(
