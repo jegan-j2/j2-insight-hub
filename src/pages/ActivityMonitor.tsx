@@ -10,11 +10,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown } from "lucide-react";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval, getDaysInMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SDRAvatar } from "@/components/SDRAvatar";
@@ -113,6 +115,7 @@ const ALL_DAYS: AllDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0 };
 
 const ActivityMonitor = () => {
+  const { clientFilter, setClientFilter } = useDateFilter();
   const [mode, setMode] = useState<Mode>("live");
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
@@ -142,9 +145,12 @@ const ActivityMonitor = () => {
     clientId: string;
     createdAt: string;
   } | null>(null);
+  const [clientOptions, setClientOptions] = useState<{client_id: string; client_name: string; logo_url: string | null}[]>([]);
 
   const SDR_PAGE_SIZE = 15;
   const DRILL_PAGE_SIZE = 15;
+
+  const activeClientFilter = clientFilter && clientFilter !== "all" ? clientFilter : null;
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -180,11 +186,13 @@ const ActivityMonitor = () => {
 
       const { data: clients } = await supabase
         .from("clients")
-        .select("client_id, client_name");
+        .select("client_id, client_name, logo_url, status")
+        .order("client_name");
       if (clients) {
         const map: Record<string, string> = {};
         for (const c of clients) map[c.client_id] = c.client_name;
         setClientNameMap(map);
+        setClientOptions(clients.filter(c => c.status === "active").map(c => ({ client_id: c.client_id, client_name: c.client_name, logo_url: c.logo_url })));
       }
     };
     fetchPhotosAndMembers();
@@ -326,7 +334,7 @@ const ActivityMonitor = () => {
   const fetchLatestSqlLive = useCallback(async () => {
     const startOfDay = todayMelbourne + "T00:00:00";
     const endOfDay = todayMelbourne + "T23:59:59";
-    const { data } = await supabase
+    let query = supabase
       .from("sql_meetings")
       .select("sdr_name, company_name, client_id, created_at")
       .in("meeting_status", ["pending", "held", "reschedule"])
@@ -334,37 +342,44 @@ const ActivityMonitor = () => {
       .lte("created_at", endOfDay)
       .order("created_at", { ascending: false })
       .limit(1);
+    if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
+    const { data } = await query;
     setLatestSql(data?.[0] ? {
       sdrName: data[0].sdr_name || "",
       companyName: data[0].company_name || "",
       clientId: data[0].client_id || "",
       createdAt: data[0].created_at,
     } : null);
-  }, [todayMelbourne]);
+  }, [todayMelbourne, activeClientFilter]);
 
   // LIVE fetch
   const fetchLiveData = useCallback(async () => {
     if (mode !== "live") return;
     setLoading(true);
     try {
-      const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([
-        supabase
-          .from("daily_snapshots")
-          .select("sdr_name, client_id, dials, answered, dms_reached, sqls, answer_rate")
-          .eq("snapshot_date", todayMelbourne),
-        supabase
-          .from("activity_log")
-          .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url")
-          .gte("activity_date", todayMelbourne + "T00:00:00")
-          .lte("activity_date", todayMelbourne + "T23:59:59")
-          .order("activity_date", { ascending: false }),
-        supabase
-          .from("sql_meetings")
-          .select("sdr_name, client_id, meeting_status")
-          .in("meeting_status", ["pending", "held", "reschedule"])
-          .gte("created_at", todayMelbourne + "T00:00:00")
-          .lte("created_at", todayMelbourne + "T23:59:59"),
-      ]);
+      let snapQ = supabase
+        .from("daily_snapshots")
+        .select("sdr_name, client_id, dials, answered, dms_reached, sqls, answer_rate")
+        .eq("snapshot_date", todayMelbourne);
+      if (activeClientFilter) snapQ = snapQ.eq("client_id", activeClientFilter);
+
+      let actQ = supabase
+        .from("activity_log")
+        .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url")
+        .gte("activity_date", todayMelbourne + "T00:00:00")
+        .lte("activity_date", todayMelbourne + "T23:59:59")
+        .order("activity_date", { ascending: false });
+      if (activeClientFilter) actQ = actQ.eq("client_id", activeClientFilter);
+
+      let sqlQ = supabase
+        .from("sql_meetings")
+        .select("sdr_name, client_id, meeting_status")
+        .in("meeting_status", ["pending", "held", "reschedule"])
+        .gte("created_at", todayMelbourne + "T00:00:00")
+        .lte("created_at", todayMelbourne + "T23:59:59");
+      if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
+
+      const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([snapQ, actQ, sqlQ]);
       if (snapshotRes.data) setSnapshots(snapshotRes.data);
       if (activityRes.data) setActivities(activityRes.data);
       if (liveSqlRes.data) setHistSqlMeetings(liveSqlRes.data as any);
@@ -373,7 +388,7 @@ const ActivityMonitor = () => {
     } finally {
       setLoading(false);
     }
-  }, [todayMelbourne, mode]);
+  }, [todayMelbourne, mode, activeClientFilter]);
 
   // Helper to fetch all rows with pagination (bypasses 1000-row default limit)
   const fetchAllRows = async <T,>(
@@ -422,16 +437,19 @@ const ActivityMonitor = () => {
 
       const [activityData, sqlRes, snapshotRes] = await Promise.all([
         fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) => {
+          let filtered = q;
+          if (activeClientFilter) filtered = filtered.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
-            return q.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp);
+            return filtered.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp);
           }
-          return q.or(buildDateOrFilter(dates, "activity_date"));
+          return filtered.or(buildDateOrFilter(dates, "activity_date"));
         }, "activity_date"),
         (() => {
           let q = supabase
             .from("sql_meetings")
             .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, client_id, meeting_status")
             .in("meeting_status", ["pending", "held", "reschedule"]);
+          if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
             q = q.gte("created_at", startTimestamp).lte("created_at", endTimestamp);
           } else {
@@ -439,11 +457,15 @@ const ActivityMonitor = () => {
           }
           return q;
         })(),
-        supabase
-          .from("daily_snapshots")
-          .select("sdr_name, client_id, dms_reached")
-          .gte("snapshot_date", firstDate)
-          .lte("snapshot_date", lastDate),
+        (() => {
+          let q = supabase
+            .from("daily_snapshots")
+            .select("sdr_name, client_id, dms_reached")
+            .gte("snapshot_date", firstDate)
+            .lte("snapshot_date", lastDate);
+          if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
+          return q;
+        })(),
       ]);
 
       if (import.meta.env.DEV) console.log("📊 Historical results:", {
@@ -475,7 +497,7 @@ const ActivityMonitor = () => {
     } finally {
       setLoading(false);
     }
-  }, [dateRangeInfo, timeRange, mode]);
+  }, [dateRangeInfo, timeRange, mode, activeClientFilter]);
 
   useEffect(() => {
     document.title = "J2 Insights Dashboard - Activity Monitor";
@@ -637,6 +659,7 @@ const ActivityMonitor = () => {
     // In live mode (today): show all active team members even if no activity
     if (mode === "live") {
       for (const member of allTeamMembers) {
+        if (activeClientFilter && member.client_id !== activeClientFilter) continue;
         const key = compositeKey(member.sdr_name, member.client_id || "");
         if (member.status === "active" && !map.has(key)) {
           map.set(key, {
@@ -675,7 +698,7 @@ const ActivityMonitor = () => {
     });
 
     return rows;
-  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers, clientNameMap]);
+  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers, clientNameMap, activeClientFilter]);
 
   useEffect(() => { setSdrPage(0); }, [sdrRows]);
 
@@ -713,6 +736,7 @@ const ActivityMonitor = () => {
             .gte("activity_date", startTs)
             .lte("activity_date", endTs2)
             .order("activity_date", { ascending: false });
+          if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
           const sorted = (data || []).map(r => ({
@@ -732,6 +756,7 @@ const ActivityMonitor = () => {
             .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id")
             .eq("sdr_name", sdrName)
             .ilike("call_outcome", "connected");
+          if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
             const startHour = String(timeRange[0]).padStart(2, "0");
             const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
@@ -759,6 +784,7 @@ const ActivityMonitor = () => {
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id, client_id")
           .eq("sdr_name", sdrName)
           .in("meeting_status", ["pending", "held", "reschedule"]);
+        if (activeClientFilter) sqlQuery = sqlQuery.eq("client_id", activeClientFilter);
 
         if (mode === "live") {
           sqlQuery = sqlQuery
@@ -1277,8 +1303,31 @@ const ActivityMonitor = () => {
 
       {/* SDR Table */}
       <Card className="bg-card/50 backdrop-blur-sm border-border">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle>SDR Performance</CardTitle>
+          <Select value={clientFilter} onValueChange={setClientFilter}>
+            <SelectTrigger className={cn(
+              "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+              "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+            )}>
+              <SelectValue placeholder="All Clients" />
+            </SelectTrigger>
+            <SelectContent className="z-[100] bg-card">
+              <SelectItem value="all">All Clients</SelectItem>
+              {clientOptions.map((c) => (
+                <SelectItem key={c.client_id} value={c.client_id}>
+                  <span className="flex items-center gap-2">
+                    {c.logo_url ? (
+                      <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                    ) : (
+                      <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                    )}
+                    {c.client_name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardHeader>
         <CardContent>
           {loading ? (
