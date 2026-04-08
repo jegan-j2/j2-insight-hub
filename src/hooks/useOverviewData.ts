@@ -4,6 +4,7 @@ import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
+import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
 
 interface OverviewKPIs {
   totalDials: number;
@@ -133,7 +134,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       let meetingQuery = supabase
         .from("sql_meetings")
         .select("*")
-        .in("meeting_status", ["pending", "held", "reschedule"])
+        .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
         .order("booking_date", { ascending: false });
 
       if (startDate) meetingQuery = meetingQuery.gte("booking_date", startDate);
@@ -146,7 +147,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       let sqlCountQuery = supabase
         .from("sql_meetings")
         .select("id", { count: "exact" })
-        .in("meeting_status", ["pending", "held", "reschedule"]);
+        .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]);
 
       if (startDate) sqlCountQuery = sqlCountQuery.gte("booking_date", startDate);
       if (endDate) sqlCountQuery = sqlCountQuery.lte("booking_date", endDate);
@@ -202,7 +203,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           .eq("status", "active")
           .neq("client_id", "admin")
           .order("client_name", { ascending: true }),
-        supabase.from("sql_meetings").select("client_id, booking_date, meeting_status").neq("client_id", null).in("meeting_status", ["pending", "held", "reschedule"]),
+        supabase.from("sql_meetings").select("client_id, booking_date, meeting_status").neq("client_id", null).in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]),
       ]);
 
       const allDmsMap: Record<string, number> = {};
@@ -236,7 +237,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           supabase
             .from("sql_meetings")
             .select("id", { count: "exact" })
-            .in("meeting_status", ["pending", "held", "reschedule"])
+            .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
             .gte("booking_date", prevDates.from)
             .lte("booking_date", prevDates.to),
         ]);

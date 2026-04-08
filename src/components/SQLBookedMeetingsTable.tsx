@@ -18,6 +18,7 @@ import { TableSkeleton } from "@/components/LoadingSkeletons";
 import type { DateRange } from "react-day-picker";
 import type { SQLMeeting, Client } from "@/lib/supabase-types";
 import * as XLSX from "xlsx-js-style";
+import { isActiveSqlMeetingStatus } from "@/lib/sqlMeetings";
 
 interface MeetingData {
   id: string;
@@ -228,7 +229,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
-    let filtered = [...localMeetings];
+    let filtered = localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus));
     if (dateRange?.from && dateRange?.to) {
       filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
@@ -250,10 +251,15 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     return filtered;
   }, [localMeetings, dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateRange, meetingDateRange, sortField, sortOrder]);
 
+  const activeMeetings = useMemo(
+    () => localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus)),
+    [localMeetings]
+  );
+
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
   const paginatedMeetings = filteredMeetings.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-  const uniqueClients = Array.from(new Set(localMeetings.map(m => m.clientId))).sort();
-  const uniqueSdrs = Array.from(new Set(localMeetings.map(m => m.sdr))).sort();
+  const uniqueClients = Array.from(new Set(activeMeetings.map(m => m.clientId))).sort();
+  const uniqueSdrs = Array.from(new Set(activeMeetings.map(m => m.sdr))).sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
@@ -335,7 +341,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             <div>
               <CardTitle className="text-foreground">SQL Meetings</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Showing {filteredMeetings.length} of {localMeetings.length} meetings
+                Showing {filteredMeetings.length} of {activeMeetings.length} meetings
               </p>
             </div>
             <div className="flex gap-2">

@@ -23,6 +23,7 @@ import { SDRAvatar } from "@/components/SDRAvatar";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx-js-style";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
+import { ACTIVE_SQL_MEETING_STATUSES, getRecordingUrlWithFallback } from "@/lib/sqlMeetings";
 
 type Mode = "live" | "historical";
 type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "conversations" | "answerRate" | "sqls" | "conversion";
@@ -111,6 +112,25 @@ const getMelbourneToday = () => {
   const m = melb.find(p => p.type === "month")!.value;
   const d = melb.find(p => p.type === "day")!.value;
   return `${y}-${m}-${d}`;
+};
+
+const formatScheduledMeetingDateTime = (meetingDate: string | null, meetingTime: string | null) => {
+  if (!meetingDate) return "—";
+
+  const dateLabel = format(new Date(`${meetingDate}T00:00:00`), "d MMM yyyy");
+  if (!meetingTime) return dateLabel;
+
+  const isoAttempt = new Date(`${meetingDate}T${meetingTime}`);
+  if (!Number.isNaN(isoAttempt.getTime())) {
+    return format(isoAttempt, "d MMM yyyy, h:mm a");
+  }
+
+  const looseAttempt = new Date(`${meetingDate} ${meetingTime}`);
+  if (!Number.isNaN(looseAttempt.getTime())) {
+    return format(looseAttempt, "d MMM yyyy, h:mm a");
+  }
+
+  return `${dateLabel}, ${meetingTime}`;
 };
 
 const ALL_WEEKDAYS: WeekDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -338,7 +358,7 @@ const ActivityMonitor = () => {
     let query = supabase
       .from("sql_meetings")
       .select("sdr_name, company_name, client_id, created_at, booking_date")
-      .in("meeting_status", ["pending", "held", "reschedule"])
+      .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
       .eq("booking_date", todayMelbourne)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -374,7 +394,7 @@ const ActivityMonitor = () => {
       let sqlQ = supabase
         .from("sql_meetings")
         .select("sdr_name, client_id, meeting_status")
-        .in("meeting_status", ["pending", "held", "reschedule"])
+        .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
         .eq("booking_date", todayMelbourne);
       if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
 
@@ -447,14 +467,14 @@ const ActivityMonitor = () => {
           let q = supabase
             .from("sql_meetings")
             .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, client_id")
-            .in("meeting_status", ["pending", "held", "reschedule"]);
+            .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]);
           if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
             q = q.eq("booking_date", firstDate);
           } else {
-            q = q.gte("booking_date", firstDate).lte("booking_date", lastDate);
+            q = q.in("booking_date", dates);
           }
-          return q;
+          return q.order("booking_date", { ascending: false });
         })(),
         (() => {
           let q = supabase
@@ -739,7 +759,10 @@ const ActivityMonitor = () => {
           const { data } = await query;
           const sorted = (data || []).map(r => ({
             ...r,
-            recording_url: r.recording_url || (r.hubspot_engagement_id ? `https://api-na2.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/243030925/engagement/${r.hubspot_engagement_id}` : null),
+            recording_url: getRecordingUrlWithFallback({
+              recordingUrl: r.recording_url,
+              hubspotEngagementId: r.hubspot_engagement_id,
+            }),
           })).sort((a, b) => {
             const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
             const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
@@ -767,7 +790,10 @@ const ActivityMonitor = () => {
           const { data } = await query;
           const sorted = (data || []).map(r => ({
             ...r,
-            recording_url: r.recording_url || (r.hubspot_engagement_id ? `https://api-na2.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/243030925/engagement/${r.hubspot_engagement_id}` : null),
+            recording_url: getRecordingUrlWithFallback({
+              recordingUrl: r.recording_url,
+              hubspotEngagementId: r.hubspot_engagement_id,
+            }),
           })).sort((a, b) => {
             const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
             const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
@@ -781,7 +807,7 @@ const ActivityMonitor = () => {
           .from("sql_meetings")
           .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, contact_email, hubspot_engagement_id, client_id")
           .eq("sdr_name", sdrName)
-          .in("meeting_status", ["pending", "held", "reschedule"]);
+          .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]);
         if (activeClientFilter) sqlQuery = sqlQuery.eq("client_id", activeClientFilter);
 
         if (mode === "live") {
@@ -791,7 +817,7 @@ const ActivityMonitor = () => {
           if (dates.length === 1) {
             sqlQuery = sqlQuery.eq("booking_date", dates[0]);
           } else {
-            sqlQuery = sqlQuery.gte("booking_date", dates[0]).lte("booking_date", dates[dates.length - 1]);
+            sqlQuery = sqlQuery.in("booking_date", dates);
           }
         }
 
@@ -814,7 +840,10 @@ const ActivityMonitor = () => {
               for (const row of engData) {
                 if (row.hubspot_engagement_id && !engagementMap.has(row.hubspot_engagement_id)) {
                   engagementMap.set(row.hubspot_engagement_id, {
-                    recording_url: row.recording_url,
+                    recording_url: getRecordingUrlWithFallback({
+                      recordingUrl: row.recording_url,
+                      hubspotEngagementId: row.hubspot_engagement_id,
+                    }),
                     call_duration: row.call_duration,
                     activity_date: row.activity_date,
                   });
@@ -872,16 +901,17 @@ const ActivityMonitor = () => {
             }
 
             // Fallback: construct recording URL from engagement ID if still null
-            if (!recording_url && sql.hubspot_engagement_id) {
-              recording_url = `https://api-na2.hubspot.com/recording/auth/provider/hublets/v1/external-url-retriever/getAuthRecording/portal/243030925/engagement/${sql.hubspot_engagement_id}`;
-            }
+            recording_url = getRecordingUrlWithFallback({
+              recordingUrl: recording_url,
+              hubspotEngagementId: sql.hubspot_engagement_id,
+            });
 
             enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date, meeting_time: sql.meeting_time ?? null, meeting_status: sql.meeting_status ?? null, client_notes: sql.client_notes ?? null });
           }
         }
         enrichedSqlData.sort((a, b) =>
-          new Date(b.activity_date || b.created_at || b.booking_date).getTime() -
-          new Date(a.activity_date || a.created_at || a.booking_date).getTime()
+          new Date(b.activity_date || `${b.booking_date}T00:00:00`).getTime() -
+          new Date(a.activity_date || `${a.booking_date}T00:00:00`).getTime()
         );
         setDrillDownSqlData(enrichedSqlData);
       }
@@ -1606,39 +1636,23 @@ const ActivityMonitor = () => {
             ) : (
               <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table className="table-fixed w-full">
-                  <TableHeader className="sticky top-0 z-10 bg-card">
-                     <TableRow className="border-border/50" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">{mode === "live" ? "Booking Time" : "Booking Date"}</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Contact Person</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Company</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[16%]">Meeting Date</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[10%]">Status</TableHead>
-                      <TableHead className="font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">Notes</TableHead>
-                      <TableHead className="text-left font-bold text-[#0f172a] dark:text-[#f1f5f9] w-[14%]">Recording</TableHead>
+                  <TableHeader className="table-header-navy sticky top-0 z-10">
+                    <TableRow>
+                      <TableHead className="w-[18%] text-center">Booking Date</TableHead>
+                      <TableHead className="w-[20%] text-left">Contact Person</TableHead>
+                      <TableHead className="w-[20%] text-left">Company</TableHead>
+                      <TableHead className="w-[24%] text-center">Meeting Date</TableHead>
+                      <TableHead className="w-[18%] text-center">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="table-striped">
                     {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
-                      const displayDate = m.activity_date || m.created_at;
-                      const meetingDateStr = m.meeting_date
-                        ? (() => {
-                            const dateFormatted = format(new Date(m.meeting_date + "T00:00:00"), "d MMM yyyy");
-                            return m.meeting_time ? `${dateFormatted}, ${m.meeting_time}` : dateFormatted;
-                          })()
-                        : "—";
-                      const statusConfig = (() => {
-                        const s = m.meeting_status || "pending";
-                        const map: Record<string, { label: string; color: string }> = {
-                          pending: { label: "Pending", color: "#f59e0b" },
-                          held: { label: "Held", color: "#10b981" },
-                          reschedule: { label: "Reschedule", color: "#3b82f6" },
-                        };
-                        return map[s] || { label: s, color: "#94a3b8" };
-                      })();
+                      const displayDate = m.activity_date;
+                      const meetingDateStr = formatScheduledMeetingDateTime(m.meeting_date, m.meeting_time ?? null);
                       return (
                       <>
-                        <TableRow key={m.id} className={cn("border-border/50", index % 2 === 0 && "bg-muted/5")}>
-                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                        <TableRow key={m.id} className={cn("border-border/50")}>
+                          <TableCell className="text-center whitespace-nowrap tabular-nums">
                             {displayDate
                               ? (mode === "live"
                                 ? new Date(displayDate).toLocaleTimeString("en-AU", {
@@ -1654,17 +1668,11 @@ const ActivityMonitor = () => {
                                     year: "numeric",
                                   })
                               )
-                              : format(new Date(m.booking_date), "MMM d, yyyy")}
+                              : format(new Date(`${m.booking_date}T00:00:00`), "d MMM yyyy")}
                           </TableCell>
-                          <TableCell className="font-medium text-foreground">{m.contact_person || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{m.company_name || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">{meetingDateStr}</TableCell>
-                          <TableCell>
-                            <Badge className="text-white text-xs" style={{ backgroundColor: statusConfig.color }}>
-                              {statusConfig.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground text-sm truncate" title={m.client_notes || ""}>{m.client_notes || "—"}</TableCell>
+                          <TableCell className="text-left font-medium">{m.contact_person || "—"}</TableCell>
+                          <TableCell className="text-left">{m.company_name || "—"}</TableCell>
+                          <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
                           <TableCell className="text-center">
                             {m.recording_url ? (
                               <Button
@@ -1686,7 +1694,7 @@ const ActivityMonitor = () => {
                         </TableRow>
                         {playingRecordingId === m.id && m.recording_url && (
                           <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={7} className="py-3">
+                            <TableCell colSpan={5} className="py-3">
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { format, differenceInDays } from "date-fns";
 import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import type { DateRange } from "react-day-picker";
+import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
 
 interface SDRPerformanceOverviewProps {
   sdr: {
@@ -171,7 +172,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
         .from("sql_meetings")
         .select("booking_date")
         .eq("sdr_name", sdr.name)
-        .not("meeting_status", "eq", "cancelled");
+        .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]);
       if (effectiveClientId) query = query.eq("client_id", effectiveClientId);
       const { data } = await query
         .order("booking_date", { ascending: false })
