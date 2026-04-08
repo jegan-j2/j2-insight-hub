@@ -1379,13 +1379,13 @@ const ActivityMonitor = () => {
                   <TableRow>
                     <TableHead className="px-4 py-3 text-left" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-3 text-left"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
-                    {mode === "live" && <TableHead className="px-4 py-3 text-left">Last Activity</TableHead>}
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
+                    {mode === "live" && <TableHead className="px-4 py-3 text-center">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="table-striped">
@@ -1444,8 +1444,8 @@ const ActivityMonitor = () => {
                             <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
                           </span>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">{row.dials}</TableCell>
-                        <TableCell className="text-right px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">{row.dials}</TableCell>
+                        <TableCell className="text-center px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1455,10 +1455,10 @@ const ActivityMonitor = () => {
                             {row.answered}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
                           {row.answerRate.toFixed(1)}%
                         </TableCell>
-                        <TableCell className="text-right px-4 py-2">
+                        <TableCell className="text-center px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1468,7 +1468,7 @@ const ActivityMonitor = () => {
                             {row.conversations}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-right px-4 py-2">
+                        <TableCell className="text-center px-4 py-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1478,22 +1478,22 @@ const ActivityMonitor = () => {
                             {row.sqls}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">
+                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
                           {row.conversion.toFixed(1)}%
                         </TableCell>
                         {mode === "live" && (
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="text-center px-4 py-2">
                             {row.lastActivity ? (() => {
                               const minutesAgo = (Date.now() - new Date(row.lastActivity).getTime()) / 60000;
                               return (
                                 <span className={minutesAgo <= 5
-                                  ? "text-sm text-right text-[#10b981] font-medium"
-                                  : "text-sm text-right text-muted-foreground"
+                                  ? "text-sm text-[#10b981] font-medium"
+                                  : "text-sm text-muted-foreground"
                                 }>
                                   {formatRelativeTime(row.lastActivity)}
                                 </span>
                               );
-                            })() : <span className="text-sm text-right text-muted-foreground">—</span>}
+                            })() : <span className="text-sm text-muted-foreground">—</span>}
                           </TableCell>
                         )}
                       </TableRow>
