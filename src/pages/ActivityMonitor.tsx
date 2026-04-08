@@ -779,27 +779,23 @@ const ActivityMonitor = () => {
       } else if (metric === "sqls") {
         let sqlQuery = supabase
           .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, created_at, contact_email, hubspot_engagement_id, client_id")
+          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, contact_email, hubspot_engagement_id, client_id")
           .eq("sdr_name", sdrName)
           .in("meeting_status", ["pending", "held", "reschedule"]);
         if (activeClientFilter) sqlQuery = sqlQuery.eq("client_id", activeClientFilter);
 
         if (mode === "live") {
-          sqlQuery = sqlQuery
-            .gte("created_at", `${todayMelbourne}T00:00:00`)
-            .lte("created_at", `${todayMelbourne}T23:59:59`);
+          sqlQuery = sqlQuery.eq("booking_date", todayMelbourne);
         } else {
           const dates = dateRangeInfo.dates;
           if (dates.length === 1) {
-            const startHour = String(timeRange[0]).padStart(2, "0");
-            const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-            sqlQuery = sqlQuery.gte("created_at", `${dates[0]}T${startHour}:00:00`).lte("created_at", `${dates[0]}T${endTs}`);
+            sqlQuery = sqlQuery.eq("booking_date", dates[0]);
           } else {
-            sqlQuery = sqlQuery.or(buildDateOrFilter(dates, "created_at"));
+            sqlQuery = sqlQuery.gte("booking_date", dates[0]).lte("booking_date", dates[dates.length - 1]);
           }
         }
 
-        const { data: sqlData } = await sqlQuery.order("created_at", { ascending: false });
+        const { data: sqlData } = await sqlQuery.order("booking_date", { ascending: false });
 
         // Batch-fetch recordings: 2 queries instead of N+1
         const enrichedSqlData: SqlMeetingRow[] = [];
