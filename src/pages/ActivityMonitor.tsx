@@ -785,6 +785,7 @@ const ActivityMonitor = () => {
           .in("meeting_status", ["pending", "held", "reschedule"]);
         if (activeClientFilter) sqlQuery = sqlQuery.eq("client_id", activeClientFilter);
 
+        if (mode === "live") {
           sqlQuery = sqlQuery
             .gte("created_at", `${todayMelbourne}T00:00:00`)
             .lte("created_at", `${todayMelbourne}T23:59:59`);
