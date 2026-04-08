@@ -13,6 +13,7 @@ import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/lib/supabase";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
 
 type FilterPreset = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign";
 
@@ -138,7 +139,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
         .from("sql_meetings")
         .select("contact_person, company_name, booking_date")
         .eq("sdr_name", sdr.name)
-        .not("meeting_status", "eq", "cancelled")
+        .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
         .gte("booking_date", startDate)
         .lte("booking_date", endDate);
       if (sdr.clientId) query = query.eq("client_id", sdr.clientId);
