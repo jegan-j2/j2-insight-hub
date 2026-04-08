@@ -1436,7 +1436,14 @@ const ActivityMonitor = () => {
                             {row.sdrName}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>{clientNameMap[row.clientId] || row.clientId}</TableCell>
+                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>
+                          <span className="flex items-center gap-1.5">
+                            {clientLogoMap[row.clientId] ? (
+                              <img src={clientLogoMap[row.clientId]!} alt="" className="w-5 h-5 rounded-full object-contain flex-shrink-0" />
+                            ) : null}
+                            <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
+                          </span>
+                        </TableCell>
                         <TableCell className="text-sm font-medium text-foreground text-right px-4 py-2">{row.dials}</TableCell>
                         <TableCell className="text-right px-4 py-2">
                           <Button
