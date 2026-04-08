@@ -1379,13 +1379,13 @@ const ActivityMonitor = () => {
                   <TableRow>
                     <TableHead className="px-4 py-3 text-left" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
                     <TableHead className="px-4 py-3 text-left"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="px-4 py-3 text-right"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
-                    {mode === "live" && <TableHead className="px-4 py-3 text-left">Last Activity</TableHead>}
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
+                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
+                    {mode === "live" && <TableHead className="px-4 py-3 text-center">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="table-striped">
