@@ -91,18 +91,48 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
   };
 
   const getHealthSignal = (
-    elapsedPercent: number,
     sqls: number,
     target: number,
-    dials: number
+    dials: number,
+    campaignStart: string | null,
+    campaignEnd: string | null
   ): "red" | "amber" | "green" | "grey" => {
     if (dials === 0) return "grey";
-    if (target === 0 || elapsedPercent === 0) return "green";
-    const expectedSQLs = target * (elapsedPercent / 100);
-    if (expectedSQLs === 0) return "green";
-    const achievementPercent = (sqls / expectedSQLs) * 100;
-    if (elapsedPercent > 60 && achievementPercent < 60) return "red";
-    if (elapsedPercent > 40 && achievementPercent < 80) return "amber";
+    if (target === 0) return "green";
+    if (!campaignStart || !campaignEnd) return "green";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(campaignStart);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(campaignEnd);
+    endDate.setHours(0, 0, 0, 0);
+
+    if (today <= startDate) return "green";
+
+    const countWorkingDays = (from: Date, to: Date) => {
+      let count = 0;
+      const curr = new Date(from);
+      while (curr <= to) {
+        const dow = curr.getDay();
+        if (dow !== 0 && dow !== 6) count++;
+        curr.setDate(curr.getDate() + 1);
+      }
+      return count;
+    };
+
+    const totalWorkingDays = countWorkingDays(startDate, endDate);
+    const elapsedEnd = today > endDate ? endDate : new Date(today.getTime() - 86400000);
+    const workingDaysElapsed = countWorkingDays(startDate, elapsedEnd);
+
+    if (totalWorkingDays === 0 || workingDaysElapsed === 0) return "green";
+
+    const requiredDailyRate = target / totalWorkingDays;
+    const actualDailyRate = sqls / workingDaysElapsed;
+    const pacePercentage = (actualDailyRate / requiredDailyRate) * 100;
+
+    if (pacePercentage <= 50) return "red";
+    if (pacePercentage <= 70) return "amber";
     return "green";
   };
 
