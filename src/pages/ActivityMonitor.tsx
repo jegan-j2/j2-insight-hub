@@ -1176,6 +1176,7 @@ const ActivityMonitor = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">· {timeRange[1] - timeRange[0]} hrs selected</span>
                     </div>
                   </>
                 ) : (
@@ -1899,6 +1900,7 @@ const ActivityMonitor = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">· {timeRange[1] - timeRange[0]} hrs selected</span>
                     </div>
                   </div>
                 )}
