@@ -1532,15 +1532,19 @@ const Settings = () => {
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('sdr_name')}>
                         <span className="flex items-center">Name<SortIcon field="sdr_name" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      {!isMobile && (
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('email')}>
                         <span className="flex items-center">Email<SortIcon field="email" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      )}
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('role')}>
                         <span className="flex items-center">Role<SortIcon field="role" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      {!isMobile && (
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('client')}>
                         <span className="flex items-center">Assigned Client<SortIcon field="client" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      )}
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('login_status')}>
                         <span className="flex items-center">Login Status<SortIcon field="login_status" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
