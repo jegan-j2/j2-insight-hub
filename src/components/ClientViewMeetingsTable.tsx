@@ -62,6 +62,7 @@ const mapMeetings = (meetings: SQLMeeting[]): MeetingData[] =>
   }));
 
 export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeetingsTableProps) => {
+  const isMobile = useIsMobile();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("bookingDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -71,6 +72,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
   const [meetingDateRange, setMeetingDateRange] = useState<DateRange | undefined>(undefined);
   const [bookingPopoverOpen, setBookingPopoverOpen] = useState(false);
   const [meetingPopoverOpen, setMeetingPopoverOpen] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { canEditSQL, isSdr } = usePermissions();
   const { updateMeetingStatus, updateClientNotes, createRescheduleRow, updating } = useMeetingUpdate();
 
