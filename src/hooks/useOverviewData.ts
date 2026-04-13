@@ -164,7 +164,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setLoading(true);
       setError(null);
 
-      // Fetch activity_log for current date range (replaces daily_snapshots)
+      // Fetch activity_log for current date range
       let activityQuery = supabase
         .from("activity_log")
         .select("client_id, activity_date, call_outcome");
