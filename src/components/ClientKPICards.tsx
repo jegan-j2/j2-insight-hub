@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Phone, PhoneCall, TrendingUp, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { ClientViewData } from "@/hooks/useClientViewData";
 
 interface ClientKPICardsProps {
