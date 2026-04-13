@@ -263,6 +263,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         hasAnyPrevData = prevDialsCount > 0 || prevConversationsCount > 0 || prevSQLsCount > 0;
       }
 
+      setDailyActivity((dailyData || []) as DailyActivityRow[]);
       setAllActivityData((allActivityRes.data || []) as ActivityRecord[]);
       setMeetings(meetingData || []);
       setCurrentDials(kpiRow.total_dials || 0);
@@ -352,9 +353,6 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     onChange: fetchDashboardData,
   });
 
-  // Derive DailySnapshot-like objects from activity_log for downstream components (charts, tables)
-  const snapshots = useMemo<DailySnapshot[]>(() => [], []);
-  const allSnapshots = useMemo(() => aggregateToSnapshots(allActivityData), [allActivityData]);
 
   const kpis = useMemo<OverviewKPIs>(() => {
     const totalDials = currentDials;
@@ -382,5 +380,5 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     };
   }, [currentDials, currentAnswered, currentDMs, sqlCount, prevDials, prevAnswered, hasPrevData, prevConversations, prevSQLs]);
 
-  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch: fetchDashboardData };
+  return { dailyActivity, meetings, kpis, dmsByClient, dmsByDate, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch: fetchDashboardData };
 };
