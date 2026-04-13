@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { J2Loader } from "@/components/J2Loader";
-import { Slider } from "@/components/ui/slider";
+
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1148,22 +1148,28 @@ const ActivityMonitor = () => {
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       TIME RANGE
                     </span>
-                    <div className="flex items-center gap-3 w-full">
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <Slider
-                          min={0}
-                          max={24}
-                          step={1}
-                          value={timeRange}
-                          onValueChange={setTimeRange}
-                        />
-                      </div>
-                      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                        <span className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8] whitespace-nowrap">
-                          <span className="text-[#cbd5e1]">· </span>
-                          {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Select value={String(timeRange[0])} onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}>
+                        <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <SelectItem key={i} value={String(i)}>{formatHour(i)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">→</span>
+                      <Select value={String(timeRange[1])} onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}>
+                        <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
+                            <SelectItem key={h} value={String(h)}>{h === 24 ? "11:59 PM" : formatHour(h)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </>
                 ) : (
@@ -1863,9 +1869,31 @@ const ActivityMonitor = () => {
                 {dateMode === "day" && (
                   <div>
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-                      Time Range · {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                      Time Range
                     </label>
-                    <Slider min={0} max={24} step={1} value={timeRange} onValueChange={setTimeRange} />
+                    <div className="flex items-center gap-2">
+                      <Select value={String(timeRange[0])} onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}>
+                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <SelectItem key={i} value={String(i)}>{formatHour(i)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-xs font-semibold text-muted-foreground">→</span>
+                      <Select value={String(timeRange[1])} onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}>
+                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
+                            <SelectItem key={h} value={String(h)}>{h === 24 ? "11:59 PM" : formatHour(h)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
 
