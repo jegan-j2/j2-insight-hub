@@ -69,8 +69,6 @@ interface OverviewData {
   dailyActivity: DailyActivityRow[];
   meetings: SQLMeeting[];
   kpis: OverviewKPIs;
-  dmsByClient: Record<string, number>;
-  dmsByDate: Record<string, number>;
   clientPerformance: ClientPerformanceRow[];
   clients: ClientInfo[];
   loading: boolean;
@@ -175,55 +173,16 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
 
       const { count: sqlsCount } = await sqlCountQuery;
 
-      // Fetch DM Conversations grouped by client_id
-      let dmQuery = supabase
-        .from("activity_log")
-        .select("client_id, activity_date")
-        .eq("is_decision_maker", true);
-      if (startDate) dmQuery = dmQuery.gte("activity_date", melbourneStartOfDayUTC(startDate));
-      if (endDate) dmQuery = dmQuery.lte("activity_date", melbourneEndOfDayUTC(endDate));
-      const { data: dmData } = await dmQuery;
-
-      const dmMap: Record<string, number> = {};
-      if (dmData) {
-        for (const row of dmData) {
-          if (row.client_id) {
-            dmMap[row.client_id] = (dmMap[row.client_id] || 0) + 1;
-          }
-        }
-      }
-
-      const dmDateMap: Record<string, number> = {};
-      if (dmData) {
-        for (const row of dmData) {
-          if (row.activity_date) {
-            const date = row.activity_date.split("T")[0];
-            dmDateMap[date] = (dmDateMap[date] || 0) + 1;
-          }
-        }
-      }
-
-      // Fetch ALL activity_log, DMs, clients, and SQL counts (unfiltered) for Client Performance table
-      const [allActivityRes, allDmRes, clientsRes, allSqlCountsRes] = await Promise.all([
-        supabase.from("activity_log").select("client_id, activity_date, call_outcome"),
-        supabase.from("activity_log").select("client_id, activity_date").eq("is_decision_maker", true),
+      // Fetch client performance and clients list via RPC + query
+      const [clientPerfRes, clientsRes] = await Promise.all([
+        supabase.rpc('get_client_performance'),
         supabase
           .from("clients")
           .select("client_id, client_name, campaign_start, campaign_end, target_sqls, logo_url, status")
           .eq("status", "active")
           .neq("client_id", "admin")
           .order("client_name", { ascending: true }),
-        supabase.from("sql_meetings").select("client_id, booking_date, meeting_status").neq("client_id", null).in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]),
       ]);
-
-      const allDmsMap: Record<string, number> = {};
-      if (allDmRes.data) {
-        for (const row of allDmRes.data) {
-          if (row.client_id) {
-            allDmsMap[row.client_id] = (allDmsMap[row.client_id] || 0) + 1;
-          }
-        }
-      }
 
       // Fetch previous period data
       const prevDates = getPreviousPeriodDates();
@@ -262,7 +221,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       }
 
       setDailyActivity((dailyData || []) as DailyActivityRow[]);
-      setAllActivityData((allActivityRes.data || []) as ActivityRecord[]);
+      setClientPerformance((clientPerfRes.data || []) as ClientPerformanceRow[]);
       setMeetings(meetingData || []);
       setCurrentDials(kpiRow.total_dials || 0);
       setCurrentAnswered(kpiRow.total_answered || 0);
@@ -273,28 +232,6 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setPrevConversations(prevConversationsCount);
       setPrevSQLs(prevSQLsCount);
       setHasPrevData(hasAnyPrevData);
-      setDmsByClient(dmMap);
-      setDmsByDate(dmDateMap);
-      setAllDmsByClient(allDmsMap);
-
-      const rawDmData: DmRecord[] = (allDmRes.data || [])
-        .filter((r: any) => r.client_id && r.activity_date)
-        .map((r: any) => ({ client_id: r.client_id, activity_date: r.activity_date.split("T")[0] }));
-      setAllDmData(rawDmData);
-
-      const sqlClientMap: Record<string, number> = {};
-      const rawSqlData: SqlRecord[] = [];
-      if (allSqlCountsRes.data) {
-        for (const row of allSqlCountsRes.data) {
-          if (row.client_id) {
-            sqlClientMap[row.client_id] = (sqlClientMap[row.client_id] || 0) + 1;
-            rawSqlData.push({ client_id: row.client_id, booking_date: row.booking_date });
-          }
-        }
-      }
-      setSqlCountsByClient(sqlClientMap);
-      setAllSqlData(rawSqlData);
-
       setClients((clientsRes.data || []) as ClientInfo[]);
 
       if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
