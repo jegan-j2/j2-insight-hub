@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toCSV, downloadCSV, formatNumberForCSV } from "@/lib/csvExport";
 import * as XLSX from "xlsx-js-style";
-import type { DailySnapshot } from "@/lib/supabase-types";
+
 
 type SortField = "name" | "dials" | "answered" | "answeredPercent" | "dms" | "sqls" | "progress" | "daysLeft" | "campaignPeriod";
 type SortOrder = "asc" | "desc";
@@ -37,8 +37,14 @@ interface ClientData {
   signal: "red" | "amber" | "green" | "grey";
 }
 
+interface ActivityRecord {
+  client_id: string | null;
+  activity_date: string;
+  call_outcome: string | null;
+}
+
 interface ClientPerformanceTableProps {
-  snapshots: DailySnapshot[];
+  allActivityData: ActivityRecord[];
   dmsByClient: Record<string, number>;
   sqlCountsByClient: Record<string, number>;
   allDmData?: DmRecord[];
@@ -53,7 +59,7 @@ interface ClientPerformanceTableProps {
   }>;
 }
 
-export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClient, allDmData, allSqlData, clients }: ClientPerformanceTableProps) => {
+export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCountsByClient, allDmData, allSqlData, clients }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -185,15 +191,16 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
       const campStart = client.campaign_start || null;
       const campEnd = client.campaign_end || null;
 
-      // Filter snapshots by client's campaign dates
-      const clientSnapshots = (snapshots || []).filter((s) => {
-        if (s.client_id !== client.client_id) return false;
-        if (campStart && s.snapshot_date < campStart) return false;
-        if (campEnd && s.snapshot_date > campEnd) return false;
+      // Filter activity_log by client's campaign dates
+      const clientActivity = (allActivityData || []).filter(r => {
+        if (r.client_id !== client.client_id) return false;
+        const date = r.activity_date.split("T")[0];
+        if (campStart && date < campStart) return false;
+        if (campEnd && date > campEnd) return false;
         return true;
       });
-      const totalDials = clientSnapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
-      const totalAnswered = clientSnapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
+      const totalDials = clientActivity.length;
+      const totalAnswered = clientActivity.filter(r => r.call_outcome === 'connected').length;
 
       // Filter DMs by campaign dates
       let totalDMs: number;
@@ -247,7 +254,7 @@ export const ClientPerformanceTable = ({ snapshots, dmsByClient, sqlCountsByClie
         ),
       };
     });
-  }, [clients, snapshots, dmsByClient, sqlCountsByClient, allDmData, allSqlData]);
+  }, [clients, allActivityData, dmsByClient, sqlCountsByClient, allDmData, allSqlData]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
