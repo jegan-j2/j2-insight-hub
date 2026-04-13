@@ -11,7 +11,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown } from "lucide-react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
@@ -138,7 +140,9 @@ const ALL_DAYS: AllDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0 };
 
 const ActivityMonitor = () => {
+  const isMobile = useIsMobile();
   const { clientFilter, setClientFilter } = useDateFilter();
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("live");
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
