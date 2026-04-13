@@ -387,24 +387,30 @@ const ActivityMonitor = () => {
     if (mode !== "live") return;
     setLoading(true);
     try {
-      let actLiveQ = supabase
-        .from("activity_log")
-        .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url")
-        .gte("activity_date", todayMelbourne + "T00:00:00")
-        .lte("activity_date", todayMelbourne + "T23:59:59")
-        .order("activity_date", { ascending: false });
-      if (activeClientFilter) actLiveQ = actLiveQ.eq("client_id", activeClientFilter);
+      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
 
-      let sqlQ = supabase
-        .from("sql_meetings")
-        .select("sdr_name, client_id, meeting_status")
-        .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
-        .eq("booking_date", todayMelbourne);
-      if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
+      const [liveActivities, liveSqls] = await Promise.all([
+        fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) => {
+          let filtered = q
+            .gte("activity_date", todayMelbourne + "T00:00:00")
+            .lte("activity_date", todayMelbourne + "T23:59:59");
+          if (activeClientFilter) filtered = filtered.eq("client_id", activeClientFilter);
+          return filtered;
+        }, "activity_date"),
+        (async () => {
+          let sqlQ = supabase
+            .from("sql_meetings")
+            .select("sdr_name, client_id, meeting_status")
+            .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
+            .eq("booking_date", todayMelbourne);
+          if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
+          const { data } = await sqlQ;
+          return data || [];
+        })(),
+      ]);
 
-      const [activityRes, liveSqlRes] = await Promise.all([actLiveQ, sqlQ]);
-      if (activityRes.data) setActivities(activityRes.data);
-      if (liveSqlRes.data) setHistSqlMeetings(liveSqlRes.data as any);
+      setActivities(liveActivities);
+      setHistSqlMeetings(liveSqls as any);
     } catch (err) {
       console.error("Error fetching live data:", err);
     } finally {
