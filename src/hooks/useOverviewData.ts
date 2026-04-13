@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
+import type { SQLMeeting } from "@/lib/supabase-types";
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
@@ -50,13 +50,19 @@ interface ActivityRecord {
   call_outcome: string | null;
 }
 
+export interface DailyActivityRow {
+  activity_day: string;
+  dials: number;
+  answered: number;
+  dm_conversations: number;
+}
+
 interface OverviewData {
-  snapshots: DailySnapshot[];
+  dailyActivity: DailyActivityRow[];
   meetings: SQLMeeting[];
   kpis: OverviewKPIs;
   dmsByClient: Record<string, number>;
   dmsByDate: Record<string, number>;
-  allSnapshots: DailySnapshot[];
   allActivityData: ActivityRecord[];
   allDmsByClient: Record<string, number>;
   sqlCountsByClient: Record<string, number>;
@@ -68,44 +74,8 @@ interface OverviewData {
   refetch: () => void;
 }
 
-/** Aggregate activity_log rows into DailySnapshot-like objects for downstream components */
-function aggregateToSnapshots(records: ActivityRecord[]): DailySnapshot[] {
-  const grouped: Record<string, Record<string, { dials: number; answered: number }>> = {};
-  for (const r of records) {
-    const date = r.activity_date.split("T")[0];
-    const clientId = r.client_id || "unknown";
-    const key = `${date}|${clientId}`;
-    if (!grouped[key]) grouped[key] = { [clientId]: { dials: 0, answered: 0 } };
-    if (!grouped[key][clientId]) grouped[key][clientId] = { dials: 0, answered: 0 };
-    grouped[key][clientId].dials++;
-    if (r.call_outcome === "connected") grouped[key][clientId].answered++;
-  }
-
-  const snapshots: DailySnapshot[] = [];
-  for (const key of Object.keys(grouped)) {
-    const [date, clientId] = key.split("|");
-    const stats = grouped[key][clientId];
-    snapshots.push({
-      id: key,
-      client_id: clientId,
-      sdr_name: "",
-      snapshot_date: date,
-      dials: stats.dials,
-      answered: stats.answered,
-      answer_rate: stats.dials > 0 ? (stats.answered / stats.dials) * 100 : 0,
-      voicemails: 0,
-      no_answers: 0,
-      dms_reached: 0,
-      mqls: 0,
-      sqls: 0,
-      created_at: "",
-      updated_at: "",
-    });
-  }
-  return snapshots;
-}
-
 export const useOverviewData = (dateRange: DateRange | undefined, filterType?: string): OverviewData => {
+  const [dailyActivity, setDailyActivity] = useState<DailyActivityRow[]>([]);
   const [allActivityData, setAllActivityData] = useState<ActivityRecord[]>([]);
   const [meetings, setMeetings] = useState<SQLMeeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,6 +145,13 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       if (kpiError) throw kpiError;
 
       const kpiRow = kpiData?.[0] || { total_dials: 0, total_answered: 0, answer_rate: 0, dm_conversations: 0 };
+
+      // Fetch daily activity data for chart via RPC
+      const { data: dailyData, error: dailyError } = await supabase.rpc('get_daily_activity', {
+        p_start_date: melbourneStartOfDay(startDate || "2000-01-01"),
+        p_end_date: melbourneEndOfDay(endDate || "2099-12-31"),
+      });
+      if (dailyError) throw dailyError;
 
       // Fetch SQL meetings for date range
       let meetingQuery = supabase
