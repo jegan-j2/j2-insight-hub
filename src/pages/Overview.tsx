@@ -126,7 +126,7 @@ const Overview = () => {
     };
     getUser();
   }, []);
-  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
   
