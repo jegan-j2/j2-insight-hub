@@ -322,22 +322,6 @@ export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCounts
                 aria-label="Search clients"
               />
             </div>
-            <Button
-              size="sm"
-              onClick={handleExportCSV}
-              className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-1.5 shrink-0"
-            >
-              <FileText className="h-4 w-4" />
-              CSV
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleExportExcel}
-              className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-1.5 shrink-0"
-            >
-              <Table2 className="h-4 w-4" />
-              Excel
-            </Button>
           </div>
         </div>
       </CardHeader>
@@ -350,12 +334,6 @@ export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCounts
           />
         ) : (
           <>
-            <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> On track</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> At risk</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Behind</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" /> No activity</span>
-            </div>
             {/* Mobile Card View */}
             <div className="md:hidden space-y-3">
               {filteredAndSortedClients.map((client) => (
@@ -601,6 +579,12 @@ export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCounts
                 </TableBody>
               </Table>
             </TooltipProvider>
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> On track</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> At risk</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Behind</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" /> No activity</span>
             </div>
           </>
         )}
