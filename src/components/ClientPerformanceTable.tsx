@@ -170,10 +170,11 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
         daysLeft: getWorkingDaysLeft(campEnd),
         elapsedPercent: getCampaignElapsed(campStart, campEnd),
         signal: getHealthSignal(
-          getCampaignElapsed(campStart, campEnd),
           totalSQLs,
           target,
-          totalDials
+          totalDials,
+          campStart,
+          campEnd
         ),
       };
     });
