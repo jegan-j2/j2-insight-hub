@@ -1246,7 +1246,7 @@ const Settings = () => {
                             </TableCell>
 
                             {/* DAYS LEFT */}
-                            <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>
+                            {!isMobile && <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>}
 
                             {/* ACTIONS */}
                             <TableCell className="text-center">
