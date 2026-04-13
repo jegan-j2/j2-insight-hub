@@ -66,6 +66,7 @@ const getPresetRange = (preset: FilterPreset, campaignDates?: { start: string; e
 };
 
 export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaignDates: campaignDatesProp, parentFilterType }: SDRDetailModalProps) => {
+  const isMobile = useIsMobile();
   // Auto-fetch campaign dates from SDR's client if not passed as prop
   const [fetchedCampaignDates, setFetchedCampaignDates] = useState<{ start: string; end: string } | null>(null);
   
