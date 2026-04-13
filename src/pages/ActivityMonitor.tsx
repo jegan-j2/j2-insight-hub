@@ -1339,29 +1339,40 @@ const ActivityMonitor = () => {
       <Card className="bg-card/50 backdrop-blur-sm border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle>SDR Performance</CardTitle>
-          <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className={cn(
-              "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
-              "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
-            )}>
-              <SelectValue placeholder="All Clients" />
-            </SelectTrigger>
-            <SelectContent className="z-[100] bg-card">
-              <SelectItem value="all">All Clients</SelectItem>
-              {clientOptions.map((c) => (
-                <SelectItem key={c.client_id} value={c.client_id}>
-                  <span className="flex items-center gap-2">
-                    {c.logo_url ? (
-                      <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                    ) : (
-                      <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
-                    )}
-                    {c.client_name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isMobile ? (
+            <Button
+              className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
+              size="sm"
+              onClick={() => setFilterDrawerOpen(true)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </Button>
+          ) : (
+            <Select value={clientFilter} onValueChange={setClientFilter}>
+              <SelectTrigger className={cn(
+                "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+              )}>
+                <SelectValue placeholder="All Clients" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-card">
+                <SelectItem value="all">All Clients</SelectItem>
+                {clientOptions.map((c) => (
+                  <SelectItem key={c.client_id} value={c.client_id}>
+                    <span className="flex items-center gap-2">
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                      )}
+                      {c.client_name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
