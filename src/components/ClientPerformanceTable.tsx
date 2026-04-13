@@ -59,6 +59,7 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
     if (end < today) return 0;
     let count = 0;
     const current = new Date(today);
+    current.setDate(current.getDate() + 1);
     while (current <= end) {
       const dow = current.getDay();
       if (dow !== 0 && dow !== 6) count++;
