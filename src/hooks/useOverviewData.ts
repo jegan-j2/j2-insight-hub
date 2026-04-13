@@ -5,6 +5,7 @@ import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 
 interface OverviewKPIs {
   totalDials: number;
@@ -169,8 +170,8 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         .from("activity_log")
         .select("client_id, activity_date, call_outcome");
 
-      if (startDate) activityQuery = activityQuery.gte("activity_date", startDate + "T00:00:00");
-      if (endDate) activityQuery = activityQuery.lte("activity_date", endDate + "T23:59:59");
+      if (startDate) activityQuery = activityQuery.gte("activity_date", melbourneStartOfDay(startDate));
+      if (endDate) activityQuery = activityQuery.lte("activity_date", melbourneEndOfDay(endDate));
 
       const { data: activityResult, error: activityError } = await activityQuery;
       if (activityError) throw activityError;
@@ -205,8 +206,8 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         .select("id", { count: "exact" })
         .eq("is_decision_maker", true);
 
-      if (startDate) conversationsQuery = conversationsQuery.gte("activity_date", startDate + "T00:00:00");
-      if (endDate) conversationsQuery = conversationsQuery.lte("activity_date", endDate + "T23:59:59");
+      if (startDate) conversationsQuery = conversationsQuery.gte("activity_date", melbourneStartOfDay(startDate));
+      if (endDate) conversationsQuery = conversationsQuery.lte("activity_date", melbourneEndOfDay(endDate));
 
       const { count: conversationsCount } = await conversationsQuery;
 
@@ -215,8 +216,8 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         .from("activity_log")
         .select("client_id, activity_date")
         .eq("is_decision_maker", true);
-      if (startDate) dmQuery = dmQuery.gte("activity_date", startDate + "T00:00:00");
-      if (endDate) dmQuery = dmQuery.lte("activity_date", endDate + "T23:59:59");
+      if (startDate) dmQuery = dmQuery.gte("activity_date", melbourneStartOfDay(startDate));
+      if (endDate) dmQuery = dmQuery.lte("activity_date", melbourneEndOfDay(endDate));
       const { data: dmData } = await dmQuery;
 
       const dmMap: Record<string, number> = {};
@@ -273,14 +274,14 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
           supabase
             .from("activity_log")
             .select("call_outcome")
-            .gte("activity_date", prevDates.from + "T00:00:00")
-            .lte("activity_date", prevDates.to + "T23:59:59"),
+            .gte("activity_date", melbourneStartOfDay(prevDates.from))
+            .lte("activity_date", melbourneEndOfDay(prevDates.to)),
           supabase
             .from("activity_log")
             .select("id", { count: "exact" })
             .eq("is_decision_maker", true)
-            .gte("activity_date", prevDates.from + "T00:00:00")
-            .lte("activity_date", prevDates.to + "T23:59:59"),
+            .gte("activity_date", melbourneStartOfDay(prevDates.from))
+            .lte("activity_date", melbourneEndOfDay(prevDates.to)),
           supabase
             .from("sql_meetings")
             .select("id", { count: "exact" })
