@@ -387,19 +387,13 @@ const ActivityMonitor = () => {
     if (mode !== "live") return;
     setLoading(true);
     try {
-      let snapQ = supabase
-        .from("daily_snapshots")
-        .select("sdr_name, client_id, dials, answered, dms_reached, sqls, answer_rate")
-        .eq("snapshot_date", todayMelbourne);
-      if (activeClientFilter) snapQ = snapQ.eq("client_id", activeClientFilter);
-
-      let actQ = supabase
+      let actLiveQ = supabase
         .from("activity_log")
         .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url")
         .gte("activity_date", todayMelbourne + "T00:00:00")
         .lte("activity_date", todayMelbourne + "T23:59:59")
         .order("activity_date", { ascending: false });
-      if (activeClientFilter) actQ = actQ.eq("client_id", activeClientFilter);
+      if (activeClientFilter) actLiveQ = actLiveQ.eq("client_id", activeClientFilter);
 
       let sqlQ = supabase
         .from("sql_meetings")
@@ -408,8 +402,7 @@ const ActivityMonitor = () => {
         .eq("booking_date", todayMelbourne);
       if (activeClientFilter) sqlQ = sqlQ.eq("client_id", activeClientFilter);
 
-      const [snapshotRes, activityRes, liveSqlRes] = await Promise.all([snapQ, actQ, sqlQ]);
-      if (snapshotRes.data) setSnapshots(snapshotRes.data);
+      const [activityRes, liveSqlRes] = await Promise.all([actLiveQ, sqlQ]);
       if (activityRes.data) setActivities(activityRes.data);
       if (liveSqlRes.data) setHistSqlMeetings(liveSqlRes.data as any);
     } catch (err) {
@@ -556,34 +549,18 @@ const ActivityMonitor = () => {
 
   // Only subscribe in live mode
   useRealtimeSubscription({
-    table: "daily_snapshots",
-    onChange: mode === "live" ? fetchLiveData : undefined,
-  });
-  useRealtimeSubscription({
     table: "activity_log",
     onChange: mode === "live" ? fetchLiveData : undefined,
   });
 
   // KPI totals
   const totals = useMemo(() => {
-    if (mode === "historical") {
-      const dials = activities.length;
-      const answered = activities.filter(a => a.call_outcome?.toLowerCase() === "connected").length;
-      const conversations = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length;
-      const sqls = histSqlMeetings.length;
-      return { dials, answered, conversations, sqls };
-    }
-    const base = snapshots.reduce(
-      (acc, s) => ({
-        dials: acc.dials + (s.dials || 0),
-        answered: acc.answered + (s.answered || 0),
-      }),
-      { dials: 0, answered: 0 }
-    );
-    const sqls = histSqlMeetings.length;
+    const dials = activities.length;
+    const answered = activities.filter(a => a.call_outcome?.toLowerCase() === "connected").length;
     const conversations = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length;
-    return { ...base, sqls, conversations };
-  }, [snapshots, activities, histSqlMeetings, mode]);
+    const sqls = histSqlMeetings.length;
+    return { dials, answered, conversations, sqls };
+  }, [activities, histSqlMeetings]);
 
   // SDR rows
   const sdrRows = useMemo(() => {
@@ -595,32 +572,33 @@ const ActivityMonitor = () => {
     );
 
     if (mode === "live") {
-      for (const s of snapshots) {
-        if (!s.sdr_name) continue;
-        const key = compositeKey(s.sdr_name, s.client_id || "");
-        // In live mode, only show active team members
+      // Build SDR rows from activities directly
+      for (const a of activities) {
+        if (!a.sdr_name) continue;
+        const key = compositeKey(a.sdr_name, a.client_id || "");
         if (!activeSDRKeys.has(key)) continue;
         const existing = map.get(key);
         if (existing) {
-          existing.dials += s.dials || 0;
-          existing.answered += s.answered || 0;
-          existing.sqls += s.sqls || 0;
+          existing.dials += 1;
+          if (a.call_outcome?.toLowerCase() === "connected") existing.answered += 1;
+          if (a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker) existing.conversations += 1;
         } else {
+          const connected = a.call_outcome?.toLowerCase() === "connected";
           map.set(key, {
-            sdrName: s.sdr_name,
-            clientId: s.client_id || "",
-            dials: s.dials || 0,
-            answered: s.answered || 0,
-            conversations: 0,
+            sdrName: a.sdr_name,
+            clientId: a.client_id || "",
+            dials: 1,
+            answered: connected ? 1 : 0,
+            conversations: connected && a.is_decision_maker ? 1 : 0,
             answerRate: 0,
-            sqls: s.sqls || 0,
+            sqls: 0,
             conversion: 0,
             lastActivity: null,
           });
         }
       }
 
-      // Override SQLs from sql_meetings for live mode
+      // Set SQLs from sql_meetings for live mode
       const liveSqlCounts = new Map<string, number>();
       for (const m of histSqlMeetings) {
         if (!m.sdr_name) continue;
@@ -664,7 +642,7 @@ const ActivityMonitor = () => {
       }
     }
 
-    // Attach last activity and compute conversations for live mode
+    // Attach last activity timestamp
     for (const a of activities) {
       if (!a.sdr_name) continue;
       const key = compositeKey(a.sdr_name, a.client_id || "");
@@ -672,9 +650,6 @@ const ActivityMonitor = () => {
       if (row) {
         const actDate = new Date(a.activity_date);
         if (!row.lastActivity || actDate > row.lastActivity) row.lastActivity = actDate;
-        if (mode === "live" && a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker) {
-          row.conversations += 1;
-        }
       }
     }
 
