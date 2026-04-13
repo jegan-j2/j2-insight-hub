@@ -44,10 +44,18 @@ export interface SqlRecord {
   booking_date: string;
 }
 
-interface ActivityRecord {
-  client_id: string | null;
-  activity_date: string;
-  call_outcome: string | null;
+export interface ClientPerformanceRow {
+  client_id: string;
+  client_name: string;
+  campaign_start: string | null;
+  campaign_end: string | null;
+  target_sqls: number | null;
+  logo_url: string | null;
+  dials: number;
+  answered: number;
+  answer_rate: number;
+  dm_conversations: number;
+  sqls: number;
 }
 
 export interface DailyActivityRow {
@@ -63,11 +71,7 @@ interface OverviewData {
   kpis: OverviewKPIs;
   dmsByClient: Record<string, number>;
   dmsByDate: Record<string, number>;
-  allActivityData: ActivityRecord[];
-  allDmsByClient: Record<string, number>;
-  sqlCountsByClient: Record<string, number>;
-  allDmData: DmRecord[];
-  allSqlData: SqlRecord[];
+  clientPerformance: ClientPerformanceRow[];
   clients: ClientInfo[];
   loading: boolean;
   error: string | null;
@@ -76,7 +80,7 @@ interface OverviewData {
 
 export const useOverviewData = (dateRange: DateRange | undefined, filterType?: string): OverviewData => {
   const [dailyActivity, setDailyActivity] = useState<DailyActivityRow[]>([]);
-  const [allActivityData, setAllActivityData] = useState<ActivityRecord[]>([]);
+  const [clientPerformance, setClientPerformance] = useState<ClientPerformanceRow[]>([]);
   const [meetings, setMeetings] = useState<SQLMeeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,12 +93,6 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   const [prevConversations, setPrevConversations] = useState(0);
   const [prevSQLs, setPrevSQLs] = useState(0);
   const [hasPrevData, setHasPrevData] = useState(false);
-  const [dmsByClient, setDmsByClient] = useState<Record<string, number>>({});
-  const [dmsByDate, setDmsByDate] = useState<Record<string, number>>({});
-  const [allDmsByClient, setAllDmsByClient] = useState<Record<string, number>>({});
-  const [sqlCountsByClient, setSqlCountsByClient] = useState<Record<string, number>>({});
-  const [allDmData, setAllDmData] = useState<DmRecord[]>([]);
-  const [allSqlData, setAllSqlData] = useState<SqlRecord[]>([]);
   const [clients, setClients] = useState<ClientInfo[]>([]);
 
   const startDate = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
