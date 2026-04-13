@@ -1178,7 +1178,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={isMobile ? 3 : 6} className="text-center text-muted-foreground py-8">
                           No clients found. Add your first client above.
                         </TableCell>
                       </TableRow>
@@ -1209,6 +1209,7 @@ const Settings = () => {
                             </TableCell>
 
                             {/* PRIMARY CONTACT */}
+                            {!isMobile && (
                             <TableCell>
                               {primary ? (
                                 <div className="flex items-center gap-2">
@@ -1221,11 +1222,14 @@ const Settings = () => {
                                 <span className="text-sm text-muted-foreground italic">No primary set</span>
                               )}
                             </TableCell>
+                            )}
 
                             {/* CAMPAIGN PERIOD */}
+                            {!isMobile && (
                             <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                               {formatCampaignPeriod(client.campaign_start, client.campaign_end)}
                             </TableCell>
+                            )}
 
                             {/* CAMPAIGN STATUS */}
                             <TableCell>
