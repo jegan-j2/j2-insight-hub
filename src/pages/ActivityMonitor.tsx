@@ -1869,9 +1869,31 @@ const ActivityMonitor = () => {
                 {dateMode === "day" && (
                   <div>
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
-                      Time Range · {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                      Time Range
                     </label>
-                    <Slider min={0} max={24} step={1} value={timeRange} onValueChange={setTimeRange} />
+                    <div className="flex items-center gap-2">
+                      <Select value={String(timeRange[0])} onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}>
+                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <SelectItem key={i} value={String(i)}>{formatHour(i)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-xs font-semibold text-muted-foreground">→</span>
+                      <Select value={String(timeRange[1])} onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}>
+                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
+                            <SelectItem key={h} value={String(h)}>{h === 24 ? "11:59 PM" : formatHour(h)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
 
