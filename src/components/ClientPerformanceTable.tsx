@@ -219,7 +219,7 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
         </div>
       </CardHeader>
       <CardContent>
-        {clients.length === 0 ? (
+        {clientPerformance.length === 0 ? (
           <EmptyState
             icon={DatabaseZap}
             title="No clients found"
