@@ -46,12 +46,16 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
   const navigate = useNavigate();
 
 
+  const parseDateStr = (dateStr: string): Date => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
   const getWorkingDaysLeft = (endDate: string | null): number | null => {
     if (!endDate) return null;
+    const end = parseDateStr(endDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(0, 0, 0, 0);
     if (end < today) return 0;
     let count = 0;
     const current = new Date(today);
@@ -67,10 +71,8 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
     if (!start || !end) return 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const startDate = new Date(start);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(end);
-    endDate.setHours(0, 0, 0, 0);
+    const startDate = parseDateStr(start);
+    const endDate = parseDateStr(end);
     if (today <= startDate) return 0;
     if (today > endDate) return 100;
 
