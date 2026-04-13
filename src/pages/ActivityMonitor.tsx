@@ -1589,7 +1589,10 @@ const ActivityMonitor = () => {
 
       {/* Drill-down Modal */}
       <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className={cn(
+          "bg-card border-border overflow-hidden flex flex-col",
+          isMobile ? "w-full h-full max-w-full max-h-full rounded-none" : "sm:max-w-[900px] max-h-[80vh]"
+        )}>
           <DialogHeader className="shrink-0">
             <DialogTitle>
               {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Answered Calls" : drillDown?.metric === "conversations" ? "DM Conversations" : "SQL Meetings"}
