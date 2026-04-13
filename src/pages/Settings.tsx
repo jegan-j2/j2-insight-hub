@@ -1556,7 +1556,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : sortedMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={isMobile ? 4 : 6} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
