@@ -967,7 +967,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="clients" className="space-y-6">
-        <TabsList className="bg-card border border-border">
+        <TabsList className="bg-card border border-border overflow-x-auto w-full justify-start">
           <TabsTrigger value="clients" className="gap-2 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Client Management</span>
@@ -1166,10 +1166,10 @@ const Settings = () => {
                   <TableHeader className="table-header-navy">
                     <TableRow>
                       <TableHead className="px-4 py-3 text-left">Client</TableHead>
-                      <TableHead className="px-4 py-3 text-left">Primary Contact</TableHead>
-                      <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>
+                      {!isMobile && <TableHead className="px-4 py-3 text-left">Primary Contact</TableHead>}
+                      {!isMobile && <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>}
                       <TableHead className="px-4 py-3 text-left">Campaign Status</TableHead>
-                      <TableHead className="px-4 py-3 text-right">Days Left</TableHead>
+                      {!isMobile && <TableHead className="px-4 py-3 text-right">Days Left</TableHead>}
                       <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
