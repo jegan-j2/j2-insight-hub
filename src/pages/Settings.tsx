@@ -1578,9 +1578,9 @@ const Settings = () => {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                            {!isMobile && <TableCell className="text-muted-foreground">{member.email}</TableCell>}
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
-                            <TableCell className="text-muted-foreground">{memberClientName}</TableCell>
+                            {!isMobile && <TableCell className="text-muted-foreground">{memberClientName}</TableCell>}
                             <TableCell>
                               <Badge className={
                                 memberInviteInfo.status === 'active' 
