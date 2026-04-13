@@ -234,7 +234,7 @@ const ActivityMonitor = () => {
   const handleExportCSV = () => {
     const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
     const headers = ["SDR Name", "Client", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Conversion Rate"];
-    const rows = sdrRows.map(r => [
+    const rows = sdrRows.filter(r => r.dials > 0).map(r => [
       r.sdrName,
       clientNameMap[r.clientId] || r.clientId,
       r.dials,
@@ -282,7 +282,7 @@ const ActivityMonitor = () => {
       const sdrHeaders = ["SDR Name", "Client", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Conversion Rate"];
       const sdrData = [
         sdrHeaders,
-        ...sdrRows.map(r => [
+        ...sdrRows.filter(r => r.dials > 0).map(r => [
           r.sdrName,
           clientNameMap[r.clientId] || r.clientId,
           r.dials,
