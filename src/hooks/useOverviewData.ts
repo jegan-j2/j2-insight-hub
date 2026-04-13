@@ -315,5 +315,5 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     };
   }, [currentDials, currentAnswered, currentDMs, sqlCount, prevDials, prevAnswered, hasPrevData, prevConversations, prevSQLs]);
 
-  return { dailyActivity, meetings, kpis, dmsByClient, dmsByDate, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch: fetchDashboardData };
+  return { dailyActivity, meetings, kpis, clientPerformance, clients, loading, error, refetch: fetchDashboardData };
 };
