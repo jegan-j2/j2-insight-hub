@@ -1387,8 +1387,62 @@ const ActivityMonitor = () => {
               title={mode === "live" ? "No activity recorded yet" : "No activity found"}
               description={mode === "live" ? "Calls will appear here once SDRs start dialing. Check back later!" : "Try adjusting the date or time range to find activity data."}
             />
+          ) : isMobile && mode === "live" ? (
+            /* Mobile stacked card layout for Live Today */
+            <div className="space-y-2">
+              {pagedSdrRows.map((row) => {
+                const recent = isRecentActivity(row.lastActivity);
+                return (
+                  <div
+                    key={`${row.sdrName}-${row.clientId}`}
+                    className={cn(
+                      "rounded-lg border border-border/50 p-3",
+                      recent && "bg-green-500/5"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="relative shrink-0">
+                        <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
+                        <span
+                          className={cn(
+                            "absolute bottom-0 left-0 rounded-full border-2 border-white dark:border-white",
+                            getStatusColor(row.lastActivity) === "green" && "bg-green-500",
+                            getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
+                            getStatusColor(row.lastActivity) === "red" && "bg-red-500",
+                          )}
+                          style={{ width: 10, height: 10 }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground text-sm truncate">{row.sdrName}</p>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          {clientLogoMap[row.clientId] && (
+                            <img src={clientLogoMap[row.clientId]!} alt="" className="w-3.5 h-3.5 rounded-full object-contain" />
+                          )}
+                          <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
+                        </span>
+                      </div>
+                      {row.lastActivity && (
+                        <span className={cn(
+                          "text-xs shrink-0",
+                          (Date.now() - row.lastActivity.getTime()) / 60000 <= 5 ? "text-[#10b981] font-medium" : "text-muted-foreground"
+                        )}>
+                          {formatRelativeTime(row.lastActivity)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                      <span><span className="font-medium text-foreground">{row.dials}</span> Dials</span>
+                      <span><span className="font-medium text-foreground">{row.answered}</span> Ans</span>
+                      <span>{row.answerRate.toFixed(1)}%</span>
+                      <span><span className="font-medium text-foreground">{row.sqls}</span> SQLs</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <div className="w-full overflow-x-hidden">
+            <div className={cn("w-full", isMobile ? "overflow-x-auto" : "overflow-x-hidden")}>
               <Table>
                 <TableHeader className="table-header-navy">
                   <TableRow>
