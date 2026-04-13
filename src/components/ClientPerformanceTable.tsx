@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { DmRecord, SqlRecord } from "@/hooks/useOverviewData";
+import type { ClientPerformanceRow } from "@/hooks/useOverviewData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -35,29 +35,11 @@ interface ClientData {
   signal: "red" | "amber" | "green" | "grey";
 }
 
-interface ActivityRecord {
-  client_id: string | null;
-  activity_date: string;
-  call_outcome: string | null;
-}
-
 interface ClientPerformanceTableProps {
-  allActivityData: ActivityRecord[];
-  dmsByClient: Record<string, number>;
-  sqlCountsByClient: Record<string, number>;
-  allDmData?: DmRecord[];
-  allSqlData?: SqlRecord[];
-  clients: Array<{
-    client_id: string;
-    client_name: string;
-    campaign_start?: string | null;
-    campaign_end?: string | null;
-    target_sqls?: number | null;
-    logo_url?: string | null;
-  }>;
+  clientPerformance: ClientPerformanceRow[];
 }
 
-export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCountsByClient, allDmData, allSqlData, clients }: ClientPerformanceTableProps) => {
+export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -132,53 +114,19 @@ export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCounts
   };
 
   const clientsData: ClientData[] = useMemo(() => {
-    return clients.map((client) => {
-      const campStart = client.campaign_start || null;
-      const campEnd = client.campaign_end || null;
-
-      // Filter activity_log by client's campaign dates
-      const clientActivity = (allActivityData || []).filter(r => {
-        if (r.client_id !== client.client_id) return false;
-        const date = r.activity_date.split("T")[0];
-        if (campStart && date < campStart) return false;
-        if (campEnd && date > campEnd) return false;
-        return true;
-      });
-      const totalDials = clientActivity.length;
-      const totalAnswered = clientActivity.filter(r => r.call_outcome === 'connected').length;
-
-      // Filter DMs by campaign dates
-      let totalDMs: number;
-      if (allDmData) {
-        totalDMs = allDmData.filter((d) => {
-          if (d.client_id !== client.client_id) return false;
-          if (campStart && d.activity_date < campStart) return false;
-          if (campEnd && d.activity_date > campEnd) return false;
-          return true;
-        }).length;
-      } else {
-        totalDMs = (dmsByClient || {})[client.client_id] || 0;
-      }
-
-      // Filter SQLs by campaign dates
-      let totalSQLs: number;
-      if (allSqlData) {
-        totalSQLs = allSqlData.filter((s) => {
-          if (s.client_id !== client.client_id) return false;
-          if (campStart && s.booking_date < campStart) return false;
-          if (campEnd && s.booking_date > campEnd) return false;
-          return true;
-        }).length;
-      } else {
-        totalSQLs = (sqlCountsByClient || {})[client.client_id] || 0;
-      }
-
-      const target = client.target_sqls || 0;
+    return clientPerformance.map((row) => {
+      const campStart = row.campaign_start || null;
+      const campEnd = row.campaign_end || null;
+      const totalDials = row.dials || 0;
+      const totalAnswered = row.answered || 0;
+      const totalDMs = row.dm_conversations || 0;
+      const totalSQLs = row.sqls || 0;
+      const target = row.target_sqls || 0;
 
       return {
-        name: client.client_name,
-        slug: client.client_id,
-        logoUrl: client.logo_url || null,
+        name: row.client_name,
+        slug: row.client_id,
+        logoUrl: row.logo_url || null,
         dials: totalDials,
         answered: totalAnswered,
         answeredPercent: totalDials > 0 ? (totalAnswered / totalDials) * 100 : 0,
@@ -199,7 +147,7 @@ export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCounts
         ),
       };
     });
-  }, [clients, allActivityData, dmsByClient, sqlCountsByClient, allDmData, allSqlData]);
+  }, [clientPerformance]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -271,7 +219,7 @@ export const ClientPerformanceTable = ({ allActivityData, dmsByClient, sqlCounts
         </div>
       </CardHeader>
       <CardContent>
-        {clients.length === 0 ? (
+        {clientPerformance.length === 0 ? (
           <EmptyState
             icon={DatabaseZap}
             title="No clients found"
