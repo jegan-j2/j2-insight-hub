@@ -105,10 +105,8 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const startDate = new Date(campaignStart);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(campaignEnd);
-    endDate.setHours(0, 0, 0, 0);
+    const startDate = parseDateStr(campaignStart);
+    const endDate = parseDateStr(campaignEnd);
 
     if (today <= startDate) return "green";
 
