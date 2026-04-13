@@ -93,22 +93,20 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
   };
 
   const getHealthSignal = (
+    campaignStart: string | null,
+    campaignEnd: string | null,
     sqls: number,
     target: number,
-    dials: number,
-    campaignStart: string | null,
-    campaignEnd: string | null
+    dials: number
   ): "red" | "amber" | "green" | "grey" => {
     if (dials === 0) return "grey";
-    if (target === 0) return "green";
+    if (!target || target === 0) return "green";
     if (!campaignStart || !campaignEnd) return "green";
 
+    const start = parseDateStr(campaignStart);
+    const end = parseDateStr(campaignEnd);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const startDate = parseDateStr(campaignStart);
-    const endDate = parseDateStr(campaignEnd);
-
-    if (today <= startDate) return "green";
 
     const countWorkingDays = (from: Date, to: Date) => {
       let count = 0;
@@ -121,14 +119,13 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
       return count;
     };
 
-    const totalWorkingDays = countWorkingDays(startDate, endDate);
-    const elapsedEnd = today > endDate ? endDate : new Date(today.getTime() - 86400000);
-    const workingDaysElapsed = countWorkingDays(startDate, elapsedEnd);
+    const totalWorkingDays = countWorkingDays(start, end);
+    const elapsedWorkingDays = countWorkingDays(start, today > end ? end : new Date(today.getTime() - 86400000));
 
-    if (totalWorkingDays === 0 || workingDaysElapsed === 0) return "green";
+    if (totalWorkingDays === 0 || elapsedWorkingDays === 0) return "green";
 
     const requiredDailyRate = target / totalWorkingDays;
-    const actualDailyRate = sqls / workingDaysElapsed;
+    const actualDailyRate = sqls / elapsedWorkingDays;
     const pacePercentage = (actualDailyRate / requiredDailyRate) * 100;
 
     if (pacePercentage <= 50) return "red";
@@ -170,11 +167,11 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
         daysLeft: getWorkingDaysLeft(campEnd),
         elapsedPercent: getCampaignElapsed(campStart, campEnd),
         signal: getHealthSignal(
+          campStart,
+          campEnd,
           totalSQLs,
           target,
-          totalDials,
-          campStart,
-          campEnd
+          totalDials
         ),
       };
     });
@@ -507,7 +504,7 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
             <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> On track</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> At risk</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Behind</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Behind</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" /> No activity</span>
             </div>
           </>
