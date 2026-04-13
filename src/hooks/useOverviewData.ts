@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { DailySnapshot, SQLMeeting } from "@/lib/supabase-types";
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
@@ -164,7 +164,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setLoading(true);
       setError(null);
 
-      // Fetch activity_log for current date range (replaces daily_snapshots)
+      // Fetch activity_log for current date range
       let activityQuery = supabase
         .from("activity_log")
         .select("client_id, activity_date, call_outcome");
@@ -359,9 +359,24 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     return () => { cancelled = true; };
   }, [fetchDashboardData]);
 
+  // Debounce activity_log realtime changes (30s) to avoid excessive refetches during peak call volume
+  const activityDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedActivityRefetch = useCallback(() => {
+    if (activityDebounceRef.current) clearTimeout(activityDebounceRef.current);
+    activityDebounceRef.current = setTimeout(() => {
+      fetchDashboardData();
+    }, 30_000);
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    return () => {
+      if (activityDebounceRef.current) clearTimeout(activityDebounceRef.current);
+    };
+  }, []);
+
   useRealtimeSubscription({
     table: 'activity_log',
-    onChange: fetchDashboardData,
+    onChange: debouncedActivityRefetch,
   });
 
   useRealtimeSubscription({
