@@ -65,6 +65,7 @@ interface InviteRecord {
 }
 
 const Settings = () => {
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const { permission: browserNotifPermission, supported: browserNotifSupported, requestPermission } = useBrowserNotifications();
   const { loading: roleLoading } = useUserRole();
