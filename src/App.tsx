@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { BreakpointIndicator } from "@/components/BreakpointIndicator";
+
 import { NavigationProgress } from "@/components/NavigationProgress";
 import { useInactiveSDRAlerts } from "@/hooks/useInactiveSDRAlerts";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
@@ -43,7 +43,7 @@ const App = () => (
         <DateFilterProvider>
           <Toaster />
           <Sonner />
-          <BreakpointIndicator />
+          
           <SlackNotificationProvider>
           <BrowserRouter>
             <NavigationProgress />
