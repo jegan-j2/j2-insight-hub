@@ -1092,7 +1092,7 @@ const ActivityMonitor = () => {
       </div>
 
       {/* Historical Filters */}
-      {mode === "historical" && (
+      {mode === "historical" && !isMobile && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
            <div style={{ padding: '4px 0 8px 0' }}>
             {/* Date Mode Tabs */}
