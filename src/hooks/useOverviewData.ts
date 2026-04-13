@@ -56,6 +56,7 @@ interface OverviewData {
   dmsByClient: Record<string, number>;
   dmsByDate: Record<string, number>;
   allSnapshots: DailySnapshot[];
+  allActivityData: ActivityRecord[];
   allDmsByClient: Record<string, number>;
   sqlCountsByClient: Record<string, number>;
   allDmData: DmRecord[];
@@ -398,5 +399,5 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
     };
   }, [activityData, conversations, sqlCount, prevDials, prevAnswered, hasPrevData, prevConversations, prevSQLs]);
 
-  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch: fetchDashboardData };
+  return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch: fetchDashboardData };
 };
