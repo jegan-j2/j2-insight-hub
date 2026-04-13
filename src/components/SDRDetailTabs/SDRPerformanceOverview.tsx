@@ -355,7 +355,7 @@ export const SDRPerformanceOverview = ({ sdr, teamAverages, latestSQL, dateRange
             {performanceTrendData.length === 0 ? (
               <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">No data for this period</div>
             ) : (
-              <div className="w-full h-[300px]">
+              <div className="w-full h-[300px] overflow-x-auto">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={performanceTrendData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />

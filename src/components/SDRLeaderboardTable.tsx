@@ -1,13 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, ArrowUpDown, Users, TrendingUp } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Users, TrendingUp, ChevronDown } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { SDRDetailModal } from "@/components/SDRDetailModal";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { EmptyState } from "@/components/EmptyState";
 import { SDRAvatar } from "@/components/SDRAvatar";
 import { supabase } from "@/lib/supabase";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface LeaderboardEntry {
   rank: number;
@@ -44,11 +47,13 @@ interface SDRLeaderboardTableProps {
 
 export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clientLogoMap = {}, showClientColumn = true, mostImproved, campaignDates }: SDRLeaderboardTableProps) => {
   const data = leaderboardData || [];
+  const isMobile = useIsMobile();
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
   const { dateRange, filterType } = useDateFilter();
   const [photoMap, setPhotoMap] = useState<Record<string, string | null>>({});
   const [sortKey, setSortKey] = useState<SortKey>("totalSQLs");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -110,6 +115,8 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
     return sorted.map((sdr, idx) => ({ ...sdr, displayRank: idx + 1 }));
   }, [data, sortKey, sortDir, clientNameMap]);
 
+  const displayData = isMobile && !showAll ? sortedData.slice(0, 5) : sortedData;
+
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return <ArrowUpDown className="h-3 w-3 ml-1 inline opacity-40" />;
     return sortDir === "asc"
@@ -160,6 +167,55 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
               title="No team data available"
               description="Add team members in Settings to see performance metrics"
             />
+          ) : isMobile ? (
+            /* Mobile: compact card layout */
+            <div className="space-y-2">
+              {displayData.map((sdr) => {
+                const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
+                return (
+                  <div
+                    key={`${sdr.name}-${sdr.clientId}`}
+                    className="rounded-lg border border-border/50 p-3 cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setSelectedSDR(sdr)}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-lg w-7 text-center shrink-0">{getRankDisplay(sdr.displayRank)}</span>
+                      <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground text-sm truncate">{sdr.name}</p>
+                        {showClientColumn && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {clientLogoMap[sdr.clientId || ""] && (
+                              <img src={clientLogoMap[sdr.clientId || ""]} alt="" className="w-3.5 h-3.5 rounded-sm object-contain" />
+                            )}
+                            <span className="truncate">{clientName}</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xl font-bold text-foreground">{sdr.totalSQLs}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">SQLs</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 ml-9">
+                      <span><span className="font-medium text-foreground">{sdr.totalDials.toLocaleString()}</span> Dials</span>
+                      <span>{getAnswerRateBadge(sdr.answerRate)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {sortedData.length > 5 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground"
+                  onClick={() => setShowAll(!showAll)}
+                >
+                  {showAll ? "Show top 5" : `Show all ${sortedData.length}`}
+                  <ChevronDown className={cn("h-4 w-4 ml-1 transition-transform", showAll && "rotate-180")} />
+                </Button>
+              )}
+            </div>
           ) : (
             <div className="overflow-x-auto scrollbar-thin scroll-gradient">
               <Table style={{ tableLayout: "fixed" }}>
