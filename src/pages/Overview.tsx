@@ -126,7 +126,7 @@ const Overview = () => {
     };
     getUser();
   }, []);
-  const { kpis, snapshots, meetings, dmsByClient, dmsByDate, allSnapshots, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, dailyActivity, meetings, dmsByClient, dmsByDate, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
   
@@ -146,15 +146,11 @@ const Overview = () => {
     prevSqlCountRef.current = kpis.totalSQLs;
   }, [kpis.totalSQLs]);
 
-  const activeClientCount = useMemo(() =>
-    new Set(snapshots?.map(s => s.client_id) ?? []).size, [snapshots]);
+  const activeClientCount = clients.length;
   
   const avgAnswerRate = useMemo(() => {
-    if (!snapshots || snapshots.length === 0) return 0;
-    const totalDials = snapshots.reduce((sum, s) => sum + (s.dials || 0), 0);
-    const totalAnswered = snapshots.reduce((sum, s) => sum + (s.answered || 0), 0);
-    return totalDials > 0 ? (totalAnswered / totalDials) * 100 : 0;
-  }, [snapshots]);
+    return kpis.totalDials > 0 ? (kpis.totalAnswered / kpis.totalDials) * 100 : 0;
+  }, [kpis.totalDials, kpis.totalAnswered]);
 
   const getDelta = (current: number, previous: number) => {
     if (!kpis.previousPeriod || previous === 0 || previous < 1) return null;
@@ -197,16 +193,8 @@ const Overview = () => {
         ["SQL Conversion Rate (%)", kpis.sqlConversionRate],
       ];
 
-      // Client performance section - aggregate snapshots by client
+      // Client performance section placeholder for CSV export
       const clientMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
-      snapshots.forEach(s => {
-        const existing = clientMap.get(s.client_id) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
-        existing.dials += s.dials || 0;
-        existing.answered += s.answered || 0;
-        existing.dms += s.dms_reached || 0;
-        existing.sqls += s.sqls || 0;
-        clientMap.set(s.client_id, existing);
-      });
 
       const clientHeaders = ["Client", "Dials", "Answered", "DM Conversations", "SQLs"];
       const clientRows = Array.from(clientMap.entries()).map(([client, data]) => [
@@ -324,14 +312,6 @@ const Overview = () => {
       const excelClientMap = new Map<string, { 
         dials: number; answered: number; sqls: number 
       }>();
-      snapshots.forEach(s => {
-        const ex = excelClientMap.get(s.client_id) || 
-          { dials: 0, answered: 0, sqls: 0 };
-        ex.dials += s.dials || 0;
-        ex.answered += s.answered || 0;
-        ex.sqls += s.sqls || 0;
-        excelClientMap.set(s.client_id, ex);
-      });
 
       const clientData = [
         ["J2 Insights Dashboard", "", `Exported: ${exportDate}`],
@@ -456,7 +436,7 @@ const Overview = () => {
     },
   ];
 
-  if (loading && snapshots.length === 0 && clients.length === 0) return <J2Loader />;
+  if (loading && dailyActivity.length === 0 && clients.length === 0) return <J2Loader />;
 
   return (
     <div id="overview-content" className="space-y-6 animate-fade-in">
@@ -475,7 +455,7 @@ const Overview = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                disabled={loading || snapshots.length === 0}
+                disabled={loading || (dailyActivity.length === 0 && clients.length === 0)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50"
               >
                 <Download className="h-4 w-4" />
@@ -638,7 +618,7 @@ const Overview = () => {
         </div>
 
       {/* Empty State */}
-      {!loading && !error && snapshots.length === 0 && (
+      {!loading && !error && dailyActivity.length === 0 && clients.length === 0 && (
         <EmptyState
           icon={DatabaseZap}
           title="No data available for selected date range"
@@ -649,7 +629,7 @@ const Overview = () => {
       )}
 
       {/* Insight Banner */}
-      {kpis && !loading && snapshots.length > 0 && (
+      {kpis && !loading && kpis.totalDials > 0 && (
          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
            <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
            <span>
@@ -702,7 +682,7 @@ const Overview = () => {
 
       {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          <CallActivityChart snapshots={snapshots} dmsByDate={dmsByDate} dateRange={dateRange} />
+          <CallActivityChart dailyActivity={dailyActivity} dateRange={dateRange} />
           <ConversionFunnelChart
             dials={kpis.totalDials}
             answered={kpis.totalAnswered}

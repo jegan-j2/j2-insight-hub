@@ -4,13 +4,12 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { EmptyState } from "@/components/EmptyState";
 import { TrendingUp } from "lucide-react";
-import type { DailySnapshot } from "@/lib/supabase-types";
-import { format, parseISO, eachDayOfInterval, isBefore, startOfDay } from "date-fns";
+import { format, eachDayOfInterval, isBefore, startOfDay, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
+import type { DailyActivityRow } from "@/hooks/useOverviewData";
 
 interface CallActivityChartProps {
-  snapshots?: DailySnapshot[];
-  dmsByDate?: Record<string, number>;
+  dailyActivity?: DailyActivityRow[];
   dateRange?: DateRange;
 }
 
@@ -20,19 +19,19 @@ const chartConfig = {
   dms: { label: "DM Conversations", color: "#6366f1" },
 };
 
-export const CallActivityChart = ({ snapshots, dmsByDate, dateRange }: CallActivityChartProps) => {
+export const CallActivityChart = ({ dailyActivity, dateRange }: CallActivityChartProps) => {
   const chartData = useMemo(() => {
-    if (!snapshots || snapshots.length === 0) return [];
+    if (!dailyActivity || dailyActivity.length === 0) return [];
 
     // Build a map of actual data by date
     const grouped: Record<string, { dials: number; answered: number; dms: number }> = {};
-    for (const s of snapshots) {
-      const date = s.snapshot_date;
-      if (!grouped[date]) {
-        grouped[date] = { dials: 0, answered: 0, dms: (dmsByDate || {})[date] || 0 };
-      }
-      grouped[date].dials += s.dials || 0;
-      grouped[date].answered += s.answered || 0;
+    for (const row of dailyActivity) {
+      const date = row.activity_day;
+      grouped[date] = {
+        dials: row.dials,
+        answered: row.answered,
+        dms: row.dm_conversations,
+      };
     }
 
     // If dateRange provided, fill all dates in range (up to today)
@@ -61,7 +60,7 @@ export const CallActivityChart = ({ snapshots, dmsByDate, dateRange }: CallActiv
         answered: grouped[date].answered,
         dms: grouped[date].dms,
       }));
-  }, [snapshots, dmsByDate, dateRange]);
+  }, [dailyActivity, dateRange]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-border">
