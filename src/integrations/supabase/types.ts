@@ -696,6 +696,31 @@ export type Database = {
           sqls: number
         }[]
       }
+      get_client_performance: {
+        Args: never
+        Returns: {
+          answer_rate: number
+          answered: number
+          campaign_end: string
+          campaign_start: string
+          client_id: string
+          client_name: string
+          dials: number
+          dm_conversations: number
+          logo_url: string
+          sqls: number
+          target_sqls: number
+        }[]
+      }
+      get_daily_activity: {
+        Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
+        Returns: {
+          activity_day: string
+          answered: number
+          dials: number
+          dm_conversations: number
+        }[]
+      }
       get_invite_records: {
         Args: never
         Returns: {
@@ -717,6 +742,15 @@ export type Database = {
           improvement: number
           previous_answer_rate: number
           sdr_name: string
+        }[]
+      }
+      get_overview_kpis: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          answer_rate: number
+          dm_conversations: number
+          total_answered: number
+          total_dials: number
         }[]
       }
       get_sdr_client_breakdown: {
