@@ -14,6 +14,15 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/lib/supabase";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { SDRActivityTimeline } from "@/components/SDRDetailTabs/SDRActivityTimeline";
+import { SDRMeetingsResults } from "@/components/SDRDetailTabs/SDRMeetingsResults";
+import { SDRNotesCoaching } from "@/components/SDRDetailTabs/SDRNotesCoaching";
+import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/lib/supabase";
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
 
 type FilterPreset = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign";
 
