@@ -5,6 +5,7 @@ import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 
 interface OverviewKPIs {
   totalDials: number;
