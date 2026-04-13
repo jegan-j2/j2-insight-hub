@@ -642,7 +642,7 @@ const ActivityMonitor = () => {
       }
     }
 
-    // Attach last activity and compute conversations for live mode
+    // Attach last activity timestamp
     for (const a of activities) {
       if (!a.sdr_name) continue;
       const key = compositeKey(a.sdr_name, a.client_id || "");
@@ -650,9 +650,6 @@ const ActivityMonitor = () => {
       if (row) {
         const actDate = new Date(a.activity_date);
         if (!row.lastActivity || actDate > row.lastActivity) row.lastActivity = actDate;
-        if (mode === "live" && a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker) {
-          row.conversations += 1;
-        }
       }
     }
 
