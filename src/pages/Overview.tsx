@@ -194,12 +194,16 @@ const Overview = () => {
       ];
 
       // Client performance section placeholder for CSV export
-      const clientMap = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
-
-      const clientHeaders = ["Client", "Dials", "Answered", "DM Conversations", "SQLs"];
-      const clientRows = Array.from(clientMap.entries()).map(([client, data]) => [
-        client, data.dials, data.answered, data.dms, data.sqls,
-      ]);
+      const clientHeaders = ["Client", "Campaign Period", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Progress %"];
+      const clientRows = clientPerformance.map(cp => {
+        const period = cp.campaign_start && cp.campaign_end
+          ? `${format(new Date(cp.campaign_start), "MMM dd, yyyy")} – ${format(new Date(cp.campaign_end), "MMM dd, yyyy")}`
+          : "";
+        const progressPct = cp.target_sqls && cp.target_sqls > 0
+          ? `${((cp.sqls / cp.target_sqls) * 100).toFixed(1)}%`
+          : "N/A";
+        return [cp.client_name, period, cp.dials, cp.answered, `${cp.answer_rate.toFixed(1)}%`, cp.dm_conversations, cp.sqls, progressPct];
+      });
 
       // Meetings section
       const meetingHeaders = ["Booking Date", "Client", "SDR", "Contact Person", "Company", "Meeting Date", "Meeting Held"];
@@ -309,32 +313,37 @@ const Overview = () => {
       XLSX.utils.book_append_sheet(wb, kpiSheet, "KPI Summary");
 
       // ── SHEET 2: Client Performance ──
-      const excelClientMap = new Map<string, { 
-        dials: number; answered: number; sqls: number 
-      }>();
-
       const clientData = [
-        ["J2 Insights Dashboard", "", `Exported: ${exportDate}`],
+        ["J2 Insights Dashboard", "", "", "", "", "", "", `Exported: ${exportDate}`],
         [],
         [reportTitle],
         [],
-        ["Client", "Dials", "Answered", "SQLs", "Answer Rate"],
-        ...Array.from(excelClientMap.entries()).map(([client, d]) => [
-          client,
-          d.dials,
-          d.answered,
-          d.sqls,
-          d.dials > 0 
-            ? `${((d.answered / d.dials) * 100).toFixed(1)}%` 
-            : "0%",
-        ]),
+        ["Client", "Campaign Period", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Progress %"],
+        ...clientPerformance.map(cp => {
+          const period = cp.campaign_start && cp.campaign_end
+            ? `${format(new Date(cp.campaign_start), "MMM dd, yyyy")} – ${format(new Date(cp.campaign_end), "MMM dd, yyyy")}`
+            : "";
+          const progressPct = cp.target_sqls && cp.target_sqls > 0
+            ? `${((cp.sqls / cp.target_sqls) * 100).toFixed(1)}%`
+            : "N/A";
+          return [
+            cp.client_name,
+            period,
+            cp.dials,
+            cp.answered,
+            `${cp.answer_rate.toFixed(1)}%`,
+            cp.dm_conversations,
+            cp.sqls,
+            progressPct,
+          ];
+        }),
       ];
       const clientSheet = XLSX.utils.aoa_to_sheet(clientData);
       clientSheet["!cols"] = [
-        { wch: 25 }, { wch: 12 }, { wch: 12 }, 
-        { wch: 12 }, { wch: 15 }
+        { wch: 25 }, { wch: 35 }, { wch: 12 },
+        { wch: 12 }, { wch: 15 }, { wch: 18 }, { wch: 12 }, { wch: 15 }
       ];
-      styleSheet(clientSheet, 5, clientData.length - 5);
+      styleSheet(clientSheet, 8, clientData.length - 5);
       XLSX.utils.book_append_sheet(wb, clientSheet, "Client Performance");
 
       // ── SHEET 3: SQL Meetings ──
