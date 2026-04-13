@@ -10,11 +10,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2 } from "lucide-react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2, SlidersHorizontal } from "lucide-react";
 import { format, isWithinInterval, parseISO, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { TableSkeleton } from "@/components/LoadingSkeletons";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { DateRange } from "react-day-picker";
 import type { SQLMeeting, Client } from "@/lib/supabase-types";
 import * as XLSX from "xlsx-js-style";
@@ -77,6 +79,7 @@ interface SQLBookedMeetingsTableProps {
 
 export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients, hideSDRFilter = false, hideSDRColumn = false }: SQLBookedMeetingsTableProps) => {
   const { canEditSQL, isSdr } = usePermissions();
+  const isMobile = useIsMobile();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -87,6 +90,8 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const [bookingDateRange, setBookingDateRange] = useState<DateRange | undefined>();
   const [meetingDateRange, setMeetingDateRange] = useState<DateRange | undefined>();
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   const displayMeetings = useMemo(() => {
     if (meetings && meetings.length > 0) return mapMeetings(meetings, clients);
@@ -174,17 +179,10 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     } else {
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       ws["!cols"] = [
-        { wch: 15 }, // Booking Date
-        { wch: 20 }, // Client
-        { wch: 25 }, // Contact Person
-        { wch: 25 }, // Company
-        { wch: 20 }, // SDR
-        { wch: 15 }, // Meeting Date
-        { wch: 12 }, // Status
-        { wch: 30 }, // Notes
+        { wch: 15 }, { wch: 20 }, { wch: 25 }, { wch: 25 },
+        { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 30 },
       ];
 
-      // Header row styling — navy background, white bold Arial
       const headerStyle = {
         fill: { fgColor: { rgb: "0F172A" } },
         font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial" },
@@ -195,7 +193,6 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
         if (ws[cellRef]) ws[cellRef].s = headerStyle;
       }
 
-      // Alternating row fills
       const evenRowStyle = { fill: { fgColor: { rgb: "F1F5F9" } }, font: { name: "Arial" } };
       const oddRowStyle = { fill: { fgColor: { rgb: "FFFFFF" } }, font: { name: "Arial" } };
       for (let r = 0; r < rows.length; r++) {
@@ -331,9 +328,70 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     );
   };
 
+  /* --- Filter Drawer content (shared between mobile drawer and inline) --- */
+  const FilterFields = () => (
+    <div className="space-y-4">
+      <div>
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Search</label>
+        <Input placeholder="Search contact, company..." value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          className="bg-background/50 border-border min-h-[44px]" />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Client</label>
+        <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
+          <SelectTrigger className="bg-background/50 border-border min-h-[44px] w-full">
+            <SelectValue placeholder="All Clients" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border z-[200]">
+            <SelectItem value="all">All Clients</SelectItem>
+            {uniqueClients.map(cid => {
+              const c = clients?.find(cl => cl.client_id === cid);
+              return <SelectItem key={cid} value={cid}>{c?.client_name || cid}</SelectItem>;
+            })}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Status</label>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+          <SelectTrigger className="bg-background/50 border-border min-h-[44px] w-full">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border z-[200]">
+            <SelectItem value="all">All Statuses</SelectItem>
+            {STATUS_OPTIONS.map(s => (
+              <SelectItem key={s.value} value={s.value}>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                  {s.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {!hideSDRFilter && (
+        <div>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">SDR</label>
+          <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+            <SelectTrigger className="bg-background/50 border-border min-h-[44px] w-full">
+              <SelectValue placeholder="All SDRs" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border-border z-[200]">
+              <SelectItem value="all">All SDRs</SelectItem>
+              {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </div>
+  );
+
   if (isLoading) return <TableSkeleton />;
 
   return (
+    <>
     <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "600ms" }}>
       <CardHeader>
         <div className="flex flex-col gap-4">
@@ -350,203 +408,307 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   <X className="h-4 w-4" /> Clear ({activeFiltersCount})
                 </Button>
               )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
-                    <Download className="h-4 w-4" /> Export <ChevronDown className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover border-border z-50">
-                  <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
-                    <FileText className="h-4 w-4 mr-2" /> Export as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
-                    <Table2 className="h-4 w-4 mr-2" /> Export as Excel
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {isMobile ? (
+                <>
+                  <Button
+                    className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
+                    size="sm"
+                    onClick={() => setFilterDrawerOpen(true)}
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                    {activeFiltersCount > 0 && (
+                      <Badge className="ml-0.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-white text-[#0f172a] dark:bg-[#0f172a] dark:text-white">
+                        {activeFiltersCount}
+                      </Badge>
+                    )}
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
+                        <Download className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+                      <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
+                        <FileText className="h-4 w-4 mr-2" /> CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
+                        <Table2 className="h-4 w-4 mr-2" /> Excel
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
+                      <Download className="h-4 w-4" /> Export <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+                    <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
+                      <FileText className="h-4 w-4 mr-2" /> Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
+                      <Table2 className="h-4 w-4 mr-2" /> Export as Excel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
 
-          {/* Always-visible filters */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Input placeholder="Search contact, company..." value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="bg-background/50 border-border min-h-[40px] min-w-[280px] flex-1" />
-            <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
-                <SelectValue placeholder="All Clients" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border z-50">
-                <SelectItem value="all">All Clients</SelectItem>
-                {uniqueClients.map(cid => {
-                  const c = clients?.find(cl => cl.client_id === cid);
-                  return <SelectItem key={cid} value={cid}>{c?.client_name || cid}</SelectItem>;
-                })}
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-              <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[160px]">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border z-50">
-                <SelectItem value="all">All Statuses</SelectItem>
-                {STATUS_OPTIONS.map(s => (
-                  <SelectItem key={s.value} value={s.value}>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                      {s.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!hideSDRFilter && (
-              <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
-                <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
-                  <SelectValue placeholder="All SDRs" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  <SelectItem value="all">All SDRs</SelectItem>
-                  {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
-            <Button variant="outline" size="sm" onClick={() => setShowMoreFilters(!showMoreFilters)}
-              className={cn("gap-2 min-h-[40px]", showMoreFilters && "bg-muted")}>
-              <Filter className="h-4 w-4" /> More Filters
-              {hiddenFiltersCount > 0 && (
-                <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
-                  {hiddenFiltersCount}
-                </Badge>
-              )}
-            </Button>
-          </div>
+          {/* Desktop filters — hidden on mobile */}
+          {!isMobile && (
+            <>
+              <div className="flex flex-wrap items-center gap-3">
+                <Input placeholder="Search contact, company..." value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  className="bg-background/50 border-border min-h-[40px] min-w-[280px] flex-1" />
+                <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
+                    <SelectValue placeholder="All Clients" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    <SelectItem value="all">All Clients</SelectItem>
+                    {uniqueClients.map(cid => {
+                      const c = clients?.find(cl => cl.client_id === cid);
+                      return <SelectItem key={cid} value={cid}>{c?.client_name || cid}</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[160px]">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    {STATUS_OPTIONS.map(s => (
+                      <SelectItem key={s.value} value={s.value}>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                          {s.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!hideSDRFilter && (
+                  <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
+                      <SelectValue placeholder="All SDRs" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      <SelectItem value="all">All SDRs</SelectItem>
+                      {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setShowMoreFilters(!showMoreFilters)}
+                  className={cn("gap-2 min-h-[40px]", showMoreFilters && "bg-muted")}>
+                  <Filter className="h-4 w-4" /> More Filters
+                  {hiddenFiltersCount > 0 && (
+                    <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
+                      {hiddenFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+              </div>
 
-          {/* Expandable hidden filters */}
-          {showMoreFilters && (
-             <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50">
-               <Popover>
-                 <PopoverTrigger asChild>
-                   <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !bookingDateRange && "text-muted-foreground")}>
-                     <CalendarIcon className="mr-2 h-4 w-4" />
-                     {bookingDateRange?.from ? (
-                       bookingDateRange.to ? (
-                         `${format(bookingDateRange.from, "MMM dd")} – ${format(bookingDateRange.to, "MMM dd, yyyy")}`
-                       ) : format(bookingDateRange.from, "MMM dd, yyyy")
-                     ) : "Booking Date Range"}
-                   </Button>
-                 </PopoverTrigger>
-                 <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                   <Calendar mode="range" selected={bookingDateRange} onSelect={(d) => { setBookingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
-                 </PopoverContent>
-               </Popover>
-               <Popover>
-                 <PopoverTrigger asChild>
-                   <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !meetingDateRange && "text-muted-foreground")}>
-                     <CalendarDays className="mr-2 h-4 w-4" />
-                     {meetingDateRange?.from ? (
-                       meetingDateRange.to ? (
-                         `${format(meetingDateRange.from, "MMM dd")} – ${format(meetingDateRange.to, "MMM dd, yyyy")}`
-                       ) : format(meetingDateRange.from, "MMM dd, yyyy")
-                     ) : "Meeting Date Range"}
-                   </Button>
-                 </PopoverTrigger>
-                 <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                   <Calendar mode="range" selected={meetingDateRange} onSelect={(d) => { setMeetingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
-                 </PopoverContent>
-               </Popover>
-             </div>
+              {showMoreFilters && (
+                 <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50">
+                   <Popover>
+                     <PopoverTrigger asChild>
+                       <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !bookingDateRange && "text-muted-foreground")}>
+                         <CalendarIcon className="mr-2 h-4 w-4" />
+                         {bookingDateRange?.from ? (
+                           bookingDateRange.to ? (
+                             `${format(bookingDateRange.from, "MMM dd")} – ${format(bookingDateRange.to, "MMM dd, yyyy")}`
+                           ) : format(bookingDateRange.from, "MMM dd, yyyy")
+                         ) : "Booking Date Range"}
+                       </Button>
+                     </PopoverTrigger>
+                     <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                       <Calendar mode="range" selected={bookingDateRange} onSelect={(d) => { setBookingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
+                     </PopoverContent>
+                   </Popover>
+                   <Popover>
+                     <PopoverTrigger asChild>
+                       <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !meetingDateRange && "text-muted-foreground")}>
+                         <CalendarDays className="mr-2 h-4 w-4" />
+                         {meetingDateRange?.from ? (
+                           meetingDateRange.to ? (
+                             `${format(meetingDateRange.from, "MMM dd")} – ${format(meetingDateRange.to, "MMM dd, yyyy")}`
+                           ) : format(meetingDateRange.from, "MMM dd, yyyy")
+                         ) : "Meeting Date Range"}
+                       </Button>
+                     </PopoverTrigger>
+                     <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                       <Calendar mode="range" selected={meetingDateRange} onSelect={(d) => { setMeetingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
+                     </PopoverContent>
+                   </Popover>
+                 </div>
+              )}
+            </>
           )}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto scrollbar-thin scroll-gradient">
-          <Table>
-            <TableHeader className="table-header-navy">
-              <TableRow>
-                <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] dark:bg-[#1E293B] text-center">
-                  <SortButton field="sqlDate" label="Booking Date" />
-                </TableHead>
-                <TableHead className="px-4 py-3 text-left">
-                  <SortButton field="clientName" label="Client" />
-                </TableHead>
-                <TableHead className="px-4 py-3 text-left">
-                  <SortButton field="contactPerson" label="Contact Person" />
-                </TableHead>
-                <TableHead className="px-4 py-3 text-left">
-                  <SortButton field="companyName" label="Company" />
-                </TableHead>
-                {!hideSDRColumn && (
-                <TableHead className="px-4 py-3 text-left">
-                  <SortButton field="sdr" label="SDR" />
-                </TableHead>
+        {isMobile ? (
+          /* Mobile: compact card-style rows with expandable details */
+          <div className="space-y-2">
+            {paginatedMeetings.length === 0 ? (
+              <div className="py-12">
+                {activeFiltersCount > 0 ? (
+                  <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
+                ) : (
+                  <EmptyState icon={CalendarX} title="No meetings booked yet" description="SQL meetings will appear here once leads are generated" />
                 )}
-                <TableHead className="px-4 py-3 text-center">
-                  <SortButton field="meetingDate" label="Meeting Date" />
-                </TableHead>
-                <TableHead className="px-4 py-3 text-center">
-                  <SortButton field="meetingStatus" label="Status" />
-                </TableHead>
-                <TableHead className="px-4 py-3 text-left" style={{ minWidth: 200 }}>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="table-striped">
-              {paginatedMeetings.map((meeting, index) => (
-                <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`} style={isOverdue(meeting) ? { borderLeft: "3px solid #F59E0B" } : undefined}>
-                  <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
-                  <TableCell className="text-foreground whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {meeting.clientLogo ? (
-                        <img src={meeting.clientLogo} alt="" className="h-6 w-6 rounded-full object-cover" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-                          {meeting.clientName.charAt(0)}
+              </div>
+            ) : paginatedMeetings.map((meeting) => {
+              const isExpanded = expandedRowId === meeting.id;
+              const overdue = isOverdue(meeting);
+              return (
+                <div
+                  key={meeting.id}
+                  className={cn(
+                    "rounded-lg border border-border/50 p-3 cursor-pointer transition-colors",
+                    overdue && "border-l-[3px] border-l-[#F59E0B]",
+                    updating === meeting.id && "opacity-60"
+                  )}
+                  onClick={() => setExpandedRowId(isExpanded ? null : meeting.id)}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-foreground text-sm truncate">{meeting.contactPerson}</p>
+                      <p className="text-xs text-muted-foreground">{format(meeting.sqlDate, "MMM dd, yyyy")}</p>
+                    </div>
+                    <StatusBadge meeting={meeting} />
+                  </div>
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Company</span>
+                        <span className="text-foreground font-medium">{meeting.companyName || "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Client</span>
+                        <span className="text-foreground flex items-center gap-1.5">
+                          {meeting.clientLogo && <img src={meeting.clientLogo} alt="" className="h-4 w-4 rounded-full object-cover" />}
+                          {meeting.clientName}
+                        </span>
+                      </div>
+                      {!hideSDRColumn && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">SDR</span>
+                          <span className="text-foreground">{meeting.sdr}</span>
                         </div>
                       )}
-                      <span className="font-medium">{meeting.clientName}</span>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Meeting Date</span>
+                        <span className="text-foreground">{format(meeting.meetingDate, "MMM dd, yyyy")}</span>
+                      </div>
+                      {meeting.clientNotes && (
+                        <div>
+                          <span className="text-muted-foreground text-xs">Notes</span>
+                          <p className="text-foreground text-xs mt-0.5">{meeting.clientNotes}</p>
+                        </div>
+                      )}
                     </div>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {meeting.contactPerson && meeting.companyName && meeting.contactPerson.trim().toLowerCase() === meeting.companyName.trim().toLowerCase() ? (
-                      <span className="text-muted-foreground italic">Name pending</span>
-                    ) : (
-                      <span className="text-foreground">{meeting.contactPerson}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-foreground">{meeting.companyName}</TableCell>
-                  {!hideSDRColumn && <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>}
-                  <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
-                  <TableCell className="text-center"><StatusBadge meeting={meeting} /></TableCell>
-                  <TableCell style={{ minWidth: 200 }}>
-                    {isSdr || !canEditSQL(meeting.clientId) ? (
-                      <span className="text-sm text-foreground">{meeting.clientNotes || ""}</span>
-                    ) : (
-                      <Input
-                        defaultValue={meeting.clientNotes}
-                        onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
-                        placeholder="Add notes..."
-                        disabled={updating === meeting.id}
-                        className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
-                      />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {paginatedMeetings.length === 0 && (
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+            <Table>
+              <TableHeader className="table-header-navy">
                 <TableRow>
-                  <TableCell colSpan={hideSDRColumn ? 7 : 8} className="py-12">
-                    {activeFiltersCount > 0 ? (
-                      <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
-                    ) : (
-                      <EmptyState icon={CalendarX} title="No meetings booked yet" description="SQL meetings will appear here once leads are generated" />
-                    )}
-                  </TableCell>
+                  <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] dark:bg-[#1E293B] text-center">
+                    <SortButton field="sqlDate" label="Booking Date" />
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-left">
+                    <SortButton field="clientName" label="Client" />
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-left">
+                    <SortButton field="contactPerson" label="Contact Person" />
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-left">
+                    <SortButton field="companyName" label="Company" />
+                  </TableHead>
+                  {!hideSDRColumn && (
+                  <TableHead className="px-4 py-3 text-left">
+                    <SortButton field="sdr" label="SDR" />
+                  </TableHead>
+                  )}
+                  <TableHead className="px-4 py-3 text-center">
+                    <SortButton field="meetingDate" label="Meeting Date" />
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-center">
+                    <SortButton field="meetingStatus" label="Status" />
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-left" style={{ minWidth: 200 }}>Notes</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody className="table-striped">
+                {paginatedMeetings.map((meeting) => (
+                  <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`} style={isOverdue(meeting) ? { borderLeft: "3px solid #F59E0B" } : undefined}>
+                    <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
+                    <TableCell className="text-foreground whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {meeting.clientLogo ? (
+                          <img src={meeting.clientLogo} alt="" className="h-6 w-6 rounded-full object-cover" />
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                            {meeting.clientName.charAt(0)}
+                          </div>
+                        )}
+                        <span className="font-medium">{meeting.clientName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {meeting.contactPerson && meeting.companyName && meeting.contactPerson.trim().toLowerCase() === meeting.companyName.trim().toLowerCase() ? (
+                        <span className="text-muted-foreground italic">Name pending</span>
+                      ) : (
+                        <span className="text-foreground">{meeting.contactPerson}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-foreground">{meeting.companyName}</TableCell>
+                    {!hideSDRColumn && <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>}
+                    <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
+                    <TableCell className="text-center"><StatusBadge meeting={meeting} /></TableCell>
+                    <TableCell style={{ minWidth: 200 }}>
+                      {isSdr || !canEditSQL(meeting.clientId) ? (
+                        <span className="text-sm text-foreground">{meeting.clientNotes || ""}</span>
+                      ) : (
+                        <Input
+                          defaultValue={meeting.clientNotes}
+                          onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
+                          placeholder="Add notes..."
+                          disabled={updating === meeting.id}
+                          className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {paginatedMeetings.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={hideSDRColumn ? 7 : 8} className="py-12">
+                      {activeFiltersCount > 0 ? (
+                        <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
+                      ) : (
+                        <EmptyState icon={CalendarX} title="No meetings booked yet" description="SQL meetings will appear here once leads are generated" />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</p>
@@ -562,5 +724,26 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
         )}
       </CardContent>
     </Card>
+
+    {/* Mobile Filter Drawer */}
+    <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
+      <DrawerContent className="max-h-[85vh]">
+        <DrawerHeader>
+          <DrawerTitle>Filters</DrawerTitle>
+        </DrawerHeader>
+        <div className="px-4 pb-2 overflow-y-auto">
+          <FilterFields />
+        </div>
+        <DrawerFooter>
+          <Button
+            className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+            onClick={() => setFilterDrawerOpen(false)}
+          >
+            Apply
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+    </>
   );
 };
