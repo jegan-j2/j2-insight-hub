@@ -1823,6 +1823,114 @@ const ActivityMonitor = () => {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Filter Drawer */}
+      <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Filters</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-2 space-y-5 overflow-y-auto">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Client</label>
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className="w-full min-h-[44px] bg-[#0f172a] text-white border-[#0f172a] dark:bg-white dark:text-[#0f172a] dark:border-white font-semibold">
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent className="z-[200] bg-card">
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clientOptions.map((c) => (
+                    <SelectItem key={c.client_id} value={c.client_id}>
+                      <span className="flex items-center gap-2">
+                        {c.logo_url ? (
+                          <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                        ) : (
+                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                        )}
+                        {c.client_name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {mode === "historical" && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Period</label>
+                  <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
+                    <TabsList className="bg-muted/50 w-full">
+                      <TabsTrigger value="day" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Day</TabsTrigger>
+                      <TabsTrigger value="week" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Week</TabsTrigger>
+                      <TabsTrigger value="month" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Month</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                    {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => navigateDate("prev")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white rounded-md" style={{ width: 36, height: 40 }}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="flex-1 text-center text-sm font-medium text-foreground bg-muted/50 rounded-md py-2.5 px-3">
+                      {dateMode === "day" ? format(histDate, "EEE, MMM d, yyyy") : dateRangeInfo.label}
+                    </div>
+                    <button onClick={() => navigateDate("next")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white rounded-md" style={{ width: 36, height: 40 }}>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {dateMode === "day" && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                      Time Range · {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                    </label>
+                    <Slider min={0} max={24} step={1} value={timeRange} onValueChange={setTimeRange} />
+                  </div>
+                )}
+
+                {dateMode !== "day" && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Days</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ALL_DAYS.map((day) => (
+                        <button
+                          key={day}
+                          onClick={() => toggleWeekday(day)}
+                          className={cn(
+                            "font-semibold rounded-lg text-xs h-[34px] px-2.5 transition-colors",
+                            selectedWeekdays.includes(day)
+                              ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                              : "bg-transparent text-[#94a3b8] border border-[#e2e8f0] dark:border-white/10"
+                          )}
+                        >
+                          {day.substring(0, 3)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <DrawerFooter>
+            <Button
+              className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+              onClick={() => {
+                if (mode === "historical") setHistApplied(true);
+                setFilterDrawerOpen(false);
+              }}
+            >
+              Apply
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
