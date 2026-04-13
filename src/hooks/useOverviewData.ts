@@ -5,7 +5,7 @@ import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 import { ACTIVE_SQL_MEETING_STATUSES } from "@/lib/sqlMeetings";
-import { melbourneStartOfDayUTC, melbourneEndOfDayUTC } from "@/lib/melbourneTime";
+import { melbourneStartOfDay, melbourneEndOfDay, melbourneStartOfDayUTC, melbourneEndOfDayUTC } from "@/lib/melbourneTime";
 
 interface OverviewKPIs {
   totalDials: number;
@@ -106,12 +106,13 @@ function aggregateToSnapshots(records: ActivityRecord[]): DailySnapshot[] {
 }
 
 export const useOverviewData = (dateRange: DateRange | undefined, filterType?: string): OverviewData => {
-  const [activityData, setActivityData] = useState<ActivityRecord[]>([]);
   const [allActivityData, setAllActivityData] = useState<ActivityRecord[]>([]);
   const [meetings, setMeetings] = useState<SQLMeeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [conversations, setConversations] = useState(0);
+  const [currentDials, setCurrentDials] = useState(0);
+  const [currentAnswered, setCurrentAnswered] = useState(0);
+  const [currentDMs, setCurrentDMs] = useState(0);
   const [sqlCount, setSqlCount] = useState(0);
   const [prevDials, setPrevDials] = useState(0);
   const [prevAnswered, setPrevAnswered] = useState(0);
@@ -165,16 +166,15 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setLoading(true);
       setError(null);
 
-      // Fetch activity_log for current date range
-      let activityQuery = supabase
-        .from("activity_log")
-        .select("client_id, activity_date, call_outcome");
+      // Fetch current period KPIs via RPC
+      const kpiParams: { p_start_date: string; p_end_date: string } = {
+        p_start_date: melbourneStartOfDay(startDate || "2000-01-01"),
+        p_end_date: melbourneEndOfDay(endDate || "2099-12-31"),
+      };
+      const { data: kpiData, error: kpiError } = await supabase.rpc('get_overview_kpis', kpiParams);
+      if (kpiError) throw kpiError;
 
-      if (startDate) activityQuery = activityQuery.gte("activity_date", melbourneStartOfDayUTC(startDate));
-      if (endDate) activityQuery = activityQuery.lte("activity_date", melbourneEndOfDayUTC(endDate));
-
-      const { data: activityResult, error: activityError } = await activityQuery;
-      if (activityError) throw activityError;
+      const kpiRow = kpiData?.[0] || { total_dials: 0, total_answered: 0, answer_rate: 0, dm_conversations: 0 };
 
       // Fetch SQL meetings for date range
       let meetingQuery = supabase
@@ -199,17 +199,6 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       if (endDate) sqlCountQuery = sqlCountQuery.lte("booking_date", endDate);
 
       const { count: sqlsCount } = await sqlCountQuery;
-
-      // Fetch conversations (Decision Maker calls) for current period
-      let conversationsQuery = supabase
-        .from("activity_log")
-        .select("id", { count: "exact" })
-        .eq("is_decision_maker", true);
-
-      if (startDate) conversationsQuery = conversationsQuery.gte("activity_date", melbourneStartOfDayUTC(startDate));
-      if (endDate) conversationsQuery = conversationsQuery.lte("activity_date", melbourneEndOfDayUTC(endDate));
-
-      const { count: conversationsCount } = await conversationsQuery;
 
       // Fetch DM Conversations grouped by client_id
       let dmQuery = supabase
@@ -297,10 +286,11 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         hasAnyPrevData = prevDialsCount > 0 || prevConversationsCount > 0 || prevSQLsCount > 0;
       }
 
-      setActivityData((activityResult || []) as ActivityRecord[]);
       setAllActivityData((allActivityRes.data || []) as ActivityRecord[]);
       setMeetings(meetingData || []);
-      setConversations(conversationsCount || 0);
+      setCurrentDials(kpiRow.total_dials || 0);
+      setCurrentAnswered(kpiRow.total_answered || 0);
+      setCurrentDMs(kpiRow.dm_conversations || 0);
       setSqlCount(sqlsCount || 0);
       setPrevDials(prevDialsCount);
       setPrevAnswered(prevAnsweredCount);
@@ -332,7 +322,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       setClients((clientsRes.data || []) as ClientInfo[]);
 
       if (import.meta.env.DEV) console.log("📊 Dashboard data fetched:", {
-        activity: activityResult?.length || 0,
+        dials: kpiRow.total_dials,
         meetings: meetingData?.length || 0,
         dateRange: { startDate, endDate },
       });
@@ -386,13 +376,13 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
   });
 
   // Derive DailySnapshot-like objects from activity_log for downstream components (charts, tables)
-  const snapshots = useMemo(() => aggregateToSnapshots(activityData), [activityData]);
+  const snapshots = useMemo<DailySnapshot[]>(() => [], []);
   const allSnapshots = useMemo(() => aggregateToSnapshots(allActivityData), [allActivityData]);
 
   const kpis = useMemo<OverviewKPIs>(() => {
-    const totalDials = activityData.length;
-    const totalAnswered = activityData.filter(r => r.call_outcome === "connected").length;
-    const totalDMs = conversations; // DM conversations from is_decision_maker count
+    const totalDials = currentDials;
+    const totalAnswered = currentAnswered;
+    const totalDMs = currentDMs;
     const totalSQLs = sqlCount;
 
     const prevAnswerRate = prevDials > 0 ? (prevAnswered / prevDials) * 100 : 0;
@@ -401,7 +391,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       totalDials,
       totalAnswered,
       answerRate: totalDials > 0 ? ((totalAnswered / totalDials) * 100).toFixed(1) : "0",
-      totalConversations: conversations,
+      totalConversations: currentDMs,
       totalDMs,
       totalSQLs,
       sqlConversionRate: totalDMs > 0 ? ((totalSQLs / totalDMs) * 100).toFixed(1) : "0",
@@ -413,7 +403,7 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
         totalSQLs: prevSQLs,
       } : null,
     };
-  }, [activityData, conversations, sqlCount, prevDials, prevAnswered, hasPrevData, prevConversations, prevSQLs]);
+  }, [currentDials, currentAnswered, currentDMs, sqlCount, prevDials, prevAnswered, hasPrevData, prevConversations, prevSQLs]);
 
   return { snapshots, meetings, kpis, dmsByClient, dmsByDate, allSnapshots, allActivityData, allDmsByClient, sqlCountsByClient, allDmData, allSqlData, clients, loading, error, refetch: fetchDashboardData };
 };
