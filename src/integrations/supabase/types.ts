@@ -27,6 +27,7 @@ export type Database = {
           contact_name: string | null
           created_at: string | null
           hubspot_contact_id: string | null
+          hubspot_disposition: string | null
           hubspot_engagement_id: string | null
           id: string
           is_decision_maker: boolean | null
@@ -52,6 +53,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           hubspot_contact_id?: string | null
+          hubspot_disposition?: string | null
           hubspot_engagement_id?: string | null
           id?: string
           is_decision_maker?: boolean | null
@@ -77,6 +79,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           hubspot_contact_id?: string | null
+          hubspot_disposition?: string | null
           hubspot_engagement_id?: string | null
           id?: string
           is_decision_maker?: boolean | null
@@ -618,11 +621,70 @@ export type Database = {
           },
         ]
       }
+      webhook_queue: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          event_payload: Json | null
+          event_type: string
+          id: string
+          last_error: string | null
+          max_attempts: number | null
+          next_retry_at: string | null
+          object_id: string
+          processed_at: string | null
+          property_name: string | null
+          property_value: string | null
+          status: string | null
+          subscription_type: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          event_payload?: Json | null
+          event_type: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          next_retry_at?: string | null
+          object_id: string
+          processed_at?: string | null
+          property_name?: string | null
+          property_value?: string | null
+          status?: string | null
+          subscription_type?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          event_payload?: Json | null
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          next_retry_at?: string | null
+          object_id?: string
+          processed_at?: string | null
+          property_name?: string | null
+          property_value?: string | null
+          status?: string | null
+          subscription_type?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      dashboard_health_check: {
+        Args: never
+        Returns: {
+          current_value: string
+          health_status: string
+          metric: string
+        }[]
+      }
       get_activity_breakdown: {
         Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
         Returns: {

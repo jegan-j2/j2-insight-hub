@@ -11,7 +11,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown } from "lucide-react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
+import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
@@ -138,7 +140,9 @@ const ALL_DAYS: AllDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0 };
 
 const ActivityMonitor = () => {
+  const isMobile = useIsMobile();
   const { clientFilter, setClientFilter } = useDateFilter();
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("live");
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
@@ -1088,7 +1092,7 @@ const ActivityMonitor = () => {
       </div>
 
       {/* Historical Filters */}
-      {mode === "historical" && (
+      {mode === "historical" && !isMobile && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
            <div style={{ padding: '4px 0 8px 0' }}>
             {/* Date Mode Tabs */}
@@ -1335,29 +1339,40 @@ const ActivityMonitor = () => {
       <Card className="bg-card/50 backdrop-blur-sm border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle>SDR Performance</CardTitle>
-          <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className={cn(
-              "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
-              "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
-            )}>
-              <SelectValue placeholder="All Clients" />
-            </SelectTrigger>
-            <SelectContent className="z-[100] bg-card">
-              <SelectItem value="all">All Clients</SelectItem>
-              {clientOptions.map((c) => (
-                <SelectItem key={c.client_id} value={c.client_id}>
-                  <span className="flex items-center gap-2">
-                    {c.logo_url ? (
-                      <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                    ) : (
-                      <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
-                    )}
-                    {c.client_name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isMobile ? (
+            <Button
+              className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
+              size="sm"
+              onClick={() => setFilterDrawerOpen(true)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </Button>
+          ) : (
+            <Select value={clientFilter} onValueChange={setClientFilter}>
+              <SelectTrigger className={cn(
+                "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+              )}>
+                <SelectValue placeholder="All Clients" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-card">
+                <SelectItem value="all">All Clients</SelectItem>
+                {clientOptions.map((c) => (
+                  <SelectItem key={c.client_id} value={c.client_id}>
+                    <span className="flex items-center gap-2">
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                      )}
+                      {c.client_name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -1372,8 +1387,62 @@ const ActivityMonitor = () => {
               title={mode === "live" ? "No activity recorded yet" : "No activity found"}
               description={mode === "live" ? "Calls will appear here once SDRs start dialing. Check back later!" : "Try adjusting the date or time range to find activity data."}
             />
+          ) : isMobile && mode === "live" ? (
+            /* Mobile stacked card layout for Live Today */
+            <div className="space-y-2">
+              {pagedSdrRows.map((row) => {
+                const recent = isRecentActivity(row.lastActivity);
+                return (
+                  <div
+                    key={`${row.sdrName}-${row.clientId}`}
+                    className={cn(
+                      "rounded-lg border border-border/50 p-3",
+                      recent && "bg-green-500/5"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="relative shrink-0">
+                        <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
+                        <span
+                          className={cn(
+                            "absolute bottom-0 left-0 rounded-full border-2 border-white dark:border-white",
+                            getStatusColor(row.lastActivity) === "green" && "bg-green-500",
+                            getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
+                            getStatusColor(row.lastActivity) === "red" && "bg-red-500",
+                          )}
+                          style={{ width: 10, height: 10 }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground text-sm truncate">{row.sdrName}</p>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          {clientLogoMap[row.clientId] && (
+                            <img src={clientLogoMap[row.clientId]!} alt="" className="w-3.5 h-3.5 rounded-full object-contain" />
+                          )}
+                          <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
+                        </span>
+                      </div>
+                      {row.lastActivity && (
+                        <span className={cn(
+                          "text-xs shrink-0",
+                          (Date.now() - row.lastActivity.getTime()) / 60000 <= 5 ? "text-[#10b981] font-medium" : "text-muted-foreground"
+                        )}>
+                          {formatRelativeTime(row.lastActivity)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                      <span><span className="font-medium text-foreground">{row.dials}</span> Dials</span>
+                      <span><span className="font-medium text-foreground">{row.answered}</span> Ans</span>
+                      <span>{row.answerRate.toFixed(1)}%</span>
+                      <span><span className="font-medium text-foreground">{row.sqls}</span> SQLs</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <div className="w-full overflow-x-hidden">
+            <div className={cn("w-full", isMobile ? "overflow-x-auto" : "overflow-x-hidden")}>
               <Table>
                 <TableHeader className="table-header-navy">
                   <TableRow>
@@ -1520,7 +1589,10 @@ const ActivityMonitor = () => {
 
       {/* Drill-down Modal */}
       <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className={cn(
+          "bg-card border-border overflow-hidden flex flex-col",
+          isMobile ? "w-full h-full max-w-full max-h-full rounded-none" : "sm:max-w-[900px] max-h-[80vh]"
+        )}>
           <DialogHeader className="shrink-0">
             <DialogTitle>
               {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Answered Calls" : drillDown?.metric === "conversations" ? "DM Conversations" : "SQL Meetings"}
@@ -1751,6 +1823,114 @@ const ActivityMonitor = () => {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Filter Drawer */}
+      <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Filters</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-2 space-y-5 overflow-y-auto">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Client</label>
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className="w-full min-h-[44px] bg-[#0f172a] text-white border-[#0f172a] dark:bg-white dark:text-[#0f172a] dark:border-white font-semibold">
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent className="z-[200] bg-card">
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clientOptions.map((c) => (
+                    <SelectItem key={c.client_id} value={c.client_id}>
+                      <span className="flex items-center gap-2">
+                        {c.logo_url ? (
+                          <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                        ) : (
+                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                        )}
+                        {c.client_name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {mode === "historical" && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Period</label>
+                  <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
+                    <TabsList className="bg-muted/50 w-full">
+                      <TabsTrigger value="day" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Day</TabsTrigger>
+                      <TabsTrigger value="week" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Week</TabsTrigger>
+                      <TabsTrigger value="month" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Month</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                    {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => navigateDate("prev")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white rounded-md" style={{ width: 36, height: 40 }}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="flex-1 text-center text-sm font-medium text-foreground bg-muted/50 rounded-md py-2.5 px-3">
+                      {dateMode === "day" ? format(histDate, "EEE, MMM d, yyyy") : dateRangeInfo.label}
+                    </div>
+                    <button onClick={() => navigateDate("next")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white rounded-md" style={{ width: 36, height: 40 }}>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {dateMode === "day" && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                      Time Range · {formatHour(timeRange[0])} – {timeRange[1] === 24 ? "11:59 PM" : formatHour(timeRange[1])}
+                    </label>
+                    <Slider min={0} max={24} step={1} value={timeRange} onValueChange={setTimeRange} />
+                  </div>
+                )}
+
+                {dateMode !== "day" && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Days</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ALL_DAYS.map((day) => (
+                        <button
+                          key={day}
+                          onClick={() => toggleWeekday(day)}
+                          className={cn(
+                            "font-semibold rounded-lg text-xs h-[34px] px-2.5 transition-colors",
+                            selectedWeekdays.includes(day)
+                              ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                              : "bg-transparent text-[#94a3b8] border border-[#e2e8f0] dark:border-white/10"
+                          )}
+                        >
+                          {day.substring(0, 3)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <DrawerFooter>
+            <Button
+              className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+              onClick={() => {
+                if (mode === "historical") setHistApplied(true);
+                setFilterDrawerOpen(false);
+              }}
+            >
+              Apply
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
