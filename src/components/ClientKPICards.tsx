@@ -11,6 +11,7 @@ interface ClientKPICardsProps {
 }
 
 export const ClientKPICards = ({ kpis, onAnsweredClick, onDMsClick }: ClientKPICardsProps) => {
+  const isMobile = useIsMobile();
   const cards = [
     {
       title: "Total Dials",
@@ -51,7 +52,10 @@ export const ClientKPICards = ({ kpis, onAnsweredClick, onDMsClick }: ClientKPIC
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
+    <div className={cn(
+      "gap-6 animate-fade-in",
+      isMobile ? "grid grid-cols-2" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+    )}>
       {cards.map((card) => (
         <Card
           key={card.title}

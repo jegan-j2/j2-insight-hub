@@ -17,6 +17,7 @@ const chartConfig = {
 };
 
 export const ClientWeeklyComparisonChart = ({ snapshots }: ClientWeeklyComparisonChartProps) => {
+  const isMobile = useIsMobile();
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return [];
 
