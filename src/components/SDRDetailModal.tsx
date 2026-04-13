@@ -209,7 +209,10 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[90vw] max-w-[1400px] h-screen md:h-auto md:max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className={cn(
+        "overflow-y-auto p-0 gap-0",
+        isMobile ? "w-full h-full max-w-full max-h-full rounded-none" : "w-[90vw] max-w-[1400px] h-screen md:h-auto md:max-h-[90vh]"
+      )}>
         {/* Header */}
         <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border sticky top-0 bg-card z-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
