@@ -734,6 +734,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_live_today_activity: {
+        Args: { p_client_id?: string; p_date: string }
+        Returns: {
+          answered: number
+          client_id: string
+          dials: number
+          dm_conversations: number
+          sdr_name: string
+          sqls: number
+        }[]
+      }
       get_most_improved_sdr: {
         Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
         Returns: {
