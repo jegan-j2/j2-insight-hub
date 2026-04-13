@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
 import { TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
@@ -16,6 +17,7 @@ const chartConfig = {
 };
 
 export const ClientWeeklyComparisonChart = ({ snapshots }: ClientWeeklyComparisonChartProps) => {
+  const isMobile = useIsMobile();
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return [];
 
@@ -86,24 +88,26 @@ export const ClientWeeklyComparisonChart = ({ snapshots }: ClientWeeklyCompariso
         <CardTitle className="text-foreground">Week-over-Week Performance</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="w-full" style={{ height: "350px" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-              <XAxis dataKey="metric" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "var(--radius)", color: "hsl(var(--popover-foreground))" }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
-                formatter={(value: any, name: string) => [value, name === "thisWeek" ? "This Week" : "Last Week"]}
-              />
-              <Legend wrapperStyle={{ paddingTop: "20px", fontSize: "14px" }} />
-              <Bar dataKey="lastWeek" fill={chartConfig.lastWeek.color} name={chartConfig.lastWeek.label} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="thisWeek" fill={chartConfig.thisWeek.color} name={chartConfig.thisWeek.label} radius={[4, 4, 0, 0]}>
-                <LabelList content={<CustomLabel />} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <div className={isMobile ? "overflow-x-auto" : ""}>
+          <div className="w-full" style={{ height: "350px", minWidth: isMobile ? "500px" : undefined }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis dataKey="metric" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "var(--radius)", color: "hsl(var(--popover-foreground))" }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                  formatter={(value: any, name: string) => [value, name === "thisWeek" ? "This Week" : "Last Week"]}
+                />
+                <Legend wrapperStyle={{ paddingTop: "20px", fontSize: "14px" }} />
+                <Bar dataKey="lastWeek" fill={chartConfig.lastWeek.color} name={chartConfig.lastWeek.label} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="thisWeek" fill={chartConfig.thisWeek.color} name={chartConfig.thisWeek.label} radius={[4, 4, 0, 0]}>
+                  <LabelList content={<CustomLabel />} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
         
         <div className="mt-4 p-3 rounded-lg bg-muted/20 border border-border">

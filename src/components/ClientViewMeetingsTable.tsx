@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowUpDown, Download, ChevronLeft, ChevronRight, ChevronDown, CalendarX, Check, Search, CalendarIcon, X, FileText, Table2 } from "lucide-react";
+import { ArrowUpDown, Download, ChevronLeft, ChevronRight, ChevronDown, CalendarX, Check, Search, CalendarIcon, X, FileText, Table2, ChevronUp } from "lucide-react";
 import { useMeetingUpdate } from "@/hooks/useMeetingUpdate";
 import { usePermissions } from "@/hooks/useUserRole";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { DateRange } from "react-day-picker";
 import type { SQLMeeting } from "@/lib/supabase-types";
 import { EmptyState } from "@/components/EmptyState";
@@ -61,6 +62,7 @@ const mapMeetings = (meetings: SQLMeeting[]): MeetingData[] =>
   }));
 
 export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeetingsTableProps) => {
+  const isMobile = useIsMobile();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("bookingDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -70,6 +72,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
   const [meetingDateRange, setMeetingDateRange] = useState<DateRange | undefined>(undefined);
   const [bookingPopoverOpen, setBookingPopoverOpen] = useState(false);
   const [meetingPopoverOpen, setMeetingPopoverOpen] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { canEditSQL, isSdr } = usePermissions();
   const { updateMeetingStatus, updateClientNotes, createRescheduleRow, updating } = useMeetingUpdate();
 
@@ -412,65 +415,128 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto scrollbar-thin scroll-gradient">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
-                  <SortButton field="bookingDate" label="Booking Date" />
-                </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
-                  <SortButton field="contactPerson" label="Contact Person" />
-                </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
-                  <SortButton field="companyName" label="Company" />
-                </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">SDR</TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
-                  <SortButton field="meetingDate" label="Meeting Date" />
-                </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
-                  <SortButton field="meetingStatus" label="Status" />
-                </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 200 }}>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedMeetings.map((meeting, index) => (
-                <TableRow key={meeting.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${index % 2 === 0 ? "bg-muted/5" : ""} ${updating === meeting.id ? "opacity-60" : ""}`}>
-                  <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
-                    {format(meeting.bookingDate, "MMM dd, yyyy")}
-                  </TableCell>
-                  <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
-                  <TableCell className="px-4 py-2 text-foreground">{meeting.companyName}</TableCell>
-                  <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
-                  <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
-                    {meeting.meetingDate ? format(meeting.meetingDate, "MMM dd, yyyy") : "TBC"}
-                  </TableCell>
-                  <TableCell className="px-4 py-2 text-center">
-                    <StatusBadge meeting={meeting} />
-                  </TableCell>
-                  <TableCell className="px-4 py-2" style={{ minWidth: 200 }}>
-                    <Input
-                      defaultValue={meeting.clientNotes}
-                      onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
-                      placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
-                      disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
-                      className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
-                    />
-                  </TableCell>
+        {isMobile ? (
+          <div className="space-y-2">
+            {paginatedMeetings.length === 0 ? (
+              <EmptyState icon={CalendarX} title="No meetings in this period" description="No SQL booked meetings found for the selected filters" />
+            ) : (
+              paginatedMeetings.map((meeting) => {
+                const isExpanded = expandedRowId === meeting.id;
+                return (
+                  <div
+                    key={meeting.id}
+                    className={cn(
+                      "rounded-lg border border-border/50 p-3 transition-colors",
+                      updating === meeting.id ? "opacity-60" : "active:bg-muted/30"
+                    )}
+                    onClick={() => setExpandedRowId(isExpanded ? null : meeting.id)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-foreground truncate">{meeting.contactPerson}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{format(meeting.bookingDate, "MMM dd, yyyy")}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <StatusBadge meeting={meeting} />
+                        {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-sm" onClick={(e) => e.stopPropagation()}>
+                        {meeting.companyName && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Company</span>
+                            <span className="text-foreground font-medium">{meeting.companyName}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">SDR</span>
+                          <span className="text-foreground font-medium">{meeting.sdr}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Meeting Date</span>
+                          <span className="text-foreground font-medium">{meeting.meetingDate ? format(meeting.meetingDate, "MMM dd, yyyy") : "TBC"}</span>
+                        </div>
+                        {(meeting.clientNotes || (!isSdr && canEditSQL(meeting.clientId))) && (
+                          <div>
+                            <span className="text-muted-foreground text-xs">Notes</span>
+                            <Input
+                              defaultValue={meeting.clientNotes}
+                              onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
+                              placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
+                              disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
+                              className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2 mt-1"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                    <SortButton field="bookingDate" label="Booking Date" />
+                  </TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                    <SortButton field="contactPerson" label="Contact Person" />
+                  </TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                    <SortButton field="companyName" label="Company" />
+                  </TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">SDR</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
+                    <SortButton field="meetingDate" label="Meeting Date" />
+                  </TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">
+                    <SortButton field="meetingStatus" label="Status" />
+                  </TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]" style={{ minWidth: 200 }}>Notes</TableHead>
                 </TableRow>
-              ))}
-              {paginatedMeetings.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-12">
-                    <EmptyState icon={CalendarX} title="No meetings in this period" description="No SQL booked meetings found for the selected filters" />
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {paginatedMeetings.map((meeting, index) => (
+                  <TableRow key={meeting.id} className={`border-border/50 hover:bg-muted/20 transition-colors ${index % 2 === 0 ? "bg-muted/5" : ""} ${updating === meeting.id ? "opacity-60" : ""}`}>
+                    <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
+                      {format(meeting.bookingDate, "MMM dd, yyyy")}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">{meeting.contactPerson}</TableCell>
+                    <TableCell className="px-4 py-2 text-foreground">{meeting.companyName}</TableCell>
+                    <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
+                    <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
+                      {meeting.meetingDate ? format(meeting.meetingDate, "MMM dd, yyyy") : "TBC"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 text-center">
+                      <StatusBadge meeting={meeting} />
+                    </TableCell>
+                    <TableCell className="px-4 py-2" style={{ minWidth: 200 }}>
+                      <Input
+                        defaultValue={meeting.clientNotes}
+                        onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
+                        placeholder={!isSdr && canEditSQL(meeting.clientId) ? "Add notes..." : ""}
+                        disabled={updating === meeting.id || isSdr || !canEditSQL(meeting.clientId)}
+                        className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {paginatedMeetings.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-12">
+                      <EmptyState icon={CalendarX} title="No meetings in this period" description="No SQL booked meetings found for the selected filters" />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</p>
