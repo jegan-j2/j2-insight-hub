@@ -193,18 +193,11 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       let hasAnyPrevData = false;
 
       if (prevDates) {
-        const [prevActivityRes, prevConvRes, prevSqlRes] = await Promise.all([
-          supabase
-            .from("activity_log")
-            .select("call_outcome")
-            .gte("activity_date", melbourneStartOfDayUTC(prevDates.from))
-            .lte("activity_date", melbourneEndOfDayUTC(prevDates.to)),
-          supabase
-            .from("activity_log")
-            .select("id", { count: "exact" })
-            .eq("is_decision_maker", true)
-            .gte("activity_date", melbourneStartOfDayUTC(prevDates.from))
-            .lte("activity_date", melbourneEndOfDayUTC(prevDates.to)),
+        const [prevKpiRes, prevSqlRes] = await Promise.all([
+          supabase.rpc('get_overview_kpis', {
+            p_start_date: melbourneStartOfDay(prevDates.from),
+            p_end_date: melbourneEndOfDay(prevDates.to),
+          }),
           supabase
             .from("sql_meetings")
             .select("id", { count: "exact" })
@@ -212,10 +205,10 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
             .gte("booking_date", prevDates.from)
             .lte("booking_date", prevDates.to),
         ]);
-        const prevActivity = prevActivityRes.data || [];
-        prevDialsCount = prevActivity.length;
-        prevAnsweredCount = prevActivity.filter(r => r.call_outcome === "connected").length;
-        prevConversationsCount = prevConvRes.count || 0;
+        const prevKpiRow = prevKpiRes.data?.[0] || { total_dials: 0, total_answered: 0, answer_rate: 0, dm_conversations: 0 };
+        prevDialsCount = prevKpiRow.total_dials || 0;
+        prevAnsweredCount = prevKpiRow.total_answered || 0;
+        prevConversationsCount = prevKpiRow.dm_conversations || 0;
         prevSQLsCount = prevSqlRes.count || 0;
         hasAnyPrevData = prevDialsCount > 0 || prevConversationsCount > 0 || prevSQLsCount > 0;
       }
