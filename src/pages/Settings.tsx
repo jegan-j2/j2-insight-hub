@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useBrowserNotifications } from "@/hooks/useBrowserNotifications";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,6 +65,7 @@ interface InviteRecord {
 }
 
 const Settings = () => {
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const { permission: browserNotifPermission, supported: browserNotifSupported, requestPermission } = useBrowserNotifications();
   const { loading: roleLoading } = useUserRole();
@@ -965,7 +967,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="clients" className="space-y-6">
-        <TabsList className="bg-card border border-border">
+        <TabsList className="bg-card border border-border overflow-x-auto w-full justify-start">
           <TabsTrigger value="clients" className="gap-2 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Client Management</span>
@@ -1164,10 +1166,10 @@ const Settings = () => {
                   <TableHeader className="table-header-navy">
                     <TableRow>
                       <TableHead className="px-4 py-3 text-left">Client</TableHead>
-                      <TableHead className="px-4 py-3 text-left">Primary Contact</TableHead>
-                      <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>
+                      {!isMobile && <TableHead className="px-4 py-3 text-left">Primary Contact</TableHead>}
+                      {!isMobile && <TableHead className="px-4 py-3 text-left">Campaign Period</TableHead>}
                       <TableHead className="px-4 py-3 text-left">Campaign Status</TableHead>
-                      <TableHead className="px-4 py-3 text-right">Days Left</TableHead>
+                      {!isMobile && <TableHead className="px-4 py-3 text-right">Days Left</TableHead>}
                       <TableHead className="px-4 py-3 text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1176,7 +1178,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : filteredClients.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={isMobile ? 3 : 6} className="text-center text-muted-foreground py-8">
                           No clients found. Add your first client above.
                         </TableCell>
                       </TableRow>
@@ -1207,6 +1209,7 @@ const Settings = () => {
                             </TableCell>
 
                             {/* PRIMARY CONTACT */}
+                            {!isMobile && (
                             <TableCell>
                               {primary ? (
                                 <div className="flex items-center gap-2">
@@ -1219,11 +1222,14 @@ const Settings = () => {
                                 <span className="text-sm text-muted-foreground italic">No primary set</span>
                               )}
                             </TableCell>
+                            )}
 
                             {/* CAMPAIGN PERIOD */}
+                            {!isMobile && (
                             <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                               {formatCampaignPeriod(client.campaign_start, client.campaign_end)}
                             </TableCell>
+                            )}
 
                             {/* CAMPAIGN STATUS */}
                             <TableCell>
@@ -1240,7 +1246,7 @@ const Settings = () => {
                             </TableCell>
 
                             {/* DAYS LEFT */}
-                            <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>
+                            {!isMobile && <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>}
 
                             {/* ACTIONS */}
                             <TableCell className="text-center">
@@ -1526,15 +1532,19 @@ const Settings = () => {
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('sdr_name')}>
                         <span className="flex items-center">Name<SortIcon field="sdr_name" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      {!isMobile && (
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('email')}>
                         <span className="flex items-center">Email<SortIcon field="email" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      )}
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('role')}>
                         <span className="flex items-center">Role<SortIcon field="role" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      {!isMobile && (
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('client')}>
                         <span className="flex items-center">Assigned Client<SortIcon field="client" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
+                      )}
                       <TableHead className="px-4 py-3 text-left cursor-pointer select-none" onClick={() => handleTeamSort('login_status')}>
                         <span className="flex items-center">Login Status<SortIcon field="login_status" current={teamSortField} dir={teamSortDir} /></span>
                       </TableHead>
@@ -1546,7 +1556,7 @@ const Settings = () => {
                       <TableSkeletonRows />
                     ) : sortedMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={isMobile ? 4 : 6} className="text-center text-muted-foreground py-8">
                           No team members found. Add your first team member above.
                         </TableCell>
                       </TableRow>
@@ -1568,9 +1578,9 @@ const Settings = () => {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                            {!isMobile && <TableCell className="text-muted-foreground">{member.email}</TableCell>}
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
-                            <TableCell className="text-muted-foreground">{memberClientName}</TableCell>
+                            {!isMobile && <TableCell className="text-muted-foreground">{memberClientName}</TableCell>}
                             <TableCell>
                               <Badge className={
                                 memberInviteInfo.status === 'active' 
