@@ -6,6 +6,24 @@ import { toZonedTime } from "date-fns-tz";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 
+const PAGE_SIZE = 1000;
+
+async function fetchAllRows<T = any>(
+  buildQuery: (from: number, to: number) => any
+): Promise<T[]> {
+  let all: T[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all = all.concat(data as T[]);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
 interface ActivityRecord {
   id: string;
   activity_date: string;
