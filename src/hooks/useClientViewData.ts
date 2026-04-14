@@ -121,6 +121,13 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
     try {
       setLoading(true);
       setError(null);
+      setCampaignSQLs(0);
+      setTotalDials(0);
+      setTotalAnswered(0);
+      setTotalDMs(0);
+      setAnsweredCalls([]);
+      setDmConversations([]);
+      setMeetings([]);
 
       // Fetch client
       const { data: clientData, error: clientError } = await supabase
