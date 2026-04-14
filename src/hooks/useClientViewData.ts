@@ -176,8 +176,8 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         .eq("client_id", clientId)
         .in("meeting_status", ["pending", "held", "reschedule"])
         .order("booking_date", { ascending: false });
-      if (startDate) meetingQuery = meetingQuery.gte("booking_date", startDate);
-      if (endDate) meetingQuery = meetingQuery.lte("booking_date", endDate);
+      if (clientData?.campaign_start) meetingQuery = meetingQuery.gte("booking_date", clientData.campaign_start);
+      if (clientData?.campaign_end) meetingQuery = meetingQuery.lte("booking_date", clientData.campaign_end);
       const { data: meetingData, error: meetingError } = await meetingQuery;
       if (meetingError) throw meetingError;
 
