@@ -123,19 +123,12 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
   const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
   const fetchData = useCallback(async () => {
-    if (!clientId || !startDate || !endDate) return;
+    if (!clientId) return;
     try {
       setLoading(true);
       setError(null);
-      setCampaignSQLs(0);
-      setTotalDials(0);
-      setTotalAnswered(0);
-      setTotalDMs(0);
-      setAnsweredCalls([]);
-      setDmConversations([]);
-      setMeetings([]);
 
-      // Fetch client
+      // Always fetch client first
       const { data: clientData, error: clientError } = await supabase
         .from("clients")
         .select("*")
@@ -143,6 +136,21 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         .maybeSingle();
       if (clientError) throw clientError;
       setClient(clientData as unknown as Client);
+
+      // Don't fetch activity data until date range is set
+      if (!startDate || !endDate) {
+        setLoading(false);
+        return;
+      }
+
+      // Reset state before fetching
+      setCampaignSQLs(0);
+      setTotalDials(0);
+      setTotalAnswered(0);
+      setTotalDMs(0);
+      setAnsweredCalls([]);
+      setDmConversations([]);
+      setMeetings([]);
 
       // Build date filters
       const dateStart = startDate ? melbourneStartOfDay(startDate) : undefined;
