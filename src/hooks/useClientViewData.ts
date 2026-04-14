@@ -7,23 +7,28 @@ import { toZonedTime } from "date-fns-tz";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
 
-const PAGE_SIZE = 1000;
-
-async function fetchAllRows<T = any>(
-  buildQuery: (from: number, to: number) => any
-): Promise<T[]> {
-  let all: T[] = [];
+const fetchAllRows = async <T,>(
+  tableName: string,
+  selectCols: string,
+  filters: (query: any) => any,
+  orderCol?: string
+): Promise<T[]> => {
+  const PAGE_SIZE = 1000;
+  let allData: T[] = [];
   let from = 0;
-  while (true) {
-    const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    all = all.concat(data as T[]);
-    if (data.length < PAGE_SIZE) break;
+  let hasMore = true;
+  while (hasMore) {
+    let query = supabase.from(tableName).select(selectCols).range(from, from + PAGE_SIZE - 1);
+    query = filters(query);
+    if (orderCol) query = query.order(orderCol, { ascending: false });
+    const { data, error } = await query;
+    if (error) { console.error(`Fetch error ${tableName}:`, error); break; }
+    if (data) allData = allData.concat(data as T[]);
+    hasMore = (data?.length || 0) === PAGE_SIZE;
     from += PAGE_SIZE;
   }
-  return all;
-}
+  return allData;
+};
 
 interface ActivityRecord {
   id: string;
@@ -153,29 +158,30 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       const { count: dialsCount } = await dialsQuery;
 
       // Total answered (call_outcome = 'connected') — paginated
-      const answeredData = await fetchAllRows<ActivityRecord>((from, to) => {
-        let q = supabase
-          .from("activity_log")
-          .select("id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker")
-          .eq("client_id", clientId)
-          .eq("call_outcome", "connected");
-        if (dateStart) q = q.gte("activity_date", dateStart);
-        if (dateEnd) q = q.lte("activity_date", dateEnd);
-        return q.order("activity_date", { ascending: false }).range(from, to);
-      });
+      const answeredData = await fetchAllRows<ActivityRecord>(
+        "activity_log",
+        "id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker",
+        (q) => {
+          let filtered = q.eq("client_id", clientId).eq("call_outcome", "connected");
+          if (dateStart) filtered = filtered.gte("activity_date", dateStart);
+          if (dateEnd) filtered = filtered.lte("activity_date", dateEnd);
+          return filtered;
+        },
+        "activity_date"
+      );
 
       // DM Conversations (is_decision_maker = true AND call_outcome = 'connected') — paginated
-      const dmData = await fetchAllRows<ActivityRecord>((from, to) => {
-        let q = supabase
-          .from("activity_log")
-          .select("id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker")
-          .eq("client_id", clientId)
-          .eq("is_decision_maker", true)
-          .eq("call_outcome", "connected");
-        if (dateStart) q = q.gte("activity_date", dateStart);
-        if (dateEnd) q = q.lte("activity_date", dateEnd);
-        return q.order("activity_date", { ascending: false }).range(from, to);
-      });
+      const dmData = await fetchAllRows<ActivityRecord>(
+        "activity_log",
+        "id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker",
+        (q) => {
+          let filtered = q.eq("client_id", clientId).eq("call_outcome", "connected").eq("is_decision_maker", true);
+          if (dateStart) filtered = filtered.gte("activity_date", dateStart);
+          if (dateEnd) filtered = filtered.lte("activity_date", dateEnd);
+          return filtered;
+        },
+        "activity_date"
+      );
 
       // SQL meetings for table (filtered by date)
       let meetingQuery = supabase
