@@ -56,7 +56,7 @@ const ClientView = () => {
 
   // Initialize date range to campaign period once client loads
   useEffect(() => {
-    if (!campaignRangeInitialized && client?.campaign_start && client?.campaign_end) {
+    if (!campaignRangeInitialized && client?.campaign_start && client?.campaign_end && client.client_id === clientSlug) {
       setDateRange({
         from: new Date(client.campaign_start + "T00:00:00"),
         to: new Date(client.campaign_end + "T00:00:00"),
@@ -64,7 +64,7 @@ const ClientView = () => {
       setFilterType("campaign");
       setCampaignRangeInitialized(true);
     }
-  }, [client, campaignRangeInitialized]);
+  }, [client, campaignRangeInitialized, clientSlug]);
 
   useEffect(() => {
     const getUser = async () => {
