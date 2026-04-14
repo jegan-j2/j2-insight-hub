@@ -1101,7 +1101,7 @@ const ActivityMonitor = () => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => navigateDate("prev")}
-                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md border border-white/20"
+                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] hover:opacity-80 transition-opacity rounded-md border border-white/20 dark:border-gray-300"
                     style={{ width: 30, height: 34 }}
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
@@ -1110,7 +1110,7 @@ const ActivityMonitor = () => {
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
-                         className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-[#0f172a] border border-white/20 rounded-md"
+                         className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-[#0f172a] dark:bg-white dark:text-[#0f172a] border border-white/20 dark:border-gray-300 rounded-md"
                           style={{ padding: '0 12px', height: 34, minWidth: 140 }}
                         >
                           <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
@@ -1129,7 +1129,7 @@ const ActivityMonitor = () => {
                     </Popover>
                   ) : (
                     <div
-                      className="flex items-center justify-center text-xs font-medium text-white whitespace-nowrap bg-[#0f172a] border border-white/20 rounded-md"
+                      className="flex items-center justify-center text-xs font-medium text-white whitespace-nowrap bg-[#0f172a] dark:bg-white dark:text-[#0f172a] border border-white/20 dark:border-gray-300 rounded-md"
                       style={{ padding: '0 12px', height: 34 }}
                     >
                       {dateRangeInfo.label}
@@ -1137,7 +1137,7 @@ const ActivityMonitor = () => {
                   )}
                   <button
                     onClick={() => navigateDate("next")}
-                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md border border-white/20"
+                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] hover:opacity-80 transition-opacity rounded-md border border-white/20 dark:border-gray-300"
                     style={{ width: 30, height: 34 }}
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -1156,7 +1156,7 @@ const ActivityMonitor = () => {
                     </span>
                     <div className="flex items-center gap-2">
                       <Select value={String(timeRange[0])} onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}>
-                        <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                        <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1167,7 +1167,7 @@ const ActivityMonitor = () => {
                       </Select>
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">→</span>
                       <Select value={String(timeRange[1])} onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}>
-                        <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                        <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1861,13 +1861,13 @@ const ActivityMonitor = () => {
                     {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
                   </label>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => navigateDate("prev")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white rounded-md" style={{ width: 36, height: 40 }}>
+                    <button onClick={() => navigateDate("prev")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] rounded-md border border-white/20 dark:border-gray-300" style={{ width: 36, height: 40 }}>
                       <ChevronLeft className="h-4 w-4" />
                     </button>
                     <div className="flex-1 text-center text-sm font-medium text-foreground bg-muted/50 rounded-md py-2.5 px-3">
                       {dateMode === "day" ? format(histDate, "EEE, MMM d, yyyy") : dateRangeInfo.label}
                     </div>
-                    <button onClick={() => navigateDate("next")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white rounded-md" style={{ width: 36, height: 40 }}>
+                    <button onClick={() => navigateDate("next")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] rounded-md border border-white/20 dark:border-gray-300" style={{ width: 36, height: 40 }}>
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
@@ -1880,7 +1880,7 @@ const ActivityMonitor = () => {
                     </label>
                     <div className="flex items-center gap-2">
                       <Select value={String(timeRange[0])} onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}>
-                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1891,7 +1891,7 @@ const ActivityMonitor = () => {
                       </Select>
                       <span className="text-xs font-semibold text-muted-foreground">→</span>
                       <Select value={String(timeRange[1])} onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}>
-                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white border-white/20 text-xs font-medium">
+                        <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
