@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -142,8 +143,21 @@ const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 
 const ActivityMonitor = () => {
   const isMobile = useIsMobile();
   const { clientFilter, setClientFilter } = useDateFilter();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [mode, setMode] = useState<Mode>("live");
+
+  // Initialise from URL params
+  const initialMode = (searchParams.get("mode") === "historical" ? "historical" : "live") as Mode;
+  const initialDateMode = (["day", "week", "month"].includes(searchParams.get("dateMode") || "") ? searchParams.get("dateMode") : "day") as DateMode;
+  const initialDate = (() => {
+    const d = searchParams.get("date");
+    if (d) { const p = new Date(d + "T00:00:00"); if (!Number.isNaN(p.getTime())) return p; }
+    return new Date();
+  })();
+  const initialStartHour = parseInt(searchParams.get("startHour") || "9", 10);
+  const initialEndHour = parseInt(searchParams.get("endHour") || "17", 10);
+
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
   );
@@ -315,12 +329,12 @@ const ActivityMonitor = () => {
 
 
   // Historical filters
-  const [histDate, setHistDate] = useState<Date>(new Date());
-  const [timeRange, setTimeRange] = useState<number[]>([9, 17]);
+  const [histDate, setHistDate] = useState<Date>(initialDate);
+  const [timeRange, setTimeRange] = useState<number[]>([initialStartHour, initialEndHour]);
   const [selectedWeekdays, setSelectedWeekdays] = useState<AllDay[]>([...ALL_WEEKDAYS]);
   const [histApplied, setHistApplied] = useState(false);
   const [histSqlMeetings, setHistSqlMeetings] = useState<SqlMeetingRow[]>([]);
-  const [dateMode, setDateMode] = useState<DateMode>("day");
+  const [dateMode, setDateMode] = useState<DateMode>(initialDateMode);
   const pillsRef = useRef<HTMLDivElement>(null);
   const [pillsWidth, setPillsWidth] = useState(0);
 
@@ -553,7 +567,20 @@ const ActivityMonitor = () => {
     }
   }, [mode]);
 
-  // Only subscribe in live mode
+  // Sync state → URL params
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    params.mode = mode;
+    if (mode === "historical") {
+      params.dateMode = dateMode;
+      params.date = format(histDate, "yyyy-MM-dd");
+      params.startHour = String(timeRange[0]);
+      params.endHour = String(timeRange[1]);
+    }
+    setSearchParams(params, { replace: true });
+  }, [mode, dateMode, histDate, timeRange, setSearchParams]);
+
+
   useRealtimeSubscription({
     table: "activity_log",
     onChange: mode === "live" ? fetchLiveData : undefined,
