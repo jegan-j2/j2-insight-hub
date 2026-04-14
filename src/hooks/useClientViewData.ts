@@ -144,28 +144,30 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       if (dateEnd) dialsQuery = dialsQuery.lte("activity_date", dateEnd);
       const { count: dialsCount } = await dialsQuery;
 
-      // Total answered (call_outcome = 'connected')
-      let answeredQuery = supabase
-        .from("activity_log")
-        .select("id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker")
-        .eq("client_id", clientId)
-        .eq("call_outcome", "connected");
-      if (dateStart) answeredQuery = answeredQuery.gte("activity_date", dateStart);
-      if (dateEnd) answeredQuery = answeredQuery.lte("activity_date", dateEnd);
-      answeredQuery = answeredQuery.order("activity_date", { ascending: false });
-      const { data: answeredData } = await answeredQuery;
+      // Total answered (call_outcome = 'connected') — paginated
+      const answeredData = await fetchAllRows<ActivityRecord>((from, to) => {
+        let q = supabase
+          .from("activity_log")
+          .select("id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker")
+          .eq("client_id", clientId)
+          .eq("call_outcome", "connected");
+        if (dateStart) q = q.gte("activity_date", dateStart);
+        if (dateEnd) q = q.lte("activity_date", dateEnd);
+        return q.order("activity_date", { ascending: false }).range(from, to);
+      });
 
-      // DM Conversations (is_decision_maker = true AND call_outcome = 'connected')
-      let dmQuery = supabase
-        .from("activity_log")
-        .select("id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker")
-        .eq("client_id", clientId)
-        .eq("is_decision_maker", true)
-        .eq("call_outcome", "connected");
-      if (dateStart) dmQuery = dmQuery.gte("activity_date", dateStart);
-      if (dateEnd) dmQuery = dmQuery.lte("activity_date", dateEnd);
-      dmQuery = dmQuery.order("activity_date", { ascending: false });
-      const { data: dmData } = await dmQuery;
+      // DM Conversations (is_decision_maker = true AND call_outcome = 'connected') — paginated
+      const dmData = await fetchAllRows<ActivityRecord>((from, to) => {
+        let q = supabase
+          .from("activity_log")
+          .select("id, activity_date, contact_name, company_name, call_duration, call_outcome, is_decision_maker")
+          .eq("client_id", clientId)
+          .eq("is_decision_maker", true)
+          .eq("call_outcome", "connected");
+        if (dateStart) q = q.gte("activity_date", dateStart);
+        if (dateEnd) q = q.lte("activity_date", dateEnd);
+        return q.order("activity_date", { ascending: false }).range(from, to);
+      });
 
       // SQL meetings for table (filtered by date)
       let meetingQuery = supabase
