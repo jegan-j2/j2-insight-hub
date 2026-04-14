@@ -1101,7 +1101,7 @@ const ActivityMonitor = () => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => navigateDate("prev")}
-                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white hover:opacity-80 transition-opacity rounded-md border border-white/20"
+                    className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] hover:opacity-80 transition-opacity rounded-md border border-white/20 dark:border-gray-300"
                     style={{ width: 30, height: 34 }}
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
