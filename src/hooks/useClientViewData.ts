@@ -281,10 +281,13 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       const lastWeekStart = format(lastWeekStartDate, "yyyy-MM-dd");
       const lastWeekEnd = format(lastWeekEndDate, "yyyy-MM-dd");
 
-      const [{ count: thisWeekCount }, { count: lastWeekCount }] = await Promise.all([
-        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", weekStart).lte("booking_date", weekEnd),
-        supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd),
-      ]);
+      let thisWeekQuery = supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", weekStart).lte("booking_date", weekEnd);
+      let lastWeekQuery = supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd);
+      if (clientData?.campaign_start) {
+        thisWeekQuery = thisWeekQuery.gte("booking_date", clientData.campaign_start);
+        lastWeekQuery = lastWeekQuery.gte("booking_date", clientData.campaign_start);
+      }
+      const [{ count: thisWeekCount }, { count: lastWeekCount }] = await Promise.all([thisWeekQuery, lastWeekQuery]);
 
       setTotalDials(dialsCount || 0);
       setTotalAnswered(answeredData.length);
