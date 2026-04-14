@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Client, SQLMeeting } from "@/lib/supabase-types";
 import { format, startOfWeek, subWeeks } from "date-fns";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import { toZonedTime } from "date-fns-tz";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
@@ -139,8 +140,8 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       setClient(clientData as unknown as Client);
 
       // Build date filters
-      const dateStart = startDate ? startDate + "T00:00:00" : undefined;
-      const dateEnd = endDate ? endDate + "T23:59:59" : undefined;
+      const dateStart = startDate ? melbourneStartOfDay(startDate) : undefined;
+      const dateEnd = endDate ? melbourneEndOfDay(endDate) : undefined;
 
       // Total dials (all activity_log entries for this client in date range)
       let dialsQuery = supabase
