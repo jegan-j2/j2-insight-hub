@@ -334,8 +334,8 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
   const campaign = useMemo<CampaignData | null>(() => {
     if (!client?.target_sqls || !client?.campaign_start || !client?.campaign_end) return null;
 
-    const start = new Date(client.campaign_start);
-    const end = new Date(client.campaign_end);
+    const start = new Date(client.campaign_start + "T00:00:00");
+    const end = new Date(client.campaign_end + "T00:00:00");
     const today = new Date();
 
     const totalWorkingDays = countWorkingDays(start, end);
