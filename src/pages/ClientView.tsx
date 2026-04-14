@@ -81,7 +81,7 @@ const ClientView = () => {
     { label: "Last Month", type: "lastMonth" as FilterType, range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
   ];
 
-  if (loading && !client) {
+  if (loading) {
     return <J2Loader />;
   }
 
