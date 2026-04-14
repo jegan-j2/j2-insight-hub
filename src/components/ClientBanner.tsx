@@ -11,17 +11,10 @@ interface ClientBannerProps {
   dateRange?: DateRange;
 }
 
-const clientGradients: Record<string, string> = {
-  "inxpress": "linear-gradient(135deg, #0891B2 0%, #06B6D4 100%)",
-  "congero": "linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)",
-  "techcorp-solutions": "linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%)",
-  "global-logistics": "linear-gradient(135deg, #059669 0%, #10B981 100%)",
-  "finserve-group": "linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)",
-  "healthcare-plus": "linear-gradient(135deg, #0284C7 0%, #06B6D4 100%)",
-};
+const DEFAULT_GRADIENT = "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)";
 
 export const ClientBanner = ({ clientSlug, clientName, dateRange }: ClientBannerProps) => {
-  const gradient = clientGradients[clientSlug] || clientGradients["inxpress"];
+  const gradient = DEFAULT_GRADIENT;
   const [clientData, setClientData] = useState<{ logo_url: string | null; banner_url: string | null; campaign_start: string | null; campaign_end: string | null; target_sqls: number | null } | null>(null);
 
   useEffect(() => {
