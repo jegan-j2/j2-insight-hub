@@ -329,12 +329,12 @@ const ActivityMonitor = () => {
 
 
   // Historical filters
-  const [histDate, setHistDate] = useState<Date>(new Date());
-  const [timeRange, setTimeRange] = useState<number[]>([9, 17]);
+  const [histDate, setHistDate] = useState<Date>(initialDate);
+  const [timeRange, setTimeRange] = useState<number[]>([initialStartHour, initialEndHour]);
   const [selectedWeekdays, setSelectedWeekdays] = useState<AllDay[]>([...ALL_WEEKDAYS]);
   const [histApplied, setHistApplied] = useState(false);
   const [histSqlMeetings, setHistSqlMeetings] = useState<SqlMeetingRow[]>([]);
-  const [dateMode, setDateMode] = useState<DateMode>("day");
+  const [dateMode, setDateMode] = useState<DateMode>(initialDateMode);
   const pillsRef = useRef<HTMLDivElement>(null);
   const [pillsWidth, setPillsWidth] = useState(0);
 
