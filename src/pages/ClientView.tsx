@@ -58,10 +58,10 @@ const ClientView = () => {
   useEffect(() => {
     if (!campaignRangeInitialized && client?.campaign_start && client?.campaign_end) {
       setDateRange({
-        from: new Date(client.campaign_start),
-        to: new Date(client.campaign_end),
+        from: new Date(client.campaign_start + "T00:00:00"),
+        to: new Date(client.campaign_end + "T00:00:00"),
       });
-      setFilterType(null);
+      setFilterType("campaign");
       setCampaignRangeInitialized(true);
     }
   }, [client, campaignRangeInitialized]);
