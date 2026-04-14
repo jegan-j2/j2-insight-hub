@@ -480,7 +480,7 @@ export const ClientViewMeetingsTable = ({ clientSlug, meetings }: ClientViewMeet
           <div className="overflow-x-auto scrollbar-thin scroll-gradient">
             <Table>
               <TableHeader>
-                <TableRow className="border-border hover:bg-transparent bg-[#f1f5f9] dark:bg-[#1e293b]">
+                <TableRow className="table-header-navy">
                   <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">
                     <SortButton field="bookingDate" label="Booking Date" />
                   </TableHead>
