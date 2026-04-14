@@ -265,10 +265,10 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       ]);
 
       setTotalDials(dialsCount || 0);
-      setTotalAnswered(answeredData?.length || 0);
-      setTotalDMs(dmData?.length || 0);
-      setAnsweredCalls(answeredData || []);
-      setDmConversations(dmData || []);
+      setTotalAnswered(answeredData.length);
+      setTotalDMs(dmData.length);
+      setAnsweredCalls(answeredData);
+      setDmConversations(dmData);
       setMeetings((meetingData || []) as unknown as SQLMeeting[]);
       setCampaignSQLs(campaignSqlCount || 0);
       setMeetingOutcomes(outcomes);
