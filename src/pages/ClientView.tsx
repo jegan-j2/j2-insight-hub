@@ -133,6 +133,28 @@ const ClientView = () => {
               </Button>
             );
           })}
+          {client?.campaign_start && client?.campaign_end && (
+            <Button
+              variant={filterType === "campaign" ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setDateRange({
+                  from: new Date(client.campaign_start + "T00:00:00"),
+                  to: new Date(client.campaign_end + "T00:00:00"),
+                });
+                setFilterType("campaign");
+                setCustomRange(undefined);
+              }}
+              className={cn(
+                "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
+                filterType === "campaign"
+                  ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                  : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              Campaign
+            </Button>
+          )}
           <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
