@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Phone, PhoneCall, TrendingUp, Handshake } from "lucide-react";
+import { Phone, PhoneCall, Percent, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ClientViewData } from "@/hooks/useClientViewData";
@@ -34,7 +34,7 @@ export const ClientKPICards = ({ kpis, onAnsweredClick, onDMsClick }: ClientKPIC
     {
       title: "Answer Rate",
       value: `${kpis.answerRate}%`,
-      icon: TrendingUp,
+      icon: Percent,
       iconColor: "text-indigo-500",
       iconBg: "bg-indigo-500/10",
       clickable: false,
