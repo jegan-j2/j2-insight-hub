@@ -144,6 +144,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       }
 
       // Reset state before fetching
+      setClient(null);
       setCampaignSQLs(0);
       setTotalDials(0);
       setTotalAnswered(0);
