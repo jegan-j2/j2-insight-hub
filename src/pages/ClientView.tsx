@@ -17,7 +17,7 @@ import { J2Loader } from "@/components/J2Loader";
 import { useClientViewData } from "@/hooks/useClientViewData";
 import { supabase } from "@/lib/supabase";
 
-type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "custom";
+type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign" | "custom";
 
 const getGreeting = () => {
   const hour = new Date().getHours();
