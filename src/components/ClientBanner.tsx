@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { usePermissions } from "@/hooks/useUserRole";
 
 interface ClientBannerProps {
   clientSlug: string;
@@ -15,6 +16,7 @@ const DEFAULT_GRADIENT = "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)";
 
 export const ClientBanner = ({ clientSlug, clientName, dateRange }: ClientBannerProps) => {
   const gradient = DEFAULT_GRADIENT;
+  const { isClient } = usePermissions();
   const [clientData, setClientData] = useState<{ logo_url: string | null; banner_url: string | null; campaign_start: string | null; campaign_end: string | null; target_sqls: number | null } | null>(null);
 
   useEffect(() => {
@@ -46,16 +48,18 @@ export const ClientBanner = ({ clientSlug, clientName, dateRange }: ClientBanner
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
       
       {/* Edit Button */}
-      <div className="absolute top-4 right-4 opacity-0 hover:opacity-100 transition-opacity duration-200">
-        <Button
-          variant="secondary"
-          size="sm"
-          className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
-        >
-          <Edit2 className="h-3 w-3 mr-2" />
-          Edit Banner
-        </Button>
-      </div>
+      {!isClient && (
+        <div className="absolute top-4 right-4 opacity-0 hover:opacity-100 transition-opacity duration-200">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+          >
+            <Edit2 className="h-3 w-3 mr-2" />
+            Edit Banner
+          </Button>
+        </div>
+      )}
       
       {/* Client Logo + Info */}
       <div className="absolute bottom-4 left-4 sm:bottom-3 sm:left-3 md:bottom-4 md:left-4 lg:bottom-6 lg:left-8 flex items-end gap-4">
