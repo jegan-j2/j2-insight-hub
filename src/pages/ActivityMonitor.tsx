@@ -143,8 +143,21 @@ const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 
 const ActivityMonitor = () => {
   const isMobile = useIsMobile();
   const { clientFilter, setClientFilter } = useDateFilter();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [mode, setMode] = useState<Mode>("live");
+
+  // Initialise from URL params
+  const initialMode = (searchParams.get("mode") === "historical" ? "historical" : "live") as Mode;
+  const initialDateMode = (["day", "week", "month"].includes(searchParams.get("dateMode") || "") ? searchParams.get("dateMode") : "day") as DateMode;
+  const initialDate = (() => {
+    const d = searchParams.get("date");
+    if (d) { const p = new Date(d + "T00:00:00"); if (!Number.isNaN(p.getTime())) return p; }
+    return new Date();
+  })();
+  const initialStartHour = parseInt(searchParams.get("startHour") || "9", 10);
+  const initialEndHour = parseInt(searchParams.get("endHour") || "17", 10);
+
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [isDark, setIsDark] = useState(
     () => document.documentElement.classList.contains('dark')
   );
