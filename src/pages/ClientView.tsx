@@ -38,6 +38,13 @@ const ClientView = () => {
   const [dmsModalOpen, setDmsModalOpen] = useState(false);
   const [campaignRangeInitialized, setCampaignRangeInitialized] = useState(false);
 
+  // Reset campaign range when switching clients
+  useEffect(() => {
+    setCampaignRangeInitialized(false);
+    setDateRange(undefined);
+    setFilterType(null);
+  }, [clientSlug]);
+
   const { loading, error, client, kpis, campaign, meetings, answeredCalls, dmConversations, meetingOutcomes, nextMeeting, weekActivity, refetch } =
     useClientViewData(clientSlug || "", dateRange);
 
