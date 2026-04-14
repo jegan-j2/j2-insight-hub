@@ -100,11 +100,11 @@ const TeamPerformance = () => {
       const kpiData = [
         ["Metric", "Value"],
         ["Total Dials", teamTotals.dials],
-        ["Total Answered", teamTotals.answered],
-        ["Answer Rate", teamTotals.answerRate + "%"],
+        ["Answered", teamTotals.answered],
+        ["Avg Answer Rate", teamTotals.answerRate + "%"],
         ["DM Conversations", teamTotals.dms],
         ["Total SQLs", teamTotals.sqls],
-        ["Conversion Rate", teamTotals.convRate + "%"],
+        ["Team Conv Rate", teamTotals.convRate + "%"],
         ["Date Range", dateRange?.from && dateRange?.to ? `${format(dateRange.from, "yyyy-MM-dd")} to ${format(dateRange.to, "yyyy-MM-dd")}` : ""],
       ];
       const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
