@@ -16,7 +16,7 @@ export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting, we
   const daysLabel = campaign.daysRemaining === 1 ? "day" : "days";
 
   const nextMeetingValue = nextMeeting
-    ? `${format(new Date(nextMeeting.date), "MMM d, yyyy")} – ${nextMeeting.company}`
+    ? `${format(new Date(nextMeeting.date + "T00:00:00"), "MMM d, yyyy")} – ${nextMeeting.company}`
     : "Coming soon";
 
   return (
