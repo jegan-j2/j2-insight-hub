@@ -65,16 +65,18 @@ const TeamPerformance = () => {
     setExporting(true);
     try {
       const dateStr = format(new Date(), "yyyy-MM-dd");
-      const headers = ["Rank", "Name", "Dials", "Answered", "Answer Rate (%)", "DMs Reached", "SQLs", "Conversion Rate (%)"];
-      const rows = leaderboard.map(sdr => [
+    const headers = ["Rank", "SDR Name", "Client", "Total Dials", "Answered", "Answer Rate (%)", "DM Conversations", "SQLs", "Conversion Rate (%)", "Avg Talk Time (s)"];
+      const rows = leaderboard.filter(sdr => sdr.totalDials > 0).map(sdr => [
         sdr.rank,
         sdr.name,
+        clientNameMap[sdr.clientId] || sdr.clientId || "",
         sdr.totalDials,
         sdr.totalAnswered,
         sdr.answerRate,
         sdr.totalDMs,
         sdr.totalSQLs,
         sdr.conversionRate,
+        sdr.avgDuration,
       ]);
       downloadCSV(toCSV(headers, rows), `j2-team-performance-${dateStr}.csv`);
       toast({ title: "CSV exported successfully", className: "border-[#10b981]" });
@@ -116,22 +118,24 @@ const TeamPerformance = () => {
       });
 
       // Sheet 2 — SDR Leaderboard
-      const sdrHeaders = ["Rank", "Name", "Dials", "Answered", "Answer Rate", "DMs Reached", "SQLs", "Conversion Rate"];
+      const sdrHeaders = ["Rank", "SDR Name", "Client", "Total Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Conversion Rate", "Avg Talk Time (s)"];
       const sdrData = [
         sdrHeaders,
         ...leaderboard.filter(sdr => sdr.totalDials > 0).map(sdr => [
           sdr.rank,
           sdr.name,
+          clientNameMap[sdr.clientId] || sdr.clientId || "",
           sdr.totalDials,
           sdr.totalAnswered,
           sdr.answerRate + "%",
           sdr.totalDMs,
           sdr.totalSQLs,
           sdr.conversionRate + "%",
+          sdr.avgDuration,
         ])
       ];
       const sdrSheet = XLSX.utils.aoa_to_sheet(sdrData);
-      sdrSheet["!cols"] = [{ wch: 8 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 18 }];
+      sdrSheet["!cols"] = [{ wch: 8 }, { wch: 22 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 10 }, { wch: 16 }, { wch: 18 }];
       sdrData.forEach((_, i) => {
         const rowStyle = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
         sdrHeaders.forEach((__, c) => {
