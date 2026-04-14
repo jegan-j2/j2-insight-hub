@@ -123,7 +123,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
   const endDate = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
   const fetchData = useCallback(async () => {
-    if (!clientId) return;
+    if (!clientId || !startDate || !endDate) return;
     try {
       setLoading(true);
       setError(null);
