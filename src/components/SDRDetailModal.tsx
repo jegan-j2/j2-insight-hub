@@ -91,12 +91,17 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
 
   const campaignDates = campaignDatesProp || fetchedCampaignDates;
 
-  const defaultPreset: FilterPreset = parentFilterType === "campaign" && campaignDates ? "campaign" : "thisMonth";
-  const [activePreset, setActivePreset] = useState<FilterPreset>(defaultPreset);
+  const mapParentFilter = (pf?: string): FilterPreset => {
+    if (pf === "campaign" && campaignDates) return "campaign";
+    if (pf === "last7days" || pf === "last30days" || pf === "thisMonth" || pf === "lastMonth") return pf;
+    return "thisMonth";
+  };
+
+  const [activePreset, setActivePreset] = useState<FilterPreset>(mapParentFilter(parentFilterType));
   
   useEffect(() => {
     if (isOpen) {
-      setActivePreset(parentFilterType === "campaign" && campaignDates ? "campaign" : "thisMonth");
+      setActivePreset(mapParentFilter(parentFilterType));
     }
   }, [isOpen, parentFilterType, campaignDates]);
 
