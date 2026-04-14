@@ -196,7 +196,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         .from("sql_meetings")
         .select("*")
         .eq("client_id", clientId)
-        .in("meeting_status", ["pending", "held", "reschedule"])
+        .in("meeting_status", ["pending", "held", "reschedule", "no_show"])
         .order("booking_date", { ascending: false });
       if (clientData?.campaign_start) meetingQuery = meetingQuery.gte("booking_date", clientData.campaign_start);
       if (clientData?.campaign_end) meetingQuery = meetingQuery.lte("booking_date", clientData.campaign_end);
@@ -208,7 +208,7 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
         .from("sql_meetings")
         .select("id", { count: "exact" })
         .eq("client_id", clientId)
-        .in("meeting_status", ["pending", "held", "reschedule"]);
+        .in("meeting_status", ["pending", "held", "reschedule", "no_show"]);
       if (clientData?.campaign_start) campaignSqlQuery = campaignSqlQuery.gte("booking_date", clientData.campaign_start);
       if (clientData?.campaign_end) campaignSqlQuery = campaignSqlQuery.lte("booking_date", clientData.campaign_end);
       const { count: campaignSqlCount } = await campaignSqlQuery;
@@ -281,8 +281,8 @@ export const useClientViewData = (clientId: string, dateRange: DateRange | undef
       const lastWeekStart = format(lastWeekStartDate, "yyyy-MM-dd");
       const lastWeekEnd = format(lastWeekEndDate, "yyyy-MM-dd");
 
-      let thisWeekQuery = supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", weekStart).lte("booking_date", weekEnd);
-      let lastWeekQuery = supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule"]).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd);
+      let thisWeekQuery = supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule", "no_show"]).gte("booking_date", weekStart).lte("booking_date", weekEnd);
+      let lastWeekQuery = supabase.from("sql_meetings").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("meeting_status", ["pending", "held", "reschedule", "no_show"]).gte("booking_date", lastWeekStart).lte("booking_date", lastWeekEnd);
       if (clientData?.campaign_start) {
         thisWeekQuery = thisWeekQuery.gte("booking_date", clientData.campaign_start);
         lastWeekQuery = lastWeekQuery.gte("booking_date", clientData.campaign_start);
