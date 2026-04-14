@@ -16,7 +16,7 @@ import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
-import { exportToPDF } from "@/lib/pdfExport";
+import * as XLSX from "xlsx-js-style";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ const TeamPerformance = () => {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [allClients, setAllClients] = useState<ClientLookup[]>([]);
   const [exporting, setExporting] = useState(false);
-  const [exportingPDF, setExportingPDF] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   
   const { toast } = useToast();
   const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
@@ -83,16 +83,72 @@ const TeamPerformance = () => {
     }
   };
 
-  const handleExportPDF = async () => {
-    setExportingPDF(true);
+  const handleExportExcel = () => {
+    setExportingExcel(true);
     try {
       const dateStr = format(new Date(), "yyyy-MM-dd");
-      await exportToPDF('team-performance-content', `j2-team-performance-${dateStr}.pdf`, 'Team Performance Report');
-      toast({ title: "PDF exported successfully", className: "border-[#10b981]" });
+      const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 11 },
+        fill: { fgColor: { rgb: "0F172A" } }
+      };
+      const evenRow = { fill: { fgColor: { rgb: "F1F5F9" } } };
+      const oddRow = { fill: { fgColor: { rgb: "FFFFFF" } } };
+
+      // Sheet 1 — KPI Summary
+      const kpiData = [
+        ["Metric", "Value"],
+        ["Total Dials", teamTotals.dials],
+        ["Total Answered", teamTotals.answered],
+        ["Answer Rate", teamTotals.answerRate + "%"],
+        ["DM Conversations", teamTotals.dms],
+        ["Total SQLs", teamTotals.sqls],
+        ["Conversion Rate", teamTotals.convRate + "%"],
+        ["Date Range", dateRange?.from && dateRange?.to ? `${format(dateRange.from, "yyyy-MM-dd")} to ${format(dateRange.to, "yyyy-MM-dd")}` : ""],
+      ];
+      const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
+      kpiSheet["!cols"] = [{ wch: 24 }, { wch: 30 }];
+      kpiData.forEach((_, i) => {
+        const rowStyle = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
+        const cell1 = XLSX.utils.encode_cell({ r: i, c: 0 });
+        const cell2 = XLSX.utils.encode_cell({ r: i, c: 1 });
+        if (kpiSheet[cell1]) kpiSheet[cell1].s = rowStyle;
+        if (kpiSheet[cell2]) kpiSheet[cell2].s = rowStyle;
+      });
+
+      // Sheet 2 — SDR Leaderboard
+      const sdrHeaders = ["Rank", "Name", "Dials", "Answered", "Answer Rate", "DMs Reached", "SQLs", "Conversion Rate"];
+      const sdrData = [
+        sdrHeaders,
+        ...leaderboard.filter(sdr => sdr.totalDials > 0).map(sdr => [
+          sdr.rank,
+          sdr.name,
+          sdr.totalDials,
+          sdr.totalAnswered,
+          sdr.answerRate + "%",
+          sdr.totalDMs,
+          sdr.totalSQLs,
+          sdr.conversionRate + "%",
+        ])
+      ];
+      const sdrSheet = XLSX.utils.aoa_to_sheet(sdrData);
+      sdrSheet["!cols"] = [{ wch: 8 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 18 }];
+      sdrData.forEach((_, i) => {
+        const rowStyle = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
+        sdrHeaders.forEach((__, c) => {
+          const cell = XLSX.utils.encode_cell({ r: i, c });
+          if (sdrSheet[cell]) sdrSheet[cell].s = rowStyle;
+        });
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, kpiSheet, "KPI Summary");
+      XLSX.utils.book_append_sheet(wb, sdrSheet, "SDR Leaderboard");
+      XLSX.writeFile(wb, `j2-team-performance-${dateStr}.xlsx`);
+      toast({ title: "Excel exported successfully", className: "border-[#10b981]" });
     } catch (err) {
       toast({ title: "Export failed", description: String(err), variant: "destructive" });
     } finally {
-      setExportingPDF(false);
+      setExportingExcel(false);
     }
   };
 
@@ -278,9 +334,9 @@ const TeamPerformance = () => {
                 <FileText className="h-4 w-4 mr-2" />
                 Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF}>
+              <DropdownMenuItem onClick={handleExportExcel}>
                 <Table2 className="h-4 w-4 mr-2" />
-                Export as PDF
+                Export as Excel
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
