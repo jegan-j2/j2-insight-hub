@@ -567,7 +567,20 @@ const ActivityMonitor = () => {
     }
   }, [mode]);
 
-  // Only subscribe in live mode
+  // Sync state → URL params
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    params.mode = mode;
+    if (mode === "historical") {
+      params.dateMode = dateMode;
+      params.date = format(histDate, "yyyy-MM-dd");
+      params.startHour = String(timeRange[0]);
+      params.endHour = String(timeRange[1]);
+    }
+    setSearchParams(params, { replace: true });
+  }, [mode, dateMode, histDate, timeRange, setSearchParams]);
+
+
   useRealtimeSubscription({
     table: "activity_log",
     onChange: mode === "live" ? fetchLiveData : undefined,
