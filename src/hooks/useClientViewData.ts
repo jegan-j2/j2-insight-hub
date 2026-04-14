@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Client, SQLMeeting } from "@/lib/supabase-types";
 import { format, startOfWeek, subWeeks } from "date-fns";
+import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import { toZonedTime } from "date-fns-tz";
 import { useRealtimeSubscription } from "./useRealtimeSubscription";
 import type { DateRange } from "react-day-picker";
