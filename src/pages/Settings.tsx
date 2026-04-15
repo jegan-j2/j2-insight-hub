@@ -127,13 +127,13 @@ const Settings = () => {
   }, [toast]);
 
   // --- Active clients list for SDR assignment dropdown ---
-  const [clientsList, setClientsList] = useState<{ client_id: string; client_name: string }[]>([]);
+  const [clientsList, setClientsList] = useState<{ client_id: string; client_name: string; logo_url: string | null }[]>([]);
 
   const fetchClientsList = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('client_id, client_name')
+        .select('client_id, client_name, logo_url')
         .or('status.eq.active,status.is.null')
         .order('client_name');
       if (error) throw error;
@@ -1579,9 +1579,9 @@ const Settings = () => {
                       paginatedMembers.map((member) => {
                         const isInactive = member.status === 'inactive';
                         const memberInviteInfo = getMemberInviteInfo(member.email);
-                        const memberClientName = member.client_id && member.role?.toLowerCase() === 'sdr'
-                          ? clientsList.find(c => c.client_id === member.client_id)?.client_name || member.client_id
-                          : '—';
+                        const memberClientData = member.client_id && member.role?.toLowerCase() === 'sdr'
+                          ? clientsList.find(c => c.client_id === member.client_id)
+                          : null;
                         return (
                           <TableRow key={member.id} className={`border-border/50 transition-colors ${isInactive ? 'opacity-50' : ''}`}>
                             <TableCell className="font-medium text-foreground">
@@ -1595,7 +1595,22 @@ const Settings = () => {
                             </TableCell>
                             {!isMobile && <TableCell className="text-muted-foreground">{member.email}</TableCell>}
                             <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
-                            {!isMobile && <TableCell className="text-muted-foreground">{memberClientName}</TableCell>}
+                            {!isMobile && (
+                              <TableCell className="text-muted-foreground">
+                                {memberClientData ? (
+                                  <span className="flex items-center gap-1.5">
+                                    {memberClientData.logo_url ? (
+                                      <img src={memberClientData.logo_url} alt="" className="w-5 h-5 rounded-full object-contain flex-shrink-0" />
+                                    ) : (
+                                      <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                                        {memberClientData.client_name.charAt(0)}
+                                      </span>
+                                    )}
+                                    <span className="truncate">{memberClientData.client_name}</span>
+                                  </span>
+                                ) : '—'}
+                              </TableCell>
+                            )}
                             <TableCell>
                               <Badge className={
                                 memberInviteInfo.status === 'active' 
