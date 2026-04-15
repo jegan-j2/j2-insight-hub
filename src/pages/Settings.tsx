@@ -722,6 +722,7 @@ const Settings = () => {
           .from('clients')
           .update({
             client_name: clientForm.client_name,
+            email: clientForm.email.trim() || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
@@ -730,6 +731,11 @@ const Settings = () => {
           })
           .eq('id', editingClient.id);
         if (error) throw error;
+        // Sync user access if email changed
+        if (editingClient.email && clientForm.email && editingClient.email !== clientForm.email.trim()) {
+          await supabase.rpc('sync_user_role', { p_email: editingClient.email, p_role: 'client_inactive', p_client_id: editingClient.client_id });
+          await supabase.rpc('sync_user_role', { p_email: clientForm.email.trim(), p_role: 'client', p_client_id: editingClient.client_id });
+        }
         toast({ title: "Client updated", description: `${clientForm.client_name} has been updated.`, className: "border-[#10b981] text-[#10b981]" });
       } else {
         const { data: existing } = await supabase
@@ -747,6 +753,7 @@ const Settings = () => {
           .insert({
             client_name: clientForm.client_name,
             client_id: slug,
+            email: clientForm.email.trim() || null,
             campaign_start: clientForm.campaign_start || null,
             campaign_end: clientForm.campaign_end || null,
             target_sqls: clientForm.target_sqls ? parseInt(clientForm.target_sqls) : null,
@@ -1124,6 +1131,18 @@ const Settings = () => {
                           <p className="text-xs text-muted-foreground">Auto-generated, cannot be changed</p>
                         </div>
                       )}
+                      <div className="grid gap-2">
+                        <Label htmlFor="client-email">Client Login Email</Label>
+                        <Input
+                          id="client-email"
+                          type="email"
+                          placeholder="e.g., client@company.com"
+                          value={clientForm.email}
+                          onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                          className="bg-background/50 border-border"
+                        />
+                        <p className="text-xs text-muted-foreground">Email the client uses to log into the dashboard</p>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="campaign-start">Campaign Start</Label>
