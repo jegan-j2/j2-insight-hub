@@ -739,6 +739,8 @@ const Settings = () => {
         .update({ status: 'inactive' })
         .eq('id', client.id);
       if (error) throw error;
+      // Revoke portal access for all client-role users linked to this client
+      await supabase.from('user_roles').delete().eq('client_id', client.client_id).eq('role', 'client');
       toast({ title: "Client deactivated", description: `Toggle 'Show inactive clients' to view ${client.client_name}.`, className: "border-orange-500" });
       fetchClients();
     } catch (error: any) {
@@ -849,6 +851,8 @@ const Settings = () => {
         .update({ status: 'inactive' })
         .eq('id', member.id);
       if (error) throw error;
+      // Revoke user_roles access by email
+      await supabase.rpc('revoke_user_access', { p_email: member.email });
       toast({ title: "Team member deactivated", description: `Toggle 'Show inactive team members' to view ${member.sdr_name}.`, className: "border-orange-500" });
       fetchTeamMembers();
     } catch (error: any) {
