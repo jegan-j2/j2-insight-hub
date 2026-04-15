@@ -841,6 +841,16 @@ const Settings = () => {
 
         toast({ title: "Team member updated", description: `${memberForm.sdr_name} has been updated.`, className: "border-[#10b981] text-[#10b981]" });
       } else {
+        const { data: existingEmail } = await supabase
+          .from('team_members')
+          .select('email')
+          .eq('email', memberForm.email.trim().toLowerCase())
+          .maybeSingle();
+        if (existingEmail) {
+          toast({ title: "Email already exists", description: `${memberForm.email} is already registered. Use a different email address.`, variant: "destructive" });
+          setIsSavingMember(false);
+          return;
+        }
         const { error } = await supabase
           .from('team_members')
           .insert({
