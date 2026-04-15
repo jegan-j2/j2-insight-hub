@@ -157,6 +157,10 @@ const Login = () => {
             )}
           </Button>
 
+          {loginError && (
+            <p className="text-sm text-rose-500 text-center mt-2">{loginError}</p>
+          )}
+
           <div className="text-center mt-4">
             <Link
               to="/forgot-password"
