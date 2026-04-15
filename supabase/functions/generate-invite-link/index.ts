@@ -27,10 +27,10 @@ const buildEmailHtml = (inviteLink: string, email: string) => {
       Click below to set your password and get started.
     </p>
     <a href="${inviteLink}" 
-       style="display:block; background:#3b82f6; color:white; text-align:center;
-              padding:14px; border-radius:8px; text-decoration:none; 
-              font-weight:600; font-size:15px;">
-      Accept Invitation
+       style="display:block; background:#0F172A; color:white; text-align:center;
+               padding:14px; border-radius:8px; text-decoration:none; 
+               font-weight:600; font-size:15px;">
+       Accept Invitation
     </a>
     <p style="color:#94a3b8; font-size:12px; text-align:center; margin-top:24px;">
       This link expires in 48 hours. If you didn't expect this email, ignore it.
