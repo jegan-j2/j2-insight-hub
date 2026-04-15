@@ -434,6 +434,7 @@ const Settings = () => {
 
   // --- Loading states ---
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [isSendingTestSlack, setIsSendingTestSlack] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
@@ -910,6 +911,8 @@ const Settings = () => {
 
       if (error) throw error;
       toast({ title: "Notification settings saved", description: "Your notification preferences have been updated.", className: "border-[#10b981] text-[#10b981]" });
+      setLastSaved(new Date());
+      setTimeout(() => setLastSaved(null), 3000);
     } catch (error: any) {
       console.error('Error saving notification settings:', error);
       toast({ title: "Error saving settings", description: getSafeErrorMessage(error), variant: "destructive" });
@@ -1969,7 +1972,12 @@ const Settings = () => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 mt-4">
+               <div className="flex justify-end items-center gap-3 mt-4">
+                {lastSaved && (
+                  <span className="text-xs text-[#10b981] flex items-center gap-1 animate-fade-in">
+                    <CheckCircle className="h-3.5 w-3.5" /> Saved
+                  </span>
+                )}
                 <Button variant="outline" onClick={handleSendTestEmail} className="gap-2 border-border dark:border-white/20 dark:text-white" disabled={reportFrequency === "disabled" || isSendingTestEmail || !canEditSettings}>
                   {isSendingTestEmail ? (<><Loader2 className="h-4 w-4 animate-spin" />Sending...</>) : (<><Send className="h-4 w-4" />Send Test Email</>)}
                 </Button>
@@ -2060,7 +2068,12 @@ const Settings = () => {
             </div>
 
             {/* Save Slack Settings */}
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end items-center gap-3 pt-2">
+              {lastSaved && (
+                <span className="text-xs text-[#10b981] flex items-center gap-1 animate-fade-in">
+                  <CheckCircle className="h-3.5 w-3.5" /> Saved
+                </span>
+              )}
               <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
                 {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
               </Button>
@@ -2142,7 +2155,12 @@ const Settings = () => {
               </p>
             )}
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end items-center gap-3 pt-2">
+              {lastSaved && (
+                <span className="text-xs text-[#10b981] flex items-center gap-1 animate-fade-in">
+                  <CheckCircle className="h-3.5 w-3.5" /> Saved
+                </span>
+              )}
               <Button onClick={handleSaveNotifications} className="gap-2 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100" disabled={isSavingNotifications || !canEditSettings}>
                 {isSavingNotifications ? (<><Loader2 className="h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4" />{canEditSettings ? 'Save Settings' : '🔒 Admin Access Required'}</>)}
               </Button>
