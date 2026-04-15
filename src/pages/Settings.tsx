@@ -1722,13 +1722,18 @@ const Settings = () => {
                                     </TooltipTrigger>
                                     <TooltipContent>Edit</TooltipContent>
                                   </Tooltip>
-                                  {(memberInviteInfo.status === 'no_invite' || memberInviteInfo.status === 'expired') && member.email && (
+                                  {member.email && (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className={`h-8 w-8 ${memberInviteInfo.status === 'expired' ? 'text-rose-500 hover:text-rose-400 hover:bg-rose-500/10' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'}`}
+                                          className={`h-8 w-8 ${
+                                            memberInviteInfo.status === 'expired' ? 'text-rose-500 hover:text-rose-400 hover:bg-rose-500/10' :
+                                            memberInviteInfo.status === 'pending' ? 'text-blue-500 hover:text-blue-400 hover:bg-blue-500/10' :
+                                            memberInviteInfo.status === 'active' ? 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10' :
+                                            'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'
+                                          }`}
                                           onClick={() => handleSendInvite(member.email, member.role || 'sdr', member.sdr_name)}
                                           disabled={memberInviteStatus[member.email] === 'sending'}
                                           aria-label={`Send invite to ${member.sdr_name}`}
@@ -1736,23 +1741,7 @@ const Settings = () => {
                                           {memberInviteStatus[member.email] === 'sending' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                                         </Button>
                                       </TooltipTrigger>
-                                      <TooltipContent>Send Invite</TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {memberInviteInfo.status === 'pending' && member.email && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
-                                          onClick={() => handleResendInvite(member.email, 'member', member.sdr_name)}
-                                          aria-label={`Resend invite to ${member.sdr_name}`}
-                                        >
-                                          <RefreshCw className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Resend Invite</TooltipContent>
+                                      <TooltipContent>{memberInviteInfo.status === 'no_invite' ? 'Send Invite' : 'Resend Invite'}</TooltipContent>
                                     </Tooltip>
                                   )}
                                   <div className="mx-0.5" style={{ width: '1px', height: '20px', backgroundColor: '#e2e8f0', flexShrink: 0 }} />
