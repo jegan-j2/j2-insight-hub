@@ -224,8 +224,10 @@ const Settings = () => {
   const [showInactiveClients, setShowInactiveClients] = useState(false);
   const [showInactiveMembers, setShowInactiveMembers] = useState(false);
   const [teamSearch, setTeamSearch] = useState('');
+  const [clientSearch, setClientSearch] = useState('');
 
-  const filteredClients = showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status);
+  const filteredClients = (showInactiveClients ? clients : clients.filter(c => c.status === 'active' || !c.status))
+    .filter(c => !clientSearch.trim() || c.client_name.toLowerCase().includes(clientSearch.toLowerCase()));
   const filteredMembers = teamMembers.filter(member => {
     const matchesActive = showInactiveMembers
       ? true
@@ -767,7 +769,9 @@ const Settings = () => {
       if (error) throw error;
       // Revoke portal access for all client-role users linked to this client
       await supabase.from('user_roles').delete().eq('client_id', client.client_id).eq('role', 'client');
-      toast({ title: "Client deactivated", description: `Toggle 'Show inactive clients' to view ${client.client_name}.`, className: "border-orange-500" });
+      // Also deactivate all SDRs for this client
+      await supabase.from('team_members').update({ status: 'inactive' }).eq('client_id', client.client_id).eq('role', 'SDR');
+      toast({ title: "Client deactivated", description: `${client.client_name} and all assigned SDRs have been deactivated.`, className: "border-orange-500" });
       fetchClients();
     } catch (error: any) {
       console.error('Error deactivating client:', error);
@@ -1056,7 +1060,17 @@ const Settings = () => {
                 <CardTitle className="text-left">Client Management</CardTitle>
                 <CardDescription className="text-left">Add, edit, or remove client accounts</CardDescription>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search clients..."
+                    value={clientSearch}
+                    onChange={e => setClientSearch(e.target.value)}
+                    className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 dark:focus:ring-white/20 w-64"
+                  />
+                </div>
                 <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
                   {canEditClients ? (
                     <DialogTrigger asChild>
