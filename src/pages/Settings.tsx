@@ -495,7 +495,7 @@ const Settings = () => {
   // --- Team dialog ---
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMemberRow | null>(null);
-  const [memberForm, setMemberForm] = useState({ sdr_name: "", email: "", role: "", profile_photo_url: "", client_id: "" });
+  const [memberForm, setMemberForm] = useState({ sdr_name: "", email: "", role: "", profile_photo_url: "", client_id: "", hubspot_owner_id: "" });
   const [isSavingMember, setIsSavingMember] = useState(false);
   const [uploadingMemberPhoto, setUploadingMemberPhoto] = useState(false);
   const memberPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -752,13 +752,13 @@ const Settings = () => {
   // --- Team CRUD ---
   const handleAddMember = () => {
     setEditingMember(null);
-    setMemberForm({ sdr_name: "", email: "", role: "", profile_photo_url: "", client_id: "" });
+    setMemberForm({ sdr_name: "", email: "", role: "", profile_photo_url: "", client_id: "", hubspot_owner_id: "" });
     setIsTeamDialogOpen(true);
   };
 
   const handleEditMember = (member: TeamMemberRow) => {
     setEditingMember(member);
-    setMemberForm({ sdr_name: member.sdr_name, email: member.email, role: member.role || "", profile_photo_url: member.profile_photo_url || "", client_id: member.client_id || "" });
+    setMemberForm({ sdr_name: member.sdr_name, email: member.email, role: member.role || "", profile_photo_url: member.profile_photo_url || "", client_id: member.client_id || "", hubspot_owner_id: (member as any).hubspot_owner_id || "" });
     setIsTeamDialogOpen(true);
   };
 
@@ -785,12 +785,13 @@ const Settings = () => {
       if (editingMember) {
         const { error } = await supabase
           .from('team_members')
-          .update({
-            sdr_name: memberForm.sdr_name,
-            email: memberForm.email,
-            role: memberForm.role,
-            client_id: memberForm.client_id || null,
-          })
+           .update({
+             sdr_name: memberForm.sdr_name,
+             email: memberForm.email,
+             role: memberForm.role,
+             client_id: memberForm.client_id || null,
+             hubspot_owner_id: memberForm.hubspot_owner_id || null,
+           })
           .eq('id', editingMember.id);
         if (error) throw error;
 
@@ -1497,6 +1498,19 @@ const Settings = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                        </div>
+                      )}
+                      {editingMember && memberForm.role === 'SDR' && (
+                        <div className="grid gap-2">
+                          <Label htmlFor="member-hubspot-id">HubSpot Owner ID</Label>
+                          <Input
+                            id="member-hubspot-id"
+                            placeholder="e.g., 75246504"
+                            value={memberForm.hubspot_owner_id}
+                            onChange={(e) => setMemberForm({ ...memberForm, hubspot_owner_id: e.target.value })}
+                            className="bg-background/50 border-border"
+                          />
+                          <p className="text-xs text-muted-foreground">Found in HubSpot → Settings → Users. Required for call tracking.</p>
                         </div>
                       )}
                     </div>
