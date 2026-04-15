@@ -701,6 +701,11 @@ const Settings = () => {
       toast({ title: "Invalid target", description: "Target SQLs must be 0-100,000.", variant: "destructive" });
       return;
     }
+    if (clientForm.campaign_start && clientForm.campaign_end && 
+        clientForm.campaign_end <= clientForm.campaign_start) {
+      toast({ title: "Invalid campaign dates", description: "Campaign end date must be after start date.", variant: "destructive" });
+      return;
+    }
     setIsSavingClient(true);
     try {
       const slug = editingClient ? editingClient.client_id : name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50);
