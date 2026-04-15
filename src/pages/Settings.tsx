@@ -394,6 +394,16 @@ const Settings = () => {
         .update({ status: 'active' })
         .eq('id', member.id);
       if (error) throw error;
+      // Restore user_roles access
+      try {
+        await supabase.rpc('sync_user_role', {
+          p_email: member.email,
+          p_role: (member.role || 'sdr').toLowerCase(),
+          p_client_id: member.client_id || null
+        });
+      } catch (syncErr) {
+        console.error('Error syncing user_roles on reactivate:', syncErr);
+      }
       toast({ title: "Team member reactivated", description: `${member.sdr_name} is now active.`, className: "border-[#10b981] text-[#10b981]" });
       fetchTeamMembers();
     } catch (error: any) {
@@ -406,7 +416,7 @@ const Settings = () => {
   const [sendTime, setSendTime] = useState("4:00 PM");
   const [sendDay, setSendDay] = useState("Monday");
   const [sendDate, setSendDate] = useState("1st of month");
-  const [reportEmails, setReportEmails] = useState("admin@j2group.com.au");
+  const [reportEmails, setReportEmails] = useState("");
   const [slackWebhook, setSlackWebhook] = useState("");
   const [sendDays, setSendDays] = useState<string[]>(["monday", "tuesday", "wednesday", "thursday", "friday"]);
   const [reportContent, setReportContent] = useState({
@@ -450,7 +460,7 @@ const Settings = () => {
         setSendTime(data.send_time || "4:00 PM");
         setSendDay(data.send_day || "Monday");
         setSendDate(data.send_date || "1st of month");
-        setReportEmails(data.report_emails || "admin@j2group.com.au");
+        setReportEmails(data.report_emails || "");
         setSlackWebhook(data.slack_webhook_url || "");
         if (data.report_send_days && Array.isArray(data.report_send_days)) {
           setSendDays(data.report_send_days as string[]);
@@ -1446,21 +1456,32 @@ const Settings = () => {
                             className="bg-background/50 border-border flex-1"
                           />
                           {memberForm.email && isValidEmail(memberForm.email) && editingMember && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSendInvite(memberForm.email, 'sdr', memberForm.sdr_name)}
-                              disabled={memberInviteStatus[memberForm.email] === 'sending'}
-                              className="gap-1.5 shrink-0 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white"
-                            >
-                              {memberInviteStatus[memberForm.email] === 'sending' ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : memberInviteStatus[memberForm.email] === 'sent' ? (
-                                <>✓ Invite Sent</>
-                              ) : (
-                                <><Mail className="h-3.5 w-3.5" />Send Invite</>
-                              )}
-                            </Button>
+                            (() => {
+                              const emailChanged = memberForm.email !== editingMember.email;
+                              const btn = (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSendInvite(memberForm.email, 'sdr', memberForm.sdr_name)}
+                                  disabled={memberInviteStatus[memberForm.email] === 'sending' || emailChanged}
+                                  className="gap-1.5 shrink-0 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-[#3b82f6] dark:hover:bg-[#2563eb] dark:text-white"
+                                >
+                                  {memberInviteStatus[memberForm.email] === 'sending' ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : memberInviteStatus[memberForm.email] === 'sent' ? (
+                                    <>✓ Invite Sent</>
+                                  ) : (
+                                    <><Mail className="h-3.5 w-3.5" />Send Invite</>
+                                  )}
+                                </Button>
+                              );
+                              return emailChanged ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                                  <TooltipContent>Save member first to update email before sending invite.</TooltipContent>
+                                </Tooltip>
+                              ) : btn;
+                            })()
                           )}
                         </div>
                         {memberInviteStatus[memberForm.email] === 'sent' && (
