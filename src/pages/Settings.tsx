@@ -331,25 +331,40 @@ const Settings = () => {
   };
   const getInitials = (name: string) => name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
+  const countWorkingDays = (start: Date, end: Date): number => {
+    let count = 0;
+    const current = new Date(start);
+    while (current <= end) {
+      const day = current.getDay();
+      if (day !== 0 && day !== 6) count++;
+      current.setDate(current.getDate() + 1);
+    }
+    return count;
+  };
+
   const getCampaignStatus = (client: ClientRow) => {
     if (client.status === 'inactive') return { label: "Inactive", color: "bg-muted/50 text-muted-foreground border-border" };
     if (!client.campaign_start || !client.campaign_end) return null;
     const now = new Date(); now.setHours(0,0,0,0);
-    const start = new Date(client.campaign_start); start.setHours(0,0,0,0);
-    const end = new Date(client.campaign_end); end.setHours(0,0,0,0);
+    const start = new Date(client.campaign_start + "T00:00:00"); start.setHours(0,0,0,0);
+    const end = new Date(client.campaign_end + "T00:00:00"); end.setHours(0,0,0,0);
     if (now < start) return { label: "Not Started", color: "bg-muted/50 text-muted-foreground border-border" };
     if (now > end) return { label: "Expired", color: "bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30" };
-    const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000*60*60*24));
-    if (daysLeft <= 14) return { label: "Ending Soon", color: "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30", dot: "bg-amber-500" };
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const workingDaysLeft = countWorkingDays(tomorrow, end);
+    if (workingDaysLeft <= 7) return { label: "Ending Soon", color: "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30", dot: "bg-amber-500" };
     return { label: "Active", color: "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30", dot: "bg-emerald-500" };
   };
 
   const getDaysLeft = (client: ClientRow) => {
     if (!client.campaign_start || !client.campaign_end) return "—";
-    const now = new Date(); now.setHours(0,0,0,0);
-    const end = new Date(client.campaign_end); end.setHours(0,0,0,0);
+    const now = new Date();
+    const end = new Date(client.campaign_end + "T00:00:00");
     if (now > end) return "Ended";
-    const days = Math.ceil((end.getTime() - now.getTime()) / (1000*60*60*24));
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const days = countWorkingDays(tomorrow, end);
     return days === 1 ? "1 day" : `${days} days`;
   };
 
@@ -1246,7 +1261,7 @@ const Settings = () => {
                             </TableCell>
 
                             {/* DAYS LEFT */}
-                            {!isMobile && <TableCell className="text-sm text-muted-foreground">{daysLeft}</TableCell>}
+                            {!isMobile && <TableCell className="text-sm text-muted-foreground text-right">{daysLeft}</TableCell>}
 
                             {/* ACTIONS */}
                             <TableCell className="text-center">
