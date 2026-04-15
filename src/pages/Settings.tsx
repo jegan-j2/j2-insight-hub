@@ -724,6 +724,16 @@ const Settings = () => {
         if (error) throw error;
         toast({ title: "Client updated", description: `${clientForm.client_name} has been updated.`, className: "border-[#10b981] text-[#10b981]" });
       } else {
+        const { data: existing } = await supabase
+          .from('clients')
+          .select('client_id')
+          .eq('client_id', slug)
+          .maybeSingle();
+        if (existing) {
+          toast({ title: "Client already exists", description: `A client with ID "${slug}" already exists. Please use a different name.`, variant: "destructive" });
+          setIsSavingClient(false);
+          return;
+        }
         const { error } = await supabase
           .from('clients')
           .insert({
