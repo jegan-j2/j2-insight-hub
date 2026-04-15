@@ -107,6 +107,7 @@ const Login = () => {
             <img src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT} alt="J2 Group" className="w-20 h-20 rounded-full object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-[#0f172a] dark:text-[#f1f5f9]">J2 Insights Dashboard</h1>
+          <p className="text-sm text-[#94a3b8] dark:text-[rgba(255,255,255,0.35)]">Sign in with the credentials from your invite email.</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
