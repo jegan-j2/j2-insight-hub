@@ -1053,7 +1053,11 @@ const Settings = () => {
         <p className="text-muted-foreground">Manage your dashboard configuration and preferences</p>
       </div>
 
-      <Tabs defaultValue="clients" className="space-y-6">
+      const validTabs = ['clients', 'team', 'notifications'];
+      const tabParam = searchParams.get('tab');
+      const defaultTab = validTabs.includes(tabParam || '') ? tabParam! : 'clients';
+
+      <Tabs value={defaultTab} onValueChange={(val) => setSearchParams({ tab: val }, { replace: true })} className="space-y-6">
         <TabsList className="bg-card border border-border overflow-x-auto w-full justify-start">
           <TabsTrigger value="clients" className="gap-2 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">
             <Building2 className="h-4 w-4" />
