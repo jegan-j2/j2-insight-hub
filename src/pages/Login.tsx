@@ -62,6 +62,7 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setLoginError("");
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -70,11 +71,18 @@ const Login = () => {
       });
 
       if (error) {
-        toast({
-          title: "Login failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        const msg = error.message.toLowerCase();
+        if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials')) {
+          // Supabase doesn't distinguish wrong password vs unknown email in the same way,
+          // but "Invalid login credentials" covers both cases
+          setLoginError("Incorrect email or password. Please try again.");
+        } else if (msg.includes('email not confirmed')) {
+          setLoginError("Please confirm your email before signing in.");
+        } else if (msg.includes('too many requests') || msg.includes('rate limit')) {
+          setLoginError("Too many attempts. Please wait a few minutes.");
+        } else {
+          setLoginError(error.message);
+        }
         return;
       }
 
@@ -84,11 +92,7 @@ const Login = () => {
       await redirectBasedOnRole();
     } catch (err) {
       console.error("Login error:", err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      setLoginError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
