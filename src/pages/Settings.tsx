@@ -806,6 +806,11 @@ const Settings = () => {
       toast({ title: "Role required", description: "Please select a role.", variant: "destructive" });
       return;
     }
+    if (memberForm.role === 'SDR' && memberForm.hubspot_owner_id && 
+        !/^\d+$/.test(memberForm.hubspot_owner_id.trim())) {
+      toast({ title: "Invalid HubSpot Owner ID", description: "HubSpot Owner ID must be numeric only (e.g. 75246504).", variant: "destructive" });
+      return;
+    }
     setIsSavingMember(true);
     try {
       if (editingMember) {
