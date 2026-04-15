@@ -20,10 +20,11 @@ import { supabase } from "@/lib/supabase";
 type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign" | "custom";
 
 const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour <= 11) return "Good morning";
-  if (hour >= 12 && hour <= 16) return "Good afternoon";
-  if (hour >= 17 && hour <= 20) return "Good evening";
+  const hour = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne', hour: 'numeric', hour12: false });
+  const h = parseInt(hour);
+  if (h >= 5 && h <= 11) return "Good morning";
+  if (h >= 12 && h <= 16) return "Good afternoon";
+  if (h >= 17 && h <= 20) return "Good evening";
   return "Welcome back";
 };
 
@@ -72,10 +73,11 @@ const ClientView = () => {
       if (!user) return;
       const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
       if (fullName && typeof fullName === "string") {
-        setFirstName(fullName.split(" ")[0]);
+        const raw = fullName.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
+        if (raw) setFirstName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
       } else if (user.email) {
-        const local = user.email.split("@")[0];
-        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
+        const local = user.email.split("@")[0]?.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
+        if (local) setFirstName(local.charAt(0).toUpperCase() + local.slice(1).toLowerCase());
       }
     };
     getUser();
