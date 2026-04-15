@@ -382,6 +382,10 @@ const Settings = () => {
         .update({ status: 'active' })
         .eq('id', client.id);
       if (error) throw error;
+      // Restore client portal access
+      if (client.email) {
+        await supabase.rpc('sync_user_role', { p_email: client.email, p_role: 'client', p_client_id: client.client_id });
+      }
       toast({ title: "Client reactivated", description: `${client.client_name} is now active.`, className: "border-[#10b981] text-[#10b981]" });
       fetchClients();
     } catch (error: any) {
@@ -398,9 +402,11 @@ const Settings = () => {
       if (error) throw error;
       // Restore user_roles access
       try {
+        const roleMap: Record<string, string> = { 'Admin': 'admin', 'Manager': 'manager', 'SDR': 'sdr' };
+        const rlsRole = roleMap[member.role || ''] || 'sdr';
         await supabase.rpc('sync_user_role', {
           p_email: member.email,
-          p_role: (member.role || 'sdr').toLowerCase(),
+          p_role: rlsRole,
           p_client_id: member.client_id || null
         });
       } catch (syncErr) {
@@ -769,6 +775,10 @@ const Settings = () => {
       if (error) throw error;
       // Revoke portal access for all client-role users linked to this client
       await supabase.from('user_roles').delete().eq('client_id', client.client_id).eq('role', 'client');
+      // Sync user role to inactive as fallback
+      if (client.email) {
+        await supabase.rpc('sync_user_role', { p_email: client.email, p_role: 'client_inactive', p_client_id: client.client_id });
+      }
       // Also deactivate all SDRs for this client
       await supabase.from('team_members').update({ status: 'inactive' }).eq('client_id', client.client_id).eq('role', 'SDR');
       toast({ title: "Client deactivated", description: `${client.client_name} and all assigned SDRs have been deactivated.`, className: "border-orange-500" });
@@ -899,6 +909,8 @@ const Settings = () => {
       if (error) throw error;
       // Revoke user_roles access by email
       await supabase.rpc('revoke_user_access', { p_email: member.email });
+      // Sync user role to inactive as fallback
+      await supabase.rpc('sync_user_role', { p_email: member.email, p_role: 'inactive', p_client_id: member.client_id || null });
       toast({ title: "Team member deactivated", description: `Toggle 'Show inactive team members' to view ${member.sdr_name}.`, className: "border-orange-500" });
       fetchTeamMembers();
     } catch (error: any) {
