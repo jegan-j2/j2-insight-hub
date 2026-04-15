@@ -1708,6 +1708,23 @@ const Settings = () => {
                                     </TooltipTrigger>
                                     <TooltipContent>Edit</TooltipContent>
                                   </Tooltip>
+                                  {(memberInviteInfo.status === 'no_invite' || memberInviteInfo.status === 'expired') && member.email && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className={`h-8 w-8 ${memberInviteInfo.status === 'expired' ? 'text-rose-500 hover:text-rose-400 hover:bg-rose-500/10' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'}`}
+                                          onClick={() => handleSendInvite(member.email, member.role || 'sdr', member.sdr_name)}
+                                          disabled={memberInviteStatus[member.email] === 'sending'}
+                                          aria-label={`Send invite to ${member.sdr_name}`}
+                                        >
+                                          {memberInviteStatus[member.email] === 'sending' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Send Invite</TooltipContent>
+                                    </Tooltip>
+                                  )}
                                   {memberInviteInfo.status === 'pending' && member.email && (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
