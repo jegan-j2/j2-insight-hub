@@ -221,11 +221,11 @@ const TeamPerformance = () => {
       if (!user) return;
       const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
       if (fullName && typeof fullName === "string") {
-        const raw = fullName.split(/[\s\-]/)[0];
-        setFirstName(raw.charAt(0).toUpperCase() + raw.slice(1));
+        const raw = fullName.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
+        if (raw) setFirstName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
       } else if (user.email) {
-        const local = user.email.split("@")[0];
-        setFirstName(local.charAt(0).toUpperCase() + local.slice(1));
+        const local = user.email.split("@")[0]?.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
+        if (local) setFirstName(local.charAt(0).toUpperCase() + local.slice(1).toLowerCase());
       }
     };
     getUser();
