@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-import { Clock, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface HourlyBreakdownPanelProps {
