@@ -359,13 +359,13 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-border/50 bg-[#f1f5f9] dark:bg-[#1e293b]">
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Contact</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Job Title</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Type</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Last Login</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9]">Dashboard Access</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-[#0f172a] dark:text-[#f1f5f9] text-left">Actions</TableHead>
+                <TableRow className="border-border/50 bg-[#0F172A] dark:bg-[#0F172A]">
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Contact</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Job Title</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Type</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Last Login</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Dashboard Access</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px] text-left">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
