@@ -132,11 +132,41 @@ export const useMeetingUpdate = () => {
     }
   }
 
+  const reinstateMeeting = async (meetingId: string) => {
+    try {
+      setUpdating(meetingId)
+      const user = await getCurrentUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { error } = await supabase
+        .from('sql_meetings')
+        .update({
+          meeting_status: 'pending',
+          meeting_held: false,
+          edited_in_dashboard: true,
+          last_edited_by: user.email,
+          last_edited_at: new Date().toISOString()
+        })
+        .eq('id', meetingId)
+
+      if (error) throw error
+      toast({ title: 'Meeting reinstated and protected from sync.', className: 'border-[#10b981] text-[#10b981]', duration: 3000 })
+      return true
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('Error reinstating meeting:', error)
+      toast({ title: 'Error', description: getSafeErrorMessage(error), variant: 'destructive', duration: 3000 })
+      return false
+    } finally {
+      setUpdating(null)
+    }
+  }
+
   return {
     updateMeetingHeld,
     updateMeetingStatus,
     updateClientNotes,
     createRescheduleRow,
+    reinstateMeeting,
     updating
   }
 }
