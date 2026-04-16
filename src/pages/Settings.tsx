@@ -202,7 +202,7 @@ const Settings = () => {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('generate-invite-link', {
-        body: { email, redirectTo: `${window.location.origin}/reset-password` }
+        body: { email, role, client_id: clientId }
       });
 
       if (fnError) throw fnError;
