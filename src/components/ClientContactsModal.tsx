@@ -248,7 +248,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     setSendingInviteId(contact.id);
     try {
       const { data, error } = await supabase.functions.invoke("generate-invite-link", {
-        body: { email: contact.email },
+        body: { email: contact.email, role: "client", client_id: client.client_id },
       });
       if (error) throw error;
       // Optimistically update portal_access
