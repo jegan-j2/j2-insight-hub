@@ -768,6 +768,26 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+
+    <AlertDialog open={!!reinstateTarget} onOpenChange={(open) => { if (!open) setReinstateTarget(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Reinstate this meeting?</AlertDialogTitle>
+          <AlertDialogDescription>
+            It will be marked as pending and protected from HubSpot sync.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+            onClick={() => reinstateTarget && handleReinstate(reinstateTarget)}
+          >
+            Reinstate
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
