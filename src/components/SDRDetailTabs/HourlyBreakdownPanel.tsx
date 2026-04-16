@@ -277,18 +277,18 @@ export const HourlyBreakdownPanel = ({
               </p>
               <p
                 className="text-lg font-bold mt-0.5"
-                style={{ color: displaySqls > 0 ? "#059669" : undefined }}
+                style={{ color: (selectedHourData && selectedHourData.sqls > 0) ? "#059669" : undefined }}
               >
                 {displaySqls > 0 ? `🎯 ${displaySqls}` : "0"}
               </p>
             </div>
 
-            {/* Stat 3: Answer Rate */}
+            {/* Stat 3: DM Conv. Rate */}
             <div className="flex-1 text-center px-2">
               <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-                Answer Rate
+                DM Conv. Rate
               </p>
-              <p className="text-lg font-bold text-foreground mt-0.5">{answerRate}%</p>
+              <p className="text-lg font-bold text-foreground mt-0.5">{dmConvRate}%</p>
             </div>
 
             {/* Stat 4: DM Conversations */}
