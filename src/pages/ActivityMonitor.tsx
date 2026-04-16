@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { J2Loader } from "@/components/J2Loader";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -1353,8 +1354,8 @@ const ActivityMonitor = () => {
       {/* SDR Table */}
       <Card className="bg-card/50 backdrop-blur-sm border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <CardTitle>SDR Performance</CardTitle>
+          <CardTitle>SDR Performance</CardTitle>
+          <div className="flex items-center gap-3">
             {(() => {
               const activeMembers = allTeamMembers.filter(m => m.status === "active" && (!activeClientFilter || m.client_id === activeClientFilter));
               const totalCount = activeMembers.length;
@@ -1365,53 +1366,54 @@ const ActivityMonitor = () => {
               const notStarted = totalCount - activeToday;
               return (
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                    👥 {totalCount} Total
-                  </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                    🟢 {activeToday} Active Today
+                    🟢 {activeToday} Active
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
                     🔴 {notStarted} Not Started
                   </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                    👥 {totalCount} Total
+                  </span>
                 </div>
               );
             })()}
+            <Separator orientation="vertical" className="h-6" />
+            {isMobile ? (
+              <Button
+                className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
+                size="sm"
+                onClick={() => setFilterDrawerOpen(true)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </Button>
+            ) : (
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className={cn(
+                  "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                  "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+                )}>
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-card">
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clientOptions.map((c) => (
+                    <SelectItem key={c.client_id} value={c.client_id}>
+                      <span className="flex items-center gap-2">
+                        {c.logo_url ? (
+                          <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                        ) : (
+                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                        )}
+                        {c.client_name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
-          {isMobile ? (
-            <Button
-              className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
-              size="sm"
-              onClick={() => setFilterDrawerOpen(true)}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-            </Button>
-          ) : (
-            <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className={cn(
-                "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
-                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
-              )}>
-                <SelectValue placeholder="All Clients" />
-              </SelectTrigger>
-              <SelectContent className="z-[100] bg-card">
-                <SelectItem value="all">All Clients</SelectItem>
-                {clientOptions.map((c) => (
-                  <SelectItem key={c.client_id} value={c.client_id}>
-                    <span className="flex items-center gap-2">
-                      {c.logo_url ? (
-                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                      ) : (
-                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
-                      )}
-                      {c.client_name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
         </CardHeader>
         <CardContent>
           {loading ? (
