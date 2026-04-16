@@ -788,6 +788,16 @@ export type Database = {
           week_start: string
         }[]
       }
+      get_sdr_hourly_breakdown: {
+        Args: { p_client_id?: string; p_date: string; p_sdr_name: string }
+        Returns: {
+          answered: number
+          dials: number
+          dms: number
+          hour: number
+          sqls_booked: number
+        }[]
+      }
       get_sdr_meetings_kpis: {
         Args: {
           p_client_id?: string
