@@ -1137,18 +1137,6 @@ const Settings = () => {
                           <p className="text-xs text-muted-foreground">Auto-generated, cannot be changed</p>
                         </div>
                       )}
-                      <div className="grid gap-2">
-                        <Label htmlFor="client-email">Client Login Email</Label>
-                        <Input
-                          id="client-email"
-                          type="email"
-                          placeholder="e.g., client@company.com"
-                          value={clientForm.email}
-                          onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                          className="bg-background/50 border-border"
-                        />
-                        <p className="text-xs text-muted-foreground">Email the client uses to log into the dashboard</p>
-                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="campaign-start">Campaign Start</Label>
