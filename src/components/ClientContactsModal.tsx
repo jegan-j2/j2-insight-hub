@@ -78,6 +78,7 @@ const emptyForm: ContactFormData = { contact_name: "", contact_title: "", email:
 export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }: ClientContactsModalProps) => {
   const { toast } = useToast();
   const { resolvedTheme } = useTheme();
+  const { isAdmin } = usePermissions();
   const [contacts, setContacts] = useState<ClientContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
