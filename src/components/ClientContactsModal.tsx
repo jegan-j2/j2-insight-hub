@@ -511,6 +511,26 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                               </TooltipTrigger>
                               <TooltipContent>Edit contact</TooltipContent>
                             </Tooltip>
+                            {isAdmin && contact.email && !isInactive && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={`h-8 w-8 ${
+                                      contact.portal_access
+                                        ? 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10'
+                                        : 'text-blue-500 hover:text-blue-400 hover:bg-blue-500/10'
+                                    }`}
+                                    disabled={sendingInviteId === contact.id}
+                                    onClick={() => handleSendInvite(contact)}
+                                  >
+                                    {sendingInviteId === contact.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{contact.portal_access ? 'Resend Invite' : 'Send Invite'}</TooltipContent>
+                              </Tooltip>
+                            )}
                             {isInactive ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
