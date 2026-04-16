@@ -1353,7 +1353,31 @@ const ActivityMonitor = () => {
       {/* SDR Table */}
       <Card className="bg-card/50 backdrop-blur-sm border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle>SDR Performance</CardTitle>
+          <div className="flex items-center gap-3 flex-wrap">
+            <CardTitle>SDR Performance</CardTitle>
+            {(() => {
+              const activeMembers = allTeamMembers.filter(m => m.status === "active" && (!activeClientFilter || m.client_id === activeClientFilter));
+              const totalCount = activeMembers.length;
+              const activeTodaySet = new Set(
+                sdrRows.filter(r => r.dials > 0).map(r => `${r.sdrName}|||${r.clientId}`)
+              );
+              const activeToday = activeMembers.filter(m => activeTodaySet.has(`${m.sdr_name}|||${m.client_id || ""}`)).length;
+              const notStarted = totalCount - activeToday;
+              return (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                    👥 {totalCount} Total
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                    🟢 {activeToday} Active Today
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
+                    🔴 {notStarted} Not Started
+                  </span>
+                </div>
+              );
+            })()}
+          </div>
           {isMobile ? (
             <Button
               className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
