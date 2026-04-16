@@ -421,26 +421,6 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                             <Button size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={savingEdit || !editForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                               {savingEdit ? "Saving..." : "Save Changes"}
                             </Button>
-                            {editForm.email.trim() && (
-                              <Button
-                                size="sm"
-                                className="gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
-                                disabled={sendingInviteId === contact.id || savingEdit}
-                                onClick={async () => {
-                                  setSendingInviteId(contact.id);
-                                  try {
-                                    // Save edits first if changed
-                                    if (editForm.contact_name.trim()) await handleSaveEdit(contact.id);
-                                    await sendInviteByEmail(editForm.email.trim(), contact.id);
-                                  } finally {
-                                    setSendingInviteId(null);
-                                  }
-                                }}
-                              >
-                                {sendingInviteId === contact.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                                {contact.portal_access ? "Resend Invite" : "Send Dashboard Invite"}
-                              </Button>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
