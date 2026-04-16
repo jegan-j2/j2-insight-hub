@@ -277,6 +277,17 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
               <div className="ml-2 w-4 h-4 rounded border border-dashed border-border bg-muted/20" />
               <span>Future</span>
             </div>
+
+            {/* Hourly Breakdown Panel */}
+            {selectedDay && selectedDayDate && (
+              <HourlyBreakdownPanel
+                date={selectedDayDate}
+                sdrName={sdrName}
+                clientId={clientId}
+                totalDials={dialsByDate[selectedDay] || 0}
+                onClose={() => setSelectedDay(null)}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
