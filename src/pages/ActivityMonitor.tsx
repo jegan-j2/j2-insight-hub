@@ -1365,15 +1365,18 @@ const ActivityMonitor = () => {
               const activeToday = activeMembers.filter(m => activeTodaySet.has(`${m.sdr_name}|||${m.client_id || ""}`)).length;
               const notStarted = totalCount - activeToday;
               return (
-                <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                    🟢 {activeToday} Active
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    {activeToday} Active
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
-                    🔴 {notStarted} Not Started
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    {notStarted} Not Started
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                    👥 {totalCount} Total
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+                    <span className="w-2 h-2 rounded-full bg-gray-400" />
+                    {totalCount} Total
                   </span>
                 </div>
               );
