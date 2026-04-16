@@ -1,11 +1,18 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface HourlyBreakdownPanelProps {
+  open: boolean;
   date: Date;
   sdrName: string;
   clientId?: string;
@@ -21,7 +28,7 @@ interface HourData {
   sqls: number;
 }
 
-const HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 8am–6pm
+const HOURS = Array.from({ length: 11 }, (_, i) => i + 8);
 
 const getHourLabel = (h: number) => {
   if (h === 0) return "12am";
@@ -42,6 +49,7 @@ const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/p
 const LOGO_DARK = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_darkmode.png";
 
 export const HourlyBreakdownPanel = ({
+  open,
   date,
   sdrName,
   clientId,
@@ -51,13 +59,13 @@ export const HourlyBreakdownPanel = ({
   const [hourlyData, setHourlyData] = useState<HourData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
 
   const dateStr = format(date, "yyyy-MM-dd");
   const dateLabel = format(date, "MMM d");
 
   useEffect(() => {
+    if (!open) return;
     const fetchHourly = async () => {
       setLoading(true);
       setSelectedHour(null);
@@ -68,7 +76,6 @@ export const HourlyBreakdownPanel = ({
         p_client_id: clientId || null,
       });
 
-      // Build full hour buckets
       const buckets: Record<number, HourData> = {};
       for (const h of HOURS) {
         buckets[h] = { hour: h, dials: 0, answered: 0, dms: 0, sqls: 0 };
@@ -94,18 +101,7 @@ export const HourlyBreakdownPanel = ({
     };
 
     fetchHourly();
-  }, [dateStr, sdrName, clientId]);
-
-  // Click outside to close
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  }, [open, dateStr, sdrName, clientId]);
 
   const dayTotals = useMemo(() => {
     const d = hourlyData.reduce(
@@ -152,155 +148,144 @@ export const HourlyBreakdownPanel = ({
   const displayDms = selectedHourData ? selectedHourData.dms : dayTotals.dms;
 
   return (
-    <div
-      ref={panelRef}
-      className="mt-3 border border-border rounded-lg bg-card overflow-hidden animate-in slide-in-from-top-2 duration-200"
-    >
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-sm font-semibold text-foreground">
-              {dateLabel} — {totalDials} Dials
-            </span>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {sdrName} · click an hour to drill in
-            </p>
-          </div>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
-            Hour view
-          </span>
-        </div>
-      </div>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-base font-semibold">
+            {dateLabel} — {totalDials} Dials · {sdrName}
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Click an hour to drill in
+          </p>
+        </DialogHeader>
 
-      {/* Hour grid */}
-      <div className="px-4 py-3">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-6 gap-2">
-            <img
-              src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT}
-              alt="Loading"
-              className="w-10 h-10 rounded-full object-contain border border-border animate-[spin_2s_linear_infinite]"
-            />
-            <p className="text-xs text-muted-foreground font-medium">Loading...</p>
-          </div>
-        ) : (
-          <>
-            {/* Hour labels */}
-            <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}>
-              {HOURS.map((h) => (
-                <div key={h} className="text-center text-[10px] text-muted-foreground font-medium">
-                  {getHourLabel(h)}
-                </div>
-              ))}
+        {/* Hour grid */}
+        <div className="py-2">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-6 gap-2">
+              <img
+                src={resolvedTheme === "dark" ? LOGO_DARK : LOGO_LIGHT}
+                alt="Loading"
+                className="w-10 h-10 rounded-full object-contain border border-border animate-[spin_2s_linear_infinite]"
+              />
+              <p className="text-xs text-muted-foreground font-medium">Loading...</p>
             </div>
-
-            {/* Hour cells */}
-            <div
-              className="grid gap-1 mt-1"
-              style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}
-            >
-              {hourlyData.map((hd) => {
-                const style = getHourCellStyle(hd.dials, resolvedTheme === "dark");
-                const isSelected = selectedHour === hd.hour;
-                let tooltipText: string;
-                if (hd.dials === 0) {
-                  tooltipText = `${getHourLabel(hd.hour)} — 0 dials`;
-                } else {
-                  tooltipText = `${getHourLabel(hd.hour)} — ${hd.dials} dials · ${hd.answered} answered · ${hd.dms} DMs`;
-                  if (hd.sqls > 0) tooltipText += ` · ${hd.sqls} SQL 🎯`;
-                }
-
-                return (
-                  <div
-                    key={hd.hour}
-                    className={cn(
-                      "rounded flex items-center justify-center text-[12px] font-semibold cursor-pointer transition-all relative group",
-                      isSelected && "ring-2 ring-primary ring-offset-1 ring-offset-background"
-                    )}
-                    style={{
-                      height: 44,
-                      backgroundColor: style.bg,
-                      color: style.text,
-                    }}
-                    onClick={() => handleHourClick(hd.hour)}
-                  >
-                    {hd.dials}
-                    {/* SQL badge */}
-                    {hd.sqls > 0 && (
-                      <span className="absolute top-0.5 right-0.5 text-[8px] leading-none">🎯</span>
-                    )}
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded bg-foreground text-background text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
-                      {tooltipText}
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-foreground" />
-                    </div>
+          ) : (
+            <>
+              {/* Hour labels */}
+              <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}>
+                {HOURS.map((h) => (
+                  <div key={h} className="text-center text-[10px] text-muted-foreground font-medium">
+                    {getHourLabel(h)}
                   </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+                ))}
+              </div>
 
-      {/* Summary bar */}
-      {!loading && (
-        <div className="px-4 py-3 border-t border-border bg-muted/30">
-          {selectedHourData && (
-            <button
-              onClick={() => setSelectedHour(null)}
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline mb-2"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              back to full day
-            </button>
-          )}
-          <div className="flex items-center divide-x divide-border">
-            {/* Stat 1: Peak Hour (day view) or Dials (hour view) */}
-            <div className="flex-1 text-center px-2">
-              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-                {selectedHourData ? "Dials" : "Peak Hour"}
-              </p>
-              <p className="text-lg font-bold text-foreground mt-0.5">
-                {selectedHourData
-                  ? selectedHourData.dials
-                  : dayTotals.peakDials > 0
-                  ? `${getHourLabel(dayTotals.peakHour)} (${dayTotals.peakDials})`
-                  : "—"}
-              </p>
-            </div>
-
-            {/* Stat 2: SQLs Booked */}
-            <div className="flex-1 text-center px-2">
-              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-                SQLs Booked
-              </p>
-              <p
-                className="text-lg font-bold mt-0.5"
-                style={{ color: (selectedHourData && selectedHourData.sqls > 0) ? "#059669" : undefined }}
+              {/* Hour cells */}
+              <div
+                className="grid gap-1 mt-1"
+                style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}
               >
-                {displaySqls > 0 ? `🎯 ${displaySqls}` : "0"}
-              </p>
-            </div>
+                {hourlyData.map((hd) => {
+                  const style = getHourCellStyle(hd.dials, resolvedTheme === "dark");
+                  const isSelected = selectedHour === hd.hour;
+                  let tooltipText: string;
+                  if (hd.dials === 0) {
+                    tooltipText = `${getHourLabel(hd.hour)} — 0 dials`;
+                  } else {
+                    tooltipText = `${getHourLabel(hd.hour)} — ${hd.dials} dials · ${hd.answered} answered · ${hd.dms} DMs`;
+                    if (hd.sqls > 0) tooltipText += ` · ${hd.sqls} SQL 🎯`;
+                  }
 
-            {/* Stat 3: DM Conv. Rate */}
-            <div className="flex-1 text-center px-2">
-              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-                DM Conv. Rate
-              </p>
-              <p className="text-lg font-bold text-foreground mt-0.5">{dmConvRate}%</p>
-            </div>
+                  return (
+                    <div
+                      key={hd.hour}
+                      className={cn(
+                        "rounded flex items-center justify-center text-[12px] font-semibold cursor-pointer transition-all relative group",
+                        isSelected && "ring-2 ring-primary ring-offset-1 ring-offset-background"
+                      )}
+                      style={{
+                        height: 44,
+                        backgroundColor: style.bg,
+                        color: style.text,
+                      }}
+                      onClick={() => handleHourClick(hd.hour)}
+                    >
+                      {hd.dials}
+                      {hd.sqls > 0 && (
+                        <span className="absolute top-0.5 right-0.5 text-[8px] leading-none">🎯</span>
+                      )}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded bg-foreground text-background text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+                        {tooltipText}
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-foreground" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
 
-            {/* Stat 4: DM Conversations */}
-            <div className="flex-1 text-center px-2">
-              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-                DM Conv.
-              </p>
-              <p className="text-lg font-bold text-foreground mt-0.5">{displayDms}</p>
+        {/* Summary bar */}
+        {!loading && (
+          <div className="pt-3 border-t border-border">
+            {selectedHourData && (
+              <button
+                onClick={() => setSelectedHour(null)}
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mb-2"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                back to full day
+              </button>
+            )}
+            <div className="flex items-center divide-x divide-border">
+              {/* Stat 1: Peak Hour (day view) or Dials (hour view) */}
+              <div className="flex-1 text-center px-2">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+                  {selectedHourData ? "Dials" : "Peak Hour"}
+                </p>
+                <p className="text-lg font-bold text-foreground mt-0.5">
+                  {selectedHourData
+                    ? selectedHourData.dials
+                    : dayTotals.peakDials > 0
+                    ? `${getHourLabel(dayTotals.peakHour)} (${dayTotals.peakDials})`
+                    : "—"}
+                </p>
+              </div>
+
+              {/* Stat 2: SQLs Booked */}
+              <div className="flex-1 text-center px-2">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+                  SQLs Booked
+                </p>
+                <p
+                  className="text-lg font-bold mt-0.5"
+                  style={{ color: (selectedHourData && selectedHourData.sqls > 0) ? "#059669" : undefined }}
+                >
+                  {displaySqls > 0 ? `🎯 ${displaySqls}` : "0"}
+                </p>
+              </div>
+
+              {/* Stat 3: DM Conversations */}
+              <div className="flex-1 text-center px-2">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+                  DM Conv.
+                </p>
+                <p className="text-lg font-bold text-foreground mt-0.5">{displayDms}</p>
+              </div>
+
+              {/* Stat 4: DM Conv. Rate */}
+              <div className="flex-1 text-center px-2">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+                  DM Conv. Rate
+                </p>
+                <p className="text-lg font-bold text-foreground mt-0.5">{dmConvRate}%</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -278,16 +278,15 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
               <span>Future</span>
             </div>
 
-            {/* Hourly Breakdown Panel */}
-            {selectedDay && selectedDayDate && (
-              <HourlyBreakdownPanel
-                date={selectedDayDate}
-                sdrName={sdrName}
-                clientId={clientId}
-                totalDials={dialsByDate[selectedDay] || 0}
-                onClose={() => setSelectedDay(null)}
-              />
-            )}
+            {/* Hourly Breakdown Modal */}
+            <HourlyBreakdownPanel
+              open={!!(selectedDay && selectedDayDate)}
+              date={selectedDayDate || new Date()}
+              sdrName={sdrName}
+              clientId={clientId}
+              totalDials={selectedDay ? (dialsByDate[selectedDay] || 0) : 0}
+              onClose={() => setSelectedDay(null)}
+            />
           </div>
         </CardContent>
       </Card>
