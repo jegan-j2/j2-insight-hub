@@ -137,15 +137,15 @@ export const HourlyBreakdownPanel = ({
     setSelectedHour((prev) => (prev === hour ? null : hour));
   }, []);
 
-  const answerRate = useMemo(() => {
+  const dmConvRate = useMemo(() => {
     if (selectedHourData) {
       return selectedHourData.dials > 0
-        ? Math.round((selectedHourData.answered / selectedHourData.dials) * 100)
-        : 0;
+        ? ((selectedHourData.dms / selectedHourData.dials) * 100).toFixed(1)
+        : "0";
     }
     return dayTotals.dials > 0
-      ? Math.round((dayTotals.answered / dayTotals.dials) * 100)
-      : 0;
+      ? ((dayTotals.dms / dayTotals.dials) * 100).toFixed(1)
+      : "0";
   }, [selectedHourData, dayTotals]);
 
   const displaySqls = selectedHourData ? selectedHourData.sqls : dayTotals.sqls;
