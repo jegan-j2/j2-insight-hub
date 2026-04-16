@@ -175,36 +175,49 @@ Deno.serve(async (req) => {
       )
     }
 
-    // STEP 3: Update user_roles to track the invite
-    console.log('Email sent successfully to:', email, '— updating user_roles...')
+    // STEP 3: Insert/upsert user_roles — this is BLOCKING; failure rolls back the invite
+    console.log('Email sent successfully to:', email, '— inserting user_roles...')
 
-    try {
-      const { data: usersData } = await adminClient.auth.admin.listUsers()
-      const userId = usersData?.users?.find(
-        (u: any) => u.email === email
-      )?.id
+    const { data: usersData } = await adminClient.auth.admin.listUsers()
+    const newUserId = usersData?.users?.find(
+      (u: any) => u.email === email
+    )?.id
 
-      if (userId) {
-        const { error: updateError } = await adminClient
-          .from('user_roles')
-          .update({
-            invite_status: 'pending',
-            invite_sent_at: new Date().toISOString(),
-            invite_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-          })
-          .eq('user_id', userId)
-
-        if (updateError) {
-          console.warn('user_roles update failed (non-blocking):', updateError.message)
-        } else {
-          console.log('user_roles updated for user:', userId)
-        }
-      } else {
-        console.warn('No auth user found for email, skipping user_roles update')
-      }
-    } catch (trackErr) {
-      console.warn('Invite tracking error (non-blocking):', trackErr)
+    if (!newUserId) {
+      console.error('Could not find auth user for email after invite:', email)
+      return new Response(
+        JSON.stringify({ error: 'User was not created in auth. Invite failed.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+
+    const { error: rolesError } = await adminClient
+      .from('user_roles')
+      .upsert({
+        user_id: newUserId,
+        role,
+        client_id: role === 'admin' ? 'admin' : (role === 'manager' ? null : client_id || null),
+        invite_status: 'pending',
+        invite_sent_at: new Date().toISOString(),
+        invite_expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+      }, { onConflict: 'user_id' })
+
+    if (rolesError) {
+      console.error('user_roles insert failed — rolling back:', rolesError.message)
+      // Attempt to delete the auth user to roll back
+      try {
+        await adminClient.auth.admin.deleteUser(newUserId)
+        console.log('Rolled back auth user:', newUserId)
+      } catch (rollbackErr) {
+        console.error('Failed to roll back auth user:', rollbackErr)
+      }
+      return new Response(
+        JSON.stringify({ error: 'Failed to assign role. Invite rolled back.', details: rolesError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('user_roles upserted for user:', newUserId, 'role:', role)
 
     // STEP 4: Return success
     return new Response(
