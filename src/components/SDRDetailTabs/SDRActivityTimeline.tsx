@@ -30,6 +30,19 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
   const [answeredByDate, setAnsweredByDate] = useState<Record<string, number>>({});
   const [sqlsByDate, setSqlsByDate] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const selectedDayDate = useMemo(() => {
+    if (!selectedDay) return null;
+    // Parse yyyy-MM-dd as local date
+    const [y, m, d] = selectedDay.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }, [selectedDay]);
+
+  const handleDayClick = useCallback((dateKey: string, isFuture: boolean) => {
+    if (isFuture) return;
+    setSelectedDay((prev) => (prev === dateKey ? null : dateKey));
+  }, []);
 
   const melbourneNow = useMemo(() => {
     const str = new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" });
