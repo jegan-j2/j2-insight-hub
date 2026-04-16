@@ -256,20 +256,25 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     }
   };
 
+  const sendInviteByEmail = async (email: string, contactId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("generate-invite-link", {
+        body: { email, role: "client", client_id: client.client_id },
+      });
+      if (error) throw error;
+      setContacts(prev => prev.map(c => c.id === contactId ? { ...c, portal_access: true } : c));
+      await supabase.from("client_contacts").update({ portal_access: true }).eq("id", contactId);
+      toast({ title: "Invite sent", description: `Invitation sent to ${email}`, className: "border-[#10b981] text-[#10b981]" });
+    } catch (err: any) {
+      toast({ title: "Failed to send invite", description: getSafeErrorMessage(err), variant: "destructive" });
+    }
+  };
+
   const handleSendInvite = async (contact: ClientContact) => {
     if (!contact.email) return;
     setSendingInviteId(contact.id);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-invite-link", {
-        body: { email: contact.email, role: "client", client_id: client.client_id },
-      });
-      if (error) throw error;
-      // Optimistically update portal_access
-      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, portal_access: true } : c));
-      await supabase.from("client_contacts").update({ portal_access: true }).eq("id", contact.id);
-      toast({ title: "Invite sent", description: `Invitation sent to ${contact.email}`, className: "border-[#10b981] text-[#10b981]" });
-    } catch (err: any) {
-      toast({ title: "Failed to send invite", description: getSafeErrorMessage(err), variant: "destructive" });
+      await sendInviteByEmail(contact.email, contact.id);
     } finally {
       setSendingInviteId(null);
     }
