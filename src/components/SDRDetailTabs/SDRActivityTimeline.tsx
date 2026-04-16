@@ -227,14 +227,17 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
                         className={cn(
                           "rounded flex items-center justify-center text-[13px] font-semibold transition-all relative group",
                           isFuture && "border border-dashed border-border bg-muted/20",
-                          isToday && "ring-2 ring-primary ring-offset-1 ring-offset-background",
-                          !isFuture && value > 0 && "hover:scale-105 hover:shadow-md cursor-pointer",
-                          !isFuture && value === 0 && "border border-border/50"
+                          isToday && !selectedDay && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+                          !isFuture && "cursor-pointer",
+                          !isFuture && value > 0 && "hover:scale-105 hover:shadow-md",
+                          !isFuture && value === 0 && "border border-border/50",
+                          selectedDay === key && "ring-2 ring-primary ring-offset-1 ring-offset-background"
                         )}
                         style={{
                           height: 56,
                           ...(!isFuture ? { backgroundColor: style.bg, color: style.text } : {}),
                         }}
+                        onClick={() => handleDayClick(key, isFuture)}
                       >
                         {isFuture ? (
                           <span className="text-muted-foreground/30 text-[11px]">—</span>
