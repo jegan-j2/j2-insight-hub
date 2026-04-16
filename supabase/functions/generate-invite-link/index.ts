@@ -88,11 +88,19 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { email } = await req.json()
+    const { email, role, client_id } = await req.json()
 
     if (!email) {
       return new Response(
         JSON.stringify({ error: 'Email is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const validRoles = ['admin', 'manager', 'sdr', 'client']
+    if (!role || !validRoles.includes(role)) {
+      return new Response(
+        JSON.stringify({ error: `Role is required and must be one of: ${validRoles.join(', ')}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
