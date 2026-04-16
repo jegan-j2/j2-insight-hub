@@ -280,10 +280,21 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     meeting.meetingStatus.toLowerCase() === "pending" &&
     isBefore(meeting.meetingDate, startOfDay(new Date()));
 
+  const handleReinstate = useCallback(async (meeting: MeetingData) => {
+    setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: 'pending' } : m));
+    const success = await reinstateMeeting(meeting.id);
+    if (!success) {
+      setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: 'cancelled' } : m));
+    }
+    setReinstateTarget(null);
+  }, [reinstateMeeting]);
+
   const StatusBadge = ({ meeting }: { meeting: MeetingData }) => {
     const config = getStatusConfig(meeting.meetingStatus);
     const canEdit = !isSdr && canEditSQL(meeting.clientId);
     const overdue = isOverdue(meeting);
+    const isCancelled = meeting.meetingStatus === 'cancelled';
+    const canReinstate = isCancelled && (isAdmin || isManager);
 
     const badgeContent = (
       <div className="flex items-center gap-1.5">
@@ -296,10 +307,21 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             Overdue
           </Badge>
         )}
+        {canReinstate && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
+            onClick={(e) => { e.stopPropagation(); setReinstateTarget(meeting); }}
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reinstate
+          </Button>
+        )}
       </div>
     );
 
-    if (!canEdit || updating === meeting.id) return badgeContent;
+    if (!canEdit || updating === meeting.id || isCancelled) return badgeContent;
 
     return (
       <div className="flex items-center justify-center gap-1.5">
