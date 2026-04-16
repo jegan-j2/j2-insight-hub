@@ -1366,16 +1366,16 @@ const ActivityMonitor = () => {
               const notStarted = totalCount - activeToday;
               return (
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     {activeToday} Active
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
                     <span className="w-2 h-2 rounded-full bg-red-500" />
                     {notStarted} Not Started
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
-                    <span className="w-2 h-2 rounded-full bg-gray-400" />
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <span className="w-2 h-2 rounded-full bg-[#475569]" />
                     {totalCount} Total
                   </span>
                 </div>
