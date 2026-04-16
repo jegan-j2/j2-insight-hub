@@ -361,7 +361,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-border/50 bg-[#0F172A] dark:bg-[#0F172A]">
+                <TableRow className="border-border/50 bg-[#0F172A] hover:bg-[#0F172A] dark:bg-[#0F172A] dark:hover:bg-[#0F172A]">
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Contact</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Job Title</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Type</TableHead>
