@@ -26,6 +26,8 @@ const getHeatmapStyle = (value: number, isFuture: boolean): { bg: string; text: 
 
 export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivityTimelineProps) => {
   const [dialsByDate, setDialsByDate] = useState<Record<string, number>>({});
+  const [answeredByDate, setAnsweredByDate] = useState<Record<string, number>>({});
+  const [sqlsByDate, setSqlsByDate] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   const melbourneNow = useMemo(() => {
@@ -62,6 +64,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
       const startDate = format(dateRange.from, "yyyy-MM-dd");
       const endDate = format(dateRange.to, "yyyy-MM-dd");
 
+      // Fetch heatmap dials
       const { data } = await supabase.rpc("get_sdr_heatmap", {
         p_sdr_name: sdrName,
         p_start_date: melbourneStartOfDay(startDate),
@@ -69,14 +72,41 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
         p_client_id: clientId || null,
       });
 
-      const map: Record<string, number> = {};
+      const dialMap: Record<string, number> = {};
       if (data) {
         for (const row of data as any[]) {
           const key = row.activity_day;
-          map[key] = (map[key] || 0) + (Number(row.dial_count) || 0);
+          dialMap[key] = (dialMap[key] || 0) + (Number(row.dial_count) || 0);
         }
       }
-      setDialsByDate(map);
+
+      // Fetch answered + sqls from daily_snapshots
+      let snapshotQuery = supabase
+        .from("daily_snapshots")
+        .select("snapshot_date, answered, sqls")
+        .eq("sdr_name", sdrName)
+        .gte("snapshot_date", startDate)
+        .lte("snapshot_date", endDate);
+
+      if (clientId) {
+        snapshotQuery = snapshotQuery.eq("client_id", clientId);
+      }
+
+      const { data: snapshots } = await snapshotQuery;
+
+      const ansMap: Record<string, number> = {};
+      const sqlMap: Record<string, number> = {};
+      if (snapshots) {
+        for (const row of snapshots) {
+          const key = row.snapshot_date;
+          ansMap[key] = (ansMap[key] || 0) + (Number(row.answered) || 0);
+          sqlMap[key] = (sqlMap[key] || 0) + (Number(row.sqls) || 0);
+        }
+      }
+
+      setDialsByDate(dialMap);
+      setAnsweredByDate(ansMap);
+      setSqlsByDate(sqlMap);
       setLoading(false);
     };
     fetchData();
@@ -167,9 +197,15 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
                   {week.dates.map((date, dayIndex) => {
                     const key = format(date, "yyyy-MM-dd");
                     const value = dialsByDate[key] || 0;
+                    const answered = answeredByDate[key] || 0;
+                    const sqls = sqlsByDate[key] || 0;
                     const isFuture = isAfter(date, melbourneNow) && !isSameDay(date, melbourneNow);
                     const isToday = isSameDay(date, melbourneNow);
                     const style = getHeatmapStyle(value, isFuture);
+                    const tooltipDate = format(date, "MMM d");
+                    const tooltipText = value === 0
+                      ? "No activity"
+                      : `${tooltipDate} — ${value} dials · ${answered} answered${sqls > 0 ? ` · ${sqls} 🎯` : ""}`;
 
                     return (
                       <div
@@ -193,10 +229,14 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
                         ) : (
                           value.toString()
                         )}
+                        {/* SQL badge */}
+                        {!isFuture && sqls > 0 && (
+                          <span className="absolute top-0.5 right-0.5 text-[9px] leading-none">🎯</span>
+                        )}
                         {/* Tooltip */}
                         {!isFuture && (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded bg-foreground text-background text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
-                            {value === 0 ? "No activity" : `${value} dials`}
+                            {tooltipText}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-foreground" />
                           </div>
                         )}
