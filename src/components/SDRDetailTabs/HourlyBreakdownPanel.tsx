@@ -152,10 +152,10 @@ export const HourlyBreakdownPanel = ({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">
-            {dateLabel} — {totalDials} Dials · {sdrName}
+            {dateLabel} - {totalDials} Dials
           </DialogTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Click an hour to drill in
+            Click an hour to explore
           </p>
         </DialogHeader>
 
@@ -191,9 +191,9 @@ export const HourlyBreakdownPanel = ({
                   const isSelected = selectedHour === hd.hour;
                   let tooltipText: string;
                   if (hd.dials === 0) {
-                    tooltipText = `${getHourLabel(hd.hour)} — 0 dials`;
+                    tooltipText = `${getHourLabel(hd.hour)} - 0 dials`;
                   } else {
-                    tooltipText = `${getHourLabel(hd.hour)} — ${hd.dials} dials · ${hd.answered} answered · ${hd.dms} DMs`;
+                    tooltipText = `${getHourLabel(hd.hour)} - ${hd.dials} dials · ${hd.answered} answered · ${hd.dms} DMs`;
                     if (hd.sqls > 0) tooltipText += ` · ${hd.sqls} SQL 🎯`;
                   }
 
