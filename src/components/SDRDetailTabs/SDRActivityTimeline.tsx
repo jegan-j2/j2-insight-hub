@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Calendar, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { format, isAfter, isSameDay, addDays, eachWeekOfInterval } from "date-fns";
 import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import type { DateRange } from "react-day-picker";
+import { HourlyBreakdownPanel } from "./HourlyBreakdownPanel";
 
 interface SDRActivityTimelineProps {
   sdrName: string;
@@ -29,6 +30,19 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
   const [answeredByDate, setAnsweredByDate] = useState<Record<string, number>>({});
   const [sqlsByDate, setSqlsByDate] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const selectedDayDate = useMemo(() => {
+    if (!selectedDay) return null;
+    // Parse yyyy-MM-dd as local date
+    const [y, m, d] = selectedDay.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }, [selectedDay]);
+
+  const handleDayClick = useCallback((dateKey: string, isFuture: boolean) => {
+    if (isFuture) return;
+    setSelectedDay((prev) => (prev === dateKey ? null : dateKey));
+  }, []);
 
   const melbourneNow = useMemo(() => {
     const str = new Date().toLocaleString("en-US", { timeZone: "Australia/Melbourne" });
@@ -213,14 +227,17 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
                         className={cn(
                           "rounded flex items-center justify-center text-[13px] font-semibold transition-all relative group",
                           isFuture && "border border-dashed border-border bg-muted/20",
-                          isToday && "ring-2 ring-primary ring-offset-1 ring-offset-background",
-                          !isFuture && value > 0 && "hover:scale-105 hover:shadow-md cursor-pointer",
-                          !isFuture && value === 0 && "border border-border/50"
+                          isToday && !selectedDay && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+                          !isFuture && "cursor-pointer",
+                          !isFuture && value > 0 && "hover:scale-105 hover:shadow-md",
+                          !isFuture && value === 0 && "border border-border/50",
+                          selectedDay === key && "ring-2 ring-primary ring-offset-1 ring-offset-background"
                         )}
                         style={{
                           height: 56,
                           ...(!isFuture ? { backgroundColor: style.bg, color: style.text } : {}),
                         }}
+                        onClick={() => handleDayClick(key, isFuture)}
                       >
                         {isFuture ? (
                           <span className="text-muted-foreground/30 text-[11px]">—</span>
@@ -260,6 +277,17 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
               <div className="ml-2 w-4 h-4 rounded border border-dashed border-border bg-muted/20" />
               <span>Future</span>
             </div>
+
+            {/* Hourly Breakdown Panel */}
+            {selectedDay && selectedDayDate && (
+              <HourlyBreakdownPanel
+                date={selectedDayDate}
+                sdrName={sdrName}
+                clientId={clientId}
+                totalDials={dialsByDate[selectedDay] || 0}
+                onClose={() => setSelectedDay(null)}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
