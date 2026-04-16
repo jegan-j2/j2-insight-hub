@@ -103,7 +103,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const [localMeetings, setLocalMeetings] = useState<MeetingData[]>([]);
   useEffect(() => { setLocalMeetings(displayMeetings); }, [displayMeetings]);
 
-  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, updating } = useMeetingUpdate();
+  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, reinstateMeeting, updating } = useMeetingUpdate();
 
   const handleStatusChange = useCallback(async (meeting: MeetingData, newStatus: string) => {
     const oldStatus = meeting.meetingStatus;
