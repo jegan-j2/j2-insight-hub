@@ -11,7 +11,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
-import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2, SlidersHorizontal } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2, SlidersHorizontal, RotateCcw } from "lucide-react";
 import { format, isWithinInterval, parseISO, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
@@ -78,7 +79,7 @@ interface SQLBookedMeetingsTableProps {
 }
 
 export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients, hideSDRFilter = false, hideSDRColumn = false }: SQLBookedMeetingsTableProps) => {
-  const { canEditSQL, isSdr } = usePermissions();
+  const { canEditSQL, isSdr, isAdmin, isManager } = usePermissions();
   const isMobile = useIsMobile();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("sqlDate");
@@ -92,6 +93,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [reinstateTarget, setReinstateTarget] = useState<MeetingData | null>(null);
 
   const displayMeetings = useMemo(() => {
     if (meetings && meetings.length > 0) return mapMeetings(meetings, clients);
@@ -101,7 +103,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const [localMeetings, setLocalMeetings] = useState<MeetingData[]>([]);
   useEffect(() => { setLocalMeetings(displayMeetings); }, [displayMeetings]);
 
-  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, updating } = useMeetingUpdate();
+  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, reinstateMeeting, updating } = useMeetingUpdate();
 
   const handleStatusChange = useCallback(async (meeting: MeetingData, newStatus: string) => {
     const oldStatus = meeting.meetingStatus;
@@ -226,7 +228,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
-    let filtered = localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus));
+    let filtered = localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled');
     if (dateRange?.from && dateRange?.to) {
       filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
@@ -249,7 +251,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   }, [localMeetings, dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateRange, meetingDateRange, sortField, sortOrder]);
 
   const activeMeetings = useMemo(
-    () => localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus)),
+    () => localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled'),
     [localMeetings]
   );
 
@@ -278,10 +280,21 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     meeting.meetingStatus.toLowerCase() === "pending" &&
     isBefore(meeting.meetingDate, startOfDay(new Date()));
 
+  const handleReinstate = useCallback(async (meeting: MeetingData) => {
+    setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: 'pending' } : m));
+    const success = await reinstateMeeting(meeting.id);
+    if (!success) {
+      setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: 'cancelled' } : m));
+    }
+    setReinstateTarget(null);
+  }, [reinstateMeeting]);
+
   const StatusBadge = ({ meeting }: { meeting: MeetingData }) => {
     const config = getStatusConfig(meeting.meetingStatus);
     const canEdit = !isSdr && canEditSQL(meeting.clientId);
     const overdue = isOverdue(meeting);
+    const isCancelled = meeting.meetingStatus === 'cancelled';
+    const canReinstate = isCancelled && (isAdmin || isManager);
 
     const badgeContent = (
       <div className="flex items-center gap-1.5">
@@ -294,10 +307,21 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             Overdue
           </Badge>
         )}
+        {canReinstate && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
+            onClick={(e) => { e.stopPropagation(); setReinstateTarget(meeting); }}
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reinstate
+          </Button>
+        )}
       </div>
     );
 
-    if (!canEdit || updating === meeting.id) return badgeContent;
+    if (!canEdit || updating === meeting.id || isCancelled) return badgeContent;
 
     return (
       <div className="flex items-center justify-center gap-1.5">
@@ -744,6 +768,26 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+
+    <AlertDialog open={!!reinstateTarget} onOpenChange={(open) => { if (!open) setReinstateTarget(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Reinstate this meeting?</AlertDialogTitle>
+          <AlertDialogDescription>
+            It will be marked as pending and protected from HubSpot sync.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+            onClick={() => reinstateTarget && handleReinstate(reinstateTarget)}
+          >
+            Reinstate
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
