@@ -168,7 +168,6 @@ export const HourlyBreakdownPanel = ({
             </p>
           </div>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
-            <Clock className="h-3 w-3" />
             Hour view
           </span>
         </div>
