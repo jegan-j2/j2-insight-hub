@@ -129,9 +129,13 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     return () => document.removeEventListener("keydown", handleEsc);
   }, [open, onClose]);
 
-  const handleSaveContact = async () => {
+  const handleSaveContact = async (andInvite = false) => {
     if (!contactForm.contact_name.trim()) {
       toast({ title: "Name is required", variant: "destructive" });
+      return;
+    }
+    if (andInvite && !contactForm.email.trim()) {
+      toast({ title: "Email is required to send an invite", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -145,6 +149,8 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
         .eq("status", "inactive")
         .maybeSingle();
 
+      let savedContactId: string | null = null;
+
       if (existing) {
         // Reactivate and update
         const { error } = await supabase.from("client_contacts").update({
@@ -154,19 +160,26 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           status: "active",
         }).eq("id", existing.id);
         if (error) throw error;
+        savedContactId = existing.id;
       } else {
-        const { error } = await supabase.from("client_contacts").insert({
+        const { data, error } = await supabase.from("client_contacts").insert({
           client_id: client.client_id,
           contact_name: contactForm.contact_name.trim(),
           contact_title: contactForm.contact_title.trim() || null,
           email: contactForm.email.trim() || null,
           contact_type: contactForm.contact_type,
           status: "active",
-        });
+        }).select("id").single();
         if (error) throw error;
+        savedContactId = data?.id || null;
       }
 
       toast({ title: "Contact added", description: `${contactForm.contact_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
+
+      if (andInvite && contactForm.email.trim() && savedContactId) {
+        await sendInviteByEmail(contactForm.email.trim(), savedContactId);
+      }
+
       setContactForm({ ...emptyForm });
       setShowAddForm(false);
       fetchContacts();
@@ -243,20 +256,25 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     }
   };
 
+  const sendInviteByEmail = async (email: string, contactId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("generate-invite-link", {
+        body: { email, role: "client", client_id: client.client_id },
+      });
+      if (error) throw error;
+      setContacts(prev => prev.map(c => c.id === contactId ? { ...c, portal_access: true } : c));
+      await supabase.from("client_contacts").update({ portal_access: true }).eq("id", contactId);
+      toast({ title: "Invite sent", description: `Invitation sent to ${email}`, className: "border-[#10b981] text-[#10b981]" });
+    } catch (err: any) {
+      toast({ title: "Failed to send invite", description: getSafeErrorMessage(err), variant: "destructive" });
+    }
+  };
+
   const handleSendInvite = async (contact: ClientContact) => {
     if (!contact.email) return;
     setSendingInviteId(contact.id);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-invite-link", {
-        body: { email: contact.email, role: "client", client_id: client.client_id },
-      });
-      if (error) throw error;
-      // Optimistically update portal_access
-      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, portal_access: true } : c));
-      await supabase.from("client_contacts").update({ portal_access: true }).eq("id", contact.id);
-      toast({ title: "Invite sent", description: `Invitation sent to ${contact.email}`, className: "border-[#10b981] text-[#10b981]" });
-    } catch (err: any) {
-      toast({ title: "Failed to send invite", description: getSafeErrorMessage(err), variant: "destructive" });
+      await sendInviteByEmail(contact.email, contact.id);
     } finally {
       setSendingInviteId(null);
     }
@@ -401,6 +419,26 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                             <Button size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={savingEdit || !editForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                               {savingEdit ? "Saving..." : "Save Changes"}
                             </Button>
+                            {editForm.email.trim() && (
+                              <Button
+                                size="sm"
+                                className="gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                                disabled={sendingInviteId === contact.id || savingEdit}
+                                onClick={async () => {
+                                  setSendingInviteId(contact.id);
+                                  try {
+                                    // Save edits first if changed
+                                    if (editForm.contact_name.trim()) await handleSaveEdit(contact.id);
+                                    await sendInviteByEmail(editForm.email.trim(), contact.id);
+                                  } finally {
+                                    setSendingInviteId(null);
+                                  }
+                                }}
+                              >
+                                {sendingInviteId === contact.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                {contact.portal_access ? "Resend Invite" : "Send Dashboard Invite"}
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -544,9 +582,20 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
               </div>
               <div className="flex justify-end gap-2 mt-3">
                 <button onClick={() => setShowAddForm(false)} style={{ border: '1px solid #94a3b8', backgroundColor: 'transparent', color: 'inherit', padding: '6px 12px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
-                <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
+                <Button size="sm" onClick={() => handleSaveContact(false)} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                   {saving ? "Saving..." : "Save Contact"}
                 </Button>
+                {contactForm.email.trim() && (
+                  <Button
+                    size="sm"
+                    className="gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                    disabled={saving || !contactForm.contact_name.trim()}
+                    onClick={() => handleSaveContact(true)}
+                  >
+                    {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                    Save & Send Invite
+                  </Button>
+                )}
               </div>
             </div>
           )}
