@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Calendar, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { format, isAfter, isSameDay, addDays, eachWeekOfInterval } from "date-fns";
 import { melbourneStartOfDay, melbourneEndOfDay } from "@/lib/melbourneTime";
 import type { DateRange } from "react-day-picker";
+import { HourlyBreakdownPanel } from "./HourlyBreakdownPanel";
 
 interface SDRActivityTimelineProps {
   sdrName: string;
