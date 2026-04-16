@@ -30,8 +30,8 @@ const getHourLabel = (h: number) => {
   return `${h - 12}pm`;
 };
 
-const getHourCellStyle = (dials: number): { bg: string; text: string } => {
-  if (dials === 0) return { bg: "#F1F5F9", text: "#94A3B8" };
+const getHourCellStyle = (dials: number, isDark: boolean): { bg: string; text: string } => {
+  if (dials === 0) return { bg: isDark ? "#1E293B" : "#F1F5F9", text: "#475569" };
   if (dials <= 3) return { bg: "#E2E8F0", text: "#475569" };
   if (dials <= 7) return { bg: "#CBD5E1", text: "#334155" };
   if (dials <= 10) return { bg: "#94A3B8", text: "#ffffff" };
