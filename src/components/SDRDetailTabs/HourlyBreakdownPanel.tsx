@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-import { Clock, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface HourlyBreakdownPanelProps {
@@ -30,8 +30,8 @@ const getHourLabel = (h: number) => {
   return `${h - 12}pm`;
 };
 
-const getHourCellStyle = (dials: number): { bg: string; text: string } => {
-  if (dials === 0) return { bg: "#F1F5F9", text: "#94A3B8" };
+const getHourCellStyle = (dials: number, isDark: boolean): { bg: string; text: string } => {
+  if (dials === 0) return { bg: isDark ? "#1E293B" : "#F1F5F9", text: "#475569" };
   if (dials <= 3) return { bg: "#E2E8F0", text: "#475569" };
   if (dials <= 7) return { bg: "#CBD5E1", text: "#334155" };
   if (dials <= 10) return { bg: "#94A3B8", text: "#ffffff" };
@@ -137,15 +137,15 @@ export const HourlyBreakdownPanel = ({
     setSelectedHour((prev) => (prev === hour ? null : hour));
   }, []);
 
-  const answerRate = useMemo(() => {
+  const dmConvRate = useMemo(() => {
     if (selectedHourData) {
       return selectedHourData.dials > 0
-        ? Math.round((selectedHourData.answered / selectedHourData.dials) * 100)
-        : 0;
+        ? ((selectedHourData.dms / selectedHourData.dials) * 100).toFixed(1)
+        : "0";
     }
     return dayTotals.dials > 0
-      ? Math.round((dayTotals.answered / dayTotals.dials) * 100)
-      : 0;
+      ? ((dayTotals.dms / dayTotals.dials) * 100).toFixed(1)
+      : "0";
   }, [selectedHourData, dayTotals]);
 
   const displaySqls = selectedHourData ? selectedHourData.sqls : dayTotals.sqls;
@@ -168,7 +168,6 @@ export const HourlyBreakdownPanel = ({
             </p>
           </div>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
-            <Clock className="h-3 w-3" />
             Hour view
           </span>
         </div>
@@ -202,7 +201,7 @@ export const HourlyBreakdownPanel = ({
               style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}
             >
               {hourlyData.map((hd) => {
-                const style = getHourCellStyle(hd.dials);
+                const style = getHourCellStyle(hd.dials, resolvedTheme === "dark");
                 const isSelected = selectedHour === hd.hour;
                 let tooltipText: string;
                 if (hd.dials === 0) {
@@ -278,18 +277,18 @@ export const HourlyBreakdownPanel = ({
               </p>
               <p
                 className="text-lg font-bold mt-0.5"
-                style={{ color: displaySqls > 0 ? "#059669" : undefined }}
+                style={{ color: (selectedHourData && selectedHourData.sqls > 0) ? "#059669" : undefined }}
               >
                 {displaySqls > 0 ? `🎯 ${displaySqls}` : "0"}
               </p>
             </div>
 
-            {/* Stat 3: Answer Rate */}
+            {/* Stat 3: DM Conv. Rate */}
             <div className="flex-1 text-center px-2">
               <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-                Answer Rate
+                DM Conv. Rate
               </p>
-              <p className="text-lg font-bold text-foreground mt-0.5">{answerRate}%</p>
+              <p className="text-lg font-bold text-foreground mt-0.5">{dmConvRate}%</p>
             </div>
 
             {/* Stat 4: DM Conversations */}
