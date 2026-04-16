@@ -93,6 +93,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [reinstateTarget, setReinstateTarget] = useState<MeetingData | null>(null);
 
   const displayMeetings = useMemo(() => {
     if (meetings && meetings.length > 0) return mapMeetings(meetings, clients);
