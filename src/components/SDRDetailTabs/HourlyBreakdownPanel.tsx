@@ -201,7 +201,7 @@ export const HourlyBreakdownPanel = ({
               style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}
             >
               {hourlyData.map((hd) => {
-                const style = getHourCellStyle(hd.dials);
+                const style = getHourCellStyle(hd.dials, resolvedTheme === "dark");
                 const isSelected = selectedHour === hd.hour;
                 let tooltipText: string;
                 if (hd.dials === 0) {
