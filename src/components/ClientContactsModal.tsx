@@ -419,6 +419,26 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                             <Button size="sm" onClick={() => handleSaveEdit(contact.id)} disabled={savingEdit || !editForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                               {savingEdit ? "Saving..." : "Save Changes"}
                             </Button>
+                            {editForm.email.trim() && (
+                              <Button
+                                size="sm"
+                                className="gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                                disabled={sendingInviteId === contact.id || savingEdit}
+                                onClick={async () => {
+                                  setSendingInviteId(contact.id);
+                                  try {
+                                    // Save edits first if changed
+                                    if (editForm.contact_name.trim()) await handleSaveEdit(contact.id);
+                                    await sendInviteByEmail(editForm.email.trim(), contact.id);
+                                  } finally {
+                                    setSendingInviteId(null);
+                                  }
+                                }}
+                              >
+                                {sendingInviteId === contact.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                {contact.portal_access ? "Resend Invite" : "Send Dashboard Invite"}
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -562,9 +582,20 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
               </div>
               <div className="flex justify-end gap-2 mt-3">
                 <button onClick={() => setShowAddForm(false)} style={{ border: '1px solid #94a3b8', backgroundColor: 'transparent', color: 'inherit', padding: '6px 12px', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
-                <Button size="sm" onClick={handleSaveContact} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
+                <Button size="sm" onClick={() => handleSaveContact(false)} disabled={saving || !contactForm.contact_name.trim()} className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100">
                   {saving ? "Saving..." : "Save Contact"}
                 </Button>
+                {contactForm.email.trim() && (
+                  <Button
+                    size="sm"
+                    className="gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                    disabled={saving || !contactForm.contact_name.trim()}
+                    onClick={() => handleSaveContact(true)}
+                  >
+                    {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                    Save & Send Invite
+                  </Button>
+                )}
               </div>
             </div>
           )}
