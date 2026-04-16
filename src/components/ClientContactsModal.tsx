@@ -129,9 +129,13 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     return () => document.removeEventListener("keydown", handleEsc);
   }, [open, onClose]);
 
-  const handleSaveContact = async () => {
+  const handleSaveContact = async (andInvite = false) => {
     if (!contactForm.contact_name.trim()) {
       toast({ title: "Name is required", variant: "destructive" });
+      return;
+    }
+    if (andInvite && !contactForm.email.trim()) {
+      toast({ title: "Email is required to send an invite", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -145,6 +149,8 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
         .eq("status", "inactive")
         .maybeSingle();
 
+      let savedContactId: string | null = null;
+
       if (existing) {
         // Reactivate and update
         const { error } = await supabase.from("client_contacts").update({
@@ -154,19 +160,26 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
           status: "active",
         }).eq("id", existing.id);
         if (error) throw error;
+        savedContactId = existing.id;
       } else {
-        const { error } = await supabase.from("client_contacts").insert({
+        const { data, error } = await supabase.from("client_contacts").insert({
           client_id: client.client_id,
           contact_name: contactForm.contact_name.trim(),
           contact_title: contactForm.contact_title.trim() || null,
           email: contactForm.email.trim() || null,
           contact_type: contactForm.contact_type,
           status: "active",
-        });
+        }).select("id").single();
         if (error) throw error;
+        savedContactId = data?.id || null;
       }
 
       toast({ title: "Contact added", description: `${contactForm.contact_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
+
+      if (andInvite && contactForm.email.trim() && savedContactId) {
+        await sendInviteByEmail(contactForm.email.trim(), savedContactId);
+      }
+
       setContactForm({ ...emptyForm });
       setShowAddForm(false);
       fetchContacts();
