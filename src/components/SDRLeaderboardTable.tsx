@@ -54,6 +54,8 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
   const [sortKey, setSortKey] = useState<SortKey>("totalSQLs");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [showAll, setShowAll] = useState(false);
+  const [currentSdrName, setCurrentSdrName] = useState<string | null>(null);
+  const [isSdrRole, setIsSdrRole] = useState(false);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -68,6 +70,36 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
     };
     fetchPhotos();
   }, []);
+
+  // Determine if current user is SDR role and resolve their own sdr_name (via team_members.email)
+  useEffect(() => {
+    const resolveSelf = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+      const role = roleRow?.role?.toLowerCase();
+      if (role !== "sdr") {
+        setIsSdrRole(false);
+        return;
+      }
+      setIsSdrRole(true);
+      if (user.email) {
+        const { data: tm } = await supabase
+          .from("team_members")
+          .select("sdr_name")
+          .eq("email", user.email)
+          .maybeSingle();
+        if (tm?.sdr_name) setCurrentSdrName(tm.sdr_name);
+      }
+    };
+    resolveSelf();
+  }, []);
+
+  const canOpenRow = (sdrName: string) => !isSdrRole || sdrName === currentSdrName;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -172,11 +204,15 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
             <div className="space-y-2">
               {displayData.map((sdr) => {
                 const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
+                const clickable = canOpenRow(sdr.name);
                 return (
                   <div
                     key={`${sdr.name}-${sdr.clientId}`}
-                    className="rounded-lg border border-border/50 p-3 cursor-pointer hover:bg-muted/30 transition-colors"
-                    onClick={() => setSelectedSDR(sdr)}
+                    className={cn(
+                      "rounded-lg border border-border/50 p-3 transition-colors",
+                      clickable ? "cursor-pointer hover:bg-muted/30" : "cursor-default"
+                    )}
+                    onClick={() => clickable && setSelectedSDR(sdr)}
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="text-lg w-7 text-center shrink-0">{getRankDisplay(sdr.displayRank)}</span>
@@ -251,18 +287,28 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
                   {sortedData.map((sdr, idx) => {
                     const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
                     const dmValue = Number(sdr.totalDMs);
+                    const clickable = canOpenRow(sdr.name);
 
                     return (
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
-                        className="transition-colors cursor-pointer"
+                        className={cn(
+                          "transition-colors",
+                          clickable ? "cursor-pointer" : "cursor-default hover:bg-transparent"
+                        )}
                         style={{ height: "48px" }}
                       >
                         <TableCell className="text-center" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
                         <TableCell className="text-left" style={{ padding: cellPad }}>
-                          <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedSDR(sdr)}>
+                          <div
+                            className={cn(
+                              "flex items-center gap-2 transition-colors",
+                              clickable ? "cursor-pointer hover:text-primary" : "cursor-default"
+                            )}
+                            onClick={() => clickable && setSelectedSDR(sdr)}
+                          >
                             <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
                             <span className="font-normal whitespace-nowrap truncate">{sdr.name}</span>
                           </div>

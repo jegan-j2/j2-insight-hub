@@ -20,8 +20,11 @@ const Index = () => {
           .eq("user_id", session.user.id)
           .single();
 
-        if (roleData?.role === "client" && roleData.client_id) {
+        const role = roleData?.role?.toLowerCase();
+        if (role === "client" && roleData?.client_id) {
           navigate(`/client/${roleData.client_id}`, { replace: true });
+        } else if (role === "sdr") {
+          navigate("/team", { replace: true });
         } else {
           navigate("/overview", { replace: true });
         }
