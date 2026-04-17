@@ -204,11 +204,15 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
             <div className="space-y-2">
               {displayData.map((sdr) => {
                 const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
+                const clickable = canOpenRow(sdr.name);
                 return (
                   <div
                     key={`${sdr.name}-${sdr.clientId}`}
-                    className="rounded-lg border border-border/50 p-3 cursor-pointer hover:bg-muted/30 transition-colors"
-                    onClick={() => setSelectedSDR(sdr)}
+                    className={cn(
+                      "rounded-lg border border-border/50 p-3 transition-colors",
+                      clickable ? "cursor-pointer hover:bg-muted/30" : "cursor-default"
+                    )}
+                    onClick={() => clickable && setSelectedSDR(sdr)}
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="text-lg w-7 text-center shrink-0">{getRankDisplay(sdr.displayRank)}</span>
