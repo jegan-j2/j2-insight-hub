@@ -1772,24 +1772,13 @@ const ActivityMonitor = () => {
                       </TableHead>
                       <TableHead className={cn("text-left", mode === "live" ? "w-[20%]" : "w-[18%]")}>Contact Person</TableHead>
                       <TableHead className={cn("text-left", mode === "live" ? "w-[18%]" : "w-[16%]")}>Company</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[18%]" : "w-[16%]")}>Meeting Date</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[14%]" : "w-[14%]")}>Status</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[16%]" : "w-[16%]")}>Recording</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[22%]")}>Meeting Date</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[24%]")}>Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="table-striped">
                     {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
                       const meetingDateStr = formatScheduledMeetingDateTime(m.meeting_date, m.meeting_time ?? null);
-                      const statusConfig = (() => {
-                        const opts = [
-                          { value: "pending", label: "Pending", color: "#F59E0B" },
-                          { value: "held", label: "Held", color: "#10B981" },
-                          { value: "no_show", label: "No Show", color: "#EF4444" },
-                          { value: "cancelled", label: "Cancelled", color: "#94A3B8" },
-                          { value: "reschedule", label: "Reschedule", color: "#3b82f6" },
-                        ];
-                        return opts.find(o => o.value === (m.meeting_status ?? "pending")) ?? opts[0];
-                      })();
                       return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50")}>
@@ -1818,11 +1807,6 @@ const ActivityMonitor = () => {
                           <TableCell className="text-left">{m.company_name || "—"}</TableCell>
                           <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
                           <TableCell className="text-center">
-                            <Badge className="gap-1 text-white text-xs cursor-default" style={{ backgroundColor: statusConfig.color }}>
-                              {statusConfig.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
                             {m.recording_url ? (
                               <Button
                                 variant="outline"
@@ -1843,7 +1827,7 @@ const ActivityMonitor = () => {
                         </TableRow>
                         {playingRecordingId === m.id && m.recording_url && (
                           <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={6} className="py-3">
+                            <TableCell colSpan={5} className="py-3">
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">
