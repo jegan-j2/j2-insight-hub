@@ -287,18 +287,28 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
                   {sortedData.map((sdr, idx) => {
                     const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
                     const dmValue = Number(sdr.totalDMs);
+                    const clickable = canOpenRow(sdr.name);
 
                     return (
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
-                        className="transition-colors cursor-pointer"
+                        className={cn(
+                          "transition-colors",
+                          clickable ? "cursor-pointer" : "cursor-default hover:bg-transparent"
+                        )}
                         style={{ height: "48px" }}
                       >
                         <TableCell className="text-center" style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}>
                           {getRankDisplay(sdr.displayRank)}
                         </TableCell>
                         <TableCell className="text-left" style={{ padding: cellPad }}>
-                          <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => setSelectedSDR(sdr)}>
+                          <div
+                            className={cn(
+                              "flex items-center gap-2 transition-colors",
+                              clickable ? "cursor-pointer hover:text-primary" : "cursor-default"
+                            )}
+                            onClick={() => clickable && setSelectedSDR(sdr)}
+                          >
                             <SDRAvatar name={sdr.name} photoUrl={photoMap[sdr.name]} size="md" />
                             <span className="font-normal whitespace-nowrap truncate">{sdr.name}</span>
                           </div>
