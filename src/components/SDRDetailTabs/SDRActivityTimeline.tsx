@@ -94,10 +94,10 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
         }
       }
 
-      // Fetch answered + sqls from daily_snapshots
+      // Fetch answered from daily_snapshots
       let snapshotQuery = supabase
         .from("daily_snapshots")
-        .select("snapshot_date, answered, sqls")
+        .select("snapshot_date, answered")
         .eq("sdr_name", sdrName)
         .gte("snapshot_date", startDate)
         .lte("snapshot_date", endDate);
@@ -109,12 +109,33 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
       const { data: snapshots } = await snapshotQuery;
 
       const ansMap: Record<string, number> = {};
-      const sqlMap: Record<string, number> = {};
       if (snapshots) {
         for (const row of snapshots) {
           const key = row.snapshot_date;
           ansMap[key] = (ansMap[key] || 0) + (Number(row.answered) || 0);
-          sqlMap[key] = (sqlMap[key] || 0) + (Number(row.sqls) || 0);
+        }
+      }
+
+      // Fetch SQLs from sql_meetings, excluding cancelled/no_show
+      let sqlQuery = supabase
+        .from("sql_meetings")
+        .select("booking_date, meeting_status")
+        .eq("sdr_name", sdrName)
+        .gte("booking_date", startDate)
+        .lte("booking_date", endDate)
+        .not("meeting_status", "in", "(cancelled,no_show)");
+
+      if (clientId) {
+        sqlQuery = sqlQuery.eq("client_id", clientId);
+      }
+
+      const { data: sqlRows } = await sqlQuery;
+
+      const sqlMap: Record<string, number> = {};
+      if (sqlRows) {
+        for (const row of sqlRows as any[]) {
+          const key = row.booking_date;
+          sqlMap[key] = (sqlMap[key] || 0) + 1;
         }
       }
 
