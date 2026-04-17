@@ -1843,7 +1843,7 @@ const ActivityMonitor = () => {
                         </TableRow>
                         {playingRecordingId === m.id && m.recording_url && (
                           <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={5} className="py-3">
+                            <TableCell colSpan={6} className="py-3">
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">
