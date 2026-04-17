@@ -157,7 +157,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   };
 
   const exportData = (type: "csv" | "excel") => {
-    const headers = ["SQL Date", "Client", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
+    const headers = ["Booking Date", "Client", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
     const rows = filteredMeetings.map(m => [
       format(m.sqlDate, "MMM dd, yyyy"),
       m.clientName,
@@ -166,11 +166,16 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
       m.sdr,
       format(m.meetingDate, "MMM dd, yyyy"),
       getStatusConfig(m.meetingStatus).label,
-      m.clientNotes,
+      m.clientNotes ?? "",
     ]);
 
+    const escapeCsv = (val: unknown) => {
+      const s = val == null ? "" : String(val);
+      return `"${s.replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+    };
+
     if (type === "csv") {
-      const csv = [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
+      const csv = [headers.map(escapeCsv).join(","), ...rows.map(r => r.map(escapeCsv).join(","))].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -228,12 +233,16 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
-    let filtered = localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled');
+    let filtered = [...localMeetings];
     if (dateRange?.from && dateRange?.to) {
       filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
     if (clientFilter !== "all") filtered = filtered.filter(m => m.clientId === clientFilter);
-    if (statusFilter !== "all") filtered = filtered.filter(m => m.meetingStatus === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(m => m.meetingStatus === statusFilter);
+    } else {
+      filtered = filtered.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled' || m.meetingStatus === 'no_show');
+    }
     if (sdrFilter !== "all") filtered = filtered.filter(m => m.sdr === sdrFilter);
     if (bookingDateRange?.from && bookingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: bookingDateRange.from!, end: bookingDateRange.to! }));
     if (meetingDateRange?.from && meetingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.meetingDate, { start: meetingDateRange.from!, end: meetingDateRange.to! }));
