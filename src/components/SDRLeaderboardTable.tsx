@@ -54,6 +54,8 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
   const [sortKey, setSortKey] = useState<SortKey>("totalSQLs");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [showAll, setShowAll] = useState(false);
+  const [currentSdrName, setCurrentSdrName] = useState<string | null>(null);
+  const [isSdrRole, setIsSdrRole] = useState(false);
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -68,6 +70,36 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
     };
     fetchPhotos();
   }, []);
+
+  // Determine if current user is SDR role and resolve their own sdr_name (via team_members.email)
+  useEffect(() => {
+    const resolveSelf = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+      const role = roleRow?.role?.toLowerCase();
+      if (role !== "sdr") {
+        setIsSdrRole(false);
+        return;
+      }
+      setIsSdrRole(true);
+      if (user.email) {
+        const { data: tm } = await supabase
+          .from("team_members")
+          .select("sdr_name")
+          .eq("email", user.email)
+          .maybeSingle();
+        if (tm?.sdr_name) setCurrentSdrName(tm.sdr_name);
+      }
+    };
+    resolveSelf();
+  }, []);
+
+  const canOpenRow = (sdrName: string) => !isSdrRole || sdrName === currentSdrName;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
