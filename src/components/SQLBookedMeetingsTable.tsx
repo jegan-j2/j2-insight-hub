@@ -233,12 +233,16 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
-    let filtered = localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled');
+    let filtered = [...localMeetings];
     if (dateRange?.from && dateRange?.to) {
       filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
     if (clientFilter !== "all") filtered = filtered.filter(m => m.clientId === clientFilter);
-    if (statusFilter !== "all") filtered = filtered.filter(m => m.meetingStatus === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(m => m.meetingStatus === statusFilter);
+    } else {
+      filtered = filtered.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled' || m.meetingStatus === 'no_show');
+    }
     if (sdrFilter !== "all") filtered = filtered.filter(m => m.sdr === sdrFilter);
     if (bookingDateRange?.from && bookingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: bookingDateRange.from!, end: bookingDateRange.to! }));
     if (meetingDateRange?.from && meetingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.meetingDate, { start: meetingDateRange.from!, end: meetingDateRange.to! }));
