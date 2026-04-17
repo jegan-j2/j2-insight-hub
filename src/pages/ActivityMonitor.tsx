@@ -1767,11 +1767,14 @@ const ActivityMonitor = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader className="table-header-navy sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="w-[24%] text-left">Contact Person</TableHead>
-                      <TableHead className="w-[22%] text-left">Company</TableHead>
-                      <TableHead className="w-[22%] text-center">Meeting Date</TableHead>
-                      <TableHead className="w-[16%] text-center">Status</TableHead>
-                      <TableHead className="w-[16%] text-center">Recording</TableHead>
+                      <TableHead className={cn("text-left", mode === "live" ? "w-[14%]" : "w-[20%]")}>
+                        {mode === "live" ? "Booked At" : "Booking Date & Time"}
+                      </TableHead>
+                      <TableHead className={cn("text-left", mode === "live" ? "w-[20%]" : "w-[18%]")}>Contact Person</TableHead>
+                      <TableHead className={cn("text-left", mode === "live" ? "w-[18%]" : "w-[16%]")}>Company</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[18%]" : "w-[16%]")}>Meeting Date</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[14%]" : "w-[14%]")}>Status</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[16%]" : "w-[16%]")}>Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="table-striped">
