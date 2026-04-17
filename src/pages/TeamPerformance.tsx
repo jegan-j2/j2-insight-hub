@@ -48,7 +48,9 @@ const TeamPerformance = () => {
   const [exportingExcel, setExportingExcel] = useState(false);
   
   const { toast } = useToast();
-  const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, clientFilter);
+  // SDR role always sees the full leaderboard across all clients (cannot be filtered)
+  const effectiveClientFilter = isSdr ? "all" : clientFilter;
+  const { loading, error, leaderboard, previousLeaderboard, activityChartData, refetch } = useTeamPerformanceData(dateRange, effectiveClientFilter);
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
