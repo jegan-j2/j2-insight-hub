@@ -311,11 +311,6 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
           {config.icon && <config.icon className="h-3 w-3" />}
           {config.label}
         </Badge>
-        {overdue && (
-          <Badge className="text-[10px] px-1.5 py-0 h-5 text-white cursor-default" style={{ backgroundColor: "#F59E0B" }}>
-            Overdue
-          </Badge>
-        )}
         {canReinstate && (
           <Button
             variant="ghost"
@@ -352,11 +347,6 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             ))}
           </SelectContent>
         </Select>
-        {overdue && (
-          <Badge className="text-[10px] px-1.5 py-0 h-5 text-white cursor-default" style={{ backgroundColor: "#F59E0B" }}>
-            Overdue
-          </Badge>
-        )}
       </div>
     );
   };
