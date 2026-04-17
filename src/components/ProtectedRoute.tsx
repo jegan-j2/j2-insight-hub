@@ -43,12 +43,24 @@ export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRout
           return;
         }
 
+        const role = roleData.role?.toLowerCase();
+
         // CLIENT user → enforce their own page only!
-        if (roleData.role === "client" && roleData.client_id) {
+        if (role === "client" && roleData.client_id) {
           const clientPath = `/client/${roleData.client_id}`;
           if (!location.pathname.startsWith(clientPath)) {
             if (import.meta.env.DEV) console.log(`🔒 Client redirected to ${clientPath}`);
             setRedirectPath(clientPath);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // SDR user → only /team allowed
+        if (role === "sdr") {
+          if (!location.pathname.startsWith("/team")) {
+            if (import.meta.env.DEV) console.log("🔒 SDR redirected to /team");
+            setRedirectPath("/team");
             setLoading(false);
             return;
           }

@@ -50,9 +50,13 @@ const Login = () => {
       return;
     }
 
-    if (roleData.role === "client" && roleData.client_id) {
+    const role = roleData.role?.toLowerCase();
+    if (role === "client" && roleData.client_id) {
       if (import.meta.env.DEV) console.log(`🔒 Redirecting client to /client/${roleData.client_id}`);
       navigate(`/client/${roleData.client_id}`);
+    } else if (role === "sdr") {
+      if (import.meta.env.DEV) console.log("🔒 Redirecting SDR to /team");
+      navigate("/team");
     } else {
       if (import.meta.env.DEV) console.log("🔒 Redirecting admin to /overview");
       navigate("/overview");

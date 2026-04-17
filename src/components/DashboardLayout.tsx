@@ -3,6 +3,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Navbar from "@/components/Navbar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,6 +11,8 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
+  const { isSdr, isClient } = useUserRole();
+  const hideSidebar = isSdr || isClient;
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -19,7 +22,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </div>
       {/* Sidebar + content below the fixed header */}
       <div className="flex w-full pt-16 min-h-screen">
-        <AppSidebar />
+        {!hideSidebar && <AppSidebar />}
         <main
           className="flex-1 min-w-0 overflow-auto"
           style={{ padding: isMobile ? 12 : 24 }}
