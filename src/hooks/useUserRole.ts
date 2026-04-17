@@ -95,7 +95,20 @@ export const useUserRole = (): UserRoleState => {
     }
 
     checkRole()
-    return () => { cancelled = true }
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        try { localStorage.removeItem(CACHE_KEY) } catch { /* ignore */ }
+        if (!cancelled) setState(buildState(null, null, false))
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        checkRole()
+      }
+    })
+
+    return () => {
+      cancelled = true
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
   return state
