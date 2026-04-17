@@ -157,7 +157,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   };
 
   const exportData = (type: "csv" | "excel") => {
-    const headers = ["SQL Date", "Client", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
+    const headers = ["Booking Date", "Client", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
     const rows = filteredMeetings.map(m => [
       format(m.sqlDate, "MMM dd, yyyy"),
       m.clientName,
@@ -166,11 +166,16 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
       m.sdr,
       format(m.meetingDate, "MMM dd, yyyy"),
       getStatusConfig(m.meetingStatus).label,
-      m.clientNotes,
+      m.clientNotes ?? "",
     ]);
 
+    const escapeCsv = (val: unknown) => {
+      const s = val == null ? "" : String(val);
+      return `"${s.replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+    };
+
     if (type === "csv") {
-      const csv = [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
+      const csv = [headers.map(escapeCsv).join(","), ...rows.map(r => r.map(escapeCsv).join(","))].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
