@@ -1768,7 +1768,7 @@ const ActivityMonitor = () => {
                   <TableHeader className="table-header-navy sticky top-0 z-10">
                     <TableRow>
                       <TableHead className={cn("text-left", mode === "live" ? "w-[14%]" : "w-[20%]")}>
-                        {mode === "live" ? "Booked At" : "Booking Date & Time"}
+                        Booked At
                       </TableHead>
                       <TableHead className={cn("text-left", mode === "live" ? "w-[20%]" : "w-[18%]")}>Contact Person</TableHead>
                       <TableHead className={cn("text-left", mode === "live" ? "w-[18%]" : "w-[16%]")}>Company</TableHead>
