@@ -1793,6 +1793,27 @@ const ActivityMonitor = () => {
                       return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50")}>
+                          <TableCell className="text-left text-sm text-muted-foreground whitespace-nowrap tabular-nums">
+                            {(() => {
+                              const ts = m.activity_date || (m.booking_date ? `${m.booking_date}T00:00:00` : null);
+                              if (!ts) return "—";
+                              const d = new Date(ts);
+                              const timeStr = d.toLocaleTimeString("en-AU", {
+                                timeZone: "Australia/Melbourne",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                              }).replace(' am', ' AM').replace(' pm', ' PM');
+                              if (mode === "live") return timeStr;
+                              const dateStr = d.toLocaleDateString("en-AU", {
+                                timeZone: "Australia/Melbourne",
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              });
+                              return `${dateStr} · ${timeStr}`;
+                            })()}
+                          </TableCell>
                           <TableCell className="text-left font-medium">{m.contact_person || "—"}</TableCell>
                           <TableCell className="text-left">{m.company_name || "—"}</TableCell>
                           <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
