@@ -502,7 +502,7 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
               </Table>
             </TooltipProvider>
             </div>
-            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+            <div className="flex items-center justify-start gap-4 mt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> On track</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> At risk</span>
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Behind</span>
