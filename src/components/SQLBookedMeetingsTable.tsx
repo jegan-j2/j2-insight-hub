@@ -597,7 +597,6 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                   key={meeting.id}
                   className={cn(
                     "rounded-lg border border-border/50 p-3 cursor-pointer transition-colors",
-                    overdue && "border-l-[3px] border-l-[#F59E0B]",
                     updating === meeting.id && "opacity-60"
                   )}
                   onClick={() => setExpandedRowId(isExpanded ? null : meeting.id)}
@@ -677,7 +676,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
               </TableHeader>
               <TableBody className="table-striped">
                 {paginatedMeetings.map((meeting) => (
-                  <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`} style={isOverdue(meeting) ? { borderLeft: "3px solid #F59E0B" } : undefined}>
+                  <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`}>
                     <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
                     <TableCell className="text-foreground whitespace-nowrap">
                       <div className="flex items-center gap-2">
