@@ -11,24 +11,65 @@ interface UserRoleState {
   loading: boolean
 }
 
+const CACHE_KEY = 'j2_user_role_cache_v1'
+
+const buildState = (role: string | null, clientId: string | null, loading: boolean): UserRoleState => {
+  const r = role?.toLowerCase() ?? null
+  return {
+    role,
+    clientId,
+    isAdmin: r === 'admin',
+    isManager: r === 'manager',
+    isClient: r === 'client',
+    isSdr: r === 'sdr',
+    loading,
+  }
+}
+
+const readCache = (): { role: string | null; clientId: string | null } | null => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') {
+      return { role: parsed.role ?? null, clientId: parsed.clientId ?? null }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+const writeCache = (role: string | null, clientId: string | null) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ role, clientId }))
+  } catch {
+    /* ignore */
+  }
+}
+
 export const useUserRole = (): UserRoleState => {
-  const [state, setState] = useState<UserRoleState>({
-    role: null,
-    clientId: null,
-    isAdmin: false,
-    isManager: false,
-    isClient: false,
-    isSdr: false,
-    loading: true,
+  const [state, setState] = useState<UserRoleState>(() => {
+    const cached = readCache()
+    if (cached) {
+      // Treat cached value as authoritative for initial render to avoid UI flash;
+      // it will be revalidated by the effect below.
+      return buildState(cached.role, cached.clientId, false)
+    }
+    return buildState(null, null, true)
   })
 
   useEffect(() => {
+    let cancelled = false
     const checkRole = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) {
-          setState(prev => ({ ...prev, loading: false }))
+          if (!cancelled) {
+            writeCache(null, null)
+            setState(buildState(null, null, false))
+          }
           return
         }
 
@@ -38,26 +79,23 @@ export const useUserRole = (): UserRoleState => {
           .eq('user_id', user.id)
           .single()
 
+        if (cancelled) return
+
         if (userRole) {
-          setState({
-            role: userRole.role,
-            clientId: userRole.client_id,
-            isAdmin: userRole.role?.toLowerCase() === 'admin',
-            isManager: userRole.role?.toLowerCase() === 'manager',
-            isClient: userRole.role?.toLowerCase() === 'client',
-            isSdr: userRole.role?.toLowerCase() === 'sdr',
-            loading: false,
-          })
+          writeCache(userRole.role, userRole.client_id)
+          setState(buildState(userRole.role, userRole.client_id, false))
         } else {
-          setState(prev => ({ ...prev, loading: false }))
+          writeCache(null, null)
+          setState(buildState(null, null, false))
         }
       } catch (error) {
         console.error('Error checking user role:', error)
-        setState(prev => ({ ...prev, loading: false }))
+        if (!cancelled) setState(prev => ({ ...prev, loading: false }))
       }
     }
 
     checkRole()
+    return () => { cancelled = true }
   }, [])
 
   return state
