@@ -1767,41 +1767,37 @@ const ActivityMonitor = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader className="table-header-navy sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="w-[18%] text-center">Booking Date</TableHead>
-                      <TableHead className="w-[20%] text-left">Contact Person</TableHead>
-                      <TableHead className="w-[20%] text-left">Company</TableHead>
-                      <TableHead className="w-[24%] text-center">Meeting Date</TableHead>
-                      <TableHead className="w-[18%] text-center">Recording</TableHead>
+                      <TableHead className="w-[24%] text-left">Contact Person</TableHead>
+                      <TableHead className="w-[22%] text-left">Company</TableHead>
+                      <TableHead className="w-[22%] text-center">Meeting Date</TableHead>
+                      <TableHead className="w-[16%] text-center">Status</TableHead>
+                      <TableHead className="w-[16%] text-center">Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="table-striped">
                     {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
-                      const displayDate = m.activity_date;
                       const meetingDateStr = formatScheduledMeetingDateTime(m.meeting_date, m.meeting_time ?? null);
+                      const statusConfig = (() => {
+                        const opts = [
+                          { value: "pending", label: "Pending", color: "#F59E0B" },
+                          { value: "held", label: "Held", color: "#10B981" },
+                          { value: "no_show", label: "No Show", color: "#EF4444" },
+                          { value: "cancelled", label: "Cancelled", color: "#94A3B8" },
+                          { value: "reschedule", label: "Reschedule", color: "#3b82f6" },
+                        ];
+                        return opts.find(o => o.value === (m.meeting_status ?? "pending")) ?? opts[0];
+                      })();
                       return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50")}>
-                          <TableCell className="text-center whitespace-nowrap tabular-nums">
-                            {displayDate
-                              ? (mode === "live"
-                                ? new Date(displayDate).toLocaleTimeString("en-AU", {
-                                    timeZone: "Australia/Melbourne",
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  }).replace(' am', ' AM').replace(' pm', ' PM')
-                                : new Date(displayDate).toLocaleDateString("en-AU", {
-                                    timeZone: "Australia/Melbourne",
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })
-                              )
-                              : format(new Date(`${m.booking_date}T00:00:00`), "d MMM yyyy")}
-                          </TableCell>
                           <TableCell className="text-left font-medium">{m.contact_person || "—"}</TableCell>
                           <TableCell className="text-left">{m.company_name || "—"}</TableCell>
                           <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge className="gap-1 text-white text-xs cursor-default" style={{ backgroundColor: statusConfig.color }}>
+                              {statusConfig.label}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-center">
                             {m.recording_url ? (
                               <Button
