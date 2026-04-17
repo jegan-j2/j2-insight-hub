@@ -57,6 +57,7 @@ export const HourlyBreakdownPanel = ({
   onClose,
 }: HourlyBreakdownPanelProps) => {
   const [hourlyData, setHourlyData] = useState<HourData[]>([]);
+  const [validSqlsForDay, setValidSqlsForDay] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const { resolvedTheme } = useTheme();
@@ -70,11 +71,22 @@ export const HourlyBreakdownPanel = ({
       setLoading(true);
       setSelectedHour(null);
 
-      const { data } = await supabase.rpc("get_sdr_hourly_breakdown", {
-        p_sdr_name: sdrName,
-        p_date: dateStr,
-        p_client_id: clientId || null,
-      });
+      let sqlQuery = supabase
+        .from("sql_meetings")
+        .select("id")
+        .eq("sdr_name", sdrName)
+        .eq("booking_date", dateStr)
+        .not("meeting_status", "in", "(cancelled,no_show)");
+      if (clientId) sqlQuery = sqlQuery.eq("client_id", clientId);
+
+      const [{ data }, { data: sqlRows }] = await Promise.all([
+        supabase.rpc("get_sdr_hourly_breakdown", {
+          p_sdr_name: sdrName,
+          p_date: dateStr,
+          p_client_id: clientId || null,
+        }),
+        sqlQuery,
+      ]);
 
       const buckets: Record<number, HourData> = {};
       for (const h of HOURS) {
@@ -97,6 +109,7 @@ export const HourlyBreakdownPanel = ({
       }
 
       setHourlyData(HOURS.map((h) => buckets[h]));
+      setValidSqlsForDay(sqlRows?.length || 0);
       setLoading(false);
     };
 
@@ -144,7 +157,7 @@ export const HourlyBreakdownPanel = ({
       : "0";
   }, [selectedHourData, dayTotals]);
 
-  const displaySqls = selectedHourData ? selectedHourData.sqls : dayTotals.sqls;
+  const displaySqls = selectedHourData ? selectedHourData.sqls : validSqlsForDay;
   const displayDms = selectedHourData ? selectedHourData.dms : dayTotals.dms;
 
   return (
