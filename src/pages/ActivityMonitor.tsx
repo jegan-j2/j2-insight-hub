@@ -1767,11 +1767,14 @@ const ActivityMonitor = () => {
                 <Table className="table-fixed w-full">
                   <TableHeader className="table-header-navy sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="w-[24%] text-left">Contact Person</TableHead>
-                      <TableHead className="w-[22%] text-left">Company</TableHead>
-                      <TableHead className="w-[22%] text-center">Meeting Date</TableHead>
-                      <TableHead className="w-[16%] text-center">Status</TableHead>
-                      <TableHead className="w-[16%] text-center">Recording</TableHead>
+                      <TableHead className={cn("text-left", mode === "live" ? "w-[14%]" : "w-[20%]")}>
+                        {mode === "live" ? "Booked At" : "Booking Date & Time"}
+                      </TableHead>
+                      <TableHead className={cn("text-left", mode === "live" ? "w-[20%]" : "w-[18%]")}>Contact Person</TableHead>
+                      <TableHead className={cn("text-left", mode === "live" ? "w-[18%]" : "w-[16%]")}>Company</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[18%]" : "w-[16%]")}>Meeting Date</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[14%]" : "w-[14%]")}>Status</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[16%]" : "w-[16%]")}>Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="table-striped">
@@ -1790,6 +1793,27 @@ const ActivityMonitor = () => {
                       return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50")}>
+                          <TableCell className="text-left text-sm text-muted-foreground whitespace-nowrap tabular-nums">
+                            {(() => {
+                              const ts = m.activity_date || (m.booking_date ? `${m.booking_date}T00:00:00` : null);
+                              if (!ts) return "—";
+                              const d = new Date(ts);
+                              const timeStr = d.toLocaleTimeString("en-AU", {
+                                timeZone: "Australia/Melbourne",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                              }).replace(' am', ' AM').replace(' pm', ' PM');
+                              if (mode === "live") return timeStr;
+                              const dateStr = d.toLocaleDateString("en-AU", {
+                                timeZone: "Australia/Melbourne",
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              });
+                              return `${dateStr} · ${timeStr}`;
+                            })()}
+                          </TableCell>
                           <TableCell className="text-left font-medium">{m.contact_person || "—"}</TableCell>
                           <TableCell className="text-left">{m.company_name || "—"}</TableCell>
                           <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
@@ -1819,7 +1843,7 @@ const ActivityMonitor = () => {
                         </TableRow>
                         {playingRecordingId === m.id && m.recording_url && (
                           <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={5} className="py-3">
+                            <TableCell colSpan={6} className="py-3">
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">
