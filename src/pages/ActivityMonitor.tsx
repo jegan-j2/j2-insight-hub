@@ -1779,16 +1779,6 @@ const ActivityMonitor = () => {
                   <TableBody className="table-striped">
                     {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
                       const meetingDateStr = formatScheduledMeetingDateTime(m.meeting_date, m.meeting_time ?? null);
-                      const statusConfig = (() => {
-                        const opts = [
-                          { value: "pending", label: "Pending", color: "#F59E0B" },
-                          { value: "held", label: "Held", color: "#10B981" },
-                          { value: "no_show", label: "No Show", color: "#EF4444" },
-                          { value: "cancelled", label: "Cancelled", color: "#94A3B8" },
-                          { value: "reschedule", label: "Reschedule", color: "#3b82f6" },
-                        ];
-                        return opts.find(o => o.value === (m.meeting_status ?? "pending")) ?? opts[0];
-                      })();
                       return (
                       <>
                         <TableRow key={m.id} className={cn("border-border/50")}>
@@ -1816,11 +1806,6 @@ const ActivityMonitor = () => {
                           <TableCell className="text-left font-medium">{m.contact_person || "—"}</TableCell>
                           <TableCell className="text-left">{m.company_name || "—"}</TableCell>
                           <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="gap-1 text-white text-xs cursor-default" style={{ backgroundColor: statusConfig.color }}>
-                              {statusConfig.label}
-                            </Badge>
-                          </TableCell>
                           <TableCell className="text-center">
                             {m.recording_url ? (
                               <Button
