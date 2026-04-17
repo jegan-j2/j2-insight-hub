@@ -19,6 +19,7 @@ import { toCSV, downloadCSV } from "@/lib/csvExport";
 import * as XLSX from "xlsx-js-style";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
+import { useUserRole } from "@/hooks/useUserRole";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
@@ -40,6 +41,7 @@ interface ClientLookup {
 
 const TeamPerformance = () => {
   const { dateRange, setDateRange, filterType, setFilterType, clientFilter, setClientFilter } = useDateFilter();
+  const { isSdr } = useUserRole();
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [allClients, setAllClients] = useState<ClientLookup[]>([]);
   const [exporting, setExporting] = useState(false);
@@ -322,28 +324,30 @@ const TeamPerformance = () => {
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                disabled={loading || leaderboard.length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50"
-              >
-                <Download className="h-4 w-4" />
-                Export
-                <ChevronDown className="h-4 w-4 ml-1" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportCSV}>
-                <FileText className="h-4 w-4 mr-2" />
-                Export as CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel}>
-                <Table2 className="h-4 w-4 mr-2" />
-                Export as Excel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {!isSdr && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  disabled={loading || leaderboard.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50"
+                >
+                  <Download className="h-4 w-4" />
+                  Export
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel}>
+                  <Table2 className="h-4 w-4 mr-2" />
+                  Export as Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -430,32 +434,34 @@ const TeamPerformance = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Client Filter — on same row, right side, matching date tab styling */}
-          <div className="ml-auto">
-            <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className={cn(
-                "w-[180px] min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200",
-                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
-              )}>
-                <SelectValue placeholder="All Clients" />
-              </SelectTrigger>
-              <SelectContent className="z-[100] bg-card">
-                <SelectItem value="all">All Clients</SelectItem>
-                {clients.map((c) => (
-                  <SelectItem key={c.client_id} value={c.client_id}>
-                    <span className="flex items-center gap-2">
-                      {c.logo_url ? (
-                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                      ) : (
-                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
-                      )}
-                      {c.client_name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Client Filter — hidden for SDR role */}
+          {!isSdr && (
+            <div className="ml-auto">
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className={cn(
+                  "w-[180px] min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                  "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+                )}>
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent className="z-[100] bg-card">
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clients.map((c) => (
+                    <SelectItem key={c.client_id} value={c.client_id}>
+                      <span className="flex items-center gap-2">
+                        {c.logo_url ? (
+                          <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                        ) : (
+                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                        )}
+                        {c.client_name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
          {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
