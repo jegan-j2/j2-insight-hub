@@ -1772,9 +1772,8 @@ const ActivityMonitor = () => {
                       </TableHead>
                       <TableHead className={cn("text-left", mode === "live" ? "w-[20%]" : "w-[18%]")}>Contact Person</TableHead>
                       <TableHead className={cn("text-left", mode === "live" ? "w-[18%]" : "w-[16%]")}>Company</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[18%]" : "w-[16%]")}>Meeting Date</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[14%]" : "w-[14%]")}>Status</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[16%]" : "w-[16%]")}>Recording</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[22%]")}>Meeting Date</TableHead>
+                      <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[24%]")}>Recording</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="table-striped">
