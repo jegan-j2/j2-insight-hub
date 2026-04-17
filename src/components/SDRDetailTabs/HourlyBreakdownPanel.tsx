@@ -157,7 +157,7 @@ export const HourlyBreakdownPanel = ({
       : "0";
   }, [selectedHourData, dayTotals]);
 
-  const displaySqls = selectedHourData ? selectedHourData.sqls : dayTotals.sqls;
+  const displaySqls = selectedHourData ? selectedHourData.sqls : validSqlsForDay;
   const displayDms = selectedHourData ? selectedHourData.dms : dayTotals.dms;
 
   return (
