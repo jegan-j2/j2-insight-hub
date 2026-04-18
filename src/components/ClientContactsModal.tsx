@@ -397,7 +397,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Type</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Last Login</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Dashboard Access</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-white text-[14px] text-left">Actions</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px] text-left min-w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
