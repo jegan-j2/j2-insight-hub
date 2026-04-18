@@ -99,10 +99,12 @@ const Login = () => {
         return;
       }
 
-      toast({ title: "Login successful", description: "Redirecting..." });
-
+      // Verify role exists BEFORE showing success toast
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await redirectBasedOnRole();
+      const ok = await redirectBasedOnRole();
+      if (ok) {
+        toast({ title: "Login successful", description: "Redirecting..." });
+      }
     } catch (err) {
       console.error("Login error:", err);
       setLoginError("An unexpected error occurred. Please try again.");
