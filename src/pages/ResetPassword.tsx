@@ -177,7 +177,7 @@ const ResetPassword = () => {
                 Updating...
               </>
             ) : (
-              "Reset Password"
+              "Set Password"
             )}
           </Button>
           {!canSubmit && (

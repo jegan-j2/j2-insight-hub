@@ -220,6 +220,18 @@ Deno.serve(async (req) => {
 
     console.log('user_roles upserted for user:', newUserId, 'role:', role)
 
+    // STEP 3b: Set display name on auth user metadata so greetings can use it
+    if (displayName && typeof displayName === 'string' && displayName.trim()) {
+      try {
+        await adminClient.auth.admin.updateUserById(newUserId, {
+          user_metadata: { full_name: displayName.trim(), name: displayName.trim() },
+        })
+        console.log('user_metadata updated with displayName for:', newUserId)
+      } catch (metaErr) {
+        console.error('Failed to update user_metadata (non-fatal):', metaErr)
+      }
+    }
+
     // STEP 4: Return success
     return new Response(
       JSON.stringify({ success: true }),
