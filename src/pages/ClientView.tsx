@@ -15,6 +15,7 @@ import { ClientDrillDownModal } from "@/components/ClientDrillDownModal";
 import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
 import { useClientViewData } from "@/hooks/useClientViewData";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/lib/supabase";
 
 type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign" | "custom";
@@ -30,7 +31,7 @@ const getGreeting = () => {
 
 const ClientView = () => {
   const { clientSlug } = useParams();
-  const [firstName, setFirstName] = useState<string | null>(null);
+  const { firstName } = useUserProfile();
   const [filterType, setFilterType] = useState<FilterType | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
@@ -67,21 +68,6 @@ const ClientView = () => {
     }
   }, [client, campaignRangeInitialized, clientSlug]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
-      if (fullName && typeof fullName === "string") {
-        const raw = fullName.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
-        if (raw) setFirstName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
-      } else if (user.email) {
-        const local = user.email.split("@")[0]?.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
-        if (local) setFirstName(local.charAt(0).toUpperCase() + local.slice(1).toLowerCase());
-      }
-    };
-    getUser();
-  }, []);
 
   const filters = [
     { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },

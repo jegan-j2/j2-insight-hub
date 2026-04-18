@@ -20,6 +20,7 @@ import * as XLSX from "xlsx-js-style";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
@@ -218,22 +219,8 @@ const TeamPerformance = () => {
   }, [clientFilter, clients]);
 
   // Melbourne timezone greeting
-  const [firstName, setFirstName] = useState<string | null>(null);
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
-      if (fullName && typeof fullName === "string") {
-        const raw = fullName.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
-        if (raw) setFirstName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
-      } else if (user.email) {
-        const local = user.email.split("@")[0]?.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
-        if (local) setFirstName(local.charAt(0).toUpperCase() + local.slice(1).toLowerCase());
-      }
-    };
-    getUser();
-  }, []);
+  const { firstName } = useUserProfile();
+
 
   const melbourneGreeting = useMemo(() => {
     const now = new Date();

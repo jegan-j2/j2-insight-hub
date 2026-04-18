@@ -18,6 +18,7 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
 import { useOverviewData } from "@/hooks/useOverviewData";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { toCSV, downloadCSV, formatDateForCSV } from "@/lib/csvExport";
 import type { DateRange } from "react-day-picker";
 import type { FilterType } from "@/contexts/DateFilterContext";
@@ -59,7 +60,7 @@ const getDateRangeForFilter = (ft: FilterType): DateRange | undefined => {
 const Overview = () => {
   const { dateRange, setDateRange, filterType, setFilterType, clientFilter, setClientFilter } = useDateFilter();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [firstName, setFirstName] = useState<string | null>(null);
+  const { firstName } = useUserProfile();
   const initializedFromUrl = useRef(false);
 
   // Restore filter state from URL on mount
@@ -113,21 +114,6 @@ const Overview = () => {
     setSearchParams(params, { replace: true });
   }, [filterType, dateRange, clientFilter, setSearchParams]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
-      if (fullName && typeof fullName === "string") {
-        const raw = fullName.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
-        if (raw) setFirstName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
-      } else if (user.email) {
-        const local = user.email.split("@")[0]?.split(/[-_\s]/)[0]?.replace(/[^a-zA-Z]/g, '')?.trim();
-        if (local) setFirstName(local.charAt(0).toUpperCase() + local.slice(1).toLowerCase());
-      }
-    };
-    getUser();
-  }, []);
   const { kpis, dailyActivity, meetings, clientPerformance, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
