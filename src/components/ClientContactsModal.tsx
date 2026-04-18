@@ -11,7 +11,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { X, Plus, Pencil, MinusCircle, Users, CheckCircle, Mail, Loader2, RefreshCw } from "lucide-react";
 import { computeAccessInfo, type InviteSnapshot } from "@/lib/accessStatus";
 import { format, formatDistanceToNow } from "date-fns";
-import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
