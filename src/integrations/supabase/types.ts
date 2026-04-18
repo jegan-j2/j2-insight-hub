@@ -871,6 +871,7 @@ export type Database = {
         }[]
       }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      revoke_client_access: { Args: { p_email: string }; Returns: undefined }
       revoke_user_access: { Args: { p_email: string }; Returns: undefined }
       sync_user_role: {
         Args: { p_client_id?: string; p_email: string; p_role: string }
