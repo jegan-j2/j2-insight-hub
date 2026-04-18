@@ -141,7 +141,7 @@ Daily Performance Summary — ${reportDate}
             'Authorization': `Bearer ${resendKey}`,
           },
           body: JSON.stringify({
-            from: 'J2 Insight Hub <reports@updates.j2outsourcing.com>',
+            from: 'J2 Insight Hub <admin-support@j2group.com.au>',
             to,
             subject: `Daily Performance Report — ${reportDate}`,
             text: emailBody,
