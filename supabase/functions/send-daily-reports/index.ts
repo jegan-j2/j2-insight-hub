@@ -125,6 +125,33 @@ Daily Performance Summary — ${reportDate}
 🏆 Top SDR: ${topSDR}
     `.trim()
 
+    const emailHtml = `
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; background: #f8fafc; padding: 40px; margin: 0;">
+  <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <div style="background: #0F172A; padding: 32px; text-align: center;">
+      <img src="https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/public/branding/j2_logo_new_lightmode.png" width="72" style="display:block; margin: 0 auto 16px; border-radius: 50%;" />
+      <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600;">Daily Performance Summary</h1>
+      <p style="color: #94a3b8; margin: 6px 0 0; font-size: 14px;">${reportDate}</p>
+    </div>
+    <div style="padding: 32px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-size: 15px;">📞 Total Dials</td><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; color: #0f172a; font-size: 15px; font-weight: 600;">${totalDials.toLocaleString()}</td></tr>
+        <tr><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-size: 15px;">✅ Answered</td><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; color: #0f172a; font-size: 15px; font-weight: 600;">${totalAnswered.toLocaleString()} (${answerRate}%)</td></tr>
+        <tr><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-size: 15px;">🤝 DM Conversations</td><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; color: #0f172a; font-size: 15px; font-weight: 600;">${totalDMs.toLocaleString()}</td></tr>
+        <tr><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-size: 15px;">🎯 SQLs Booked</td><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; color: #0f172a; font-size: 15px; font-weight: 600;">${totalSQLs.toLocaleString()}</td></tr>
+        <tr><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-size: 15px;">📈 Conversion Rate</td><td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; color: #0f172a; font-size: 15px; font-weight: 600;">${conversionRate}%</td></tr>
+        <tr><td style="padding: 12px 0; color: #0f172a; font-size: 15px;">🏆 Top SDR</td><td style="padding: 12px 0; text-align: right; color: #0f172a; font-size: 15px; font-weight: 600;">${topSDR}</td></tr>
+      </table>
+    </div>
+    <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+      <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 J2 Group · Melbourne, Australia</p>
+    </div>
+  </div>
+</body>
+</html>`.trim()
+
     // Send via Slack if webhook is configured
     if (settings.slack_webhook_url) {
       const content = (settings.report_content as Record<string, boolean>) || {}
@@ -153,7 +180,7 @@ Daily Performance Summary — ${reportDate}
             from: 'J2 Insight Hub <admin-support@j2group.com.au>',
             to,
             subject: `Daily Performance Report — ${reportDate}`,
-            text: emailBody,
+            html: emailHtml,
           }),
         })
       }
