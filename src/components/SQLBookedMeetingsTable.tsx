@@ -446,38 +446,42 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                       </Badge>
                     )}
                   </Button>
+                  {!isSdr && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+                        <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
+                          <FileText className="h-4 w-4 mr-2" /> CSV
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
+                          <Table2 className="h-4 w-4 mr-2" /> Excel
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </>
+              ) : (
+                !isSdr && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
-                        <Download className="h-4 w-4" />
+                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
+                        <Download className="h-4 w-4" /> Export <ChevronDown className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-popover border-border z-50">
                       <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
-                        <FileText className="h-4 w-4 mr-2" /> CSV
+                        <FileText className="h-4 w-4 mr-2" /> Export as CSV
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
-                        <Table2 className="h-4 w-4 mr-2" /> Excel
+                        <Table2 className="h-4 w-4 mr-2" /> Export as Excel
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </>
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
-                      <Download className="h-4 w-4" /> Export <ChevronDown className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-popover border-border z-50">
-                    <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
-                      <FileText className="h-4 w-4 mr-2" /> Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
-                      <Table2 className="h-4 w-4 mr-2" /> Export as Excel
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                )
               )}
             </div>
           </div>
