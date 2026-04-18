@@ -179,7 +179,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
       toast({ title: "Contact added", description: `${contactForm.contact_name} has been added.`, className: "border-[#10b981] text-[#10b981]" });
 
       if (andInvite && contactForm.email.trim() && savedContactId) {
-        await sendInviteByEmail(contactForm.email.trim(), savedContactId);
+        await sendInviteByEmail(contactForm.email.trim(), savedContactId, contactForm.contact_name.trim());
       }
 
       setContactForm({ ...emptyForm });
@@ -258,10 +258,10 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     }
   };
 
-  const sendInviteByEmail = async (email: string, contactId: string) => {
+  const sendInviteByEmail = async (email: string, contactId: string, displayName?: string) => {
     try {
       const { error } = await supabase.functions.invoke("generate-invite-link", {
-        body: { email, role: "client", client_id: client.client_id },
+        body: { email, role: "client", client_id: client.client_id, displayName },
       });
       if (error) throw error;
       setContacts(prev => prev.map(c => c.id === contactId ? { ...c, portal_access: true } : c));
@@ -276,7 +276,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     if (!contact.email) return;
     setSendingInviteId(contact.id);
     try {
-      await sendInviteByEmail(contact.email, contact.id);
+      await sendInviteByEmail(contact.email, contact.id, contact.contact_name);
     } finally {
       setSendingInviteId(null);
     }

@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     <h2 style="text-align:center; color:#0f172a; margin-bottom:8px;">${greeting}</h2>
     <p style="color:#64748b; text-align:center; margin-bottom:12px;">You've been invited to access the J2 Insights Dashboard — your real-time view of campaign performance and results.</p>
     <p style="color:#64748b; text-align:center; margin-bottom:32px;">Click below to set your password and get started.</p>
-    <a href="${inviteUrl}" style="display:block; background:#3b82f6; color:white; text-align:center; padding:14px; border-radius:8px; text-decoration:none; font-weight:600; font-size:15px;">Accept Invitation</a>
+    <a href="${inviteUrl}" style="display:block; background:#0F172A; color:white; text-align:center; padding:14px; border-radius:8px; text-decoration:none; font-weight:600; font-size:15px;">Accept Invitation</a>
     <p style="color:#94a3b8; font-size:12px; text-align:center; margin-top:24px;">This link expires in 48 hours. If you didn't expect this email, ignore it.</p>
     <hr style="border:none; border-top:1px solid #e2e8f0; margin:24px 0;" />
     <p style="color:#94a3b8; font-size:12px; text-align:center;">© 2026 J2 Group · Melbourne, Australia</p>
