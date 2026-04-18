@@ -202,7 +202,7 @@ const Settings = () => {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('generate-invite-link', {
-        body: { email, role, client_id: clientId }
+        body: { email, role, client_id: clientId, displayName: name }
       });
 
       if (fnError) throw fnError;

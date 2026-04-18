@@ -5,9 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-const buildEmailHtml = (inviteLink: string, email: string) => {
-  const name = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  const greeting = name ? `Welcome, ${name}!` : 'Hi there, welcome!';
+const buildEmailHtml = (inviteLink: string, displayName?: string) => {
+  const trimmed = (displayName || '').trim();
+  const firstName = trimmed ? trimmed.split(/\s+/)[0] : '';
+  const greeting = firstName ? `Welcome, ${firstName}!` : 'Welcome, there!';
   return `
 <!DOCTYPE html>
 <html>
@@ -88,7 +89,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { email, role, client_id } = await req.json()
+    const { email, role, client_id, displayName } = await req.json()
 
     if (!email) {
       return new Response(
@@ -160,7 +161,7 @@ Deno.serve(async (req) => {
         from: 'J2 Group <admin-support@j2group.com.au>',
         to: [email],
         subject: "You've been invited to J2 Insights Dashboard",
-        html: buildEmailHtml(actionLink, email),
+        html: buildEmailHtml(actionLink, displayName),
       }),
     })
 
