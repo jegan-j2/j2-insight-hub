@@ -20,6 +20,7 @@ import * as XLSX from "xlsx-js-style";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
