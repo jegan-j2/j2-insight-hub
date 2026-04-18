@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SDRAvatar } from "@/components/SDRAvatar";
 import { usePermissions, useUserRole } from "@/hooks/useUserRole";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { computeAccessInfo, type AccessStatus, type AccessInfo } from "@/lib/accessStatus";
 
 interface ClientRow {
   id: string;
@@ -65,26 +66,6 @@ interface InviteRecord {
   email: string | null;
   last_sign_in_at: string | null;
 }
-
-// Shared 4-state access status used in Team Members and Client Contacts tables.
-// Returns one of: 'active' (green) | 'invite_sent' (amber) | 'expired' (red) | 'inactive' (grey) | 'no_invite' (grey)
-export type AccessStatus = 'active' | 'invite_sent' | 'expired' | 'inactive' | 'no_invite';
-export interface AccessInfo { status: AccessStatus; label: string; }
-
-export const computeAccessInfo = (
-  invite: { invite_sent_at: string | null; invite_expires_at: string | null; last_sign_in_at: string | null } | null | undefined,
-  isManuallyInactive: boolean
-): AccessInfo => {
-  if (isManuallyInactive) return { status: 'inactive', label: 'Inactive' };
-  if (invite?.last_sign_in_at) return { status: 'active', label: 'Active' };
-  if (invite?.invite_sent_at) {
-    const expiresAt = invite.invite_expires_at ? new Date(invite.invite_expires_at).getTime() : null;
-    const now = Date.now();
-    if (expiresAt && expiresAt > now) return { status: 'invite_sent', label: 'Invite Sent' };
-    return { status: 'expired', label: 'Expired' };
-  }
-  return { status: 'no_invite', label: 'No Invite Sent' };
-};
 
 const Settings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
