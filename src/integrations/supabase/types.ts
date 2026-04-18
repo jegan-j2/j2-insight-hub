@@ -730,6 +730,7 @@ export type Database = {
           invite_expires_at: string
           invite_sent_at: string
           invite_status: string
+          last_sign_in_at: string
           role: string
           user_id: string
         }[]

@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SDRAvatar } from "@/components/SDRAvatar";
 import { usePermissions, useUserRole } from "@/hooks/useUserRole";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { computeAccessInfo, type AccessStatus, type AccessInfo } from "@/lib/accessStatus";
 
 interface ClientRow {
   id: string;
@@ -63,6 +64,7 @@ interface InviteRecord {
   invite_expires_at: string | null;
   user_id: string | null;
   email: string | null;
+  last_sign_in_at: string | null;
 }
 
 const Settings = () => {
@@ -171,28 +173,14 @@ const Settings = () => {
   // --- Slack webhook visibility ---
   const [showSlackWebhook, setShowSlackWebhook] = useState(false);
 
-  const getClientInviteInfo = (clientEmail: string) => {
+  const getClientInviteInfo = (clientEmail: string, isManuallyInactive = false): AccessInfo => {
     const invite = inviteRecords.find(r => r.email === clientEmail && r.role === 'client');
-    if (!invite || invite.invite_status === 'not_sent') return { status: 'no_invite', label: 'No Invite Sent' };
-    if (invite.invite_status === 'accepted') return { status: 'active', label: 'User Active' };
-    if (invite.invite_status === 'pending') {
-      const isExpired = invite.invite_expires_at && new Date(invite.invite_expires_at) < new Date();
-      if (isExpired) return { status: 'expired', label: 'Invite Expired' };
-      return { status: 'pending', label: 'Invite Pending' };
-    }
-    return { status: 'no_invite', label: 'No Invite Sent' };
+    return computeAccessInfo(invite, isManuallyInactive);
   };
 
-  const getMemberInviteInfo = (email: string) => {
+  const getMemberInviteInfo = (email: string, isManuallyInactive = false): AccessInfo => {
     const invite = inviteRecords.find(r => r.email === email && r.role !== 'client');
-    if (!invite || invite.invite_status === 'not_sent') return { status: 'no_invite', label: 'No Invite Sent' };
-    if (invite.invite_status === 'accepted') return { status: 'active', label: 'User Active' };
-    if (invite.invite_status === 'pending') {
-      const isExpired = invite.invite_expires_at && new Date(invite.invite_expires_at) < new Date();
-      if (isExpired) return { status: 'expired', label: 'Invite Expired' };
-      return { status: 'pending', label: 'Invite Pending' };
-    }
-    return { status: 'no_invite', label: 'No Invite Sent' };
+    return computeAccessInfo(invite, isManuallyInactive);
   };
 
   const handleSendInvite = async (email: string, role: string, name: string, clientId?: string) => {
@@ -277,11 +265,11 @@ const Settings = () => {
       aVal = clientsList.find(c => c.client_id === a.client_id)?.client_name || '';
       bVal = clientsList.find(c => c.client_id === b.client_id)?.client_name || '';
     } else if (teamSortField === 'login_status') {
-      const order = { active: 0, pending: 1, expired: 2, no_invite: 3 };
-      const aInfo = getMemberInviteInfo(a.email);
-      const bInfo = getMemberInviteInfo(b.email);
-      aVal = String(order[aInfo.status as keyof typeof order] ?? 9);
-      bVal = String(order[bInfo.status as keyof typeof order] ?? 9);
+      const order: Record<AccessStatus, number> = { active: 0, invite_sent: 1, expired: 2, no_invite: 3, inactive: 4 };
+      const aInfo = getMemberInviteInfo(a.email, a.status === 'inactive');
+      const bInfo = getMemberInviteInfo(b.email, b.status === 'inactive');
+      aVal = String(order[aInfo.status] ?? 9);
+      bVal = String(order[bInfo.status] ?? 9);
     }
     const cmp = aVal.localeCompare(bVal, undefined, { numeric: true });
     return teamSortDir === 'asc' ? cmp : -cmp;
@@ -1689,7 +1677,7 @@ const Settings = () => {
                     ) : (
                       paginatedMembers.map((member) => {
                         const isInactive = member.status === 'inactive';
-                        const memberInviteInfo = getMemberInviteInfo(member.email);
+                        const memberInviteInfo = getMemberInviteInfo(member.email, isInactive);
                         const memberClientData = member.client_id && member.role?.toLowerCase() === 'sdr'
                           ? clientsList.find(c => c.client_id === member.client_id)
                           : null;
@@ -1723,17 +1711,37 @@ const Settings = () => {
                               </TableCell>
                             )}
                             <TableCell>
-                              <Badge className={
-                                memberInviteInfo.status === 'active' 
-                                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' :
-                                memberInviteInfo.status === 'pending' 
-                                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20' :
-                                memberInviteInfo.status === 'expired' 
-                                  ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20' :
-                                  'bg-muted/50 text-muted-foreground border-border hover:bg-muted/50'
-                              }>
-                                {memberInviteInfo.label}
-                              </Badge>
+                              <div className="flex items-center gap-2">
+                                <Badge className={
+                                  memberInviteInfo.status === 'active'
+                                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' :
+                                  memberInviteInfo.status === 'invite_sent'
+                                    ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20' :
+                                  memberInviteInfo.status === 'expired'
+                                    ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20' :
+                                    'bg-muted/50 text-muted-foreground border-border hover:bg-muted/50'
+                                }>
+                                  {memberInviteInfo.label}
+                                </Badge>
+                                {memberInviteInfo.status === 'expired' && member.email && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 px-2 text-[11px] border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                                    disabled={memberInviteStatus[member.email] === 'sending'}
+                                    onClick={() => handleResendInvite(member.email, member.role || 'sdr', member.sdr_name, member.client_id || undefined)}
+                                  >
+                                    {memberInviteStatus[member.email] === 'sending' ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <RefreshCw className="h-3 w-3 mr-1" />
+                                        Resend
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-center">
                               {canEditTeamMembers ? (
@@ -1755,7 +1763,7 @@ const Settings = () => {
                                           size="icon"
                                           className={`h-8 w-8 ${
                                             memberInviteInfo.status === 'expired' ? 'text-rose-500 hover:text-rose-400 hover:bg-rose-500/10' :
-                                            memberInviteInfo.status === 'pending' ? 'text-blue-500 hover:text-blue-400 hover:bg-blue-500/10' :
+                                            memberInviteInfo.status === 'invite_sent' ? 'text-blue-500 hover:text-blue-400 hover:bg-blue-500/10' :
                                             memberInviteInfo.status === 'active' ? 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10' :
                                             'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'
                                           }`}
