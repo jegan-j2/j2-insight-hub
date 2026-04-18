@@ -483,14 +483,14 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground italic">Never logged in</span>
-                      </TableCell>
-                      <TableCell>
                         {(() => {
                           const inv = contact.email ? inviteByEmail[contact.email.toLowerCase()] : null;
                           if (inv?.last_sign_in_at) {
                             return (
-                              <span className="text-sm text-muted-foreground" title={format(new Date(inv.last_sign_in_at), "d MMM yyyy, h:mm a")}>
+                              <span
+                                className="text-sm text-muted-foreground"
+                                title={format(new Date(inv.last_sign_in_at), "d MMM yyyy, h:mm a")}
+                              >
                                 {formatDistanceToNow(new Date(inv.last_sign_in_at), { addSuffix: true })}
                               </span>
                             );
