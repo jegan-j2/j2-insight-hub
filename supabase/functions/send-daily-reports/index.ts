@@ -91,7 +91,16 @@ Deno.serve(async (req) => {
 
     const totalDials = snapshots?.reduce((sum, s) => sum + (s.dials || 0), 0) || 0
     const totalAnswered = snapshots?.reduce((sum, s) => sum + (s.answered || 0), 0) || 0
-    const totalDMs = snapshots?.reduce((sum, s) => sum + (s.dms_reached || 0), 0) || 0
+
+    // DM Conversations: query activity_log directly (dms_reached field doesn't exist)
+    const { data: dmData } = await supabase
+      .from('activity_log')
+      .select('id')
+      .eq('is_decision_maker', true)
+      .gte('activity_date', `${reportDate}T00:00:00+10:00`)
+      .lte('activity_date', `${reportDate}T23:59:59+10:00`)
+
+    const totalDMs = dmData?.length || 0
     const totalSQLs = snapshots?.reduce((sum, s) => sum + (s.sqls || 0), 0) || 0
     const answerRate = totalDials > 0 ? ((totalAnswered / totalDials) * 100).toFixed(1) : '0.0'
     const conversionRate = totalDials > 0 ? ((totalSQLs / totalDials) * 100).toFixed(2) : '0.00'
