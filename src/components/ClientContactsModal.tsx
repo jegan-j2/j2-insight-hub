@@ -226,6 +226,10 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
     try {
       const { error } = await supabase.from("client_contacts").update({ status: "inactive" }).eq("id", contact.id);
       if (error) throw error;
+      // Revoke dashboard access — removes user_roles row so they're blocked on next login
+      if (contact.email) {
+        await supabase.rpc('revoke_client_access', { p_email: contact.email });
+      }
       toast({ title: "Contact removed", className: "border-[#10b981] text-[#10b981]" });
       onContactsChanged?.();
     } catch (err: any) {

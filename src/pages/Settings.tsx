@@ -904,7 +904,8 @@ const Settings = () => {
         .update({ status: 'inactive' })
         .eq('id', member.id);
       if (error) throw error;
-      // Revoke user_roles access by email
+      // Revoke user_roles access by email — blocks dashboard access on next login
+      await supabase.rpc('revoke_client_access', { p_email: member.email });
       await supabase.rpc('revoke_user_access', { p_email: member.email });
       // Sync user role to inactive as fallback
       await supabase.rpc('sync_user_role', { p_email: member.email, p_role: 'inactive', p_client_id: member.client_id || null });
