@@ -90,30 +90,32 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
   const [editForm, setEditForm] = useState<ContactFormData>({ ...emptyForm });
   const [savingEdit, setSavingEdit] = useState(false);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
-  // Map of email → invite snapshot from get_invite_records (admin-only RPC)
+  // Map of email → invite/auth snapshot for this client's contacts.
+  // Sourced from get_contact_auth_info RPC (joins auth.users + user_roles + client_contacts)
+  // so we can determine real Last Login + Dashboard Access state per contact.
   const [inviteByEmail, setInviteByEmail] = useState<Record<string, InviteSnapshot>>({});
 
   const fetchInviteRecords = useCallback(async () => {
-    if (!isAdmin) return;
     try {
-      const { data } = await supabase.rpc('get_invite_records');
-      if (data) {
-        const map: Record<string, InviteSnapshot> = {};
-        (data as any[]).forEach((r) => {
-          if (r.email && r.role === 'client') {
-            map[r.email.toLowerCase()] = {
-              invite_sent_at: r.invite_sent_at,
-              invite_expires_at: r.invite_expires_at,
-              last_sign_in_at: r.last_sign_in_at,
-            };
-          }
-        });
-        setInviteByEmail(map);
-      }
+      const { data, error } = await (supabase.rpc as any)('get_contact_auth_info', {
+        p_client_id: client.client_id,
+      });
+      if (error) throw error;
+      const map: Record<string, InviteSnapshot> = {};
+      (data as any[] | null)?.forEach((r) => {
+        if (r?.email) {
+          map[String(r.email).toLowerCase()] = {
+            invite_sent_at: r.invite_sent_at ?? null,
+            invite_expires_at: r.invite_expires_at ?? null,
+            last_sign_in_at: r.last_sign_in_at ?? null,
+          };
+        }
+      });
+      setInviteByEmail(map);
     } catch (err) {
-      console.error('Error fetching invite records:', err);
+      console.error('Error fetching contact auth info:', err);
     }
-  }, [isAdmin]);
+  }, [client.client_id]);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -395,7 +397,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Type</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Last Login</TableHead>
                   <TableHead className="px-4 py-2 font-bold text-white text-[14px]">Dashboard Access</TableHead>
-                  <TableHead className="px-4 py-2 font-bold text-white text-[14px] text-left">Actions</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-white text-[14px] text-left min-w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -481,14 +483,14 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground italic">Never logged in</span>
-                      </TableCell>
-                      <TableCell>
                         {(() => {
                           const inv = contact.email ? inviteByEmail[contact.email.toLowerCase()] : null;
                           if (inv?.last_sign_in_at) {
                             return (
-                              <span className="text-sm text-muted-foreground" title={format(new Date(inv.last_sign_in_at), "d MMM yyyy, h:mm a")}>
+                              <span
+                                className="text-sm text-muted-foreground"
+                                title={format(new Date(inv.last_sign_in_at), "d MMM yyyy, h:mm a")}
+                              >
                                 {formatDistanceToNow(new Date(inv.last_sign_in_at), { addSuffix: true })}
                               </span>
                             );
