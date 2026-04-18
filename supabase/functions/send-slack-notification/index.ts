@@ -34,6 +34,21 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Authorization: only admin or manager may send Slack notifications
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'manager'])
+      .maybeSingle()
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ success: false, error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { webhookUrl, message } = await req.json()
 
     if (!webhookUrl || !message) {
