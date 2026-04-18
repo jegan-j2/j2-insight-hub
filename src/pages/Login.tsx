@@ -27,27 +27,35 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { resolvedTheme } = useTheme();
-  const redirectBasedOnRole = async () => {
+  const redirectBasedOnRole = async (): Promise<boolean> => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (import.meta.env.DEV) console.log("🔍 Login - getUser result:", user, "Error:", userError);
 
     if (!user) {
       console.error("No user found after login");
-      return;
+      return false;
     }
 
     const { data: roleData, error: roleError } = await supabase
       .from("user_roles")
       .select("role, client_id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (import.meta.env.DEV) console.log("🔍 Login - role data:", roleData, "Error:", roleError);
 
-    if (roleError || !roleData) {
+    // No role row → access has been revoked / never granted
+    if (!roleData) {
+      await supabase.auth.signOut();
+      setLoginError("Your account access has been revoked. Please contact your J2 Group manager.");
+      return false;
+    }
+
+    if (roleError) {
       console.error("Could not fetch user role:", roleError);
-      navigate("/overview");
-      return;
+      await supabase.auth.signOut();
+      setLoginError("Your account access has been revoked. Please contact your J2 Group manager.");
+      return false;
     }
 
     const role = roleData.role?.toLowerCase();
@@ -61,6 +69,7 @@ const Login = () => {
       if (import.meta.env.DEV) console.log("🔒 Redirecting admin to /overview");
       navigate("/overview");
     }
+    return true;
   };
 
   const handleLogin = async (e: React.FormEvent) => {
