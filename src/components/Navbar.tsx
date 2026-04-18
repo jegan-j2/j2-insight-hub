@@ -24,42 +24,11 @@ const LOGO_LIGHT = "https://eaeqkgjhgdykxwjkaxpj.supabase.co/storage/v1/object/p
 const Navbar = () => {
   const navigate = useNavigate();
   const { role } = useUserRole();
+  const { displayName, email: userEmail, photoUrl: userPhoto } = useUserProfile();
   const { resolvedTheme } = useTheme();
 
-  const [userEmail, setUserEmail] = useState<string>('')
-  const [userName, setUserName] = useState<string>('')
-  const [userInitials, setUserInitials] = useState<string>('?')
-  const [userPhoto, setUserPhoto] = useState<string | null>(null)
+  const userName = displayName || userEmail;
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email) {
-        setUserEmail(user.email)
-        const { data: member } = await supabase
-          .from('team_members')
-          .select('sdr_name, profile_photo_url')
-          .eq('email', user.email)
-          .single()
-        if (member?.sdr_name) {
-          setUserName(member.sdr_name)
-          const parts = member.sdr_name.split(' ')
-          setUserInitials(
-            parts.length >= 2 
-              ? parts[0][0] + parts[parts.length-1][0] 
-              : parts[0][0]
-          )
-        setUserPhoto(member?.profile_photo_url || null)
-      } else {
-        setUserName(user.email.split('@')[0])
-        setUserInitials(user.email[0].toUpperCase())
-        setUserPhoto(null)
-      }
-      }
-    }
-    getUser()
-  }, [])
 
   useEffect(() => {
     const fetchLastUpdated = async () => {
