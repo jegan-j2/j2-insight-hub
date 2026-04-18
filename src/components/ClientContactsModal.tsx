@@ -90,6 +90,30 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
   const [editForm, setEditForm] = useState<ContactFormData>({ ...emptyForm });
   const [savingEdit, setSavingEdit] = useState(false);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
+  // Map of email → invite snapshot from get_invite_records (admin-only RPC)
+  const [inviteByEmail, setInviteByEmail] = useState<Record<string, InviteSnapshot>>({});
+
+  const fetchInviteRecords = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const { data } = await supabase.rpc('get_invite_records');
+      if (data) {
+        const map: Record<string, InviteSnapshot> = {};
+        (data as any[]).forEach((r) => {
+          if (r.email && r.role === 'client') {
+            map[r.email.toLowerCase()] = {
+              invite_sent_at: r.invite_sent_at,
+              invite_expires_at: r.invite_expires_at,
+              last_sign_in_at: r.last_sign_in_at,
+            };
+          }
+        });
+        setInviteByEmail(map);
+      }
+    } catch (err) {
+      console.error('Error fetching invite records:', err);
+    }
+  }, [isAdmin]);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -118,10 +142,11 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
   useEffect(() => {
     if (open) {
       fetchContacts();
+      fetchInviteRecords();
       setShowAddForm(false);
       setEditingContactId(null);
     }
-  }, [open, fetchContacts]);
+  }, [open, fetchContacts, fetchInviteRecords]);
 
   useEffect(() => {
     if (!open) return;
