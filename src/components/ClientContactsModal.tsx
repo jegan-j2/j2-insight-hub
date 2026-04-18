@@ -292,6 +292,8 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
       if (error) throw error;
       setContacts(prev => prev.map(c => c.id === contactId ? { ...c, portal_access: true } : c));
       await supabase.from("client_contacts").update({ portal_access: true }).eq("id", contactId);
+      // Refresh invite snapshot so the badge flips to "Invite Sent" (amber) immediately.
+      await fetchInviteRecords();
       toast({ title: "Invite sent", description: `Invitation sent to ${email}`, className: "border-[#10b981] text-[#10b981]" });
     } catch (err: any) {
       toast({ title: "Failed to send invite", description: getSafeErrorMessage(err), variant: "destructive" });
@@ -482,29 +484,79 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         <span className="text-sm text-muted-foreground italic">Never logged in</span>
                       </TableCell>
                       <TableCell>
-                        {contact.portal_access ? (
-                          <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20">
-                            Active
-                          </Badge>
-                        ) : contact.email ? (
-                          <Button
-                            size="sm"
-                            className="h-7 text-xs gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
-                            disabled={sendingInviteId === contact.id}
-                            onClick={() => handleSendInvite(contact)}
-                          >
-                            {sendingInviteId === contact.id ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Mail className="h-3 w-3" />
-                            )}
-                            Send Invite
-                          </Button>
-                        ) : (
-                          <Badge className="bg-muted/50 text-muted-foreground border-border hover:bg-muted/50">
-                            Not Invited
-                          </Badge>
-                        )}
+                        {(() => {
+                          const inv = contact.email ? inviteByEmail[contact.email.toLowerCase()] : null;
+                          if (inv?.last_sign_in_at) {
+                            return (
+                              <span className="text-sm text-muted-foreground" title={format(new Date(inv.last_sign_in_at), "d MMM yyyy, h:mm a")}>
+                                {formatDistanceToNow(new Date(inv.last_sign_in_at), { addSuffix: true })}
+                              </span>
+                            );
+                          }
+                          return <span className="text-sm text-muted-foreground italic">Never logged in</span>;
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const inv = contact.email ? inviteByEmail[contact.email.toLowerCase()] : null;
+                          const access = computeAccessInfo(inv, isInactive);
+                          // No invite + has email + not inactive → keep the "Send Invite" CTA
+                          if (access.status === 'no_invite' && contact.email && !isInactive) {
+                            return (
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs gap-1.5 bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+                                disabled={sendingInviteId === contact.id}
+                                onClick={() => handleSendInvite(contact)}
+                              >
+                                {sendingInviteId === contact.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Mail className="h-3 w-3" />
+                                )}
+                                Send Invite
+                              </Button>
+                            );
+                          }
+                          if (access.status === 'no_invite' && !contact.email) {
+                            return (
+                              <Badge className="bg-muted/50 text-muted-foreground border-border hover:bg-muted/50">
+                                Not Invited
+                              </Badge>
+                            );
+                          }
+                          const badgeClass =
+                            access.status === 'active'
+                              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                              : access.status === 'invite_sent'
+                              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
+                              : access.status === 'expired'
+                              ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
+                              : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted/50';
+                          return (
+                            <div className="flex items-center gap-2">
+                              <Badge className={badgeClass}>{access.label}</Badge>
+                              {access.status === 'expired' && contact.email && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-[11px] border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                                  disabled={sendingInviteId === contact.id}
+                                  onClick={() => handleSendInvite(contact)}
+                                >
+                                  {sendingInviteId === contact.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <RefreshCw className="h-3 w-3 mr-1" />
+                                      Resend
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <TooltipProvider>
