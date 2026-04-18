@@ -712,6 +712,15 @@ export type Database = {
           target_sqls: number
         }[]
       }
+      get_contact_auth_info: {
+        Args: { p_client_id: string }
+        Returns: {
+          email: string
+          invite_expires_at: string
+          invite_sent_at: string
+          last_sign_in_at: string
+        }[]
+      }
       get_daily_activity: {
         Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
         Returns: {
