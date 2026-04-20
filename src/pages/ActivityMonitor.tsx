@@ -925,7 +925,7 @@ const ActivityMonitor = () => {
               hubspotEngagementId: sql.hubspot_engagement_id,
             });
 
-            enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date, meeting_time: sql.meeting_time ?? null, meeting_status: sql.meeting_status ?? null, client_notes: sql.client_notes ?? null });
+            enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date, created_at: sql.created_at ?? null, meeting_time: sql.meeting_time ?? null, meeting_status: sql.meeting_status ?? null, client_notes: sql.client_notes ?? null });
           }
         }
         enrichedSqlData.sort((a, b) =>
