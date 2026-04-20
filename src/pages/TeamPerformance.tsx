@@ -342,6 +342,23 @@ const TeamPerformance = () => {
         </div>
       </div>
 
+      <Tabs defaultValue="leaderboard" className="w-full">
+        <TabsList className="bg-muted/50">
+          <TabsTrigger
+            value="leaderboard"
+            className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
+          >
+            SDR Leaderboard
+          </TabsTrigger>
+          <TabsTrigger
+            value="heatmap"
+            className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
+          >
+            Team Heatmap
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="leaderboard" className="space-y-6 mt-6">
       {/* Date Filter Buttons */}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
