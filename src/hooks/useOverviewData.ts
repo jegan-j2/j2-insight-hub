@@ -149,11 +149,11 @@ export const useOverviewData = (dateRange: DateRange | undefined, filterType?: s
       });
       if (dailyError) throw dailyError;
 
-      // Fetch SQL meetings for date range
+      // Fetch SQL meetings for date range (all statuses for display)
       let meetingQuery = supabase
         .from("sql_meetings")
         .select("*")
-        .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES])
+        .not("meeting_status", "is", null)
         .order("booking_date", { ascending: false });
 
       if (startDate) meetingQuery = meetingQuery.gte("booking_date", startDate);
