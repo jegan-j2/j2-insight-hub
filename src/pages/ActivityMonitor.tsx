@@ -929,8 +929,8 @@ const ActivityMonitor = () => {
           }
         }
         enrichedSqlData.sort((a, b) =>
-          new Date(b.activity_date || `${b.booking_date}T00:00:00`).getTime() -
-          new Date(a.activity_date || `${a.booking_date}T00:00:00`).getTime()
+          new Date(b.created_at || b.activity_date || `${b.booking_date}T00:00:00`).getTime() -
+          new Date(a.created_at || a.activity_date || `${a.booking_date}T00:00:00`).getTime()
         );
         setDrillDownSqlData(enrichedSqlData);
       }
@@ -1784,7 +1784,7 @@ const ActivityMonitor = () => {
                         <TableRow key={m.id} className={cn("border-border/50")}>
                           <TableCell className="text-left text-sm text-muted-foreground whitespace-nowrap tabular-nums">
                             {(() => {
-                              const ts = m.activity_date || (m.booking_date ? `${m.booking_date}T00:00:00` : null);
+                              const ts = m.created_at || m.activity_date || null;
                               if (!ts) return "—";
                               const d = new Date(ts);
                               const timeStr = d.toLocaleTimeString("en-AU", {
