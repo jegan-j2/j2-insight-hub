@@ -854,6 +854,22 @@ export type Database = {
           week_start: string
         }[]
       }
+      get_team_heatmap: {
+        Args: {
+          p_client_id?: string
+          p_end_date: string
+          p_mode: string
+          p_start_date: string
+        }
+        Returns: {
+          answered: number
+          dials: number
+          dms: number
+          period_key: string
+          sdr_name: string
+          sqls: number
+        }[]
+      }
       get_team_leaderboard: {
         Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
         Returns: {
