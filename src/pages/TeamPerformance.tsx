@@ -9,6 +9,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
+import { TeamHeatmap } from "@/components/TeamHeatmap";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
@@ -340,6 +342,23 @@ const TeamPerformance = () => {
         </div>
       </div>
 
+      <Tabs defaultValue="leaderboard" className="w-full">
+        <TabsList className="bg-muted/50">
+          <TabsTrigger
+            value="leaderboard"
+            className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
+          >
+            SDR Leaderboard
+          </TabsTrigger>
+          <TabsTrigger
+            value="heatmap"
+            className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
+          >
+            Team Heatmap
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="leaderboard" className="space-y-6 mt-6">
       {/* Date Filter Buttons */}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -594,6 +613,12 @@ const TeamPerformance = () => {
       {activityChartData.length > 0 ? (
         <SDRActivityChart chartData={activityChartData} clientLogoMap={clientLogoMap} />
       ) : null}
+        </TabsContent>
+
+        <TabsContent value="heatmap" className="mt-6">
+          <TeamHeatmap clients={clients} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
