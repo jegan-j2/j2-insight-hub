@@ -613,6 +613,12 @@ const TeamPerformance = () => {
       {activityChartData.length > 0 ? (
         <SDRActivityChart chartData={activityChartData} clientLogoMap={clientLogoMap} />
       ) : null}
+        </TabsContent>
+
+        <TabsContent value="heatmap" className="mt-6">
+          <TeamHeatmap clients={clients} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
