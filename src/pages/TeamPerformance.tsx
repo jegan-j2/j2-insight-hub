@@ -9,6 +9,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
 import { SDRLeaderboardTable } from "@/components/SDRLeaderboardTable";
+import { TeamHeatmap } from "@/components/TeamHeatmap";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
