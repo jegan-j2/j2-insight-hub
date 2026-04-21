@@ -248,6 +248,47 @@ const TeamPerformance = () => {
     return { dials, answered, answerRate, dms, sqls, convRate };
   }, [leaderboard]);
 
+  // Weekly pace data — fetched from get_weekly_pace RPC, refreshed on client filter change
+  interface WeeklyPace {
+    sqls_this_week: number;
+    week_target: number;
+    days_elapsed: number;
+    days_remaining: number;
+    week_number: number;
+    total_weeks: number;
+    week_start: string;
+    week_end: string;
+    run_rate: number;
+    projected_by_friday: number;
+    needed_per_day: number;
+  }
+  const [weeklyPace, setWeeklyPace] = useState<WeeklyPace | null>(null);
+  useEffect(() => {
+    const fetchWeeklyPace = async () => {
+      const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
+      const { data, error } = await supabase.rpc("get_weekly_pace", { p_client_id: cid });
+      if (!error && data && data.length > 0) {
+        const row = data[0] as any;
+        setWeeklyPace({
+          sqls_this_week: Number(row.sqls_this_week) || 0,
+          week_target: Number(row.week_target) || 0,
+          days_elapsed: Number(row.days_elapsed) || 0,
+          days_remaining: Number(row.days_remaining) || 0,
+          week_number: Number(row.week_number) || 0,
+          total_weeks: Number(row.total_weeks) || 0,
+          week_start: row.week_start,
+          week_end: row.week_end,
+          run_rate: Number(row.run_rate) || 0,
+          projected_by_friday: Number(row.projected_by_friday) || 0,
+          needed_per_day: Number(row.needed_per_day) || 0,
+        });
+      } else {
+        setWeeklyPace(null);
+      }
+    };
+    fetchWeeklyPace();
+  }, [clientFilter, refreshKey]);
+
   // Team pace indicator — for "This Month" or "Campaign"
   const [targetSQLs, setTargetSQLs] = useState<number | null>(null);
   useEffect(() => {
@@ -606,6 +647,76 @@ const TeamPerformance = () => {
               <p className="text-[11px] text-muted-foreground mt-1">{paceData.totalSQLs} of {targetSQLs} target SQLs</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Weekly Pace — directly below the Monthly/Campaign Pace card */}
+      {weeklyPace && (
+        <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg px-5 py-3 space-y-2">
+          {(() => {
+            const wp = weeklyPace;
+            const fmtDate = (iso: string) => {
+              if (!iso) return "";
+              const d = new Date(iso + "T00:00:00");
+              return format(d, "d MMM");
+            };
+            const targetHit = wp.needed_per_day < 0 || (wp.week_target > 0 && wp.sqls_this_week >= wp.week_target);
+            const weekComplete = wp.days_remaining === 0 && !targetHit;
+            const notStarted = wp.sqls_this_week === 0 && wp.days_elapsed === 0;
+
+            const pct = wp.week_target > 0
+              ? Math.min(100, (wp.sqls_this_week / wp.week_target) * 100)
+              : 0;
+            const displayPct = targetHit ? 100 : pct;
+
+            const barColor = (() => {
+              if (targetHit) return "#10B981";
+              if (displayPct >= 71) return "#10B981";
+              if (displayPct >= 51) return "#F59E0B";
+              return "#EF4444";
+            })();
+
+            return (
+              <>
+                {/* Line 1: Summary */}
+                <p className="text-[13px] text-foreground">
+                  <span className="font-semibold">Weekly Pace:</span>
+                  {" "}{wp.sqls_this_week} SQLs this week | Run rate: {wp.run_rate.toFixed(2)}/day | Projected: {wp.projected_by_friday} by Friday
+                  {targetHit ? (
+                    <> | <span className="font-semibold text-[#10B981]">Week target hit!</span></>
+                  ) : weekComplete ? (
+                    <> | Week complete</>
+                  ) : (
+                    <> | Need {wp.needed_per_day.toFixed(2)}/day to hit week target</>
+                  )}
+                </p>
+                {/* Line 2: Sub-line */}
+                <p className="text-[12px] text-muted-foreground">
+                  {weekComplete
+                    ? `Week ${wp.week_number} of ${wp.total_weeks} complete`
+                    : notStarted
+                      ? `Week ${wp.week_number} of ${wp.total_weeks} starts today`
+                      : <>Week {wp.week_number} of {wp.total_weeks} · Mon {fmtDate(wp.week_start)} – Fri {fmtDate(wp.week_end)} · {wp.days_remaining} working day{wp.days_remaining === 1 ? "" : "s"} remaining</>
+                  }
+                </p>
+                {/* Line 3: Progress bar */}
+                {wp.week_target > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-[#E2E8F0] dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${displayPct}%`, backgroundColor: barColor }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground whitespace-nowrap">{Math.round(displayPct)}%</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">{wp.sqls_this_week} of {wp.week_target} weekly target SQLs</p>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 
