@@ -682,14 +682,16 @@ const TeamPerformance = () => {
               const d = new Date(iso + "T00:00:00");
               return format(d, "d MMM");
             };
-            const targetHit = (wp.week_target > 0 && wp.needed_per_day <= 0) || (wp.week_target > 0 && wp.sqls_this_week >= wp.week_target);
+            const roundedTarget = Math.round(wp.week_target);
+            const targetHit = (roundedTarget > 0 && wp.needed_per_day <= 0) || (roundedTarget > 0 && wp.sqls_this_week >= roundedTarget);
             const weekComplete = wp.days_remaining === 0 && !targetHit;
             const notStarted = wp.days_elapsed === 0;
 
-            const pct = wp.week_target > 0
-              ? Math.min(100, (wp.sqls_this_week / wp.week_target) * 100)
+            const pct = roundedTarget > 0
+              ? Math.min(100, (wp.sqls_this_week / roundedTarget) * 100)
               : 0;
             const displayPct = targetHit ? 100 : pct;
+            const formatNeeded = (n: number) => parseFloat(n.toFixed(1)).toString();
 
             const barColor = (() => {
               if (targetHit) return "#10B981";
