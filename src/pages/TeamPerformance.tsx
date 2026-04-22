@@ -735,7 +735,7 @@ const TeamPerformance = () => {
                       </div>
                       <span className="text-[11px] text-muted-foreground whitespace-nowrap">{Math.round(displayPct)}%</span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">{wp.sqls_this_week} of {wp.week_target} weekly target SQLs</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">{wp.sqls_this_week} of {roundedTarget} weekly target SQLs</p>
                   </div>
                 )}
               </>
