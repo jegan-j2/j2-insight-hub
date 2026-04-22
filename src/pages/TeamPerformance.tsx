@@ -285,6 +285,52 @@ const TeamPerformance = () => {
     fetchTargets();
   }, [filterType, clientFilter]);
 
+  // Weekly pace — only for "This Month" or "Campaign" filter
+  useEffect(() => {
+    if (filterType !== "thisMonth" && filterType !== "campaign") {
+      setWeeklyPace(null);
+      return;
+    }
+    const fetchWeeklyPace = async () => {
+      const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
+      const now = new Date();
+      let periodStart: Date, periodEnd: Date;
+      if (filterType === "campaign" && selectedClient?.campaign_start && selectedClient?.campaign_end) {
+        periodStart = new Date(selectedClient.campaign_start + "T00:00:00");
+        periodEnd = new Date(selectedClient.campaign_end + "T00:00:00");
+      } else {
+        periodStart = startOfMonth(now);
+        periodEnd = endOfMonth(now);
+      }
+      const { data, error } = await supabase.rpc("get_weekly_pace", {
+        p_client_id: cid,
+        p_start_date: format(periodStart, "yyyy-MM-dd"),
+        p_end_date: format(periodEnd, "yyyy-MM-dd"),
+        p_target_sqls: targetSQLs ?? undefined,
+      } as any);
+      if (!error && data && data.length > 0) {
+        const row = data[0] as any;
+        setWeeklyPace({
+          sqls_this_week: Number(row.sqls_this_week) || 0,
+          week_target: Number(row.week_target) || 0,
+          days_elapsed: Number(row.days_elapsed) || 0,
+          days_remaining: Number(row.days_remaining) || 0,
+          days_total: Number(row.days_total) || 0,
+          week_number: Number(row.week_number) || 0,
+          total_weeks: Number(row.total_weeks) || 0,
+          week_start: row.week_start,
+          week_end: row.week_end,
+          run_rate: Number(row.run_rate) || 0,
+          projected_by_friday: Number(row.projected_by_friday) || 0,
+          needed_per_day: Number(row.needed_per_day) || 0,
+        });
+      } else {
+        setWeeklyPace(null);
+      }
+    };
+    fetchWeeklyPace();
+  }, [filterType, clientFilter, selectedClient, targetSQLs, refreshKey]);
+
   const paceData = useMemo(() => {
     if (filterType !== "thisMonth" && filterType !== "campaign") return null;
     const now = new Date();
