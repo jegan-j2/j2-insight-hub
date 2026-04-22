@@ -886,23 +886,46 @@ export type Database = {
           total_dials: number
         }[]
       }
-      get_weekly_pace: {
-        Args: { p_client_id?: string }
-        Returns: {
-          days_elapsed: number
-          days_remaining: number
-          days_total: number
-          needed_per_day: number
-          projected_by_friday: number
-          run_rate: number
-          sqls_this_week: number
-          total_weeks: number
-          week_end: string
-          week_number: number
-          week_start: string
-          week_target: number
-        }[]
-      }
+      get_weekly_pace:
+        | {
+            Args: { p_client_id?: string }
+            Returns: {
+              days_elapsed: number
+              days_remaining: number
+              days_total: number
+              needed_per_day: number
+              projected_by_friday: number
+              run_rate: number
+              sqls_this_week: number
+              total_weeks: number
+              week_end: string
+              week_number: number
+              week_start: string
+              week_target: number
+            }[]
+          }
+        | {
+            Args: {
+              p_client_id?: string
+              p_end_date?: string
+              p_start_date?: string
+              p_target_sqls?: number
+            }
+            Returns: {
+              days_elapsed: number
+              days_remaining: number
+              days_total: number
+              needed_per_day: number
+              projected_by_friday: number
+              run_rate: number
+              sqls_this_week: number
+              total_weeks: number
+              week_end: string
+              week_number: number
+              week_start: string
+              week_target: number
+            }[]
+          }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
       revoke_client_access: { Args: { p_email: string }; Returns: undefined }
       revoke_user_access: { Args: { p_email: string }; Returns: undefined }

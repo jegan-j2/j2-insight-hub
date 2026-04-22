@@ -254,6 +254,7 @@ const TeamPerformance = () => {
     week_target: number;
     days_elapsed: number;
     days_remaining: number;
+    days_total: number;
     week_number: number;
     total_weeks: number;
     week_start: string;
@@ -263,31 +264,6 @@ const TeamPerformance = () => {
     needed_per_day: number;
   }
   const [weeklyPace, setWeeklyPace] = useState<WeeklyPace | null>(null);
-  useEffect(() => {
-    const fetchWeeklyPace = async () => {
-      const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
-      const { data, error } = await supabase.rpc("get_weekly_pace", { p_client_id: cid });
-      if (!error && data && data.length > 0) {
-        const row = data[0] as any;
-        setWeeklyPace({
-          sqls_this_week: Number(row.sqls_this_week) || 0,
-          week_target: Number(row.week_target) || 0,
-          days_elapsed: Number(row.days_elapsed) || 0,
-          days_remaining: Number(row.days_remaining) || 0,
-          week_number: Number(row.week_number) || 0,
-          total_weeks: Number(row.total_weeks) || 0,
-          week_start: row.week_start,
-          week_end: row.week_end,
-          run_rate: Number(row.run_rate) || 0,
-          projected_by_friday: Number(row.projected_by_friday) || 0,
-          needed_per_day: Number(row.needed_per_day) || 0,
-        });
-      } else {
-        setWeeklyPace(null);
-      }
-    };
-    fetchWeeklyPace();
-  }, [clientFilter, refreshKey]);
 
   // Team pace indicator — for "This Month" or "Campaign"
   const [targetSQLs, setTargetSQLs] = useState<number | null>(null);
@@ -308,6 +284,52 @@ const TeamPerformance = () => {
     };
     fetchTargets();
   }, [filterType, clientFilter]);
+
+  // Weekly pace — only for "This Month" or "Campaign" filter
+  useEffect(() => {
+    if (filterType !== "thisMonth" && filterType !== "campaign") {
+      setWeeklyPace(null);
+      return;
+    }
+    const fetchWeeklyPace = async () => {
+      const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
+      const now = new Date();
+      let periodStart: Date, periodEnd: Date;
+      if (filterType === "campaign" && selectedClient?.campaign_start && selectedClient?.campaign_end) {
+        periodStart = new Date(selectedClient.campaign_start + "T00:00:00");
+        periodEnd = new Date(selectedClient.campaign_end + "T00:00:00");
+      } else {
+        periodStart = startOfMonth(now);
+        periodEnd = endOfMonth(now);
+      }
+      const { data, error } = await supabase.rpc("get_weekly_pace", {
+        p_client_id: cid,
+        p_start_date: format(periodStart, "yyyy-MM-dd"),
+        p_end_date: format(periodEnd, "yyyy-MM-dd"),
+        p_target_sqls: targetSQLs ?? undefined,
+      } as any);
+      if (!error && data && data.length > 0) {
+        const row = data[0] as any;
+        setWeeklyPace({
+          sqls_this_week: Number(row.sqls_this_week) || 0,
+          week_target: Number(row.week_target) || 0,
+          days_elapsed: Number(row.days_elapsed) || 0,
+          days_remaining: Number(row.days_remaining) || 0,
+          days_total: Number(row.days_total) || 0,
+          week_number: Number(row.week_number) || 0,
+          total_weeks: Number(row.total_weeks) || 0,
+          week_start: row.week_start,
+          week_end: row.week_end,
+          run_rate: Number(row.run_rate) || 0,
+          projected_by_friday: Number(row.projected_by_friday) || 0,
+          needed_per_day: Number(row.needed_per_day) || 0,
+        });
+      } else {
+        setWeeklyPace(null);
+      }
+    };
+    fetchWeeklyPace();
+  }, [filterType, clientFilter, selectedClient, targetSQLs, refreshKey]);
 
   const paceData = useMemo(() => {
     if (filterType !== "thisMonth" && filterType !== "campaign") return null;
@@ -660,9 +682,9 @@ const TeamPerformance = () => {
               const d = new Date(iso + "T00:00:00");
               return format(d, "d MMM");
             };
-            const targetHit = wp.needed_per_day < 0 || (wp.week_target > 0 && wp.sqls_this_week >= wp.week_target);
+            const targetHit = (wp.week_target > 0 && wp.needed_per_day <= 0) || (wp.week_target > 0 && wp.sqls_this_week >= wp.week_target);
             const weekComplete = wp.days_remaining === 0 && !targetHit;
-            const notStarted = wp.sqls_this_week === 0 && wp.days_elapsed === 0;
+            const notStarted = wp.days_elapsed === 0;
 
             const pct = wp.week_target > 0
               ? Math.min(100, (wp.sqls_this_week / wp.week_target) * 100)
@@ -676,28 +698,28 @@ const TeamPerformance = () => {
               return "#EF4444";
             })();
 
+            const displayRunRate = notStarted ? 0 : wp.run_rate;
+            const displayProjected = notStarted ? 0 : wp.projected_by_friday;
+
             return (
               <>
                 {/* Line 1: Summary */}
                 <p className="text-[13px] text-foreground">
                   <span className="font-semibold">Weekly Pace:</span>
-                  {" "}{wp.sqls_this_week} SQLs this week | Run rate: {wp.run_rate.toFixed(2)}/day | Projected: {wp.projected_by_friday} by Friday
+                  {" "}{wp.sqls_this_week} SQLs this week | Run rate: {displayRunRate.toFixed(2)}/day | Projected: {displayProjected} by Friday
                   {targetHit ? (
                     <> | <span className="font-semibold text-[#10B981]">Week target hit!</span></>
                   ) : weekComplete ? (
                     <> | Week complete</>
+                  ) : notStarted ? (
+                    <> | Week just started</>
                   ) : (
                     <> | Need {wp.needed_per_day.toFixed(2)}/day to hit week target</>
                   )}
                 </p>
                 {/* Line 2: Sub-line */}
                 <p className="text-[12px] text-muted-foreground">
-                  {weekComplete
-                    ? `Week ${wp.week_number} of ${wp.total_weeks} complete`
-                    : notStarted
-                      ? `Week ${wp.week_number} of ${wp.total_weeks} starts today`
-                      : <>Week {wp.week_number} of {wp.total_weeks} · Mon {fmtDate(wp.week_start)} – Fri {fmtDate(wp.week_end)} · {wp.days_remaining} working day{wp.days_remaining === 1 ? "" : "s"} remaining</>
-                  }
+                  Week {wp.week_number} of {wp.total_weeks} · Mon {fmtDate(wp.week_start)} – Fri {fmtDate(wp.week_end)} · {wp.days_remaining} working day{wp.days_remaining === 1 ? "" : "s"} remaining
                 </p>
                 {/* Line 3: Progress bar */}
                 {wp.week_target > 0 && (
