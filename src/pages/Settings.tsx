@@ -869,6 +869,7 @@ const Settings = () => {
             email: memberForm.email,
             role: memberForm.role,
             client_id: memberForm.client_id || null,
+            hubspot_owner_id: memberForm.hubspot_owner_id || null,
           });
         if (error) throw error;
 
@@ -1582,17 +1583,17 @@ const Settings = () => {
                           </Select>
                         </div>
                       )}
-                      {editingMember && memberForm.role === 'SDR' && (
+                      {memberForm.role === 'SDR' && (
                         <div className="grid gap-2">
                           <Label htmlFor="member-hubspot-id">HubSpot Owner ID</Label>
                           <Input
                             id="member-hubspot-id"
-                            placeholder="e.g., 75246504"
+                            placeholder="e.g. 163977662"
                             value={memberForm.hubspot_owner_id}
                             onChange={(e) => setMemberForm({ ...memberForm, hubspot_owner_id: e.target.value })}
                             className="bg-background/50 border-border"
                           />
-                          <p className="text-xs text-muted-foreground">Found in HubSpot → Settings → Users. Required for call tracking.</p>
+                          <p className="text-xs text-muted-foreground">Find this in HubSpot → Settings → Users. Required for call data to sync correctly.</p>
                         </div>
                       )}
                     </div>
