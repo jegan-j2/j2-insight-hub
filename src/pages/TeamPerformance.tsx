@@ -254,6 +254,7 @@ const TeamPerformance = () => {
     week_target: number;
     days_elapsed: number;
     days_remaining: number;
+    days_total: number;
     week_number: number;
     total_weeks: number;
     week_start: string;
@@ -263,31 +264,6 @@ const TeamPerformance = () => {
     needed_per_day: number;
   }
   const [weeklyPace, setWeeklyPace] = useState<WeeklyPace | null>(null);
-  useEffect(() => {
-    const fetchWeeklyPace = async () => {
-      const cid = clientFilter && clientFilter !== "all" ? clientFilter : null;
-      const { data, error } = await supabase.rpc("get_weekly_pace", { p_client_id: cid });
-      if (!error && data && data.length > 0) {
-        const row = data[0] as any;
-        setWeeklyPace({
-          sqls_this_week: Number(row.sqls_this_week) || 0,
-          week_target: Number(row.week_target) || 0,
-          days_elapsed: Number(row.days_elapsed) || 0,
-          days_remaining: Number(row.days_remaining) || 0,
-          week_number: Number(row.week_number) || 0,
-          total_weeks: Number(row.total_weeks) || 0,
-          week_start: row.week_start,
-          week_end: row.week_end,
-          run_rate: Number(row.run_rate) || 0,
-          projected_by_friday: Number(row.projected_by_friday) || 0,
-          needed_per_day: Number(row.needed_per_day) || 0,
-        });
-      } else {
-        setWeeklyPace(null);
-      }
-    };
-    fetchWeeklyPace();
-  }, [clientFilter, refreshKey]);
 
   // Team pace indicator — for "This Month" or "Campaign"
   const [targetSQLs, setTargetSQLs] = useState<number | null>(null);
