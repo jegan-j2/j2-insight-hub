@@ -716,7 +716,7 @@ const TeamPerformance = () => {
                   ) : notStarted ? (
                     <> | Week just started</>
                   ) : (
-                    <> | Need {wp.needed_per_day.toFixed(2)}/day to hit week target</>
+                    <> | Need {formatNeeded(wp.needed_per_day)}/day to hit week target</>
                   )}
                 </p>
                 {/* Line 2: Sub-line */}
