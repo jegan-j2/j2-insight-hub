@@ -682,9 +682,9 @@ const TeamPerformance = () => {
               const d = new Date(iso + "T00:00:00");
               return format(d, "d MMM");
             };
-            const targetHit = wp.needed_per_day < 0 || (wp.week_target > 0 && wp.sqls_this_week >= wp.week_target);
+            const targetHit = (wp.week_target > 0 && wp.needed_per_day <= 0) || (wp.week_target > 0 && wp.sqls_this_week >= wp.week_target);
             const weekComplete = wp.days_remaining === 0 && !targetHit;
-            const notStarted = wp.sqls_this_week === 0 && wp.days_elapsed === 0;
+            const notStarted = wp.days_elapsed === 0;
 
             const pct = wp.week_target > 0
               ? Math.min(100, (wp.sqls_this_week / wp.week_target) * 100)
@@ -698,28 +698,28 @@ const TeamPerformance = () => {
               return "#EF4444";
             })();
 
+            const displayRunRate = notStarted ? 0 : wp.run_rate;
+            const displayProjected = notStarted ? 0 : wp.projected_by_friday;
+
             return (
               <>
                 {/* Line 1: Summary */}
                 <p className="text-[13px] text-foreground">
                   <span className="font-semibold">Weekly Pace:</span>
-                  {" "}{wp.sqls_this_week} SQLs this week | Run rate: {wp.run_rate.toFixed(2)}/day | Projected: {wp.projected_by_friday} by Friday
+                  {" "}{wp.sqls_this_week} SQLs this week | Run rate: {displayRunRate.toFixed(2)}/day | Projected: {displayProjected} by Friday
                   {targetHit ? (
                     <> | <span className="font-semibold text-[#10B981]">Week target hit!</span></>
                   ) : weekComplete ? (
                     <> | Week complete</>
+                  ) : notStarted ? (
+                    <> | Week just started</>
                   ) : (
                     <> | Need {wp.needed_per_day.toFixed(2)}/day to hit week target</>
                   )}
                 </p>
                 {/* Line 2: Sub-line */}
                 <p className="text-[12px] text-muted-foreground">
-                  {weekComplete
-                    ? `Week ${wp.week_number} of ${wp.total_weeks} complete`
-                    : notStarted
-                      ? `Week ${wp.week_number} of ${wp.total_weeks} starts today`
-                      : <>Week {wp.week_number} of {wp.total_weeks} · Mon {fmtDate(wp.week_start)} – Fri {fmtDate(wp.week_end)} · {wp.days_remaining} working day{wp.days_remaining === 1 ? "" : "s"} remaining</>
-                  }
+                  Week {wp.week_number} of {wp.total_weeks} · Mon {fmtDate(wp.week_start)} – Fri {fmtDate(wp.week_end)} · {wp.days_remaining} working day{wp.days_remaining === 1 ? "" : "s"} remaining
                 </p>
                 {/* Line 3: Progress bar */}
                 {wp.week_target > 0 && (
