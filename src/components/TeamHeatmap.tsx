@@ -585,8 +585,17 @@ export const TeamHeatmap = ({ clients }: Props) => {
             No activity data for this period
           </div>
         ) : (
-          <div className="relative overflow-x-auto" style={{ maxWidth: "100%" }}>
-            <table className="border-collapse" style={{ minWidth: columnKeys.length * 110 + (clientFilter === "all" ? 360 : 200) }}>
+          <div className="relative overflow-x-auto">
+            <table
+              className="border-collapse"
+              style={{
+                tableLayout: "fixed",
+                width: "100%",
+                minWidth: columnKeys.length <= 5
+                  ? "100%"
+                  : `calc(160px + 140px + ${columnKeys.length} * ((100vw - 300px) / 5))`
+              }}
+            >
               <thead>
                 <tr>
                   <th
@@ -622,7 +631,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     <th
                       key={k}
                       className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
-                      style={{ minWidth: 110, width: 110, maxWidth: 110, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                      style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
@@ -712,13 +721,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           <td
                             key={k}
                             className="group-hover:!bg-[#EFF6FF]"
-                            style={{ minWidth: 110, width: 110, maxWidth: 110, padding: 4, backgroundColor: rowBg }}
+                            style={{ padding: 4, backgroundColor: rowBg }}
                           >
                             <div
                               className="relative rounded-md flex items-center justify-center text-xs font-semibold"
                               style={{
-                                width: 102,
-                                minWidth: 102,
+                                width: "100%",
+                                minWidth: "100%",
                                 height: 40,
                                 backgroundColor: style.bg,
                                 color: style.text,
