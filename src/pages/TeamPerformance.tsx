@@ -184,28 +184,6 @@ const TeamPerformance = () => {
     fetchClients();
   }, []);
 
-  // Compute most improved
-  const mostImproved = useMemo(() => {
-    if (!previousLeaderboard || previousLeaderboard.length === 0) return null;
-    const prevMap = new Map<string, number>();
-    for (const entry of previousLeaderboard) {
-      const key = `${entry.name}|||${entry.clientId}`;
-      prevMap.set(key, parseFloat(entry.answerRate));
-    }
-    let best: { name: string; clientId: string; improvement: number } | null = null;
-    for (const entry of leaderboard) {
-      const key = `${entry.name}|||${entry.clientId}`;
-      const prevRate = prevMap.get(key);
-      if (prevRate !== undefined && prevRate > 0) {
-        const improvement = parseFloat(entry.answerRate) - prevRate;
-        if (improvement > 0 && (!best || improvement > best.improvement)) {
-          best = { name: entry.name, clientId: entry.clientId || "", improvement };
-        }
-      }
-    }
-    return best;
-  }, [leaderboard, previousLeaderboard]);
-
   const clientNameMap = useMemo(() =>
     Object.fromEntries(allClients.map(c => [c.client_id, c.client_name])),
     [allClients]
