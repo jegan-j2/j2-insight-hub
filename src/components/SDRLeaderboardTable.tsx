@@ -204,13 +204,30 @@ export const SDRLeaderboardTable = ({
       <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">SDR Leaderboard</CardTitle>
-          {mostImproved && (
-            <div className="flex items-center gap-2 border-l-4 border-l-emerald-500 pl-3 py-1">
-              <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span className="text-sm font-semibold text-foreground">
-                Most Improved: {mostImproved.name} · <span className="text-emerald-600 dark:text-emerald-400">Answer Rate +{mostImproved.improvement.toFixed(1)}%</span>
-              </span>
-            </div>
+          {showClientFilter && onClientFilterChange && (
+            <Select value={clientFilter} onValueChange={onClientFilterChange}>
+              <SelectTrigger className={cn(
+                "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+              )}>
+                <SelectValue placeholder="All Clients" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-card">
+                <SelectItem value="all">All Clients</SelectItem>
+                {clients.map((c) => (
+                  <SelectItem key={c.client_id} value={c.client_id}>
+                    <span className="flex items-center gap-2">
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                      )}
+                      {c.client_name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </CardHeader>
         <CardContent>
