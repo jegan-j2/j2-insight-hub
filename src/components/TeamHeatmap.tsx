@@ -246,9 +246,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return m;
   }, [clients]);
 
-  // Map sdr_name -> client_id with most dials in the period
+  // Map sdr_name -> { client_id, client_name } using the client with most dials in the period
   const sdrClientMap = useMemo(() => {
     const totals = new Map<string, Map<string, number>>();
+    const namesByClient = new Map<string, string>();
     for (const r of data) {
       if (!r.sdr_name || !r.client_id) continue;
       let inner = totals.get(r.sdr_name);
@@ -257,8 +258,11 @@ export const TeamHeatmap = ({ clients }: Props) => {
         totals.set(r.sdr_name, inner);
       }
       inner.set(r.client_id, (inner.get(r.client_id) || 0) + (r.dials || 0));
+      if (r.client_name && !namesByClient.has(r.client_id)) {
+        namesByClient.set(r.client_id, r.client_name);
+      }
     }
-    const m = new Map<string, string>();
+    const m = new Map<string, { client_id: string; client_name: string }>();
     for (const [sdr, inner] of totals.entries()) {
       let bestClient = "";
       let bestCount = -1;
@@ -268,7 +272,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
           bestClient = cid;
         }
       }
-      if (bestClient) m.set(sdr, bestClient);
+      if (bestClient) {
+        m.set(sdr, {
+          client_id: bestClient,
+          client_name: namesByClient.get(bestClient) || "",
+        });
+      }
     }
     return m;
   }, [data]);
