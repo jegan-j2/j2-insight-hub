@@ -306,6 +306,41 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return isAfter(startOfDay(d), today);
   };
 
+  // Summary totals across all visible SDRs/columns
+  const summary = useMemo(() => {
+    let dials = 0;
+    let answered = 0;
+    let sqls = 0;
+    const activeSdrs = new Set<string>();
+    for (const r of data) {
+      if (!r.sdr_name) continue;
+      dials += r.dials || 0;
+      answered += r.answered || 0;
+      sqls += r.sqls || 0;
+      if ((r.dials || 0) > 0) activeSdrs.add(r.sdr_name);
+    }
+    const answerRate = dials > 0 ? Math.round((answered / dials) * 1000) / 10 : 0;
+    const convRate = dials > 0 ? Math.round((sqls / dials) * 1000) / 10 : 0;
+    return { dials, answered, sqls, activeSdrs: activeSdrs.size, answerRate, convRate };
+  }, [data]);
+
+  // Aggregated chart data: total team dials per period bucket
+  const chartData = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const k of columnKeys) totals.set(k, 0);
+    for (const r of data) {
+      if (totals.has(r.period_key)) {
+        totals.set(r.period_key, (totals.get(r.period_key) || 0) + (r.dials || 0));
+      }
+    }
+    return columnKeys.map(k => ({
+      key: k,
+      label: formatColumnHeader(k),
+      dials: totals.get(k) || 0,
+    }));
+  }, [columnKeys, data, isHourMode]);
+
+
   const buildTooltip = (sdr: string, key: string): string => {
     const cell = cellMap.get(`${sdr}|${key}`);
     const dials = cell?.dials || 0;
