@@ -589,7 +589,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
             No activity data for this period
           </div>
         ) : (
-          <div className="relative overflow-x-auto">
+          <div className="relative overflow-x-auto" style={{ maxWidth: "100%" }}>
             <table className="border-collapse" style={{ minWidth: "100%" }}>
               <thead>
                 <tr>

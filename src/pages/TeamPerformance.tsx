@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
 import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
 import * as XLSX from "xlsx-js-style";
