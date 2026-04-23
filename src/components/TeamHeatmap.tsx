@@ -648,7 +648,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         const style = future
                           ? FUTURE_CELL_STYLE
                           : CELL_STYLES[intensityLevel(dials, datasetMax)];
-                        const showDash = dials === 0;
+                        
                         return (
                           <td
                             key={k}
