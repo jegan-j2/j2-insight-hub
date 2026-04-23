@@ -593,7 +593,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 width: "100%",
                 minWidth: columnKeys.length <= 5
                   ? "100%"
-                  : `calc(160px + 140px + ${columnKeys.length} * ((100vw - 300px) / 5))`
+                  : `calc(300px + ${columnKeys.length} * ((100vw - 300px) / 5))`
               }}
             >
               <thead>
