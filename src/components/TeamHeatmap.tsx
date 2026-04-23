@@ -129,6 +129,17 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
 
   const [data, setData] = useState<HeatmapRow[]>([]);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  useEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const [loading, setLoading] = useState(false);
   const [errored, setErrored] = useState(false);
 
