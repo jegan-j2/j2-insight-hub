@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   format,
   startOfWeek,
@@ -129,6 +129,17 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
 
   const [data, setData] = useState<HeatmapRow[]>([]);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  useEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const [loading, setLoading] = useState(false);
   const [errored, setErrored] = useState(false);
 
@@ -321,6 +332,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
 
   const today = melbourneToday();
+  const cellWidth = containerWidth > 0
+    ? Math.floor((containerWidth - 360) / 5)
+    : 160;
 
   const formatColumnHeader = (key: string): string => {
     if (isHourMode) return HOUR_LABELS[key] ?? key;
@@ -585,15 +599,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
             No activity data for this period
           </div>
         ) : (
-          <div className="relative overflow-x-auto">
+          <div className="relative overflow-x-auto" ref={tableContainerRef}>
             <table
               className="border-collapse"
               style={{
                 tableLayout: "fixed",
                 width: "100%",
-                minWidth: columnKeys.length <= 5
-                  ? "100%"
-                  : `calc(300px + ${columnKeys.length} * ((100vw - 300px) / 5))`
+                minWidth: columnKeys.length <= 5 ? "100%" : 360 + columnKeys.length * cellWidth,
               }}
             >
               <thead>
@@ -626,7 +638,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     <th
                       key={k}
                       className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
-                      style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                      style={{ width: cellWidth, minWidth: cellWidth, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
@@ -711,7 +723,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           <td
                             key={k}
                             className="group-hover:!bg-[#EFF6FF]"
-                            style={{ padding: 4, backgroundColor: rowBg }}
+                            style={{ width: cellWidth, minWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
                           >
                             <div
                               className="relative rounded-md flex items-center justify-center text-xs font-semibold"
