@@ -585,8 +585,17 @@ export const TeamHeatmap = ({ clients }: Props) => {
             No activity data for this period
           </div>
         ) : (
-          <div className="relative overflow-x-auto" style={{ maxWidth: "100%" }}>
-            <table className="border-collapse" style={{ minWidth: columnKeys.length * 110 + (clientFilter === "all" ? 360 : 200) }}>
+          <div className="relative overflow-x-auto">
+            <table
+              className="border-collapse"
+              style={{
+                tableLayout: "fixed",
+                width: "100%",
+                minWidth: columnKeys.length <= 5
+                  ? "100%"
+                  : `calc(160px + 140px + ${columnKeys.length} * ((100vw - 300px) / 5))`
+              }}
+            >
               <thead>
                 <tr>
                   <th
