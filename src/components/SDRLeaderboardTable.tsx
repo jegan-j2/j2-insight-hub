@@ -37,6 +37,12 @@ interface MostImprovedInfo {
   improvement: number;
 }
 
+interface ClientOption {
+  client_id: string;
+  client_name: string;
+  logo_url: string | null;
+}
+
 interface SDRLeaderboardTableProps {
   leaderboardData?: LeaderboardEntry[];
   clientNameMap?: Record<string, string>;
@@ -44,9 +50,23 @@ interface SDRLeaderboardTableProps {
   showClientColumn?: boolean;
   mostImproved?: MostImprovedInfo | null;
   campaignDates?: { start: string; end: string } | null;
+  clients?: ClientOption[];
+  clientFilter?: string;
+  onClientFilterChange?: (value: string) => void;
+  showClientFilter?: boolean;
 }
 
-export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clientLogoMap = {}, showClientColumn = true, mostImproved, campaignDates }: SDRLeaderboardTableProps) => {
+export const SDRLeaderboardTable = ({
+  leaderboardData,
+  clientNameMap = {},
+  clientLogoMap = {},
+  showClientColumn = true,
+  campaignDates,
+  clients = [],
+  clientFilter = "all",
+  onClientFilterChange,
+  showClientFilter = false,
+}: SDRLeaderboardTableProps) => {
   const data = leaderboardData || [];
   const isMobile = useIsMobile();
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
