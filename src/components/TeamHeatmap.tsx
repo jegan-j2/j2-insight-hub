@@ -58,15 +58,22 @@ interface HeatmapRow {
   sqls: number;
 }
 
-// Cell colour scale relative to the entire visible dataset's max
+// Cell colour scale: light backgrounds for low/zero dials, dark navy for high.
+// Matches the individual SDR Activity Heatmap on the SDR profile page.
 const CELL_STYLES = [
-  { bg: "#0f172a", text: "#475569" }, // 0
-  { bg: "#1e3a5f", text: "#93c5fd" }, // 1–20%
-  { bg: "#1e40af", text: "#bfdbfe" }, // 21–40%
-  { bg: "#2563eb", text: "#ffffff" }, // 41–60%
-  { bg: "#1d4ed8", text: "#ffffff" }, // 61–80%
-  { bg: "#1e3a8a", text: "#ffffff" }, // 81–100%
+  { bg: "#FFFFFF", text: "#94a3b8", border: "1px solid #E2E8F0" }, // 0 / no data
+  { bg: "#CBD5E1", text: "#475569", border: "none" }, // 1–20%
+  { bg: "#64748B", text: "#FFFFFF", border: "none" }, // 21–40%
+  { bg: "#334155", text: "#FFFFFF", border: "none" }, // 41–60%
+  { bg: "#1E293B", text: "#F1F5F9", border: "none" }, // 61–80%
+  { bg: "#0F172A", text: "#FFFFFF", border: "none" }, // 81–100%
 ];
+
+const FUTURE_CELL_STYLE = {
+  bg: "#F8FAFC",
+  text: "#CBD5E1",
+  border: "1px dashed #E2E8F0",
+};
 
 const intensityLevel = (value: number, max: number): number => {
   if (value <= 0 || max <= 0) return 0;
@@ -122,11 +129,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
     [clientFilter, clients]
   );
 
-  // If switching to specific client and current mode is hidden? Campaign visibility:
-  // Campaign is only visible when a specific client is selected. Reset if user switches back to all.
+  // If switching to All Clients while in Campaign mode, default to Week.
   useEffect(() => {
     if (clientFilter === "all" && mode === "campaign") {
-      setMode("day");
+      setMode("week");
     }
   }, [clientFilter, mode]);
 
@@ -355,40 +361,41 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
   return (
     <div className="space-y-4">
-      {/* Row 1 — Mode toggle */}
+      {/* Filter row — mode toggle (left) + date display (middle) + client dropdown (right) */}
       <div className="flex flex-wrap items-center gap-2">
-        {(
-          [
-            { k: "day", l: "Day" },
-            { k: "week", l: "Week" },
-            { k: "month", l: "Month" },
-            ...(showCampaignTab ? [{ k: "campaign" as Mode, l: "Campaign" }] : []),
-            { k: "custom", l: "Custom" },
-          ] as { k: Mode; l: string }[]
-        ).map(p => {
-          const active = mode === p.k;
-          return (
-            <Button
-              key={p.k}
-              variant={active ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMode(p.k)}
-              className={cn(
-                "transition-all duration-200 min-h-[40px] active:scale-95 text-xs sm:text-sm",
-                active
-                  ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
-                  : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              {p.l}
-            </Button>
-          );
-        })}
-      </div>
-
-      {/* Row 2 — Date picker (left) + Client dropdown (right) */}
-      <div className="flex flex-wrap items-center gap-2">
+        {/* Mode toggle */}
         <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              { k: "day", l: "Day" },
+              { k: "week", l: "Week" },
+              { k: "month", l: "Month" },
+              ...(showCampaignTab ? [{ k: "campaign" as Mode, l: "Campaign" }] : []),
+              { k: "custom", l: "Custom" },
+            ] as { k: Mode; l: string }[]
+          ).map(p => {
+            const active = mode === p.k;
+            return (
+              <Button
+                key={p.k}
+                variant={active ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMode(p.k)}
+                className={cn(
+                  "transition-all duration-200 min-h-[40px] active:scale-95 text-xs sm:text-sm",
+                  active
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                {p.l}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* Date display (middle) */}
+        <div className="flex items-center">
           {mode === "day" && (
             <Popover open={dayPopoverOpen} onOpenChange={setDayPopoverOpen}>
               <PopoverTrigger asChild>
@@ -561,16 +568,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
               <thead>
                 <tr>
                   <th
-                    className="sticky left-0 z-20 bg-card text-left text-xs font-semibold text-muted-foreground px-4 py-2 border-b border-border"
-                    style={{ minWidth: 220, width: 220 }}
+                    className="sticky left-0 z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
+                    style={{ minWidth: 220, width: 220, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                   >
                     SDR
                   </th>
                   {columnKeys.map(k => (
                     <th
                       key={k}
-                      className="text-xs font-semibold px-2 py-2 border-b border-border text-center text-muted-foreground whitespace-nowrap"
-                      style={{ minWidth: 72, width: 72 }}
+                      className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
+                      style={{ minWidth: 90, width: 90, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
@@ -578,16 +585,21 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 </tr>
               </thead>
               <tbody>
-                {sdrs.map(sdr => {
+                {sdrs.map((sdr, idx) => {
                   const sdrClientId = sdrClientMap.get(sdr);
                   const sdrClient = sdrClientId ? clientLookup.get(sdrClientId) : null;
+                  const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9";
                   return (
-                    <tr key={sdr} className="border-b border-border/60">
+                    <tr
+                      key={sdr}
+                      className="group transition-colors"
+                      style={{ backgroundColor: rowBg }}
+                    >
                       <td
-                        className="sticky left-0 z-10 bg-card px-4 py-2 align-middle"
-                        style={{ minWidth: 220, width: 220 }}
+                        className="sticky left-0 z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                        style={{ minWidth: 220, width: 220, backgroundColor: rowBg }}
                       >
-                        <div className="text-sm font-medium text-foreground leading-tight whitespace-nowrap">
+                        <div className="text-sm font-medium leading-tight whitespace-nowrap" style={{ color: "#0F172A" }}>
                           {sdr}
                         </div>
                         {clientFilter === "all" && sdrClient && (
@@ -596,16 +608,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
                               <img
                                 src={sdrClient.logo_url}
                                 alt=""
-                                className="w-4 h-4 rounded-sm object-contain flex-shrink-0"
+                                className="w-4 h-4 rounded-full object-contain flex-shrink-0"
                               />
                             ) : (
-                              <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                              <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
                                 {sdrClient.client_name.charAt(0)}
                               </span>
                             )}
                             <span
                               className="truncate"
-                              style={{ fontSize: 10, color: "#64748b" }}
+                              style={{ fontSize: 11, color: "#64748b" }}
                             >
                               {sdrClient.client_name}
                             </span>
@@ -617,26 +629,30 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         const dials = cell?.dials || 0;
                         const sqls = cell?.sqls || 0;
                         const future = isFutureColumn(k);
-                        const level = future ? 0 : intensityLevel(dials, datasetMax);
-                        const style = CELL_STYLES[level];
+                        const style = future
+                          ? FUTURE_CELL_STYLE
+                          : CELL_STYLES[intensityLevel(dials, datasetMax)];
                         const showDash = dials === 0;
-                        const dashColor = future ? "#334155" : style.text;
                         return (
-                          <td key={k} className="p-1" style={{ minWidth: 72, width: 72 }}>
+                          <td
+                            key={k}
+                            className="p-1 group-hover:!bg-[#EFF6FF]"
+                            style={{ minWidth: 90, width: 90, backgroundColor: rowBg }}
+                          >
                             <div
                               className="relative h-10 rounded-md flex items-center justify-center text-xs font-semibold"
-                              style={{ backgroundColor: style.bg, color: style.text }}
+                              style={{
+                                backgroundColor: style.bg,
+                                color: style.text,
+                                border: style.border,
+                              }}
                               title={buildTooltip(sdr, k)}
                             >
-                              {showDash ? (
-                                <span style={{ color: dashColor }}>—</span>
-                              ) : (
-                                dials
-                              )}
+                              {showDash ? <span>—</span> : dials}
                               {sqls > 0 && (
                                 <span
                                   className="absolute leading-none"
-                                  style={{ top: 2, right: 3, fontSize: 10 }}
+                                  style={{ top: 2, right: 3, fontSize: 12 }}
                                 >
                                   🎯
                                 </span>
@@ -761,12 +777,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 </ResponsiveContainer>
               </div>
               <div className="mt-3 flex items-center justify-between text-xs">
+                <div className="text-muted-foreground font-medium">
+                  Total: {summary.dials.toLocaleString()} dials
+                </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <span style={{ color: "#0f172a" }} className="text-base leading-none dark:text-white">●</span>
                   <span>Dials</span>
-                </div>
-                <div className="text-muted-foreground font-medium">
-                  Total: {summary.dials.toLocaleString()} dials
                 </div>
               </div>
             </CardContent>
