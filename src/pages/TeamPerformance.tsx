@@ -357,30 +357,6 @@ const TeamPerformance = () => {
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
         <div className="flex items-center gap-2">
-          {!isSdr && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  disabled={loading || leaderboard.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50"
-                >
-                  <Download className="h-4 w-4" />
-                  Export
-                  <ChevronDown className="h-4 w-4 ml-1" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportCSV}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportExcel}>
-                  <Table2 className="h-4 w-4 mr-2" />
-                  Export as Excel
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
               onClick={() => setView("leaderboard")}
