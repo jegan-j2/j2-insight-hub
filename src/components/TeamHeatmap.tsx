@@ -568,16 +568,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
               <thead>
                 <tr>
                   <th
-                    className="sticky left-0 z-20 bg-card text-left text-xs font-semibold text-muted-foreground px-4 py-2 border-b border-border"
-                    style={{ minWidth: 220, width: 220 }}
+                    className="sticky left-0 z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
+                    style={{ minWidth: 220, width: 220, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                   >
                     SDR
                   </th>
                   {columnKeys.map(k => (
                     <th
                       key={k}
-                      className="text-xs font-semibold px-2 py-2 border-b border-border text-center text-muted-foreground whitespace-nowrap"
-                      style={{ minWidth: 72, width: 72 }}
+                      className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
+                      style={{ minWidth: 90, width: 90, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
@@ -585,16 +585,21 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 </tr>
               </thead>
               <tbody>
-                {sdrs.map(sdr => {
+                {sdrs.map((sdr, idx) => {
                   const sdrClientId = sdrClientMap.get(sdr);
                   const sdrClient = sdrClientId ? clientLookup.get(sdrClientId) : null;
+                  const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9";
                   return (
-                    <tr key={sdr} className="border-b border-border/60">
+                    <tr
+                      key={sdr}
+                      className="group transition-colors"
+                      style={{ backgroundColor: rowBg }}
+                    >
                       <td
-                        className="sticky left-0 z-10 bg-card px-4 py-2 align-middle"
-                        style={{ minWidth: 220, width: 220 }}
+                        className="sticky left-0 z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                        style={{ minWidth: 220, width: 220, backgroundColor: rowBg }}
                       >
-                        <div className="text-sm font-medium text-foreground leading-tight whitespace-nowrap">
+                        <div className="text-sm font-medium leading-tight whitespace-nowrap" style={{ color: "#0F172A" }}>
                           {sdr}
                         </div>
                         {clientFilter === "all" && sdrClient && (
@@ -603,16 +608,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
                               <img
                                 src={sdrClient.logo_url}
                                 alt=""
-                                className="w-4 h-4 rounded-sm object-contain flex-shrink-0"
+                                className="w-4 h-4 rounded-full object-contain flex-shrink-0"
                               />
                             ) : (
-                              <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                              <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
                                 {sdrClient.client_name.charAt(0)}
                               </span>
                             )}
                             <span
                               className="truncate"
-                              style={{ fontSize: 10, color: "#64748b" }}
+                              style={{ fontSize: 11, color: "#64748b" }}
                             >
                               {sdrClient.client_name}
                             </span>
@@ -624,26 +629,30 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         const dials = cell?.dials || 0;
                         const sqls = cell?.sqls || 0;
                         const future = isFutureColumn(k);
-                        const level = future ? 0 : intensityLevel(dials, datasetMax);
-                        const style = CELL_STYLES[level];
+                        const style = future
+                          ? FUTURE_CELL_STYLE
+                          : CELL_STYLES[intensityLevel(dials, datasetMax)];
                         const showDash = dials === 0;
-                        const dashColor = future ? "#334155" : style.text;
                         return (
-                          <td key={k} className="p-1" style={{ minWidth: 72, width: 72 }}>
+                          <td
+                            key={k}
+                            className="p-1 group-hover:!bg-[#EFF6FF]"
+                            style={{ minWidth: 90, width: 90, backgroundColor: rowBg }}
+                          >
                             <div
                               className="relative h-10 rounded-md flex items-center justify-center text-xs font-semibold"
-                              style={{ backgroundColor: style.bg, color: style.text }}
+                              style={{
+                                backgroundColor: style.bg,
+                                color: style.text,
+                                border: style.border,
+                              }}
                               title={buildTooltip(sdr, k)}
                             >
-                              {showDash ? (
-                                <span style={{ color: dashColor }}>—</span>
-                              ) : (
-                                dials
-                              )}
+                              {showDash ? <span>—</span> : dials}
                               {sqls > 0 && (
                                 <span
                                   className="absolute leading-none"
-                                  style={{ top: 2, right: 3, fontSize: 10 }}
+                                  style={{ top: 2, right: 3, fontSize: 12 }}
                                 >
                                   🎯
                                 </span>
