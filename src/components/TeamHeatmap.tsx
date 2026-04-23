@@ -58,15 +58,22 @@ interface HeatmapRow {
   sqls: number;
 }
 
-// Cell colour scale relative to the entire visible dataset's max
+// Cell colour scale: light backgrounds for low/zero dials, dark navy for high.
+// Matches the individual SDR Activity Heatmap on the SDR profile page.
 const CELL_STYLES = [
-  { bg: "#0f172a", text: "#475569" }, // 0
-  { bg: "#1e3a5f", text: "#93c5fd" }, // 1–20%
-  { bg: "#1e40af", text: "#bfdbfe" }, // 21–40%
-  { bg: "#2563eb", text: "#ffffff" }, // 41–60%
-  { bg: "#1d4ed8", text: "#ffffff" }, // 61–80%
-  { bg: "#1e3a8a", text: "#ffffff" }, // 81–100%
+  { bg: "#FFFFFF", text: "#94a3b8", border: "1px solid #E2E8F0" }, // 0 / no data
+  { bg: "#CBD5E1", text: "#475569", border: "none" }, // 1–20%
+  { bg: "#64748B", text: "#FFFFFF", border: "none" }, // 21–40%
+  { bg: "#334155", text: "#FFFFFF", border: "none" }, // 41–60%
+  { bg: "#1E293B", text: "#F1F5F9", border: "none" }, // 61–80%
+  { bg: "#0F172A", text: "#FFFFFF", border: "none" }, // 81–100%
 ];
+
+const FUTURE_CELL_STYLE = {
+  bg: "#F8FAFC",
+  text: "#CBD5E1",
+  border: "1px dashed #E2E8F0",
+};
 
 const intensityLevel = (value: number, max: number): number => {
   if (value <= 0 || max <= 0) return 0;
