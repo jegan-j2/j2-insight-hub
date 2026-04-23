@@ -626,7 +626,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     <th
                       key={k}
                       className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
-                      style={{ minWidth: 90, width: 90, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                      style={{ minWidth: 110, width: 110, maxWidth: 110, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
