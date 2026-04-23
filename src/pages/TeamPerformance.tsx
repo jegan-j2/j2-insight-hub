@@ -373,7 +373,7 @@ const TeamPerformance = () => {
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
-              onClick={() => setView("leaderboard")}
+              onClick={() => handleViewChange("leaderboard")}
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 view === "leaderboard"
@@ -384,7 +384,7 @@ const TeamPerformance = () => {
               SDR Leaderboard
             </button>
             <button
-              onClick={() => setView("heatmap")}
+              onClick={() => handleViewChange("heatmap")}
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 view === "heatmap"
