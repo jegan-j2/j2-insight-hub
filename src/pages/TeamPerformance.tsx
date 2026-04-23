@@ -760,11 +760,7 @@ const TeamPerformance = () => {
       ) : null}
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground text-base">Team Heatmap — coming soon</p>
-          </CardContent>
-        </Card>
+        <TeamHeatmap clients={clients} />
       )}
     </div>
   );
