@@ -129,11 +129,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
     [clientFilter, clients]
   );
 
-  // If switching to specific client and current mode is hidden? Campaign visibility:
-  // Campaign is only visible when a specific client is selected. Reset if user switches back to all.
+  // If switching to All Clients while in Campaign mode, default to Week.
   useEffect(() => {
     if (clientFilter === "all" && mode === "campaign") {
-      setMode("day");
+      setMode("week");
     }
   }, [clientFilter, mode]);
 
