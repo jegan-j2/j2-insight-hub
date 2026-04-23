@@ -586,7 +586,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
           </div>
         ) : (
           <div className="relative overflow-x-auto" style={{ maxWidth: "100%" }}>
-            <table className="border-collapse" style={{ minWidth: "100%" }}>
+            <table className="border-collapse" style={{ minWidth: columnKeys.length * 110 + (clientFilter === "all" ? 360 : 200) }}>
               <thead>
                 <tr>
                   <th
