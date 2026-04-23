@@ -49,7 +49,20 @@ const TeamPerformance = () => {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [allClients, setAllClients] = useState<ClientLookup[]>([]);
   const [exporting, setExporting] = useState(false);
-  const [view, setView] = useState<"leaderboard" | "heatmap">("leaderboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialView = searchParams.get("tab") === "heatmap" ? "heatmap" : "leaderboard";
+  const [view, setView] = useState<"leaderboard" | "heatmap">(initialView);
+
+  const handleViewChange = (next: "leaderboard" | "heatmap") => {
+    setView(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === "heatmap") {
+      params.set("tab", "heatmap");
+    } else {
+      params.delete("tab");
+    }
+    setSearchParams(params, { replace: true });
+  };
   const [exportingExcel, setExportingExcel] = useState(false);
   
   const { toast } = useToast();
