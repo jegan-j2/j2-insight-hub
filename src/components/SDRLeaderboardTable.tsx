@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, ArrowUpDown, Users, TrendingUp, ChevronDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Users, ChevronDown } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { SDRDetailModal } from "@/components/SDRDetailModal";
 import { useDateFilter } from "@/contexts/DateFilterContext";
@@ -10,6 +10,7 @@ import { SDRAvatar } from "@/components/SDRAvatar";
 import { supabase } from "@/lib/supabase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface LeaderboardEntry {
