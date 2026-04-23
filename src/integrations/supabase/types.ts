@@ -863,6 +863,8 @@ export type Database = {
         }
         Returns: {
           answered: number
+          client_id: string
+          client_name: string
           dials: number
           dms: number
           period_key: string
