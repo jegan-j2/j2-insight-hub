@@ -59,15 +59,15 @@ interface HeatmapRow {
   sqls: number;
 }
 
-// Cell colour scale: light backgrounds for low/zero dials, dark navy for high.
-// Matches the individual SDR Activity Heatmap on the SDR profile page.
+// Cell colour scale: light backgrounds for low/zero dials, dark navy for KPI hit.
+// Thresholds are absolute KPI-based: 80 dials/day or 10 dials/hour = KPI achieved.
 const CELL_STYLES = [
-  { bg: "#FFFFFF", text: "#94a3b8", border: "1px solid #E2E8F0" }, // 0 / no data
-  { bg: "#CBD5E1", text: "#475569", border: "none" }, // 1–20%
-  { bg: "#64748B", text: "#FFFFFF", border: "none" }, // 21–40%
-  { bg: "#334155", text: "#FFFFFF", border: "none" }, // 41–60%
-  { bg: "#1E293B", text: "#F1F5F9", border: "none" }, // 61–80%
-  { bg: "#0F172A", text: "#FFFFFF", border: "none" }, // 81–100%
+  { bg: "#FFFFFF", text: "#94a3b8", border: "1px solid #E2E8F0" }, // 0
+  { bg: "#F1F5F9", text: "#475569", border: "none" },               // below 25% KPI
+  { bg: "#CBD5E1", text: "#475569", border: "none" },               // 25–50% KPI
+  { bg: "#64748B", text: "#FFFFFF", border: "none" },               // 50–75% KPI
+  { bg: "#334155", text: "#FFFFFF", border: "none" },               // 75–99% KPI
+  { bg: "#0F172A", text: "#FFFFFF", border: "none" },               // KPI achieved ✅
 ];
 
 const FUTURE_CELL_STYLE = {
@@ -76,14 +76,21 @@ const FUTURE_CELL_STYLE = {
   border: "1px dashed #E2E8F0",
 };
 
-const intensityLevel = (value: number, max: number): number => {
-  if (value <= 0 || max <= 0) return 0;
-  const ratio = value / max;
-  if (ratio <= 0.2) return 1;
-  if (ratio <= 0.4) return 2;
-  if (ratio <= 0.6) return 3;
-  if (ratio <= 0.8) return 4;
-  return 5;
+const intensityLevel = (value: number, isHour: boolean): number => {
+  if (value <= 0) return 0;
+  if (isHour) {
+    if (value <= 2)  return 1;
+    if (value <= 4)  return 2;
+    if (value <= 7)  return 3;
+    if (value <= 9)  return 4;
+    return 5; // 10+ per hour = KPI hit
+  } else {
+    if (value <= 20) return 1;
+    if (value <= 40) return 2;
+    if (value <= 60) return 3;
+    if (value <= 79) return 4;
+    return 5; // 80+ per day = KPI hit
+  }
 };
 
 const melbourneToday = (): Date => {
@@ -312,17 +319,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return m;
   }, [data]);
 
-  // Max dials across the entire visible dataset (limited to visible columns/SDRs)
-  const datasetMax = useMemo(() => {
-    let max = 0;
-    for (const sdr of sdrs) {
-      for (const k of columnKeys) {
-        const c = cellMap.get(`${sdr}|${k}`);
-        if (c && c.dials > max) max = c.dials;
-      }
-    }
-    return max;
-  }, [cellMap, sdrs, columnKeys]);
 
   const today = melbourneToday();
 
@@ -710,7 +706,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         const future = isFutureColumn(k);
                         const style = future
                           ? FUTURE_CELL_STYLE
-                          : CELL_STYLES[intensityLevel(dials, datasetMax)];
+                          : CELL_STYLES[intensityLevel(dials, isHourMode)];
                         
                         return (
                           <td
