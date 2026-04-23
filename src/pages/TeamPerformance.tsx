@@ -536,8 +536,11 @@ const TeamPerformance = () => {
             clientNameMap={clientNameMap}
             clientLogoMap={clientLogoMap}
             showClientColumn={clientFilter === "all"}
-            mostImproved={mostImproved}
             campaignDates={selectedClient?.campaign_start && selectedClient?.campaign_end ? { start: selectedClient.campaign_start, end: selectedClient.campaign_end } : null}
+            clients={clients}
+            clientFilter={clientFilter}
+            onClientFilterChange={setClientFilter}
+            showClientFilter={!isSdr}
           />
         </>
       ) : null}
