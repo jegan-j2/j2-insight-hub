@@ -664,7 +664,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                               }}
                               title={buildTooltip(sdr, k)}
                             >
-                              {showDash ? <span>—</span> : dials}
+                              {future ? <span>—</span> : dials}
                               {sqls > 0 && (
                                 <span
                                   className="absolute leading-none"
