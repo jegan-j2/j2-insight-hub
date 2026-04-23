@@ -361,40 +361,41 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
   return (
     <div className="space-y-4">
-      {/* Row 1 — Mode toggle */}
+      {/* Filter row — mode toggle (left) + date display (middle) + client dropdown (right) */}
       <div className="flex flex-wrap items-center gap-2">
-        {(
-          [
-            { k: "day", l: "Day" },
-            { k: "week", l: "Week" },
-            { k: "month", l: "Month" },
-            ...(showCampaignTab ? [{ k: "campaign" as Mode, l: "Campaign" }] : []),
-            { k: "custom", l: "Custom" },
-          ] as { k: Mode; l: string }[]
-        ).map(p => {
-          const active = mode === p.k;
-          return (
-            <Button
-              key={p.k}
-              variant={active ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMode(p.k)}
-              className={cn(
-                "transition-all duration-200 min-h-[40px] active:scale-95 text-xs sm:text-sm",
-                active
-                  ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
-                  : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              {p.l}
-            </Button>
-          );
-        })}
-      </div>
-
-      {/* Row 2 — Date picker (left) + Client dropdown (right) */}
-      <div className="flex flex-wrap items-center gap-2">
+        {/* Mode toggle */}
         <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              { k: "day", l: "Day" },
+              { k: "week", l: "Week" },
+              { k: "month", l: "Month" },
+              ...(showCampaignTab ? [{ k: "campaign" as Mode, l: "Campaign" }] : []),
+              { k: "custom", l: "Custom" },
+            ] as { k: Mode; l: string }[]
+          ).map(p => {
+            const active = mode === p.k;
+            return (
+              <Button
+                key={p.k}
+                variant={active ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMode(p.k)}
+                className={cn(
+                  "transition-all duration-200 min-h-[40px] active:scale-95 text-xs sm:text-sm",
+                  active
+                    ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                {p.l}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* Date display (middle) */}
+        <div className="flex items-center">
           {mode === "day" && (
             <Popover open={dayPopoverOpen} onOpenChange={setDayPopoverOpen}>
               <PopoverTrigger asChild>
