@@ -51,6 +51,7 @@ interface ClientLite {
 interface HeatmapRow {
   sdr_name: string;
   client_id: string | null;
+  client_name: string | null;
   period_key: string;
   dials: number;
   answered: number;
@@ -245,9 +246,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return m;
   }, [clients]);
 
-  // Map sdr_name -> client_id with most dials in the period
+  // Map sdr_name -> { client_id, client_name } using the client with most dials in the period
   const sdrClientMap = useMemo(() => {
     const totals = new Map<string, Map<string, number>>();
+    const namesByClient = new Map<string, string>();
     for (const r of data) {
       if (!r.sdr_name || !r.client_id) continue;
       let inner = totals.get(r.sdr_name);
@@ -256,8 +258,11 @@ export const TeamHeatmap = ({ clients }: Props) => {
         totals.set(r.sdr_name, inner);
       }
       inner.set(r.client_id, (inner.get(r.client_id) || 0) + (r.dials || 0));
+      if (r.client_name && !namesByClient.has(r.client_id)) {
+        namesByClient.set(r.client_id, r.client_name);
+      }
     }
-    const m = new Map<string, string>();
+    const m = new Map<string, { client_id: string; client_name: string }>();
     for (const [sdr, inner] of totals.entries()) {
       let bestClient = "";
       let bestCount = -1;
@@ -267,7 +272,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
           bestClient = cid;
         }
       }
-      if (bestClient) m.set(sdr, bestClient);
+      if (bestClient) {
+        m.set(sdr, {
+          client_id: bestClient,
+          client_name: namesByClient.get(bestClient) || "",
+        });
+      }
     }
     return m;
   }, [data]);
@@ -602,8 +612,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
               </thead>
               <tbody>
                 {sdrs.map((sdr, idx) => {
-                  const sdrClientId = sdrClientMap.get(sdr);
-                  const sdrClient = sdrClientId ? clientLookup.get(sdrClientId) : null;
+                  const sdrClientInfo = sdrClientMap.get(sdr);
+                  const sdrClient = sdrClientInfo
+                    ? clientLookup.get(sdrClientInfo.client_id)
+                    : null;
+                  const displayClientName =
+                    sdrClient?.client_name || sdrClientInfo?.client_name || null;
+                  const displayLogoUrl = sdrClient?.logo_url || null;
                   const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9";
                   return (
                     <tr
@@ -618,24 +633,24 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         <div className="text-sm font-medium leading-tight whitespace-nowrap" style={{ color: "#0F172A" }}>
                           {sdr}
                         </div>
-                        {clientFilter === "all" && sdrClient && (
+                        {clientFilter === "all" && displayClientName && (
                           <div className="mt-0.5 flex items-center gap-1.5">
-                            {sdrClient.logo_url ? (
+                            {displayLogoUrl ? (
                               <img
-                                src={sdrClient.logo_url}
+                                src={displayLogoUrl}
                                 alt=""
                                 className="w-4 h-4 rounded-full object-contain flex-shrink-0"
                               />
                             ) : (
                               <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
-                                {sdrClient.client_name.charAt(0)}
+                                {displayClientName.charAt(0)}
                               </span>
                             )}
                             <span
                               className="truncate"
                               style={{ fontSize: 11, color: "#64748b" }}
                             >
-                              {sdrClient.client_name}
+                              {displayClientName}
                             </span>
                           </div>
                         )}
