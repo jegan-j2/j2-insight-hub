@@ -653,6 +653,126 @@ export const TeamHeatmap = ({ clients }: Props) => {
           </div>
         )}
       </Card>
+
+      {/* Summary stat cards */}
+      {!loading && !errored && sdrs.length > 0 && (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                title: "Total Dials",
+                value: summary.dials.toLocaleString(),
+                subtitle: null as string | null,
+                icon: Phone,
+                iconColor: "text-amber-500",
+                iconBg: "bg-amber-500/10",
+              },
+              {
+                title: "Answered",
+                value: summary.answered.toLocaleString(),
+                subtitle: `${summary.answerRate}% answer rate`,
+                icon: PhoneCall,
+                iconColor: "text-emerald-500",
+                iconBg: "bg-emerald-500/10",
+              },
+              {
+                title: "SQLs",
+                value: summary.sqls.toLocaleString(),
+                subtitle: `${summary.convRate}% conversion rate`,
+                icon: TargetIcon,
+                iconColor: "text-rose-500",
+                iconBg: "bg-rose-500/10",
+              },
+              {
+                title: "Active SDRs",
+                value: summary.activeSdrs.toLocaleString(),
+                subtitle: null,
+                icon: Users,
+                iconColor: "text-indigo-500",
+                iconBg: "bg-indigo-500/10",
+              },
+            ].map(card => (
+              <Card key={card.title} className="bg-card/50 backdrop-blur-sm border-border">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm text-muted-foreground">{card.title}</p>
+                    <div className={cn("p-2 rounded-lg", card.iconBg)}>
+                      <card.icon className={cn("h-5 w-5", card.iconColor)} />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-foreground">{card.value}</p>
+                  {card.subtitle && (
+                    <p className="text-xs text-muted-foreground mt-1">{card.subtitle}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Team Dials chart */}
+          <Card className="overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">
+                {isHourMode ? "Team Dials by Hour" : "Team Dials by Day"}
+              </h3>
+            </div>
+            <CardContent className="p-5">
+              <div className="h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
+                      tickLine={false}
+                      allowDecimals={false}
+                    />
+                    <RTooltip
+                      cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      formatter={(v: any) => [`${Number(v).toLocaleString()} dials`, "Dials"]}
+                    />
+                    <Bar dataKey="dials" radius={[4, 4, 0, 0]}>
+                      {chartData.map((_, idx) => (
+                        <Cell
+                          key={idx}
+                          fill="#0f172a"
+                          onMouseEnter={(e: any) => {
+                            if (e?.target) e.target.setAttribute("fill", "#1e3a5f");
+                          }}
+                          onMouseLeave={(e: any) => {
+                            if (e?.target) e.target.setAttribute("fill", "#0f172a");
+                          }}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <span style={{ color: "#0f172a" }} className="text-base leading-none dark:text-white">●</span>
+                  <span>Dials</span>
+                </div>
+                <div className="text-muted-foreground font-medium">
+                  Total: {summary.dials.toLocaleString()} dials
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
