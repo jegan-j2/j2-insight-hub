@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { J2Loader } from "@/components/J2Loader";
 import { useTeamPerformanceData } from "@/hooks/useTeamPerformanceData";
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
 import * as XLSX from "xlsx-js-style";
@@ -48,7 +49,20 @@ const TeamPerformance = () => {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [allClients, setAllClients] = useState<ClientLookup[]>([]);
   const [exporting, setExporting] = useState(false);
-  const [view, setView] = useState<"leaderboard" | "heatmap">("leaderboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialView = searchParams.get("tab") === "heatmap" ? "heatmap" : "leaderboard";
+  const [view, setView] = useState<"leaderboard" | "heatmap">(initialView);
+
+  const handleViewChange = (next: "leaderboard" | "heatmap") => {
+    setView(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === "heatmap") {
+      params.set("tab", "heatmap");
+    } else {
+      params.delete("tab");
+    }
+    setSearchParams(params, { replace: true });
+  };
   const [exportingExcel, setExportingExcel] = useState(false);
   
   const { toast } = useToast();
@@ -359,7 +373,7 @@ const TeamPerformance = () => {
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
-              onClick={() => setView("leaderboard")}
+              onClick={() => handleViewChange("leaderboard")}
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 view === "leaderboard"
@@ -370,7 +384,7 @@ const TeamPerformance = () => {
               SDR Leaderboard
             </button>
             <button
-              onClick={() => setView("heatmap")}
+              onClick={() => handleViewChange("heatmap")}
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 view === "heatmap"

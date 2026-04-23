@@ -589,7 +589,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
             No activity data for this period
           </div>
         ) : (
-          <div className="relative overflow-x-auto">
+          <div className="relative overflow-x-auto" style={{ maxWidth: "100%" }}>
             <table className="border-collapse" style={{ minWidth: "100%" }}>
               <thead>
                 <tr>
@@ -626,7 +626,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     <th
                       key={k}
                       className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
-                      style={{ minWidth: 90, width: 90, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                      style={{ minWidth: 110, width: 110, maxWidth: 110, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
@@ -715,12 +715,15 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         return (
                           <td
                             key={k}
-                            className="p-1 group-hover:!bg-[#EFF6FF]"
-                            style={{ minWidth: 90, width: 90, backgroundColor: rowBg }}
+                            className="group-hover:!bg-[#EFF6FF]"
+                            style={{ minWidth: 110, width: 110, maxWidth: 110, padding: 4, backgroundColor: rowBg }}
                           >
                             <div
-                              className="relative h-10 rounded-md flex items-center justify-center text-xs font-semibold"
+                              className="relative rounded-md flex items-center justify-center text-xs font-semibold"
                               style={{
+                                width: 102,
+                                minWidth: 102,
+                                height: 40,
                                 backgroundColor: style.bg,
                                 color: style.text,
                                 border: style.border,
