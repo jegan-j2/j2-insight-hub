@@ -605,28 +605,23 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       width: 200,
                       backgroundColor: "#0F172A",
                       color: "#FFFFFF",
-                      ...(clientFilter !== "all"
-                        ? { borderRight: "2px solid #E2E8F0" }
-                        : {}),
                     }}
                   >
                     SDR
                   </th>
-                  {clientFilter === "all" && (
-                    <th
-                      className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
-                      style={{
-                        left: 200,
-                        minWidth: 160,
-                        width: 160,
-                        backgroundColor: "#0F172A",
-                        color: "#FFFFFF",
-                        borderRight: "2px solid #E2E8F0",
-                      }}
-                    >
-                      Client
-                    </th>
-                  )}
+                  <th
+                    className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
+                    style={{
+                      left: 200,
+                      minWidth: 160,
+                      width: 160,
+                      backgroundColor: "#0F172A",
+                      color: "#FFFFFF",
+                      borderRight: "2px solid #E2E8F0",
+                    }}
+                  >
+                    Client
+                  </th>
                   {columnKeys.map(k => (
                     <th
                       key={k}
