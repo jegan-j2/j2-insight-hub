@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, ArrowUpDown, Users, TrendingUp, ChevronDown } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Users, ChevronDown } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { SDRDetailModal } from "@/components/SDRDetailModal";
 import { useDateFilter } from "@/contexts/DateFilterContext";
@@ -10,6 +10,7 @@ import { SDRAvatar } from "@/components/SDRAvatar";
 import { supabase } from "@/lib/supabase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface LeaderboardEntry {
@@ -36,6 +37,12 @@ interface MostImprovedInfo {
   improvement: number;
 }
 
+interface ClientOption {
+  client_id: string;
+  client_name: string;
+  logo_url: string | null;
+}
+
 interface SDRLeaderboardTableProps {
   leaderboardData?: LeaderboardEntry[];
   clientNameMap?: Record<string, string>;
@@ -43,9 +50,23 @@ interface SDRLeaderboardTableProps {
   showClientColumn?: boolean;
   mostImproved?: MostImprovedInfo | null;
   campaignDates?: { start: string; end: string } | null;
+  clients?: ClientOption[];
+  clientFilter?: string;
+  onClientFilterChange?: (value: string) => void;
+  showClientFilter?: boolean;
 }
 
-export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clientLogoMap = {}, showClientColumn = true, mostImproved, campaignDates }: SDRLeaderboardTableProps) => {
+export const SDRLeaderboardTable = ({
+  leaderboardData,
+  clientNameMap = {},
+  clientLogoMap = {},
+  showClientColumn = true,
+  campaignDates,
+  clients = [],
+  clientFilter = "all",
+  onClientFilterChange,
+  showClientFilter = false,
+}: SDRLeaderboardTableProps) => {
   const data = leaderboardData || [];
   const isMobile = useIsMobile();
   const [selectedSDR, setSelectedSDR] = useState<LeaderboardEntry | null>(null);
@@ -183,13 +204,30 @@ export const SDRLeaderboardTable = ({ leaderboardData, clientNameMap = {}, clien
       <Card className="bg-card border-border shadow-sm hover:border-yellow-500/20 transition-all">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">SDR Leaderboard</CardTitle>
-          {mostImproved && (
-            <div className="flex items-center gap-2 border-l-4 border-l-emerald-500 pl-3 py-1">
-              <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span className="text-sm font-semibold text-foreground">
-                Most Improved: {mostImproved.name} · <span className="text-emerald-600 dark:text-emerald-400">Answer Rate +{mostImproved.improvement.toFixed(1)}%</span>
-              </span>
-            </div>
+          {showClientFilter && onClientFilterChange && (
+            <Select value={clientFilter} onValueChange={onClientFilterChange}>
+              <SelectTrigger className={cn(
+                "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+              )}>
+                <SelectValue placeholder="All Clients" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-card">
+                <SelectItem value="all">All Clients</SelectItem>
+                {clients.map((c) => (
+                  <SelectItem key={c.client_id} value={c.client_id}>
+                    <span className="flex items-center gap-2">
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                      )}
+                      {c.client_name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </CardHeader>
         <CardContent>

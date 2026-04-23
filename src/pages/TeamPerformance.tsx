@@ -184,28 +184,6 @@ const TeamPerformance = () => {
     fetchClients();
   }, []);
 
-  // Compute most improved
-  const mostImproved = useMemo(() => {
-    if (!previousLeaderboard || previousLeaderboard.length === 0) return null;
-    const prevMap = new Map<string, number>();
-    for (const entry of previousLeaderboard) {
-      const key = `${entry.name}|||${entry.clientId}`;
-      prevMap.set(key, parseFloat(entry.answerRate));
-    }
-    let best: { name: string; clientId: string; improvement: number } | null = null;
-    for (const entry of leaderboard) {
-      const key = `${entry.name}|||${entry.clientId}`;
-      const prevRate = prevMap.get(key);
-      if (prevRate !== undefined && prevRate > 0) {
-        const improvement = parseFloat(entry.answerRate) - prevRate;
-        if (improvement > 0 && (!best || improvement > best.improvement)) {
-          best = { name: entry.name, clientId: entry.clientId || "", improvement };
-        }
-      }
-    }
-    return best;
-  }, [leaderboard, previousLeaderboard]);
-
   const clientNameMap = useMemo(() =>
     Object.fromEntries(allClients.map(c => [c.client_id, c.client_name])),
     [allClients]
@@ -379,30 +357,6 @@ const TeamPerformance = () => {
           <p className="text-muted-foreground">Monitor individual SDR performance across all clients</p>
         </div>
         <div className="flex items-center gap-2">
-          {!isSdr && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  disabled={loading || leaderboard.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50"
-                >
-                  <Download className="h-4 w-4" />
-                  Export
-                  <ChevronDown className="h-4 w-4 ml-1" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportCSV}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportExcel}>
-                  <Table2 className="h-4 w-4 mr-2" />
-                  Export as Excel
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
               onClick={() => setView("leaderboard")}
@@ -515,32 +469,31 @@ const TeamPerformance = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Client Filter — hidden for SDR role */}
+          {/* Export — right-aligned, hidden for SDR role */}
           {!isSdr && (
             <div className="ml-auto">
-              <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger className={cn(
-                  "w-[180px] min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200",
-                  "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
-                )}>
-                  <SelectValue placeholder="All Clients" />
-                </SelectTrigger>
-                <SelectContent className="z-[100] bg-card">
-                  <SelectItem value="all">All Clients</SelectItem>
-                  {clients.map((c) => (
-                    <SelectItem key={c.client_id} value={c.client_id}>
-                      <span className="flex items-center gap-2">
-                        {c.logo_url ? (
-                          <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                        ) : (
-                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
-                        )}
-                        {c.client_name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    disabled={loading || leaderboard.length === 0}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50 min-h-[44px]"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportCSV}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel}>
+                    <Table2 className="h-4 w-4 mr-2" />
+                    Export as Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </div>
@@ -583,8 +536,11 @@ const TeamPerformance = () => {
             clientNameMap={clientNameMap}
             clientLogoMap={clientLogoMap}
             showClientColumn={clientFilter === "all"}
-            mostImproved={mostImproved}
             campaignDates={selectedClient?.campaign_start && selectedClient?.campaign_end ? { start: selectedClient.campaign_start, end: selectedClient.campaign_end } : null}
+            clients={clients}
+            clientFilter={clientFilter}
+            onClientFilterChange={setClientFilter}
+            showClientFilter={!isSdr}
           />
         </>
       ) : null}
