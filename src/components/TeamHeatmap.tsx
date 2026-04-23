@@ -1,36 +1,45 @@
 import { useEffect, useMemo, useState } from "react";
-import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfWeek } from "date-fns";
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isWeekend,
+  isAfter,
+  startOfDay,
+} from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarIcon, Loader2, Phone, CheckCircle2, Target, Users } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceLine,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import type { DateRange } from "react-day-picker";
 
-type Mode = "hour" | "day" | "week" | "month";
-type RangePreset = "last7days" | "last30days" | "thisMonth" | "lastMonth";
+type Mode = "day" | "week" | "month" | "campaign" | "custom";
 
 interface ClientLite {
   client_id: string;
   client_name: string;
   logo_url: string | null;
+  campaign_start?: string | null;
+  campaign_end?: string | null;
 }
 
 interface HeatmapRow {
   sdr_name: string;
+  client_id: string | null;
   period_key: string;
   dials: number;
   answered: number;
@@ -38,8 +47,15 @@ interface HeatmapRow {
   sqls: number;
 }
 
-// 6-tier intensity colours from the spec
-const INTENSITY_COLORS = ["#0f172a", "#1e3a5f", "#1e40af", "#2563eb", "#1d4ed8", "#1e3a8a"];
+// Cell colour scale relative to the entire visible dataset's max
+const CELL_STYLES = [
+  { bg: "#0f172a", text: "#475569" }, // 0
+  { bg: "#1e3a5f", text: "#93c5fd" }, // 1–20%
+  { bg: "#1e40af", text: "#bfdbfe" }, // 21–40%
+  { bg: "#2563eb", text: "#ffffff" }, // 41–60%
+  { bg: "#1d4ed8", text: "#ffffff" }, // 61–80%
+  { bg: "#1e3a8a", text: "#ffffff" }, // 81–100%
+];
 
 const intensityLevel = (value: number, max: number): number => {
   if (value <= 0 || max <= 0) return 0;
@@ -51,267 +67,410 @@ const intensityLevel = (value: number, max: number): number => {
   return 5;
 };
 
-const melbourneToday = (): Date => toZonedTime(new Date(), "Australia/Melbourne");
+const melbourneToday = (): Date => {
+  const now = toZonedTime(new Date(), "Australia/Melbourne");
+  return startOfDay(now);
+};
+
+const HOUR_KEYS = ["09", "10", "11", "12", "13", "14", "15", "16", "17", "18"];
+const HOUR_LABELS: Record<string, string> = {
+  "09": "9AM", "10": "10AM", "11": "11AM", "12": "12PM",
+  "13": "1PM", "14": "2PM", "15": "3PM", "16": "4PM", "17": "5PM", "18": "6PM",
+};
 
 interface Props {
   clients: ClientLite[];
 }
 
 export const TeamHeatmap = ({ clients }: Props) => {
-  const [mode, setMode] = useState<Mode>("hour");
-  const [hourDate, setHourDate] = useState<Date>(() => melbourneToday());
-  const [hourPopoverOpen, setHourPopoverOpen] = useState(false);
-  const [rangePreset, setRangePreset] = useState<RangePreset>("last7days");
+  const [mode, setMode] = useState<Mode>("day");
   const [clientFilter, setClientFilter] = useState<string>("all");
+
+  // Day mode date
+  const [dayDate, setDayDate] = useState<Date>(() => melbourneToday());
+  const [dayPopoverOpen, setDayPopoverOpen] = useState(false);
+
+  // Week mode date (any date inside the desired week)
+  const [weekAnchor, setWeekAnchor] = useState<Date>(() => melbourneToday());
+  const [weekPopoverOpen, setWeekPopoverOpen] = useState(false);
+
+  // Month mode date (any date inside the desired month)
+  const [monthAnchor, setMonthAnchor] = useState<Date>(() => melbourneToday());
+  const [monthPopoverOpen, setMonthPopoverOpen] = useState(false);
+
+  // Custom range
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
+  const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
+
   const [data, setData] = useState<HeatmapRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+  const [errored, setErrored] = useState(false);
 
-  // Compute date range based on mode + preset
-  const { startDate, endDate } = useMemo(() => {
-    if (mode === "hour") {
-      const d = format(hourDate, "yyyy-MM-dd");
-      return { startDate: d, endDate: d };
+  const selectedClient = useMemo(
+    () => (clientFilter === "all" ? null : clients.find(c => c.client_id === clientFilter) || null),
+    [clientFilter, clients]
+  );
+
+  // If switching to specific client and current mode is hidden? Campaign visibility:
+  // Campaign is only visible when a specific client is selected. Reset if user switches back to all.
+  useEffect(() => {
+    if (clientFilter === "all" && mode === "campaign") {
+      setMode("day");
     }
+  }, [clientFilter, mode]);
+
+  // Compute the date range for RPC + the visible column list
+  const { startDate, endDate, columnDates, isHourMode } = useMemo(() => {
     const today = melbourneToday();
-    switch (rangePreset) {
-      case "last7days":
-        return { startDate: format(subDays(today, 6), "yyyy-MM-dd"), endDate: format(today, "yyyy-MM-dd") };
-      case "last30days":
-        return { startDate: format(subDays(today, 29), "yyyy-MM-dd"), endDate: format(today, "yyyy-MM-dd") };
-      case "thisMonth":
-        return { startDate: format(startOfMonth(today), "yyyy-MM-dd"), endDate: format(endOfMonth(today), "yyyy-MM-dd") };
-      case "lastMonth": {
-        const lm = subMonths(today, 1);
-        return { startDate: format(startOfMonth(lm), "yyyy-MM-dd"), endDate: format(endOfMonth(lm), "yyyy-MM-dd") };
-      }
+    if (mode === "day") {
+      const d = format(dayDate, "yyyy-MM-dd");
+      return { startDate: d, endDate: d, columnDates: [] as Date[], isHourMode: true };
     }
-  }, [mode, hourDate, rangePreset]);
+    if (mode === "week") {
+      const ws = startOfWeek(weekAnchor, { weekStartsOn: 1 }); // Monday
+      const we = endOfWeek(weekAnchor, { weekStartsOn: 1 }); // Sunday
+      const allDays = eachDayOfInterval({ start: ws, end: we }).filter(d => !isWeekend(d));
+      // Pass Mon..Fri (5 working days) — RPC expects Friday as p_end_date
+      const fri = allDays[allDays.length - 1] ?? ws;
+      return {
+        startDate: format(ws, "yyyy-MM-dd"),
+        endDate: format(fri, "yyyy-MM-dd"),
+        columnDates: allDays,
+        isHourMode: false,
+      };
+    }
+    if (mode === "month") {
+      const ms = startOfMonth(monthAnchor);
+      const me = endOfMonth(monthAnchor);
+      const days = eachDayOfInterval({ start: ms, end: me }).filter(d => !isWeekend(d));
+      return {
+        startDate: format(ms, "yyyy-MM-dd"),
+        endDate: format(me, "yyyy-MM-dd"),
+        columnDates: days,
+        isHourMode: false,
+      };
+    }
+    if (mode === "campaign") {
+      if (selectedClient?.campaign_start && selectedClient?.campaign_end) {
+        const cs = new Date(selectedClient.campaign_start + "T00:00:00");
+        const ce = new Date(selectedClient.campaign_end + "T00:00:00");
+        const days = eachDayOfInterval({ start: cs, end: ce }).filter(d => !isWeekend(d));
+        return {
+          startDate: selectedClient.campaign_start,
+          endDate: selectedClient.campaign_end,
+          columnDates: days,
+          isHourMode: false,
+        };
+      }
+      return { startDate: "", endDate: "", columnDates: [], isHourMode: false };
+    }
+    // custom
+    if (customRange?.from && customRange?.to) {
+      const days = eachDayOfInterval({ start: customRange.from, end: customRange.to }).filter(d => !isWeekend(d));
+      return {
+        startDate: format(customRange.from, "yyyy-MM-dd"),
+        endDate: format(customRange.to, "yyyy-MM-dd"),
+        columnDates: days,
+        isHourMode: false,
+      };
+    }
+    return { startDate: "", endDate: "", columnDates: [], isHourMode: false };
+  }, [mode, dayDate, weekAnchor, monthAnchor, selectedClient, customRange]);
 
+  // Fetch data
   useEffect(() => {
     let cancelled = false;
+    if (!startDate || !endDate) {
+      setData([]);
+      return;
+    }
     const fetchData = async () => {
       setLoading(true);
+      setErrored(false);
       try {
+        // Always pass p_mode='day' — frontend handles hour vs day grouping.
+        // Day mode needs hour bucketing, so pass 'hour'. The RPC uses p_mode='hour'
+        // with start_date == end_date for hourly bucketing.
+        const rpcMode = isHourMode ? "hour" : "day";
         const { data: rows, error } = await supabase.rpc("get_team_heatmap", {
-          p_mode: mode,
+          p_mode: rpcMode,
           p_start_date: startDate,
           p_end_date: endDate,
           p_client_id: clientFilter === "all" ? null : clientFilter,
-        });
+        } as any);
         if (cancelled) return;
         if (error) {
           console.error("get_team_heatmap error", error);
+          setErrored(true);
           setData([]);
         } else {
           setData((rows || []) as HeatmapRow[]);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setErrored(true);
+          setData([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
     fetchData();
-    return () => { cancelled = true; };
-  }, [mode, startDate, endDate, clientFilter]);
-
-  // Reset selected period when filters change
-  useEffect(() => { setSelectedPeriod(null); }, [mode, startDate, endDate, clientFilter]);
-
-  // Build SDR list, period column list, and lookup map
-  const { sdrs, periods, cellMap } = useMemo(() => {
-    const sdrSet = new Set<string>();
-    const periodSet = new Set<string>();
-    const map = new Map<string, HeatmapRow>();
-    for (const row of data) {
-      if (!row.sdr_name) continue;
-      sdrSet.add(row.sdr_name);
-      periodSet.add(row.period_key);
-      map.set(`${row.sdr_name}|${row.period_key}`, row);
-    }
-    let periodList = Array.from(periodSet);
-
-    if (mode === "hour") {
-      // Always show 09–18; merge any extra hours
-      const baseHours: string[] = [];
-      for (let h = 9; h <= 18; h++) baseHours.push(String(h).padStart(2, "0"));
-      const merged = new Set<string>(baseHours);
-      for (const p of periodList) merged.add(p);
-      periodList = Array.from(merged).sort();
-    } else {
-      periodList.sort();
-    }
-
-    return {
-      sdrs: Array.from(sdrSet).sort((a, b) => a.localeCompare(b)),
-      periods: periodList,
-      cellMap: map,
+    return () => {
+      cancelled = true;
     };
-  }, [data, mode]);
+  }, [startDate, endDate, clientFilter, isHourMode]);
 
-  // Per-SDR max for intensity calc
-  const sdrMaxMap = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const row of data) {
-      const cur = m.get(row.sdr_name) || 0;
-      if (row.dials > cur) m.set(row.sdr_name, row.dials);
+  // Build SDR list (alphabetical by first name) and column keys
+  const clientLookup = useMemo(() => {
+    const m = new Map<string, ClientLite>();
+    for (const c of clients) m.set(c.client_id, c);
+    return m;
+  }, [clients]);
+
+  // Map sdr_name -> client_id (when All Clients, show client info; first occurrence wins)
+  const sdrClientMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of data) {
+      if (r.sdr_name && r.client_id && !m.has(r.sdr_name)) {
+        m.set(r.sdr_name, r.client_id);
+      }
     }
     return m;
   }, [data]);
 
-  // Column totals (team)
-  const columnTotals = useMemo(() => {
-    const m = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
-    for (const p of periods) m.set(p, { dials: 0, answered: 0, dms: 0, sqls: 0 });
-    for (const row of data) {
-      const t = m.get(row.period_key);
-      if (!t) continue;
-      t.dials += row.dials || 0;
-      t.answered += row.answered || 0;
-      t.dms += row.dms || 0;
-      t.sqls += row.sqls || 0;
+  const sdrs = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of data) {
+      if (r.sdr_name) set.add(r.sdr_name);
+    }
+    const arr = Array.from(set);
+    arr.sort((a, b) => {
+      const fa = a.split(" ")[0]?.toLowerCase() || a.toLowerCase();
+      const fb = b.split(" ")[0]?.toLowerCase() || b.toLowerCase();
+      return fa.localeCompare(fb);
+    });
+    return arr;
+  }, [data]);
+
+  // Column keys for the visible grid
+  const columnKeys = useMemo(() => {
+    if (isHourMode) return HOUR_KEYS;
+    return columnDates.map(d => format(d, "yyyy-MM-dd"));
+  }, [isHourMode, columnDates]);
+
+  // Build cell map keyed by `${sdr}|${columnKey}`
+  const cellMap = useMemo(() => {
+    const m = new Map<string, HeatmapRow>();
+    for (const r of data) {
+      if (!r.sdr_name) continue;
+      m.set(`${r.sdr_name}|${r.period_key}`, r);
     }
     return m;
-  }, [data, periods]);
+  }, [data]);
 
-  // Format header label
-  const formatPeriodLabel = (key: string): string => {
-    if (mode === "hour") {
-      const h = parseInt(key, 10);
-      if (Number.isNaN(h)) return key;
-      const ampm = h >= 12 ? "PM" : "AM";
-      const display = h % 12 === 0 ? 12 : h % 12;
-      return `${display}${ampm}`;
+  // Max dials across the entire visible dataset (limited to visible columns/SDRs)
+  const datasetMax = useMemo(() => {
+    let max = 0;
+    for (const sdr of sdrs) {
+      for (const k of columnKeys) {
+        const c = cellMap.get(`${sdr}|${k}`);
+        if (c && c.dials > max) max = c.dials;
+      }
     }
-    if (mode === "day") {
-      const d = new Date(key + "T00:00:00");
-      return format(d, "MMM d");
-    }
-    if (mode === "week") {
-      const d = new Date(key + "T00:00:00");
-      return `Wk ${format(d, "MMM d")}`;
-    }
-    if (mode === "month") {
-      const d = new Date(key + "-01T00:00:00");
-      return format(d, "MMM yyyy");
-    }
-    return key;
+    return max;
+  }, [cellMap, sdrs, columnKeys]);
+
+  const today = melbourneToday();
+
+  const formatColumnHeader = (key: string): string => {
+    if (isHourMode) return HOUR_LABELS[key] ?? key;
+    const d = new Date(key + "T00:00:00");
+    return format(d, "EEE d MMM");
   };
 
-  // Summary bar values
-  const summary = useMemo(() => {
-    const filterRows = selectedPeriod
-      ? data.filter(r => r.period_key === selectedPeriod)
-      : data;
-    let dials = 0, answered = 0, sqls = 0;
-    const sdrSet = new Set<string>();
-    for (const r of filterRows) {
-      dials += r.dials || 0;
-      answered += r.answered || 0;
-      sqls += r.sqls || 0;
-      if ((r.dials || 0) > 0) sdrSet.add(r.sdr_name);
-    }
-    // Peak period (always vs full data, not selected)
-    let peakKey: string | null = null;
-    let peakValue = 0;
-    for (const [k, v] of columnTotals.entries()) {
-      if (v.dials > peakValue) { peakValue = v.dials; peakKey = k; }
-    }
-    const answerRate = dials > 0 ? ((answered / dials) * 100).toFixed(1) : "0.0";
-    const convRate = dials > 0 ? ((sqls / dials) * 100).toFixed(2) : "0.00";
-    return {
-      dials, answered, sqls,
-      activeSdrs: sdrSet.size,
-      answerRate, convRate,
-      peakLabel: peakKey ? formatPeriodLabel(peakKey) : "—",
-      peakValue,
-    };
-  }, [data, selectedPeriod, columnTotals]); // eslint-disable-line react-hooks/exhaustive-deps
+  const isFutureColumn = (key: string): boolean => {
+    if (isHourMode) return false;
+    const d = new Date(key + "T00:00:00");
+    return isAfter(startOfDay(d), today);
+  };
 
-  // Chart data
-  const chartData = useMemo(() => {
-    return periods.map(p => {
-      const t = columnTotals.get(p) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
-      return { period: p, label: formatPeriodLabel(p), dials: t.dials, sqls: t.sqls };
-    });
-  }, [periods, columnTotals]); // eslint-disable-line react-hooks/exhaustive-deps
+  const buildTooltip = (sdr: string, key: string): string => {
+    const cell = cellMap.get(`${sdr}|${key}`);
+    const dials = cell?.dials || 0;
+    const answered = cell?.answered || 0;
+    const sqls = cell?.sqls || 0;
+    const headLabel = formatColumnHeader(key);
+    const sqlPart = sqls > 0 ? ` · ${sqls} 🎯` : "";
+    return `${headLabel} — ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
+  };
 
-  const totalDialsAll = useMemo(() => chartData.reduce((s, r) => s + r.dials, 0), [chartData]);
-  const paceTarget = useMemo(() => {
-    const activePeriods = chartData.filter(r => r.dials > 0).length;
-    if (activePeriods === 0) return 0;
-    return Math.round(totalDialsAll / activePeriods);
-  }, [chartData, totalDialsAll]);
-
-  const peakLabel = mode === "hour" ? "Peak Hour" : mode === "day" ? "Peak Day" : mode === "week" ? "Peak Week" : "Peak Month";
+  const showCampaignTab = clientFilter !== "all" && !!selectedClient?.campaign_start && !!selectedClient?.campaign_end;
 
   return (
-    <div className="space-y-6">
-      {/* Mode switcher + filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex items-center rounded-lg border border-border bg-card p-1">
-          {(["hour", "day", "week", "month"] as Mode[]).map(m => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
+    <div className="space-y-4">
+      {/* Row 1 — Mode toggle */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(
+          [
+            { k: "day", l: "Day" },
+            { k: "week", l: "Week" },
+            { k: "month", l: "Month" },
+            ...(showCampaignTab ? [{ k: "campaign" as Mode, l: "Campaign" }] : []),
+            { k: "custom", l: "Custom" },
+          ] as { k: Mode; l: string }[]
+        ).map(p => {
+          const active = mode === p.k;
+          return (
+            <Button
+              key={p.k}
+              variant={active ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMode(p.k)}
               className={cn(
-                "px-4 py-1.5 text-sm font-medium rounded-md transition-colors capitalize min-h-[36px]",
-                mode === m
-                  ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                "transition-all duration-200 min-h-[40px] active:scale-95 text-xs sm:text-sm",
+                active
+                  ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
+                  : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
               )}
             >
-              {m}
-            </button>
-          ))}
-        </div>
+              {p.l}
+            </Button>
+          );
+        })}
+      </div>
 
+      {/* Row 2 — Date picker (left) + Client dropdown (right) */}
+      <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          {mode === "hour" ? (
-            <Popover open={hourPopoverOpen} onOpenChange={setHourPopoverOpen}>
+          {mode === "day" && (
+            <Popover open={dayPopoverOpen} onOpenChange={setDayPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="min-h-[40px] gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  {format(hourDate, "MMM d, yyyy")}
+                  {format(dayDate, "EEE, MMM d, yyyy")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 z-[100]" align="start">
                 <Calendar
                   mode="single"
-                  selected={hourDate}
-                  onSelect={(d) => { if (d) { setHourDate(d); setHourPopoverOpen(false); } }}
+                  selected={dayDate}
+                  onSelect={d => {
+                    if (d) {
+                      setDayDate(d);
+                      setDayPopoverOpen(false);
+                    }
+                  }}
                   initialFocus
                   className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
-          ) : (
-            <div className="flex flex-wrap items-center gap-1">
-              {([
-                { k: "last7days", l: "Last 7 Days" },
-                { k: "last30days", l: "Last 30 Days" },
-                { k: "thisMonth", l: "This Month" },
-                { k: "lastMonth", l: "Last Month" },
-              ] as { k: RangePreset; l: string }[]).map(p => (
-                <Button
-                  key={p.k}
-                  variant={rangePreset === p.k ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setRangePreset(p.k)}
-                  className={cn(
-                    "min-h-[40px] text-xs sm:text-sm",
-                    rangePreset === p.k
-                      ? "bg-[#0f172a] hover:bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-white"
-                      : "bg-transparent border-border text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {p.l}
+          )}
+
+          {mode === "week" && (
+            <Popover open={weekPopoverOpen} onOpenChange={setWeekPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-h-[40px] gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  {(() => {
+                    const ws = startOfWeek(weekAnchor, { weekStartsOn: 1 });
+                    const we = endOfWeek(weekAnchor, { weekStartsOn: 1 });
+                    return `${format(ws, "MMM d")} – ${format(we, "MMM d, yyyy")}`;
+                  })()}
                 </Button>
-              ))}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                <Calendar
+                  mode="single"
+                  selected={weekAnchor}
+                  onSelect={d => {
+                    if (d) {
+                      setWeekAnchor(d);
+                      setWeekPopoverOpen(false);
+                    }
+                  }}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {mode === "month" && (
+            <Popover open={monthPopoverOpen} onOpenChange={setMonthPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-h-[40px] gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  {format(monthAnchor, "MMMM yyyy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                <Calendar
+                  mode="single"
+                  selected={monthAnchor}
+                  onSelect={d => {
+                    if (d) {
+                      setMonthAnchor(d);
+                      setMonthPopoverOpen(false);
+                    }
+                  }}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {mode === "campaign" && (
+            <div className="text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card min-h-[40px]">
+              <CalendarIcon className="h-4 w-4" />
+              {selectedClient?.campaign_start && selectedClient?.campaign_end ? (
+                <span>
+                  Campaign: {format(new Date(selectedClient.campaign_start + "T00:00:00"), "MMM d, yyyy")} – {format(new Date(selectedClient.campaign_end + "T00:00:00"), "MMM d, yyyy")}
+                </span>
+              ) : (
+                <span>No campaign dates set for this client</span>
+              )}
             </div>
           )}
 
+          {mode === "custom" && (
+            <Popover open={customPopoverOpen} onOpenChange={setCustomPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-h-[40px] gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  {customRange?.from && customRange?.to
+                    ? `${format(customRange.from, "MMM d")} – ${format(customRange.to, "MMM d, yyyy")}`
+                    : "Pick a date range"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                <Calendar
+                  mode="range"
+                  selected={customRange}
+                  onSelect={range => {
+                    setCustomRange(range);
+                    if (range?.from && range?.to) setCustomPopoverOpen(false);
+                  }}
+                  numberOfMonths={2}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
+
+        {/* Client filter (right aligned) */}
+        <div className="ml-auto">
           <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className="w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold">
+            <SelectTrigger
+              className={cn(
+                "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+              )}
+            >
               <SelectValue placeholder="All Clients" />
             </SelectTrigger>
             <SelectContent className="z-[100] bg-card">
@@ -322,7 +481,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     {c.logo_url ? (
                       <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
                     ) : (
-                      <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                      <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                        {c.client_name.charAt(0)}
+                      </span>
                     )}
                     {c.client_name}
                   </span>
@@ -333,67 +494,106 @@ export const TeamHeatmap = ({ clients }: Props) => {
         </div>
       </div>
 
-      {/* Heatmap */}
+      {/* Heatmap card */}
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="text-base font-semibold text-foreground">Team Activity Heatmap</h3>
           {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
 
-        {!loading && sdrs.length === 0 ? (
+        {loading ? (
+          <div className="px-5 py-12 flex items-center justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : errored || sdrs.length === 0 || columnKeys.length === 0 ? (
           <div className="px-5 py-12 text-center text-sm text-muted-foreground">
-            No activity data found for the selected filters.
+            No activity data for this period
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="relative overflow-x-auto">
+            <table className="border-collapse" style={{ minWidth: "100%" }}>
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 bg-card text-left text-xs font-semibold text-muted-foreground px-4 py-2 border-b border-border min-w-[180px]">
+                  <th
+                    className="sticky left-0 z-20 bg-card text-left text-xs font-semibold text-muted-foreground px-4 py-2 border-b border-border"
+                    style={{ minWidth: 220, width: 220 }}
+                  >
                     SDR
                   </th>
-                  {periods.map(p => (
+                  {columnKeys.map(k => (
                     <th
-                      key={p}
-                      onClick={() => setSelectedPeriod(prev => prev === p ? null : p)}
-                      className={cn(
-                        "text-xs font-semibold px-2 py-2 border-b border-border text-center cursor-pointer select-none whitespace-nowrap transition-colors",
-                        selectedPeriod === p
-                          ? "bg-[#2563eb] text-white"
-                          : "text-muted-foreground hover:bg-muted/50"
-                      )}
-                      title="Click to filter summary"
+                      key={k}
+                      className="text-xs font-semibold px-2 py-2 border-b border-border text-center text-muted-foreground whitespace-nowrap"
+                      style={{ minWidth: 72, width: 72 }}
                     >
-                      {formatPeriodLabel(p)}
+                      {formatColumnHeader(k)}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {sdrs.map(sdr => {
-                  const sdrMax = sdrMaxMap.get(sdr) || 0;
+                  const sdrClientId = sdrClientMap.get(sdr);
+                  const sdrClient = sdrClientId ? clientLookup.get(sdrClientId) : null;
                   return (
                     <tr key={sdr} className="border-b border-border/60">
-                      <td className="sticky left-0 z-10 bg-card text-sm font-medium text-foreground px-4 py-1.5 whitespace-nowrap">
-                        {sdr}
+                      <td
+                        className="sticky left-0 z-10 bg-card px-4 py-2 align-middle"
+                        style={{ minWidth: 220, width: 220 }}
+                      >
+                        <div className="text-sm font-medium text-foreground leading-tight whitespace-nowrap">
+                          {sdr}
+                        </div>
+                        {clientFilter === "all" && sdrClient && (
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            {sdrClient.logo_url ? (
+                              <img
+                                src={sdrClient.logo_url}
+                                alt=""
+                                className="w-4 h-4 rounded-sm object-contain flex-shrink-0"
+                              />
+                            ) : (
+                              <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                                {sdrClient.client_name.charAt(0)}
+                              </span>
+                            )}
+                            <span
+                              className="truncate"
+                              style={{ fontSize: 10, color: "#64748b" }}
+                            >
+                              {sdrClient.client_name}
+                            </span>
+                          </div>
+                        )}
                       </td>
-                      {periods.map(p => {
-                        const cell = cellMap.get(`${sdr}|${p}`);
+                      {columnKeys.map(k => {
+                        const cell = cellMap.get(`${sdr}|${k}`);
                         const dials = cell?.dials || 0;
                         const sqls = cell?.sqls || 0;
-                        const level = intensityLevel(dials, sdrMax);
-                        const bg = INTENSITY_COLORS[level];
-                        const textColor = level === 0 ? "#64748b" : level >= 3 ? "#ffffff" : "#cbd5e1";
+                        const future = isFutureColumn(k);
+                        const level = future ? 0 : intensityLevel(dials, datasetMax);
+                        const style = CELL_STYLES[level];
+                        const showDash = dials === 0;
+                        const dashColor = future ? "#334155" : style.text;
                         return (
-                          <td key={p} className="p-1">
+                          <td key={k} className="p-1" style={{ minWidth: 72, width: 72 }}>
                             <div
-                              className="relative h-9 min-w-[44px] rounded-md flex items-center justify-center text-xs font-medium"
-                              style={{ backgroundColor: bg, color: textColor }}
-                              title={`${sdr} · ${formatPeriodLabel(p)} · ${dials} dial${dials === 1 ? "" : "s"}${sqls > 0 ? ` · ${sqls} SQL${sqls === 1 ? "" : "s"}` : ""}`}
+                              className="relative h-10 rounded-md flex items-center justify-center text-xs font-semibold"
+                              style={{ backgroundColor: style.bg, color: style.text }}
+                              title={buildTooltip(sdr, k)}
                             >
-                              {dials > 0 ? dials : ""}
+                              {showDash ? (
+                                <span style={{ color: dashColor }}>—</span>
+                              ) : (
+                                dials
+                              )}
                               {sqls > 0 && (
-                                <span className="absolute top-0 right-0.5 text-[10px] leading-none">🎯</span>
+                                <span
+                                  className="absolute leading-none"
+                                  style={{ top: 2, right: 3, fontSize: 10 }}
+                                >
+                                  🎯
+                                </span>
                               )}
                             </div>
                           </td>
@@ -402,143 +602,11 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     </tr>
                   );
                 })}
-                {/* Team total row */}
-                {sdrs.length > 0 && (
-                  <tr style={{ backgroundColor: "#0f172a" }} className="border-t-2 border-[#2563eb]">
-                    <td className="sticky left-0 z-10 px-4 py-2 text-sm font-bold text-white whitespace-nowrap" style={{ backgroundColor: "#0f172a" }}>
-                      Team Total
-                    </td>
-                    {periods.map(p => {
-                      const t = columnTotals.get(p) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
-                      return (
-                        <td key={p} className="p-1">
-                          <div className="relative h-9 min-w-[44px] rounded-md flex items-center justify-center text-xs font-bold text-white">
-                            {t.dials > 0 ? t.dials : ""}
-                            {t.sqls > 0 && (
-                              <span className="absolute top-0 right-0.5 text-[10px] leading-none">🎯</span>
-                            )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         )}
       </Card>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <SummaryCard
-          icon={<CalendarIcon className="h-4 w-4" />}
-          label={peakLabel}
-          value={summary.peakLabel}
-          subtitle={summary.peakValue > 0 ? `${summary.peakValue.toLocaleString()} dials` : ""}
-          color="#94a3b8"
-        />
-        <SummaryCard
-          icon={<Phone className="h-4 w-4" />}
-          label="Total Dials"
-          value={summary.dials.toLocaleString()}
-          subtitle={selectedPeriod ? `${formatPeriodLabel(selectedPeriod)} only` : ""}
-          color="#f59e0b"
-        />
-        <SummaryCard
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          label="Answered"
-          value={summary.answered.toLocaleString()}
-          subtitle={`${summary.answerRate}% answer rate`}
-          color="#10b981"
-        />
-        <SummaryCard
-          icon={<Target className="h-4 w-4" />}
-          label="SQLs Booked"
-          value={summary.sqls.toLocaleString()}
-          subtitle={`${summary.convRate}% conv. rate`}
-          color="#f43f5e"
-        />
-        <SummaryCard
-          icon={<Users className="h-4 w-4" />}
-          label="Active SDRs"
-          value={summary.activeSdrs.toLocaleString()}
-          subtitle={selectedPeriod ? "for selected period" : "with dials > 0"}
-          color="#94a3b8"
-        />
-      </div>
-
-      {/* Chart */}
-      {chartData.length > 0 && (
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold text-foreground">Team Dials by {mode.charAt(0).toUpperCase() + mode.slice(1)}</h3>
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={{ stroke: "#334155" }} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={{ stroke: "#334155" }} />
-                <Tooltip
-                  cursor={{ fill: "rgba(148,163,184,0.08)" }}
-                  contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#f1f5f9" }}
-                  labelStyle={{ color: "#f1f5f9", fontWeight: 600 }}
-                />
-                {paceTarget > 0 && (
-                  <ReferenceLine
-                    y={paceTarget}
-                    stroke="#f59e0b"
-                    strokeDasharray="4 4"
-                    label={{ value: `Pace ${paceTarget}`, fill: "#f59e0b", fontSize: 11, position: "right" }}
-                  />
-                )}
-                <Bar dataKey="dials" radius={[4, 4, 0, 0]} onClick={(d: any) => setSelectedPeriod(prev => prev === d.period ? null : d.period)}>
-                  {chartData.map((entry) => (
-                    <Cell
-                      key={entry.period}
-                      cursor="pointer"
-                      fill={selectedPeriod === entry.period ? "#60a5fa" : "#2563eb"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          {/* Legend */}
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#2563eb" }} />
-                Dials
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="inline-block w-4 h-0 border-t-2 border-dashed" style={{ borderColor: "#f59e0b" }} />
-                Pace target
-              </span>
-            </div>
-            <span className="font-semibold text-foreground">Total: {totalDialsAll.toLocaleString()} dials</span>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
-
-interface SummaryCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  subtitle?: string;
-  color: string;
-}
-
-const SummaryCard = ({ icon, label, value, subtitle, color }: SummaryCardProps) => (
-  <Card className="p-4">
-    <div className="flex items-center gap-2 mb-2 text-xs font-medium" style={{ color }}>
-      {icon}
-      <span>{label}</span>
-    </div>
-    <div className="text-2xl font-bold text-foreground leading-tight">{value}</div>
-    {subtitle && <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>}
-  </Card>
-);
