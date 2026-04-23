@@ -723,7 +723,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           <td
                             key={k}
                             className="group-hover:!bg-[#EFF6FF]"
-                            style={{ padding: 4, backgroundColor: rowBg }}
+                            style={{ width: cellWidth, minWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
                           >
                             <div
                               className="relative rounded-md flex items-center justify-center text-xs font-semibold"
