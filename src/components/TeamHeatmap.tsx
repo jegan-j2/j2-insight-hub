@@ -593,7 +593,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 width: "100%",
                 minWidth: columnKeys.length <= 5
                   ? "100%"
-                  : `calc(160px + 140px + ${columnKeys.length} * ((100vw - 300px) / 5))`
+                  : `calc(300px + ${columnKeys.length} * ((100vw - 300px) / 5))`
               }}
             >
               <thead>
@@ -605,28 +605,23 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       width: 200,
                       backgroundColor: "#0F172A",
                       color: "#FFFFFF",
-                      ...(clientFilter !== "all"
-                        ? { borderRight: "2px solid #E2E8F0" }
-                        : {}),
                     }}
                   >
                     SDR
                   </th>
-                  {clientFilter === "all" && (
-                    <th
-                      className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
-                      style={{
-                        left: 200,
-                        minWidth: 160,
-                        width: 160,
-                        backgroundColor: "#0F172A",
-                        color: "#FFFFFF",
-                        borderRight: "2px solid #E2E8F0",
-                      }}
-                    >
-                      Client
-                    </th>
-                  )}
+                  <th
+                    className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
+                    style={{
+                      left: 200,
+                      minWidth: 160,
+                      width: 160,
+                      backgroundColor: "#0F172A",
+                      color: "#FFFFFF",
+                      borderRight: "2px solid #E2E8F0",
+                    }}
+                  >
+                    Client
+                  </th>
                   {columnKeys.map(k => (
                     <th
                       key={k}
@@ -660,9 +655,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           minWidth: 200,
                           width: 200,
                           backgroundColor: rowBg,
-                          ...(clientFilter !== "all"
-                            ? { borderRight: "2px solid #E2E8F0" }
-                            : {}),
                         }}
                       >
                         <div
@@ -672,42 +664,40 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           {sdr}
                         </div>
                       </td>
-                      {clientFilter === "all" && (
-                        <td
-                          className="sticky z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
-                          style={{
-                            left: 200,
-                            minWidth: 160,
-                            width: 160,
-                            backgroundColor: rowBg,
-                            borderRight: "2px solid #E2E8F0",
-                          }}
-                        >
-                          {displayClientName ? (
-                            <div className="flex items-center gap-2">
-                              {displayLogoUrl ? (
-                                <img
-                                  src={displayLogoUrl}
-                                  alt=""
-                                  className="w-4 h-4 rounded-full object-contain flex-shrink-0"
-                                />
-                              ) : (
-                                <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
-                                  {displayClientName.charAt(0)}
-                                </span>
-                              )}
-                              <span
-                                className="truncate text-sm"
-                                style={{ color: "#0F172A" }}
-                              >
-                                {displayClientName}
+                      <td
+                        className="sticky z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                        style={{
+                          left: 200,
+                          minWidth: 160,
+                          width: 160,
+                          backgroundColor: rowBg,
+                          borderRight: "2px solid #E2E8F0",
+                        }}
+                      >
+                        {displayClientName ? (
+                          <div className="flex items-center gap-2">
+                            {displayLogoUrl ? (
+                              <img
+                                src={displayLogoUrl}
+                                alt=""
+                                className="w-4 h-4 rounded-full object-contain flex-shrink-0"
+                              />
+                            ) : (
+                              <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                                {displayClientName.charAt(0)}
                               </span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </td>
-                      )}
+                            )}
+                            <span
+                              className="truncate text-sm"
+                              style={{ color: "#0F172A" }}
+                            >
+                              {displayClientName}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       {columnKeys.map(k => {
                         const cell = cellMap.get(`${sdr}|${k}`);
                         const dials = cell?.dials || 0;
