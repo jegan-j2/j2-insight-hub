@@ -48,6 +48,7 @@ const TeamPerformance = () => {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [allClients, setAllClients] = useState<ClientLookup[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [view, setView] = useState<"leaderboard" | "heatmap">("leaderboard");
   const [exportingExcel, setExportingExcel] = useState(false);
   
   const { toast } = useToast();
@@ -402,26 +403,35 @@ const TeamPerformance = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <button
+              onClick={() => setView("leaderboard")}
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors",
+                view === "leaderboard"
+                  ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-r border-border"
+                  : "bg-card text-muted-foreground hover:text-foreground border-r border-border"
+              )}
+            >
+              SDR Leaderboard
+            </button>
+            <button
+              onClick={() => setView("heatmap")}
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors",
+                view === "heatmap"
+                  ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                  : "bg-card text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Team Heatmap
+            </button>
+          </div>
         </div>
       </div>
 
-      <Tabs defaultValue="leaderboard" className="w-full">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger
-            value="leaderboard"
-            className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
-          >
-            SDR Leaderboard
-          </TabsTrigger>
-          <TabsTrigger
-            value="heatmap"
-            className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
-          >
-            Team Heatmap
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="leaderboard" className="space-y-6 mt-6">
+      {view === "leaderboard" ? (
+        <div className="space-y-6">
       {/* Date Filter Buttons */}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -748,12 +758,14 @@ const TeamPerformance = () => {
       {activityChartData.length > 0 ? (
         <SDRActivityChart chartData={activityChartData} clientLogoMap={clientLogoMap} />
       ) : null}
-        </TabsContent>
-
-        <TabsContent value="heatmap" className="mt-6">
-          <TeamHeatmap clients={clients} />
-        </TabsContent>
-      </Tabs>
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground text-base">Team Heatmap — coming soon</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
