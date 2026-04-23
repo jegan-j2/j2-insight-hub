@@ -245,13 +245,29 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return m;
   }, [clients]);
 
-  // Map sdr_name -> client_id (when All Clients, show client info; first occurrence wins)
+  // Map sdr_name -> client_id with most dials in the period
   const sdrClientMap = useMemo(() => {
-    const m = new Map<string, string>();
+    const totals = new Map<string, Map<string, number>>();
     for (const r of data) {
-      if (r.sdr_name && r.client_id && !m.has(r.sdr_name)) {
-        m.set(r.sdr_name, r.client_id);
+      if (!r.sdr_name || !r.client_id) continue;
+      let inner = totals.get(r.sdr_name);
+      if (!inner) {
+        inner = new Map<string, number>();
+        totals.set(r.sdr_name, inner);
       }
+      inner.set(r.client_id, (inner.get(r.client_id) || 0) + (r.dials || 0));
+    }
+    const m = new Map<string, string>();
+    for (const [sdr, inner] of totals.entries()) {
+      let bestClient = "";
+      let bestCount = -1;
+      for (const [cid, count] of inner.entries()) {
+        if (count > bestCount) {
+          bestCount = count;
+          bestClient = cid;
+        }
+      }
+      if (bestClient) m.set(sdr, bestClient);
     }
     return m;
   }, [data]);
