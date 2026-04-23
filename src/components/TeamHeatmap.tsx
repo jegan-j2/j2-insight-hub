@@ -23,8 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Phone, PhoneCall, Target as TargetIcon, Users } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RTooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import type { DateRange } from "react-day-picker";
 
 type Mode = "day" | "week" | "month" | "campaign" | "custom";
