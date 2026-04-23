@@ -332,6 +332,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
 
   const today = melbourneToday();
+  const cellWidth = containerWidth > 0
+    ? Math.floor((containerWidth - 360) / 5)
+    : 160;
 
   const formatColumnHeader = (key: string): string => {
     if (isHourMode) return HOUR_LABELS[key] ?? key;
