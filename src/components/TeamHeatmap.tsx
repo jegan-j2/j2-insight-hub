@@ -595,10 +595,33 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 <tr>
                   <th
                     className="sticky left-0 z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
-                    style={{ minWidth: 220, width: 220, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                    style={{
+                      minWidth: 200,
+                      width: 200,
+                      backgroundColor: "#0F172A",
+                      color: "#FFFFFF",
+                      ...(clientFilter !== "all"
+                        ? { borderRight: "2px solid #E2E8F0" }
+                        : {}),
+                    }}
                   >
                     SDR
                   </th>
+                  {clientFilter === "all" && (
+                    <th
+                      className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
+                      style={{
+                        left: 200,
+                        minWidth: 160,
+                        width: 160,
+                        backgroundColor: "#0F172A",
+                        color: "#FFFFFF",
+                        borderRight: "2px solid #E2E8F0",
+                      }}
+                    >
+                      Client
+                    </th>
+                  )}
                   {columnKeys.map(k => (
                     <th
                       key={k}
@@ -628,33 +651,58 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     >
                       <td
                         className="sticky left-0 z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{ minWidth: 220, width: 220, backgroundColor: rowBg }}
+                        style={{
+                          minWidth: 200,
+                          width: 200,
+                          backgroundColor: rowBg,
+                          ...(clientFilter !== "all"
+                            ? { borderRight: "2px solid #E2E8F0" }
+                            : {}),
+                        }}
                       >
-                        <div className="text-sm font-medium leading-tight whitespace-nowrap" style={{ color: "#0F172A" }}>
+                        <div
+                          className="text-sm font-medium leading-tight whitespace-nowrap"
+                          style={{ color: "#0F172A" }}
+                        >
                           {sdr}
                         </div>
-                        {clientFilter === "all" && displayClientName && (
-                          <div className="mt-0.5 flex items-center gap-1.5">
-                            {displayLogoUrl ? (
-                              <img
-                                src={displayLogoUrl}
-                                alt=""
-                                className="w-4 h-4 rounded-full object-contain flex-shrink-0"
-                              />
-                            ) : (
-                              <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
-                                {displayClientName.charAt(0)}
-                              </span>
-                            )}
-                            <span
-                              className="truncate"
-                              style={{ fontSize: 11, color: "#64748b" }}
-                            >
-                              {displayClientName}
-                            </span>
-                          </div>
-                        )}
                       </td>
+                      {clientFilter === "all" && (
+                        <td
+                          className="sticky z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                          style={{
+                            left: 200,
+                            minWidth: 160,
+                            width: 160,
+                            backgroundColor: rowBg,
+                            borderRight: "2px solid #E2E8F0",
+                          }}
+                        >
+                          {displayClientName ? (
+                            <div className="flex items-center gap-2">
+                              {displayLogoUrl ? (
+                                <img
+                                  src={displayLogoUrl}
+                                  alt=""
+                                  className="w-4 h-4 rounded-full object-contain flex-shrink-0"
+                                />
+                              ) : (
+                                <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                                  {displayClientName.charAt(0)}
+                                </span>
+                              )}
+                              <span
+                                className="truncate text-sm"
+                                style={{ color: "#0F172A" }}
+                              >
+                                {displayClientName}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      )}
                       {columnKeys.map(k => {
                         const cell = cellMap.get(`${sdr}|${k}`);
                         const dials = cell?.dials || 0;
