@@ -777,12 +777,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 </ResponsiveContainer>
               </div>
               <div className="mt-3 flex items-center justify-between text-xs">
+                <div className="text-muted-foreground font-medium">
+                  Total: {summary.dials.toLocaleString()} dials
+                </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <span style={{ color: "#0f172a" }} className="text-base leading-none dark:text-white">●</span>
                   <span>Dials</span>
-                </div>
-                <div className="text-muted-foreground font-medium">
-                  Total: {summary.dials.toLocaleString()} dials
                 </div>
               </div>
             </CardContent>
