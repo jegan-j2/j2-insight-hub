@@ -51,6 +51,7 @@ interface ClientLite {
 interface HeatmapRow {
   sdr_name: string;
   client_id: string | null;
+  client_name: string | null;
   period_key: string;
   dials: number;
   answered: number;
