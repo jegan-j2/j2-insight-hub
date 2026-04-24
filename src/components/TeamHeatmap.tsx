@@ -622,6 +622,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     style={{
                       minWidth: 200,
                       width: 200,
+                      maxWidth: 200,
                       backgroundColor: "#0F172A",
                       color: "#FFFFFF",
                     }}
@@ -635,6 +636,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       left: 200,
                       minWidth: 160,
                       width: 160,
+                      maxWidth: 160,
                       backgroundColor: "#0F172A",
                       color: "#FFFFFF",
                       borderRight: "2px solid #E2E8F0",
