@@ -650,21 +650,21 @@ export const TeamHeatmap = ({ clients }: Props) => {
                   const sdrClient = sdrClientInfo ? clientLookup.get(sdrClientInfo.client_id) : null;
                   const displayClientName = sdrClient?.client_name || sdrClientInfo?.client_name || null;
                   const displayLogoUrl = sdrClient?.logo_url || null;
-                  const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9";
+                  const rowBgClass = idx % 2 === 0 ? "bg-white dark:bg-[#0f172a]" : "bg-slate-100 dark:bg-[#1a2332]";
                   const pill = attendancePill(sdr);
                   return (
-                    <tr key={sdr} className="group transition-colors" style={{ backgroundColor: rowBg }}>
+                    <tr key={sdr} className={`group transition-colors ${rowBgClass}`}>
                       <td
-                        className="sticky left-0 z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
+                        className={`sticky left-0 z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] ${rowBgClass}`}
+                        style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, overflow: "hidden" }}
                       >
-                        <div className="text-sm font-medium leading-tight" style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className="text-sm font-medium leading-tight text-foreground" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {sdr}
                         </div>
                       </td>
                       <td
-                        className="sticky z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
+                        className={`sticky z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] ${rowBgClass}`}
+                        style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, overflow: "hidden" }}
                       >
                         {displayClientName ? (
                           <div className="flex items-center gap-2">
@@ -675,15 +675,15 @@ export const TeamHeatmap = ({ clients }: Props) => {
                                 {displayClientName.charAt(0)}
                               </span>
                             )}
-                            <span className="truncate text-sm" style={{ color: "#0F172A" }}>{displayClientName}</span>
+                            <span className="truncate text-sm text-foreground">{displayClientName}</span>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
                       <td
-                        className="sticky z-10 px-2 py-3 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: rowBg, borderRight: "2px solid #E2E8F0", textAlign: "center", overflow: "hidden" }}
+                        className={`sticky z-10 px-2 py-3 align-middle group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] border-r-2 border-r-slate-200 dark:border-r-slate-700 ${rowBgClass}`}
+                        style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, textAlign: "center", overflow: "hidden" }}
                       >
                         <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: pill.bg, color: pill.color, whiteSpace: "nowrap" }}>
                           {pill.label}
@@ -695,14 +695,15 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         const sqls = cell?.sqls || 0;
                         const future = isFutureColumn(k);
                         const style = future ? FUTURE_CELL_STYLE : CELL_STYLES[intensityLevel(dials, isHourMode)];
+                        const isZero = intensityLevel(dials, isHourMode) === 0 && !future;
                         return (
                           <td
                             key={k}
-                            className="group-hover:!bg-[#EFF6FF]"
-                            style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
+                            className={`group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] ${rowBgClass}`}
+                            style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, padding: 4 }}
                           >
                             <div
-                              className="relative rounded-md flex items-center justify-center text-xs font-semibold"
+                              className={`relative rounded-md flex items-center justify-center text-xs font-semibold ${isZero ? "dark:!bg-[#1e293b] dark:!text-slate-500 dark:!border dark:!border-slate-700" : ""} ${future ? "dark:!bg-[#1e293b] dark:!text-slate-600 dark:!border dark:!border-dashed dark:!border-slate-700" : ""}`}
                               style={{ width: "100%", minWidth: "100%", height: CELL_H, backgroundColor: style.bg, color: style.text, border: style.border }}
                               title={buildTooltip(sdr, k)}
                             >
