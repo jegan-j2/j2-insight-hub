@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, MonitorDot, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, MonitorDot, Sun, Moon, BarChart2 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -140,6 +140,21 @@ export function AppSidebar() {
                     >
                       <UserCog className="h-4 w-4" />
                       <span>Team Performance</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {/* Performance Matrix - admin and manager only */}
+              {(userRole === "admin" || userRole === "manager") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Performance Matrix">
+                    <NavLink
+                      to="/performance-matrix"
+                      className={({ isActive }) => isActive ? activeClass : inactiveClass}
+                    >
+                      <BarChart2 className="h-4 w-4" />
+                      <span>Performance Matrix</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

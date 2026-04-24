@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Overview from "./pages/Overview";
 import ClientView from "./pages/ClientView";
 import TeamPerformance from "./pages/TeamPerformance";
+import PerformanceMatrix from "./pages/PerformanceMatrix";
 import SQLMeetings from "./pages/SQLMeetings";
 
 import ActivityMonitor from "./pages/ActivityMonitor";
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/overview" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><Overview /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
               
               <Route path="/team" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><TeamPerformance /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
+              <Route path="/performance-matrix" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><PerformanceMatrix /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
               <Route path="/sql-meetings" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><SQLMeetings /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
               <Route path="/client/:clientSlug" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><ClientView /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
               <Route path="/activity-monitor" element={<ProtectedRoute><SessionTimeoutProvider><DashboardLayout><div className="page-transition"><ActivityMonitor /></div></DashboardLayout></SessionTimeoutProvider></ProtectedRoute>} />
