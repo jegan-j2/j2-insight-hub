@@ -130,6 +130,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
   const [data, setData] = useState<HeatmapRow[]>([]);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const sdrColRef = useRef<HTMLTableCellElement>(null);
+  const clientColRef = useRef<HTMLTableCellElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   useEffect(() => {
     const el = tableContainerRef.current;
