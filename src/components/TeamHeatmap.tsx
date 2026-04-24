@@ -82,10 +82,10 @@ const FUTURE_CELL_STYLE = {
 const intensityLevel = (value: number, isHour: boolean): number => {
   if (value <= 0) return 0;
   if (isHour) {
-    if (value <= 2)  return 1;
-    if (value <= 4)  return 2;
-    if (value <= 7)  return 3;
-    if (value <= 9)  return 4;
+    if (value <= 2) return 1;
+    if (value <= 4) return 2;
+    if (value <= 7) return 3;
+    if (value <= 9) return 4;
     return 5;
   } else {
     if (value <= 20) return 1;
@@ -107,25 +107,33 @@ const HOUR_LABELS: Record<string, string> = {
   "13": "1PM", "14": "2PM", "15": "3PM", "16": "4PM", "17": "5PM", "18": "6PM",
 };
 
-// Fixed frozen column widths — never change
 const SDR_COL_W    = 200;
 const CLIENT_COL_W = 160;
 const ATT_COL_W    = 90;
-const FROZEN_W     = SDR_COL_W + CLIENT_COL_W + ATT_COL_W; // 450px always
+const FROZEN_W     = SDR_COL_W + CLIENT_COL_W + ATT_COL_W;
 
 interface Props {
   clients: ClientLite[];
 }
 
 export const TeamHeatmap = ({ clients }: Props) => {
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+
   const [mode, _setMode] = useState<Mode>(() => {
     const m = searchParams.get("mode");
     if (m === "week" || m === "month" || m === "campaign" || m === "custom") return m;
     return "day";
   });
-  const [clientFilter, setClientFilter] = useState<string>("all");
 
+  const setMode = useCallback((next: Mode) => {
+    _setMode(next);
+    const params = new URLSearchParams(searchParams);
+    params.set("mode", next);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const [clientFilter, setClientFilter] = useState<string>("all");
   const [dayDate, setDayDate] = useState<Date>(() => melbourneToday());
   const [dayPopoverOpen, setDayPopoverOpen] = useState(false);
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => melbourneToday());
@@ -134,12 +142,11 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [monthPopoverOpen, setMonthPopoverOpen] = useState(false);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
-
+  const [exportingCSV, setExportingCSV] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const [data, setData] = useState<HeatmapRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [errored, setErrored] = useState(false);
-
-  // Cell width state — driven by ResizeObserver on the scroll container
   const [cellWidth, setCellWidth] = useState(160);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -156,34 +163,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
   useEffect(() => {
     const el = tableContainerRef.current;
     if (!el) return;
-    // Initial measurement after first paint
     const raf = requestAnimationFrame(() => recalcCellWidth());
     const observer = new ResizeObserver(() => recalcCellWidth());
     observer.observe(el);
-    return () => {
-      cancelAnimationFrame(raf);
-      observer.disconnect();
-    };
+    return () => { cancelAnimationFrame(raf); observer.disconnect(); };
   }, [recalcCellWidth]);
 
-  // Re-measure whenever mode or clientFilter changes (table re-renders)
   useEffect(() => {
     const raf = requestAnimationFrame(() => recalcCellWidth());
     return () => cancelAnimationFrame(raf);
   }, [mode, clientFilter, recalcCellWidth]);
-
-  const { toast } = useToast();
-  const [exportingCSV, setExportingCSV] = useState(false);
-  const [exportingExcel, setExportingExcel] = useState(false);
-
-  // Persist mode in URL — ?mode=week etc
-  const setMode = useCallback((next: Mode) => {
-    _setMode(next);
-    const params = new URLSearchParams(searchParams);
-    params.set("mode", next);
-    setSearchParams(params, { replace: true });
-  }, [searchParams, setSearchParams]);
-
 
   const selectedClient = useMemo(
     () => (clientFilter === "all" ? null : clients.find(c => c.client_id === clientFilter) || null),
@@ -191,9 +180,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
   );
 
   useEffect(() => {
-    if (clientFilter === "all" && mode === "campaign") {
-      setMode("week");
-    }
+    if (clientFilter === "all" && mode === "campaign") setMode("week");
   }, [clientFilter, mode]);
 
   const { startDate, endDate, columnDates, isHourMode } = useMemo(() => {
@@ -206,56 +193,33 @@ export const TeamHeatmap = ({ clients }: Props) => {
       const we = endOfWeek(weekAnchor, { weekStartsOn: 1 });
       const allDays = eachDayOfInterval({ start: ws, end: we }).filter(d => !isWeekend(d));
       const fri = allDays[allDays.length - 1] ?? ws;
-      return {
-        startDate: format(ws, "yyyy-MM-dd"),
-        endDate: format(fri, "yyyy-MM-dd"),
-        columnDates: allDays,
-        isHourMode: false,
-      };
+      return { startDate: format(ws, "yyyy-MM-dd"), endDate: format(fri, "yyyy-MM-dd"), columnDates: allDays, isHourMode: false };
     }
     if (mode === "month") {
       const ms = startOfMonth(monthAnchor);
       const me = endOfMonth(monthAnchor);
       const days = eachDayOfInterval({ start: ms, end: me }).filter(d => !isWeekend(d));
-      return {
-        startDate: format(ms, "yyyy-MM-dd"),
-        endDate: format(me, "yyyy-MM-dd"),
-        columnDates: days,
-        isHourMode: false,
-      };
+      return { startDate: format(ms, "yyyy-MM-dd"), endDate: format(me, "yyyy-MM-dd"), columnDates: days, isHourMode: false };
     }
     if (mode === "campaign") {
       if (selectedClient?.campaign_start && selectedClient?.campaign_end) {
         const cs = new Date(selectedClient.campaign_start + "T00:00:00");
         const ce = new Date(selectedClient.campaign_end + "T00:00:00");
         const days = eachDayOfInterval({ start: cs, end: ce }).filter(d => !isWeekend(d));
-        return {
-          startDate: selectedClient.campaign_start,
-          endDate: selectedClient.campaign_end,
-          columnDates: days,
-          isHourMode: false,
-        };
+        return { startDate: selectedClient.campaign_start, endDate: selectedClient.campaign_end, columnDates: days, isHourMode: false };
       }
       return { startDate: "", endDate: "", columnDates: [], isHourMode: false };
     }
     if (customRange?.from && customRange?.to) {
       const days = eachDayOfInterval({ start: customRange.from, end: customRange.to }).filter(d => !isWeekend(d));
-      return {
-        startDate: format(customRange.from, "yyyy-MM-dd"),
-        endDate: format(customRange.to, "yyyy-MM-dd"),
-        columnDates: days,
-        isHourMode: false,
-      };
+      return { startDate: format(customRange.from, "yyyy-MM-dd"), endDate: format(customRange.to, "yyyy-MM-dd"), columnDates: days, isHourMode: false };
     }
     return { startDate: "", endDate: "", columnDates: [], isHourMode: false };
   }, [mode, dayDate, weekAnchor, monthAnchor, selectedClient, customRange]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!startDate || !endDate) {
-      setData([]);
-      return;
-    }
+    if (!startDate || !endDate) { setData([]); return; }
     const fetchData = async () => {
       setLoading(true);
       setErrored(false);
@@ -268,21 +232,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
           p_client_id: clientFilter === "all" ? null : clientFilter,
         } as any);
         if (cancelled) return;
-        if (error) {
-          console.error("get_team_heatmap error", error);
-          setErrored(true);
-          setData([]);
-        } else {
-          setData((rows || []) as HeatmapRow[]);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setErrored(true);
-          setData([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+        if (error) { console.error("get_team_heatmap error", error); setErrored(true); setData([]); }
+        else { setData((rows || []) as HeatmapRow[]); }
+      } catch { if (!cancelled) { setErrored(true); setData([]); } }
+      finally { if (!cancelled) setLoading(false); }
     };
     fetchData();
     return () => { cancelled = true; };
@@ -355,7 +308,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return isAfter(startOfDay(d), today);
   };
 
-  // Attendance pill calculation
+  // attendancePill — after columnKeys, cellMap, isFutureColumn
   const attendancePill = useCallback((sdr: string): { label: string; bg: string; color: string } => {
     if (isHourMode) {
       const hasAny = columnKeys.some(k => (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0);
@@ -373,14 +326,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return { label: `${presentDays}/${totalDays} Days`, bg, color };
   }, [isHourMode, columnKeys, cellMap]);
 
-  // Export helpers
+  // Export — after sdrs, columnKeys, cellMap, sdrClientMap, attendancePill
   const buildExportRows = useCallback(() => {
-    const headers = [
-      "SDR",
-      "Client",
-      "Attendance",
-      ...columnKeys.map(k => formatColumnHeader(k)),
-    ];
+    const headers = ["SDR", "Client", "Attendance", ...columnKeys.map(k => formatColumnHeader(k))];
     const rows = sdrs.map(sdr => {
       const sdrClientInfo = sdrClientMap.get(sdr);
       const clientName = sdrClientInfo?.client_name || "";
@@ -465,22 +413,19 @@ export const TeamHeatmap = ({ clients }: Props) => {
   };
 
   const showCampaignTab = clientFilter !== "all" && !!selectedClient?.campaign_start && !!selectedClient?.campaign_end;
-
-  // Table minWidth: if 5 or fewer columns, fill container. Otherwise enforce scroll.
   const tableMinWidth = columnKeys.length <= 5 ? "100%" : FROZEN_W + columnKeys.length * cellWidth;
 
   return (
     <div className="space-y-4">
-      {/* Filter row */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {(
             [
-              { k: "day",   l: "Day"      },
-              { k: "week",  l: "Week"     },
-              { k: "month", l: "Month"    },
+              { k: "day",    l: "Day"    },
+              { k: "week",   l: "Week"   },
+              { k: "month",  l: "Month"  },
               ...(showCampaignTab ? [{ k: "campaign" as Mode, l: "Campaign" }] : []),
-              { k: "custom", l: "Custom"  },
+              { k: "custom", l: "Custom" },
             ] as { k: Mode; l: string }[]
           ).map(p => {
             const active = mode === p.k;
@@ -592,7 +537,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
         </div>
       </div>
 
-      {/* Heatmap card */}
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="text-base font-semibold text-foreground">Team Activity Heatmap</h3>
@@ -632,70 +576,32 @@ export const TeamHeatmap = ({ clients }: Props) => {
           </div>
         ) : (
           <div className="overflow-x-auto" ref={tableContainerRef}>
-            <table
-              className="border-collapse"
-              style={{
-                tableLayout: "fixed",
-                width: "100%",
-                minWidth: tableMinWidth,
-              }}
-            >
+            <table className="border-collapse" style={{ tableLayout: "fixed", width: "100%", minWidth: tableMinWidth }}>
               <thead>
                 <tr>
-                  {/* SDR column — always 200px */}
                   <th
                     className="sticky left-0 z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
-                    style={{
-                      width: SDR_COL_W,
-                      minWidth: SDR_COL_W,
-                      maxWidth: SDR_COL_W,
-                      backgroundColor: "#0F172A",
-                      color: "#FFFFFF",
-                    }}
+                    style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                   >
                     SDR
                   </th>
-                  {/* Client column — always 160px, always visible */}
                   <th
                     className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
-                    style={{
-                      left: SDR_COL_W,
-                      width: CLIENT_COL_W,
-                      minWidth: CLIENT_COL_W,
-                      maxWidth: CLIENT_COL_W,
-                      backgroundColor: "#0F172A",
-                      color: "#FFFFFF",
-                    }}
+                    style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                   >
                     Client
                   </th>
-                  {/* Attendance column — frozen, always visible */}
                   <th
                     className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap"
-                    style={{
-                      left: SDR_COL_W + CLIENT_COL_W,
-                      width: ATT_COL_W,
-                      minWidth: ATT_COL_W,
-                      maxWidth: ATT_COL_W,
-                      backgroundColor: "#0F172A",
-                      color: "#FFFFFF",
-                      borderRight: "2px solid #E2E8F0",
-                    }}
+                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF", borderRight: "2px solid #E2E8F0" }}
                   >
                     {isHourMode ? format(dayDate, "EEE, d MMM") : "Days"}
                   </th>
-                  {/* Data columns — cellWidth each */}
                   {columnKeys.map(k => (
                     <th
                       key={k}
                       className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
-                      style={{
-                        width: cellWidth,
-                        minWidth: cellWidth,
-                        maxWidth: cellWidth,
-                        backgroundColor: "#0F172A",
-                        color: "#FFFFFF",
-                      }}
+                      style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
@@ -705,44 +611,24 @@ export const TeamHeatmap = ({ clients }: Props) => {
               <tbody>
                 {sdrs.map((sdr, idx) => {
                   const sdrClientInfo = sdrClientMap.get(sdr);
-                  const sdrClient     = sdrClientInfo ? clientLookup.get(sdrClientInfo.client_id) : null;
+                  const sdrClient = sdrClientInfo ? clientLookup.get(sdrClientInfo.client_id) : null;
                   const displayClientName = sdrClient?.client_name || sdrClientInfo?.client_name || null;
-                  const displayLogoUrl    = sdrClient?.logo_url || null;
+                  const displayLogoUrl = sdrClient?.logo_url || null;
                   const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9";
-                  const pill  = attendancePill(sdr);
-
+                  const pill = attendancePill(sdr);
                   return (
                     <tr key={sdr} className="group transition-colors" style={{ backgroundColor: rowBg }}>
-                      {/* SDR cell with attendance pill */}
                       <td
                         className="sticky left-0 z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{
-                          width: SDR_COL_W,
-                          minWidth: SDR_COL_W,
-                          maxWidth: SDR_COL_W,
-                          backgroundColor: rowBg,
-                          overflow: "hidden",
-                        }}
+                        style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
                       >
-                        <div
-                          className="text-sm font-medium leading-tight"
-                          style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                        >
+                        <div className="text-sm font-medium leading-tight" style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {sdr}
                         </div>
                       </td>
-
-                      {/* Client cell — always visible */}
                       <td
                         className="sticky z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{
-                          left: SDR_COL_W,
-                          width: CLIENT_COL_W,
-                          minWidth: CLIENT_COL_W,
-                          maxWidth: CLIENT_COL_W,
-                          backgroundColor: rowBg,
-                          overflow: "hidden",
-                        }}
+                        style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
                       >
                         {displayClientName ? (
                           <div className="flex items-center gap-2">
@@ -753,81 +639,40 @@ export const TeamHeatmap = ({ clients }: Props) => {
                                 {displayClientName.charAt(0)}
                               </span>
                             )}
-                            <span className="truncate text-sm" style={{ color: "#0F172A" }}>
-                              {displayClientName}
-                            </span>
+                            <span className="truncate text-sm" style={{ color: "#0F172A" }}>{displayClientName}</span>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
-
-                      {/* Attendance cell — frozen */}
                       <td
                         className="sticky z-10 px-2 py-2 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{
-                          left: SDR_COL_W + CLIENT_COL_W,
-                          width: ATT_COL_W,
-                          minWidth: ATT_COL_W,
-                          maxWidth: ATT_COL_W,
-                          backgroundColor: rowBg,
-                          borderRight: "2px solid #E2E8F0",
-                          textAlign: "center",
-                          overflow: "hidden",
-                        }}
+                        style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: rowBg, borderRight: "2px solid #E2E8F0", textAlign: "center", overflow: "hidden" }}
                       >
-                        <span
-                          style={{
-                            display: "inline-block",
-                            fontSize: 10,
-                            fontWeight: 600,
-                            padding: "2px 5px",
-                            borderRadius: 3,
-                            background: pill.bg,
-                            color: pill.color,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
+                        <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "2px 5px", borderRadius: 3, background: pill.bg, color: pill.color, whiteSpace: "nowrap" }}>
                           {pill.label}
                         </span>
                       </td>
-
-                      {/* Data cells */}
                       {columnKeys.map(k => {
-                        const cell   = cellMap.get(`${sdr}|${k}`);
-                        const dials  = cell?.dials || 0;
-                        const sqls   = cell?.sqls  || 0;
+                        const cell = cellMap.get(`${sdr}|${k}`);
+                        const dials = cell?.dials || 0;
+                        const sqls = cell?.sqls || 0;
                         const future = isFutureColumn(k);
-                        const style  = future ? FUTURE_CELL_STYLE : CELL_STYLES[intensityLevel(dials, isHourMode)];
+                        const style = future ? FUTURE_CELL_STYLE : CELL_STYLES[intensityLevel(dials, isHourMode)];
                         return (
                           <td
                             key={k}
                             className="group-hover:!bg-[#EFF6FF]"
-                            style={{
-                              width: cellWidth,
-                              minWidth: cellWidth,
-                              maxWidth: cellWidth,
-                              padding: 4,
-                              backgroundColor: rowBg,
-                            }}
+                            style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
                           >
                             <div
                               className="relative rounded-md flex items-center justify-center text-xs font-semibold"
-                              style={{
-                                width: "100%",
-                                minWidth: "100%",
-                                height: 40,
-                                backgroundColor: style.bg,
-                                color: style.text,
-                                border: style.border,
-                              }}
+                              style={{ width: "100%", minWidth: "100%", height: 40, backgroundColor: style.bg, color: style.text, border: style.border }}
                               title={buildTooltip(sdr, k)}
                             >
                               {future ? <span>—</span> : dials}
                               {sqls > 0 && (
-                                <span className="absolute leading-none" style={{ top: 2, right: 3, fontSize: 12 }}>
-                                  🎯
-                                </span>
+                                <span className="absolute leading-none" style={{ top: 2, right: 3, fontSize: 12 }}>🎯</span>
                               )}
                             </div>
                           </td>
@@ -842,15 +687,14 @@ export const TeamHeatmap = ({ clients }: Props) => {
         )}
       </Card>
 
-      {/* Summary stat cards */}
       {!loading && !errored && sdrs.length > 0 && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { title: "Total Dials",  value: summary.dials.toLocaleString(),     subtitle: null as string | null, icon: Phone,        iconColor: "text-amber-500",  iconBg: "bg-amber-500/10"  },
-              { title: "Answered",     value: summary.answered.toLocaleString(),  subtitle: `${summary.answerRate}% answer rate`,      icon: PhoneCall,    iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
-              { title: "SQLs",         value: summary.sqls.toLocaleString(),      subtitle: `${summary.convRate}% conversion rate`,    icon: TargetIcon,   iconColor: "text-rose-500",    iconBg: "bg-rose-500/10"    },
-              { title: "Active SDRs",  value: summary.activeSdrs.toLocaleString(), subtitle: null,                                     icon: Users,        iconColor: "text-indigo-500",  iconBg: "bg-indigo-500/10"  },
+              { title: "Total Dials",  value: summary.dials.toLocaleString(),       subtitle: null as string | null, icon: Phone,      iconColor: "text-amber-500",   iconBg: "bg-amber-500/10"   },
+              { title: "Answered",     value: summary.answered.toLocaleString(),    subtitle: `${summary.answerRate}% answer rate`,   icon: PhoneCall,  iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10"  },
+              { title: "SQLs",         value: summary.sqls.toLocaleString(),        subtitle: `${summary.convRate}% conversion rate`, icon: TargetIcon, iconColor: "text-rose-500",    iconBg: "bg-rose-500/10"     },
+              { title: "Active SDRs",  value: summary.activeSdrs.toLocaleString(),  subtitle: null,                                   icon: Users,      iconColor: "text-indigo-500",  iconBg: "bg-indigo-500/10"   },
             ].map(card => (
               <Card key={card.title} className="bg-card/50 backdrop-blur-sm border-border">
                 <CardContent className="p-6">
