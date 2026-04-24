@@ -617,6 +617,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
               <thead>
                 <tr>
                   <th
+                    ref={sdrColRef}
                     className="sticky left-0 z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
                     style={{
                       minWidth: 200,
@@ -628,6 +629,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     SDR
                   </th>
                   <th
+                    ref={clientColRef}
                     className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
                     style={{
                       left: 200,
