@@ -334,6 +334,22 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
 
   const today = melbourneToday();
+  const attendancePill = (sdr: string): { label: string; bg: string; color: string } => {
+    if (isHourMode) {
+      const hasAny = columnKeys.some(k => (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0);
+      return hasAny
+        ? { label: "✓ Present", bg: "#dcfce7", color: "#166534" }
+        : { label: "✕ Absent",  bg: "#fee2e2", color: "#991b1b" };
+    }
+    const totalDays = columnKeys.filter(k => !isFutureColumn(k)).length;
+    const presentDays = columnKeys.filter(k => !isFutureColumn(k) && (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0).length;
+    if (totalDays === 0) return { label: "—", bg: "#f1f5f9", color: "#94a3b8" };
+    const ratio = presentDays / totalDays;
+    const bg = ratio >= 1 ? "#dcfce7" : ratio >= 0.5 ? "#fef9c3" : "#fee2e2";
+    const color = ratio >= 1 ? "#166534" : ratio >= 0.5 ? "#854d0e" : "#991b1b";
+    const unit = mode === "day" ? "Day" : "Days";
+    return { label: `${presentDays}/${totalDays} ${unit}`, bg, color };
+  };
   const cellWidth = useMemo(() => {
     if (!tableContainerRef.current) return 160;
     const containerW = tableContainerRef.current.getBoundingClientRect().width;
@@ -622,6 +638,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     style={{
                       minWidth: 200,
                       width: 200,
+                      maxWidth: 200,
                       backgroundColor: "#0F172A",
                       color: "#FFFFFF",
                     }}
@@ -635,6 +652,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       left: 200,
                       minWidth: 160,
                       width: 160,
+                      maxWidth: 160,
                       backgroundColor: "#0F172A",
                       color: "#FFFFFF",
                       borderRight: "2px solid #E2E8F0",
@@ -674,14 +692,36 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         style={{
                           minWidth: 200,
                           width: 200,
+                          maxWidth: 200,
                           backgroundColor: rowBg,
+                          overflow: "hidden",
                         }}
                       >
-                        <div
-                          className="text-sm font-medium leading-tight whitespace-nowrap"
-                          style={{ color: "#0F172A" }}
-                        >
-                          {sdr}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                          <div
+                            className="text-sm font-medium leading-tight"
+                            style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                          >
+                            {sdr}
+                          </div>
+                          {(() => {
+                            const pill = attendancePill(sdr);
+                            return (
+                              <span style={{
+                                display: "inline-block",
+                                fontSize: 10,
+                                fontWeight: 500,
+                                padding: "1px 5px",
+                                borderRadius: 3,
+                                background: pill.bg,
+                                color: pill.color,
+                                whiteSpace: "nowrap",
+                                width: "fit-content",
+                              }}>
+                                {pill.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td
@@ -690,8 +730,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           left: 200,
                           minWidth: 160,
                           width: 160,
+                          maxWidth: 160,
                           backgroundColor: rowBg,
                           borderRight: "2px solid #E2E8F0",
+                          overflow: "hidden",
                         }}
                       >
                         {displayClientName ? (
