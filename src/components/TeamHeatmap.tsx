@@ -153,6 +153,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [cellWidth, setCellWidth] = useState(160);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
+  // Dark mode detection — drives all table inline colours
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
   const recalcCellWidth = useCallback(() => {
     const el = tableContainerRef.current;
     if (!el) return;
@@ -557,7 +567,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       <Card className="overflow-hidden">
         {/* Card header: title + loading spinner + client filter (matches leaderboard) */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-          <h3 className="text-base font-semibold text-foreground">Team Activity Heatmap</h3>
+          <h3 className="text-lg font-semibold text-foreground">Team Activity Heatmap</h3>
           <div className="flex items-center gap-3">
             {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
             {/* Client filter in card header — matches leaderboard */}
@@ -631,7 +641,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                   </th>
                   <th
                     className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap"
-                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF", borderRight: "2px solid #E2E8F0" }}
+                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF", borderRight: `2px solid ${isDark ? "#334155" : "#E2E8F0"}` }}
                   >
                     {isHourMode ? format(dayDate, "EEE, d MMM") : "Days"}
                   </th>
@@ -652,21 +662,30 @@ export const TeamHeatmap = ({ clients }: Props) => {
                   const sdrClient = sdrClientInfo ? clientLookup.get(sdrClientInfo.client_id) : null;
                   const displayClientName = sdrClient?.client_name || sdrClientInfo?.client_name || null;
                   const displayLogoUrl = sdrClient?.logo_url || null;
-                  const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9";
+                  const rowBg = isDark
+                    ? (idx % 2 === 0 ? "#0f172a" : "#1a2332")
+                    : (idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9");
+                  const rowHover = isDark ? "#1e3a5f" : "#EFF6FF";
+                  const textColor = isDark ? "#E2E8F0" : "#0F172A";
+                  const borderColor = isDark ? "#334155" : "#E2E8F0";
                   const pill = attendancePill(sdr);
                   return (
                     <tr key={sdr} className="group transition-colors" style={{ backgroundColor: rowBg }}>
                       <td
-                        className="sticky left-0 z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
+                        className="sticky left-0 z-10 px-4 py-3 align-middle"
                         style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowHover}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowBg}
                       >
-                        <div className="text-sm font-medium leading-tight" style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className="text-sm font-medium leading-tight" style={{ color: textColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {sdr}
                         </div>
                       </td>
                       <td
-                        className="sticky z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
+                        className="sticky z-10 px-4 py-3 align-middle"
                         style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowHover}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowBg}
                       >
                         {displayClientName ? (
                           <div className="flex items-center gap-2">
@@ -677,17 +696,19 @@ export const TeamHeatmap = ({ clients }: Props) => {
                                 {displayClientName.charAt(0)}
                               </span>
                             )}
-                            <span className="truncate text-sm" style={{ color: "#0F172A" }}>{displayClientName}</span>
+                            <span className="truncate text-sm" style={{ color: textColor }}>{displayClientName}</span>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
                       <td
-                        className="sticky z-10 px-2 py-3 align-middle group-hover:!bg-[#EFF6FF]"
-                        style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: rowBg, borderRight: "2px solid #E2E8F0", textAlign: "center", overflow: "hidden" }}
+                        className="sticky z-10 px-2 py-3 align-middle"
+                        style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: rowBg, borderRight: `2px solid ${borderColor}`, textAlign: "center", overflow: "hidden" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowHover}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowBg}
                       >
-                        <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: pill.bg, color: pill.color, whiteSpace: "nowrap" }}>
+                        <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: pill.bg, color: pill.color, whiteSpace: "nowrap" }}>
                           {pill.label}
                         </span>
                       </td>
@@ -697,15 +718,23 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         const sqls = cell?.sqls || 0;
                         const future = isFutureColumn(k);
                         const style = future ? FUTURE_CELL_STYLE : CELL_STYLES[intensityLevel(dials, isHourMode)];
+                        // Dark mode overrides for zero and future cells
+                        const cellBg = isDark && intensityLevel(dials, isHourMode) === 0 && !future
+                          ? "#1e293b" : isDark && future ? "#1e293b" : style.bg;
+                        const cellText = isDark && (intensityLevel(dials, isHourMode) === 0 || future)
+                          ? "#475569" : style.text;
+                        const cellBorder = isDark && (intensityLevel(dials, isHourMode) === 0 || future)
+                          ? "1px solid #334155" : style.border;
                         return (
                           <td
                             key={k}
-                            className="group-hover:!bg-[#EFF6FF]"
                             style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
+                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowHover}
+                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = rowBg}
                           >
                             <div
                               className="relative rounded-md flex items-center justify-center text-xs font-semibold"
-                              style={{ width: "100%", minWidth: "100%", height: CELL_H, backgroundColor: style.bg, color: style.text, border: style.border }}
+                              style={{ width: "100%", minWidth: "100%", height: CELL_H, backgroundColor: cellBg, color: cellText, border: cellBorder }}
                               title={buildTooltip(sdr, k)}
                             >
                               {future ? <span>—</span> : dials}
