@@ -245,6 +245,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
       setExportingExcel(false);
     }
   }, [buildExportRows, columnKeys, toast]);
+
+  const selectedClient = useMemo(
     () => (clientFilter === "all" ? null : clients.find(c => c.client_id === clientFilter) || null),
     [clientFilter, clients]
   );
