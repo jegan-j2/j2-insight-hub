@@ -567,7 +567,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       <Card className="overflow-hidden">
         {/* Card header: title + loading spinner + client filter (matches leaderboard) */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-foreground">Team Activity Heatmap</h3>
+          <h3 className="text-xl font-bold text-foreground">Team Activity Heatmap</h3>
           <div className="flex items-center gap-3">
             {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
             {/* Client filter in card header — matches leaderboard */}
@@ -629,19 +629,35 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 <tr>
                   <th
                     className="sticky left-0 z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
-                    style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                    style={{
+                      width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W,
+                      background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
+                      color: "#FFFFFF",
+                      borderBottom: isDark ? "1px solid #334155" : "none",
+                    }}
                   >
                     SDR
                   </th>
                   <th
                     className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
-                    style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                    style={{
+                      left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W,
+                      background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
+                      color: "#FFFFFF",
+                      borderBottom: isDark ? "1px solid #334155" : "none",
+                    }}
                   >
                     Client
                   </th>
                   <th
                     className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap"
-                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF", borderRight: `2px solid ${isDark ? "#334155" : "#E2E8F0"}` }}
+                    style={{
+                      left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W,
+                      background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
+                      color: "#FFFFFF",
+                      borderRight: `2px solid ${isDark ? "#334155" : "#E2E8F0"}`,
+                      borderBottom: isDark ? "1px solid #334155" : "none",
+                    }}
                   >
                     {isHourMode ? format(dayDate, "EEE, d MMM") : "Days"}
                   </th>
@@ -649,7 +665,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     <th
                       key={k}
                       className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
-                      style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                      style={{
+                        width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth,
+                        background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
+                        color: "#FFFFFF",
+                        borderBottom: isDark ? "1px solid #334155" : "none",
+                      }}
                     >
                       {formatColumnHeader(k)}
                     </th>
