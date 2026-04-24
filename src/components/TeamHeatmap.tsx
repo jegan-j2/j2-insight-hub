@@ -334,9 +334,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
 
   const today = melbourneToday();
-  const cellWidth = containerWidth > 0
-    ? Math.floor((containerWidth - 360) / 5)
-    : 160;
+  const cellWidth = useMemo(() => {
+    if (!tableContainerRef.current) return 160;
+    const containerW = tableContainerRef.current.getBoundingClientRect().width;
+    const frozen = (sdrColRef.current?.getBoundingClientRect().width || 200)
+                 + (clientColRef.current?.getBoundingClientRect().width || 160);
+    return Math.floor((containerW - frozen) / 5);
+  }, [containerWidth]);
 
   const formatColumnHeader = (key: string): string => {
     if (isHourMode) return HOUR_LABELS[key] ?? key;
