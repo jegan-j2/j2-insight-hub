@@ -11,7 +11,7 @@ import {
   startOfDay,
 } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Download, ChevronDown, FileText, Table2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -37,6 +37,11 @@ import {
   Cell,
 } from "recharts";
 import type { DateRange } from "react-day-picker";
+import * as XLSX from "xlsx-js-style";
+import { toCSV, downloadCSV } from "@/lib/csvExport";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
 
 type Mode = "day" | "week" | "month" | "campaign" | "custom";
 
@@ -103,16 +108,22 @@ const HOUR_LABELS: Record<string, string> = {
 };
 
 // Fixed frozen column widths — never change
-const SDR_COL_W = 200;
+const SDR_COL_W    = 200;
 const CLIENT_COL_W = 160;
-const FROZEN_W = SDR_COL_W + CLIENT_COL_W; // 360px always
+const ATT_COL_W    = 90;
+const FROZEN_W     = SDR_COL_W + CLIENT_COL_W + ATT_COL_W; // 450px always
 
 interface Props {
   clients: ClientLite[];
 }
 
 export const TeamHeatmap = ({ clients }: Props) => {
-  const [mode, setMode] = useState<Mode>("day");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [mode, _setMode] = useState<Mode>(() => {
+    const m = searchParams.get("mode");
+    if (m === "week" || m === "month" || m === "campaign" || m === "custom") return m;
+    return "day";
+  });
   const [clientFilter, setClientFilter] = useState<string>("all");
 
   const [dayDate, setDayDate] = useState<Date>(() => melbourneToday());
@@ -161,7 +172,79 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return () => cancelAnimationFrame(raf);
   }, [mode, clientFilter, recalcCellWidth]);
 
-  const selectedClient = useMemo(
+  const { toast } = useToast();
+  const [exportingCSV, setExportingCSV] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
+
+  // Persist mode in URL — ?mode=week etc
+  const setMode = useCallback((next: Mode) => {
+    _setMode(next);
+    const params = new URLSearchParams(searchParams);
+    params.set("mode", next);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Export helpers
+  const buildExportRows = useCallback(() => {
+    const headers = [
+      "SDR",
+      "Client",
+      "Attendance",
+      ...columnKeys.map(k => formatColumnHeader(k)),
+    ];
+    const rows = sdrs.map(sdr => {
+      const sdrClientInfo = sdrClientMap.get(sdr);
+      const clientName = sdrClientInfo?.client_name || "";
+      const pill = attendancePill(sdr);
+      const cells = columnKeys.map(k => cellMap.get(`${sdr}|${k}`)?.dials || 0);
+      return [sdr, clientName, pill.label, ...cells];
+    });
+    return { headers, rows };
+  }, [sdrs, columnKeys, cellMap, sdrClientMap, attendancePill]);
+
+  const handleExportCSV = useCallback(() => {
+    setExportingCSV(true);
+    try {
+      const { headers, rows } = buildExportRows();
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      downloadCSV(toCSV(headers, rows), `j2-heatmap-${dateStr}.csv`);
+      toast({ title: "CSV exported successfully", className: "border-[#10b981]" });
+    } finally {
+      setExportingCSV(false);
+    }
+  }, [buildExportRows, toast]);
+
+  const handleExportExcel = useCallback(() => {
+    setExportingExcel(true);
+    try {
+      const { headers, rows } = buildExportRows();
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 11 },
+        fill: { fgColor: { rgb: "0F172A" } },
+      };
+      const evenRow = { fill: { fgColor: { rgb: "F1F5F9" } } };
+      const oddRow  = { fill: { fgColor: { rgb: "FFFFFF" } } };
+      const allRows = [headers, ...rows];
+      const ws = XLSX.utils.aoa_to_sheet(allRows);
+      ws["!cols"] = [{ wch: 22 }, { wch: 18 }, { wch: 14 }, ...columnKeys.map(() => ({ wch: 12 }))];
+      allRows.forEach((_, i) => {
+        const style = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
+        headers.forEach((__, c) => {
+          const cell = XLSX.utils.encode_cell({ r: i, c });
+          if (ws[cell]) ws[cell].s = style;
+        });
+      });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Team Heatmap");
+      XLSX.writeFile(wb, `j2-heatmap-${dateStr}.xlsx`);
+      toast({ title: "Excel exported successfully", className: "border-[#10b981]" });
+    } catch (err) {
+      toast({ title: "Export failed", description: String(err), variant: "destructive" });
+    } finally {
+      setExportingExcel(false);
+    }
+  }, [buildExportRows, columnKeys, toast]);
     () => (clientFilter === "all" ? null : clients.find(c => c.client_id === clientFilter) || null),
     [clientFilter, clients]
   );
@@ -510,7 +593,30 @@ export const TeamHeatmap = ({ clients }: Props) => {
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="text-base font-semibold text-foreground">Team Activity Heatmap</h3>
-          {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          <div className="flex items-center gap-3">
+            {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            {!loading && sdrs.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] font-medium text-sm transition-colors">
+                    <Download className="h-3.5 w-3.5" />
+                    Export
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportCSV} disabled={exportingCSV}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel} disabled={exportingExcel}>
+                    <Table2 className="h-4 w-4 mr-2" />
+                    Export as Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -556,10 +662,24 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       maxWidth: CLIENT_COL_W,
                       backgroundColor: "#0F172A",
                       color: "#FFFFFF",
-                      borderRight: "2px solid #E2E8F0",
                     }}
                   >
                     Client
+                  </th>
+                  {/* Attendance column — frozen, always visible */}
+                  <th
+                    className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap"
+                    style={{
+                      left: SDR_COL_W + CLIENT_COL_W,
+                      width: ATT_COL_W,
+                      minWidth: ATT_COL_W,
+                      maxWidth: ATT_COL_W,
+                      backgroundColor: "#0F172A",
+                      color: "#FFFFFF",
+                      borderRight: "2px solid #E2E8F0",
+                    }}
+                  >
+                    {isHourMode ? format(dayDate, "EEE, d MMM") : "Days"}
                   </th>
                   {/* Data columns — cellWidth each */}
                   {columnKeys.map(k => (
@@ -601,28 +721,11 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           overflow: "hidden",
                         }}
                       >
-                        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                          <div
-                            className="text-sm font-medium leading-tight"
-                            style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                          >
-                            {sdr}
-                          </div>
-                          <span
-                            style={{
-                              display: "inline-block",
-                              fontSize: 10,
-                              fontWeight: 500,
-                              padding: "1px 5px",
-                              borderRadius: 3,
-                              background: pill.bg,
-                              color: pill.color,
-                              whiteSpace: "nowrap",
-                              width: "fit-content",
-                            }}
-                          >
-                            {pill.label}
-                          </span>
+                        <div
+                          className="text-sm font-medium leading-tight"
+                          style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        >
+                          {sdr}
                         </div>
                       </td>
 
@@ -635,7 +738,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           minWidth: CLIENT_COL_W,
                           maxWidth: CLIENT_COL_W,
                           backgroundColor: rowBg,
-                          borderRight: "2px solid #E2E8F0",
                           overflow: "hidden",
                         }}
                       >
@@ -655,6 +757,36 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
+                      </td>
+
+                      {/* Attendance cell — frozen */}
+                      <td
+                        className="sticky z-10 px-2 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                        style={{
+                          left: SDR_COL_W + CLIENT_COL_W,
+                          width: ATT_COL_W,
+                          minWidth: ATT_COL_W,
+                          maxWidth: ATT_COL_W,
+                          backgroundColor: rowBg,
+                          borderRight: "2px solid #E2E8F0",
+                          textAlign: "center",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: "2px 5px",
+                            borderRadius: 3,
+                            background: pill.bg,
+                            color: pill.color,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {pill.label}
+                        </span>
                       </td>
 
                       {/* Data cells */}
