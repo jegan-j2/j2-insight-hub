@@ -334,6 +334,22 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
 
   const today = melbourneToday();
+  const attendancePill = (sdr: string): { label: string; bg: string; color: string } => {
+    if (isHourMode) {
+      const hasAny = columnKeys.some(k => (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0);
+      return hasAny
+        ? { label: "✓ Present", bg: "#dcfce7", color: "#166534" }
+        : { label: "✕ Absent",  bg: "#fee2e2", color: "#991b1b" };
+    }
+    const totalDays = columnKeys.filter(k => !isFutureColumn(k)).length;
+    const presentDays = columnKeys.filter(k => !isFutureColumn(k) && (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0).length;
+    if (totalDays === 0) return { label: "—", bg: "#f1f5f9", color: "#94a3b8" };
+    const ratio = presentDays / totalDays;
+    const bg = ratio >= 1 ? "#dcfce7" : ratio >= 0.5 ? "#fef9c3" : "#fee2e2";
+    const color = ratio >= 1 ? "#166534" : ratio >= 0.5 ? "#854d0e" : "#991b1b";
+    const unit = mode === "day" ? "Day" : "Days";
+    return { label: `${presentDays}/${totalDays} ${unit}`, bg, color };
+  };
   const cellWidth = useMemo(() => {
     if (!tableContainerRef.current) return 160;
     const containerW = tableContainerRef.current.getBoundingClientRect().width;
