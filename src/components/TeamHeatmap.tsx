@@ -628,8 +628,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     Client
                   </th>
                   <th
-                    className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap"
-                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF", borderRight: "2px solid #E2E8F0" }}
+                    className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap border-r-2 border-r-slate-200 dark:border-r-slate-700"
+                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                   >
                     {isHourMode ? format(dayDate, "EEE, d MMM") : "Days"}
                   </th>
