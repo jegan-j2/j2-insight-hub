@@ -107,10 +107,13 @@ const HOUR_LABELS: Record<string, string> = {
   "13": "1PM", "14": "2PM", "15": "3PM", "16": "4PM", "17": "5PM", "18": "6PM",
 };
 
+// Fixed frozen column widths
 const SDR_COL_W    = 200;
 const CLIENT_COL_W = 160;
-const ATT_COL_W    = 90;
-const FROZEN_W     = SDR_COL_W + CLIENT_COL_W + ATT_COL_W;
+const ATT_COL_W    = 120; // wider to fit "Fri, 24 Apr" without overflow
+const FROZEN_W     = SDR_COL_W + CLIENT_COL_W + ATT_COL_W; // 480px
+
+const CELL_H = 48; // row cell height — matches leaderboard row spacing
 
 interface Props {
   clients: ClientLite[];
@@ -415,9 +418,18 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const showCampaignTab = clientFilter !== "all" && !!selectedClient?.campaign_start && !!selectedClient?.campaign_end;
   const tableMinWidth = columnKeys.length <= 5 ? "100%" : FROZEN_W + columnKeys.length * cellWidth;
 
+  // Selected client display for card header
+  const selectedClientDisplay = useMemo(() => {
+    if (clientFilter === "all") return null;
+    return clients.find(c => c.client_id === clientFilter) || null;
+  }, [clientFilter, clients]);
+
   return (
     <div className="space-y-4">
+
+      {/* ── Filter row: mode tabs + date picker + Export (right-aligned) ── */}
       <div className="flex flex-wrap items-center gap-2">
+        {/* Mode tabs */}
         <div className="flex flex-wrap items-center gap-2">
           {(
             [
@@ -448,6 +460,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
           })}
         </div>
 
+        {/* Date picker */}
         <div className="flex items-center">
           {mode === "day" && (
             <Popover open={dayPopoverOpen} onOpenChange={setDayPopoverOpen}>
@@ -513,56 +526,79 @@ export const TeamHeatmap = ({ clients }: Props) => {
           )}
         </div>
 
+        {/* Export — right-aligned, matches leaderboard pattern */}
         <div className="ml-auto">
-          <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className={cn("w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200", "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold")}>
-              <SelectValue placeholder="All Clients" />
-            </SelectTrigger>
-            <SelectContent className="z-[100] bg-card">
-              <SelectItem value="all">All Clients</SelectItem>
-              {clients.map(c => (
-                <SelectItem key={c.client_id} value={c.client_id}>
-                  <span className="flex items-center gap-2">
-                    {c.logo_url ? (
-                      <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                    ) : (
-                      <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
-                    )}
-                    {c.client_name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                disabled={loading || sdrs.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50 min-h-[40px]"
+              >
+                <Download className="h-4 w-4" />
+                Export
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportCSV} disabled={exportingCSV}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel} disabled={exportingExcel}>
+                <Table2 className="h-4 w-4 mr-2" />
+                Export as Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
+      {/* ── Heatmap card ── */}
       <Card className="overflow-hidden">
+        {/* Card header: title + loading spinner + client filter (matches leaderboard) */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="text-base font-semibold text-foreground">Team Activity Heatmap</h3>
           <div className="flex items-center gap-3">
             {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-            {!loading && sdrs.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] font-medium text-sm transition-colors">
-                    <Download className="h-3.5 w-3.5" />
-                    Export
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleExportCSV} disabled={exportingCSV}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Export as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportExcel} disabled={exportingExcel}>
-                    <Table2 className="h-4 w-4 mr-2" />
-                    Export as Excel
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {/* Client filter in card header — matches leaderboard */}
+            <Select value={clientFilter} onValueChange={setClientFilter}>
+              <SelectTrigger
+                className={cn(
+                  "w-[180px] min-h-[36px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                  "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
+                )}
+              >
+                {selectedClientDisplay ? (
+                  <span className="flex items-center gap-2">
+                    {selectedClientDisplay.logo_url ? (
+                      <img src={selectedClientDisplay.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                    ) : (
+                      <span className="w-4 h-4 rounded-sm bg-white/20 flex items-center justify-center text-[8px] font-bold flex-shrink-0">
+                        {selectedClientDisplay.client_name.charAt(0)}
+                      </span>
+                    )}
+                    {selectedClientDisplay.client_name}
+                  </span>
+                ) : (
+                  <SelectValue placeholder="All Clients" />
+                )}
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-card">
+                <SelectItem value="all">All Clients</SelectItem>
+                {clients.map(c => (
+                  <SelectItem key={c.client_id} value={c.client_id}>
+                    <span className="flex items-center gap-2">
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                      )}
+                      {c.client_name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -619,7 +655,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                   return (
                     <tr key={sdr} className="group transition-colors" style={{ backgroundColor: rowBg }}>
                       <td
-                        className="sticky left-0 z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                        className="sticky left-0 z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
                         style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
                       >
                         <div className="text-sm font-medium leading-tight" style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -627,7 +663,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         </div>
                       </td>
                       <td
-                        className="sticky z-10 px-4 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                        className="sticky z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
                         style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
                       >
                         {displayClientName ? (
@@ -646,10 +682,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         )}
                       </td>
                       <td
-                        className="sticky z-10 px-2 py-2 align-middle group-hover:!bg-[#EFF6FF]"
+                        className="sticky z-10 px-2 py-3 align-middle group-hover:!bg-[#EFF6FF]"
                         style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: rowBg, borderRight: "2px solid #E2E8F0", textAlign: "center", overflow: "hidden" }}
                       >
-                        <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "2px 5px", borderRadius: 3, background: pill.bg, color: pill.color, whiteSpace: "nowrap" }}>
+                        <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: pill.bg, color: pill.color, whiteSpace: "nowrap" }}>
                           {pill.label}
                         </span>
                       </td>
@@ -667,12 +703,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           >
                             <div
                               className="relative rounded-md flex items-center justify-center text-xs font-semibold"
-                              style={{ width: "100%", minWidth: "100%", height: 40, backgroundColor: style.bg, color: style.text, border: style.border }}
+                              style={{ width: "100%", minWidth: "100%", height: CELL_H, backgroundColor: style.bg, color: style.text, border: style.border }}
                               title={buildTooltip(sdr, k)}
                             >
                               {future ? <span>—</span> : dials}
                               {sqls > 0 && (
-                                <span className="absolute leading-none" style={{ top: 2, right: 3, fontSize: 12 }}>🎯</span>
+                                <span className="absolute leading-none" style={{ top: 3, right: 4, fontSize: 12 }}>🎯</span>
                               )}
                             </div>
                           </td>
@@ -687,6 +723,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
         )}
       </Card>
 
+      {/* Summary stat cards */}
       {!loading && !errored && sdrs.length > 0 && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
