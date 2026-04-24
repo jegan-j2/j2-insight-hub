@@ -312,7 +312,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const formatColumnHeader = (key: string): string => {
     if (isHourMode) return HOUR_LABELS[key] ?? key;
     const d = new Date(key + "T00:00:00");
-    return format(d, "EEE d MMM");
+    return format(d, "EEE, d MMM");
   };
 
   const isFutureColumn = (key: string): boolean => {
