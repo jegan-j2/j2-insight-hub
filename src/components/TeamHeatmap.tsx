@@ -184,67 +184,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
     setSearchParams(params, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  // Export helpers
-  const buildExportRows = useCallback(() => {
-    const headers = [
-      "SDR",
-      "Client",
-      "Attendance",
-      ...columnKeys.map(k => formatColumnHeader(k)),
-    ];
-    const rows = sdrs.map(sdr => {
-      const sdrClientInfo = sdrClientMap.get(sdr);
-      const clientName = sdrClientInfo?.client_name || "";
-      const pill = attendancePill(sdr);
-      const cells = columnKeys.map(k => cellMap.get(`${sdr}|${k}`)?.dials || 0);
-      return [sdr, clientName, pill.label, ...cells];
-    });
-    return { headers, rows };
-  }, [sdrs, columnKeys, cellMap, sdrClientMap, attendancePill]);
-
-  const handleExportCSV = useCallback(() => {
-    setExportingCSV(true);
-    try {
-      const { headers, rows } = buildExportRows();
-      const dateStr = format(new Date(), "yyyy-MM-dd");
-      downloadCSV(toCSV(headers, rows), `j2-heatmap-${dateStr}.csv`);
-      toast({ title: "CSV exported successfully", className: "border-[#10b981]" });
-    } finally {
-      setExportingCSV(false);
-    }
-  }, [buildExportRows, toast]);
-
-  const handleExportExcel = useCallback(() => {
-    setExportingExcel(true);
-    try {
-      const { headers, rows } = buildExportRows();
-      const dateStr = format(new Date(), "yyyy-MM-dd");
-      const headerStyle = {
-        font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 11 },
-        fill: { fgColor: { rgb: "0F172A" } },
-      };
-      const evenRow = { fill: { fgColor: { rgb: "F1F5F9" } } };
-      const oddRow  = { fill: { fgColor: { rgb: "FFFFFF" } } };
-      const allRows = [headers, ...rows];
-      const ws = XLSX.utils.aoa_to_sheet(allRows);
-      ws["!cols"] = [{ wch: 22 }, { wch: 18 }, { wch: 14 }, ...columnKeys.map(() => ({ wch: 12 }))];
-      allRows.forEach((_, i) => {
-        const style = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
-        headers.forEach((__, c) => {
-          const cell = XLSX.utils.encode_cell({ r: i, c });
-          if (ws[cell]) ws[cell].s = style;
-        });
-      });
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Team Heatmap");
-      XLSX.writeFile(wb, `j2-heatmap-${dateStr}.xlsx`);
-      toast({ title: "Excel exported successfully", className: "border-[#10b981]" });
-    } catch (err) {
-      toast({ title: "Export failed", description: String(err), variant: "destructive" });
-    } finally {
-      setExportingExcel(false);
-    }
-  }, [buildExportRows, columnKeys, toast]);
 
   const selectedClient = useMemo(
     () => (clientFilter === "all" ? null : clients.find(c => c.client_id === clientFilter) || null),
