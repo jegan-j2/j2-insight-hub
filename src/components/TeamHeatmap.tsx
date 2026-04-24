@@ -130,6 +130,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
   const [data, setData] = useState<HeatmapRow[]>([]);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const sdrColRef = useRef<HTMLTableCellElement>(null);
+  const clientColRef = useRef<HTMLTableCellElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   useEffect(() => {
     const el = tableContainerRef.current;
@@ -332,9 +334,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
 
   const today = melbourneToday();
-  const cellWidth = containerWidth > 0
-    ? Math.floor((containerWidth - 360) / 5)
-    : 160;
+  const cellWidth = useMemo(() => {
+    if (!tableContainerRef.current) return 160;
+    const containerW = tableContainerRef.current.getBoundingClientRect().width;
+    const frozen = (sdrColRef.current?.getBoundingClientRect().width || 200)
+                 + (clientColRef.current?.getBoundingClientRect().width || 160);
+    return Math.floor((containerW - frozen) / 5);
+  }, [containerWidth]);
 
   const formatColumnHeader = (key: string): string => {
     if (isHourMode) return HOUR_LABELS[key] ?? key;
@@ -611,6 +617,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
               <thead>
                 <tr>
                   <th
+                    ref={sdrColRef}
                     className="sticky left-0 z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
                     style={{
                       minWidth: 200,
@@ -622,6 +629,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     SDR
                   </th>
                   <th
+                    ref={clientColRef}
                     className="sticky z-20 text-left text-sm font-bold px-4 py-3 whitespace-nowrap"
                     style={{
                       left: 200,
@@ -638,7 +646,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     <th
                       key={k}
                       className="text-sm font-bold px-2 py-3 text-center whitespace-nowrap"
-                      style={{ width: cellWidth, minWidth: cellWidth, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                      style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, backgroundColor: "#0F172A", color: "#FFFFFF" }}
                     >
                       {formatColumnHeader(k)}
                     </th>
@@ -723,7 +731,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           <td
                             key={k}
                             className="group-hover:!bg-[#EFF6FF]"
-                            style={{ width: cellWidth, minWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
+                            style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
                           >
                             <div
                               className="relative rounded-md flex items-center justify-center text-xs font-semibold"
