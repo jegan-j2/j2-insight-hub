@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, MonitorDot, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Users, Settings, ChevronDown, UserCog, LogOut, MonitorDot, Sun, Moon, BarChart2 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
