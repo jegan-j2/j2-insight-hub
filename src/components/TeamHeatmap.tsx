@@ -812,7 +812,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={{ stroke: "hsl(var(--border))" }} tickLine={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
+                      tickLine={false}
+                      interval={columnKeys.length <= 7 ? 0 : columnKeys.length <= 15 ? 1 : 2}
+                      angle={columnKeys.length > 10 ? -35 : 0}
+                      textAnchor={columnKeys.length > 10 ? "end" : "middle"}
+                      height={columnKeys.length > 10 ? 50 : 30}
+                    />
                     <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={{ stroke: "hsl(var(--border))" }} tickLine={false} allowDecimals={false} />
                     <RTooltip
                       cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
