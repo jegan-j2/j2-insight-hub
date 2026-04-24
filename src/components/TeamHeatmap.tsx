@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Phone, PhoneCall, Target as TargetIcon, Users } from "lucide-react";
+import { Phone, PhoneCall, Target as TargetIcon, Users, MessageSquare } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -387,16 +387,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
   }, [buildExportRows, columnKeys, toast]);
 
   const summary = useMemo(() => {
-    let dials = 0; let answered = 0; let sqls = 0;
+    let dials = 0; let answered = 0; let sqls = 0; let dms = 0;
     const activeSdrs = new Set<string>();
     for (const r of data) {
       if (!r.sdr_name) continue;
-      dials += r.dials || 0; answered += r.answered || 0; sqls += r.sqls || 0;
+      dials += r.dials || 0; answered += r.answered || 0; sqls += r.sqls || 0; dms += r.dms || 0;
       if ((r.dials || 0) > 0) activeSdrs.add(r.sdr_name);
     }
     const answerRate = dials > 0 ? Math.round((answered / dials) * 1000) / 10 : 0;
     const convRate   = dials > 0 ? Math.round((sqls    / dials) * 1000) / 10 : 0;
-    return { dials, answered, sqls, activeSdrs: activeSdrs.size, answerRate, convRate };
+    return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate };
   }, [data]);
 
   const chartData = useMemo(() => {
@@ -568,20 +568,22 @@ export const TeamHeatmap = ({ clients }: Props) => {
                   "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
                 )}
               >
-                {selectedClientDisplay ? (
-                  <span className="flex items-center gap-2">
-                    {selectedClientDisplay.logo_url ? (
-                      <img src={selectedClientDisplay.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                    ) : (
-                      <span className="w-4 h-4 rounded-sm bg-white/20 flex items-center justify-center text-[8px] font-bold flex-shrink-0">
-                        {selectedClientDisplay.client_name.charAt(0)}
-                      </span>
-                    )}
-                    {selectedClientDisplay.client_name}
-                  </span>
-                ) : (
-                  <SelectValue placeholder="All Clients" />
-                )}
+                <div className="flex items-center gap-2 overflow-hidden">
+                  {selectedClientDisplay ? (
+                    <>
+                      {selectedClientDisplay.logo_url ? (
+                        <img src={selectedClientDisplay.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="w-4 h-4 rounded-sm bg-white/20 flex items-center justify-center text-[8px] font-bold flex-shrink-0">
+                          {selectedClientDisplay.client_name.charAt(0)}
+                        </span>
+                      )}
+                      <span className="truncate">{selectedClientDisplay.client_name}</span>
+                    </>
+                  ) : (
+                    <span>All Clients</span>
+                  )}
+                </div>
               </SelectTrigger>
               <SelectContent className="z-[100] bg-card">
                 <SelectItem value="all">All Clients</SelectItem>
@@ -628,8 +630,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     Client
                   </th>
                   <th
-                    className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap border-r-2 border-r-slate-200 dark:border-r-slate-700"
-                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                    className="sticky z-20 text-center text-sm font-bold px-2 py-3 whitespace-nowrap"
+                    style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: "#0F172A", color: "#FFFFFF", borderRight: "2px solid #E2E8F0" }}
                   >
                     {isHourMode ? format(dayDate, "EEE, d MMM") : "Days"}
                   </th>
@@ -650,21 +652,21 @@ export const TeamHeatmap = ({ clients }: Props) => {
                   const sdrClient = sdrClientInfo ? clientLookup.get(sdrClientInfo.client_id) : null;
                   const displayClientName = sdrClient?.client_name || sdrClientInfo?.client_name || null;
                   const displayLogoUrl = sdrClient?.logo_url || null;
-                  const rowBgClass = idx % 2 === 0 ? "bg-white dark:bg-[#0f172a]" : "bg-slate-100 dark:bg-[#1a2332]";
+                  const rowBg = idx % 2 === 0 ? "#FFFFFF" : "#F1F5F9";
                   const pill = attendancePill(sdr);
                   return (
-                    <tr key={sdr} className={`group transition-colors ${rowBgClass}`}>
+                    <tr key={sdr} className="group transition-colors" style={{ backgroundColor: rowBg }}>
                       <td
-                        className={`sticky left-0 z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] ${rowBgClass}`}
-                        style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, overflow: "hidden" }}
+                        className="sticky left-0 z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
+                        style={{ width: SDR_COL_W, minWidth: SDR_COL_W, maxWidth: SDR_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
                       >
-                        <div className="text-sm font-medium leading-tight text-foreground" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div className="text-sm font-medium leading-tight" style={{ color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {sdr}
                         </div>
                       </td>
                       <td
-                        className={`sticky z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] ${rowBgClass}`}
-                        style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, overflow: "hidden" }}
+                        className="sticky z-10 px-4 py-3 align-middle group-hover:!bg-[#EFF6FF]"
+                        style={{ left: SDR_COL_W, width: CLIENT_COL_W, minWidth: CLIENT_COL_W, maxWidth: CLIENT_COL_W, backgroundColor: rowBg, overflow: "hidden" }}
                       >
                         {displayClientName ? (
                           <div className="flex items-center gap-2">
@@ -675,15 +677,15 @@ export const TeamHeatmap = ({ clients }: Props) => {
                                 {displayClientName.charAt(0)}
                               </span>
                             )}
-                            <span className="truncate text-sm text-foreground">{displayClientName}</span>
+                            <span className="truncate text-sm" style={{ color: "#0F172A" }}>{displayClientName}</span>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
                       <td
-                        className={`sticky z-10 px-2 py-3 align-middle group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] border-r-2 border-r-slate-200 dark:border-r-slate-700 ${rowBgClass}`}
-                        style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, textAlign: "center", overflow: "hidden" }}
+                        className="sticky z-10 px-2 py-3 align-middle group-hover:!bg-[#EFF6FF]"
+                        style={{ left: SDR_COL_W + CLIENT_COL_W, width: ATT_COL_W, minWidth: ATT_COL_W, maxWidth: ATT_COL_W, backgroundColor: rowBg, borderRight: "2px solid #E2E8F0", textAlign: "center", overflow: "hidden" }}
                       >
                         <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: pill.bg, color: pill.color, whiteSpace: "nowrap" }}>
                           {pill.label}
@@ -695,15 +697,14 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         const sqls = cell?.sqls || 0;
                         const future = isFutureColumn(k);
                         const style = future ? FUTURE_CELL_STYLE : CELL_STYLES[intensityLevel(dials, isHourMode)];
-                        const isZero = intensityLevel(dials, isHourMode) === 0 && !future;
                         return (
                           <td
                             key={k}
-                            className={`group-hover:!bg-[#EFF6FF] dark:group-hover:!bg-[#1e3a5f] ${rowBgClass}`}
-                            style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, padding: 4 }}
+                            className="group-hover:!bg-[#EFF6FF]"
+                            style={{ width: cellWidth, minWidth: cellWidth, maxWidth: cellWidth, padding: 4, backgroundColor: rowBg }}
                           >
                             <div
-                              className={`relative rounded-md flex items-center justify-center text-xs font-semibold ${isZero ? "dark:!bg-[#1e293b] dark:!text-slate-500 dark:!border dark:!border-slate-700" : ""} ${future ? "dark:!bg-[#1e293b] dark:!text-slate-600 dark:!border dark:!border-dashed dark:!border-slate-700" : ""}`}
+                              className="relative rounded-md flex items-center justify-center text-xs font-semibold"
                               style={{ width: "100%", minWidth: "100%", height: CELL_H, backgroundColor: style.bg, color: style.text, border: style.border }}
                               title={buildTooltip(sdr, k)}
                             >
@@ -727,12 +728,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
       {/* Summary stat cards */}
       {!loading && !errored && sdrs.length > 0 && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[
-              { title: "Total Dials",  value: summary.dials.toLocaleString(),       subtitle: null as string | null, icon: Phone,      iconColor: "text-amber-500",   iconBg: "bg-amber-500/10"   },
-              { title: "Answered",     value: summary.answered.toLocaleString(),    subtitle: `${summary.answerRate}% answer rate`,   icon: PhoneCall,  iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10"  },
-              { title: "SQLs",         value: summary.sqls.toLocaleString(),        subtitle: `${summary.convRate}% conversion rate`, icon: TargetIcon, iconColor: "text-rose-500",    iconBg: "bg-rose-500/10"     },
-              { title: "Active SDRs",  value: summary.activeSdrs.toLocaleString(),  subtitle: null,                                   icon: Users,      iconColor: "text-indigo-500",  iconBg: "bg-indigo-500/10"   },
+              { title: "Total Dials",     value: summary.dials.toLocaleString(),       subtitle: null as string | null,                  icon: Phone,        iconColor: "text-amber-500",   iconBg: "bg-amber-500/10"   },
+              { title: "Answered",        value: summary.answered.toLocaleString(),    subtitle: `${summary.answerRate}% answer rate`,   icon: PhoneCall,    iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10"  },
+              { title: "DM Conversations",value: summary.dms.toLocaleString(),         subtitle: null,                                   icon: MessageSquare, iconColor: "text-teal-500",    iconBg: "bg-teal-500/10"     },
+              { title: "SQLs",            value: summary.sqls.toLocaleString(),        subtitle: `${summary.convRate}% conversion rate`, icon: TargetIcon,   iconColor: "text-rose-500",    iconBg: "bg-rose-500/10"     },
+              { title: "Active SDRs",     value: summary.activeSdrs.toLocaleString(),  subtitle: null,                                   icon: Users,        iconColor: "text-indigo-500",  iconBg: "bg-indigo-500/10"   },
             ].map(card => (
               <Card key={card.title} className="bg-card/50 backdrop-blur-sm border-border">
                 <CardContent className="p-6">
@@ -767,23 +769,14 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
                       formatter={(v: any) => [`${Number(v).toLocaleString()} dials`, "Dials"]}
                     />
-                    <Bar dataKey="dials" radius={[4, 4, 0, 0]}>
-                      {chartData.map((_, idx) => (
-                        <Cell
-                          key={idx}
-                          fill="#0f172a"
-                          onMouseEnter={(e: any) => { if (e?.target) e.target.setAttribute("fill", "#1e3a5f"); }}
-                          onMouseLeave={(e: any) => { if (e?.target) e.target.setAttribute("fill", "#0f172a"); }}
-                        />
-                      ))}
-                    </Bar>
+                    <Bar dataKey="dials" radius={[4, 4, 0, 0]} fill="hsl(var(--foreground))" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="mt-3 flex items-center justify-between text-xs">
                 <div className="text-muted-foreground font-medium">Total: {summary.dials.toLocaleString()} dials</div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <span style={{ color: "#0f172a" }} className="text-base leading-none dark:text-white">●</span>
+                  <span className="text-base leading-none text-foreground">●</span>
                   <span>Dials</span>
                 </div>
               </div>
