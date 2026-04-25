@@ -882,7 +882,7 @@ const PerformanceMatrix = () => {
                       value="Total Dials →"
                       angle={-90}
                       position="insideLeft"
-                      offset={15}
+                      offset={25}
                       style={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     />
                   </YAxis>
@@ -950,7 +950,6 @@ const PerformanceMatrix = () => {
       {/* ── Quadrant filter + table ── */}
       <div>
         <div className="flex flex-wrap gap-2 mb-3 items-center">
-          <span className="text-sm text-muted-foreground">Filter table:</span>
           {[
             { key: "all" as const, label: "All SDRs", bg: "#f1f5f9", color: "#475569", border: "#cbd5e1" },
             { key: "HOHC" as const, label: "⭐ HO HC", bg: "#dcfce7", color: "#166534", border: "#86efac" },
@@ -972,7 +971,8 @@ const PerformanceMatrix = () => {
               {btn.label}
             </button>
           ))}
-          <span className="text-xs text-muted-foreground ml-1">
+          {/* Count badge — right-aligned, navy bg white text */}
+          <span className="ml-auto px-3 py-1 rounded-lg text-xs font-medium bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]">
             {filteredPoints.length} SDR{filteredPoints.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -981,22 +981,29 @@ const PerformanceMatrix = () => {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["SDR", "Client", "Dials", "SQLs", "Conv %", "vs Dial target", "vs Conv target", "Quadrant"].map(
-                  (h, i) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 text-xs font-bold whitespace-nowrap"
-                      style={{
-                        background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
-                        color: "#FFFFFF",
-                        textAlign: i >= 2 && i <= 6 ? "right" : "left",
-                        borderBottom: isDark ? "1px solid #334155" : "none",
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
+                {[
+                  { label: "SDR Name", align: "left" },
+                  { label: "Client", align: "left" },
+                  { label: "Dials", align: "right" },
+                  { label: "SQLs", align: "right" },
+                  { label: "Conv %", align: "right" },
+                  { label: "vs Dial target", align: "right" },
+                  { label: "vs Conv target", align: "right" },
+                  { label: "Quadrant", align: "left" },
+                ].map((h) => (
+                  <th
+                    key={h.label}
+                    className="px-4 py-3 text-sm font-bold whitespace-nowrap"
+                    style={{
+                      background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
+                      color: "#FFFFFF",
+                      textAlign: h.align as any,
+                      borderBottom: isDark ? "1px solid #334155" : "none",
+                    }}
+                  >
+                    {h.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -1017,14 +1024,36 @@ const PerformanceMatrix = () => {
                       : idx % 2 === 0
                         ? "#FFFFFF"
                         : "#F1F5F9";
+                    const rowHover = isDark ? "#1e3a5f" : "#EFF6FF";
                     const textCol = isDark ? "#E2E8F0" : "#0F172A";
                     const b = Q_BADGES[p.q];
                     const oDiff = p.dials - dialTarget;
                     const cDiff = parseFloat((p.conv - convTarget).toFixed(2));
                     const oColor = oDiff >= 0 ? "#16a34a" : "#dc2626";
                     const cColor = cDiff >= 0 ? "#16a34a" : "#dc2626";
+                    // Client lookup for logo + name
+                    const clientInfo = clients.find((c) => c.client_id === p.client);
+                    const clientName = clientInfo?.client_name || p.client;
+                    const clientLogo = clientInfo?.logo_url || null;
+                    // Quadrant badge — dark mode uses stronger contrast
+                    const badgeBg = isDark
+                      ? p.q === "HOHC"
+                        ? "#166534"
+                        : p.q === "LOHC"
+                          ? "#1e40af"
+                          : p.q === "HOLC"
+                            ? "#854d0e"
+                            : "#991b1b"
+                      : b.bg;
+                    const badgeText = isDark ? "#ffffff" : b.color;
                     return (
-                      <tr key={p.name} style={{ backgroundColor: rowBg }}>
+                      <tr
+                        key={p.name}
+                        style={{ backgroundColor: rowBg }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = rowHover)}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = rowBg)}
+                      >
+                        {/* SDR Name */}
                         <td className="px-4 py-3" style={{ color: textCol }}>
                           <div className="flex items-center gap-2">
                             <div
@@ -1033,31 +1062,51 @@ const PerformanceMatrix = () => {
                             >
                               {getInitials(p.name)}
                             </div>
-                            <span className="font-medium">{p.name}</span>
+                            <span className="text-sm font-medium">{p.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{p.client}</td>
-                        <td className="px-4 py-3 text-right font-mono" style={{ color: textCol }}>
+                        {/* Client logo + name */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {clientLogo ? (
+                              <img
+                                src={clientLogo}
+                                alt=""
+                                className="w-4 h-4 rounded-sm object-contain flex-shrink-0"
+                              />
+                            ) : (
+                              <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                                {clientName.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                            <span className="text-sm" style={{ color: textCol }}>
+                              {clientName}
+                            </span>
+                          </div>
+                        </td>
+                        {/* Numbers — right-aligned, no font-mono, text-sm */}
+                        <td className="px-4 py-3 text-sm text-right" style={{ color: textCol }}>
                           {p.dials.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono" style={{ color: textCol }}>
+                        <td className="px-4 py-3 text-sm text-right" style={{ color: textCol }}>
                           {p.sqls}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono" style={{ color: textCol }}>
+                        <td className="px-4 py-3 text-sm text-right" style={{ color: textCol }}>
                           {p.conv.toFixed(2)}%
                         </td>
-                        <td className="px-4 py-3 text-right font-mono" style={{ color: oColor }}>
+                        <td className="px-4 py-3 text-sm text-right" style={{ color: oColor }}>
                           {oDiff >= 0 ? "+" : ""}
                           {oDiff.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono" style={{ color: cColor }}>
+                        <td className="px-4 py-3 text-sm text-right" style={{ color: cColor }}>
                           {cDiff >= 0 ? "+" : ""}
                           {cDiff.toFixed(2)}%
                         </td>
+                        {/* Quadrant badge — dark mode aware */}
                         <td className="px-4 py-3">
                           <span
                             className="text-xs font-medium px-2 py-0.5 rounded"
-                            style={{ background: b.bg, color: b.color }}
+                            style={{ background: badgeBg, color: badgeText }}
                           >
                             {b.label}
                           </span>
