@@ -314,7 +314,10 @@ const PerformanceMatrix = () => {
     () => Math.max(...points.map((p) => p.dials), dialTarget * 1.5) * 1.15,
     [points, dialTarget],
   );
-  const maxConv = useMemo(() => Math.max(...points.map((p) => p.conv), convTarget * 1.5) + 0.3, [points, convTarget]);
+  const maxConv = useMemo(() => {
+    const dataMax = points.length > 0 ? Math.max(...points.map((p) => p.conv)) : convTarget;
+    return dataMax + 0.3;
+  }, [points, convTarget]);
 
   // 95th percentile cap for X axis — prevents outliers like PE (50%+ conv) squishing everyone else
   const xAxisMax = useMemo(() => {
