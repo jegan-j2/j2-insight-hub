@@ -133,7 +133,7 @@ const SDRDot = (props: any) => {
   const initials = getInitials(payload.name);
   return (
     <g opacity={dimmed ? 0.2 : 1}>
-      <circle cx={cx} cy={cy} r={18} fill={color + "cc"} stroke={color} strokeWidth={1.5} />
+      <circle cx={cx} cy={cy} r={14} fill={color + "cc"} stroke={color} strokeWidth={1.5} />
       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={9} fontWeight={700}>
         {initials}
       </text>
@@ -438,7 +438,7 @@ const PerformanceMatrix = () => {
         <div className="flex-shrink-0">
           <button
             onClick={() => setHelpOpen((v) => !v)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-2 bg-card"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-2 bg-card hover:bg-muted/30"
           >
             <HelpCircle className="h-4 w-4" />
             What do the quadrants mean?
@@ -658,8 +658,8 @@ const PerformanceMatrix = () => {
         .j2-slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; outline: none; cursor: pointer; }
         .j2-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #0f172a; }
         .j2-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; border: 2px solid #fff; }
-        .dark .j2-slider::-webkit-slider-thumb { background: #ffffff; box-shadow: 0 0 0 2px #0f172a, 0 0 0 3px #ffffff; }
-        .dark .j2-slider::-moz-range-thumb { background: #ffffff; }
+        .dark .j2-slider::-webkit-slider-thumb { background: #f1f5f9; box-shadow: 0 0 0 2px #1e293b, 0 0 0 3px #f1f5f9; }
+        .dark .j2-slider::-moz-range-thumb { background: #f1f5f9; border-color: #1e293b; }
         .j2-num-input { width: 64px; border: 1px solid hsl(var(--border)); border-radius: 6px; padding: 2px 6px; font-size: 13px; font-weight: 500; background: hsl(var(--background)); color: hsl(var(--foreground)); text-align: right; outline: none; }
         .j2-num-input:focus { border-color: #0f172a; }
       `}</style>
@@ -684,9 +684,13 @@ const PerformanceMatrix = () => {
             step={10}
             onChange={(e) => setPendingDial(Number(e.target.value))}
             className="j2-slider w-28"
-            style={{
-              background: `linear-gradient(to right, ${isDark ? "#e2e8f0" : "#0f172a"} ${((pendingDial - 10) / (Math.max(Math.ceil((maxDials || 3000) * 0.9), 500) - 10)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
-            }}
+            style={(() => {
+              const max = Math.max(Math.ceil((maxDials || 3000) * 0.9), 500);
+              const pct = ((pendingDial - 10) / (max - 10)) * 100;
+              const fill = isDark ? "#e2e8f0" : "#0f172a";
+              const track = isDark ? "#334155" : "#cbd5e1";
+              return { background: `linear-gradient(to right, ${fill} ${pct}%, ${track} ${pct}%)` };
+            })()}
           />
           <input
             type="number"
@@ -719,9 +723,13 @@ const PerformanceMatrix = () => {
             step={0.1}
             onChange={(e) => setPendingConv(parseFloat(Number(e.target.value).toFixed(1)))}
             className="j2-slider w-28"
-            style={{
-              background: `linear-gradient(to right, ${isDark ? "#e2e8f0" : "#0f172a"} ${((pendingConv - 0.1) / (Math.max((maxConv || 5) * 0.9, 5) - 0.1)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
-            }}
+            style={(() => {
+              const max = Math.max((maxConv || 5) * 0.9, 5);
+              const pct = ((pendingConv - 0.1) / (max - 0.1)) * 100;
+              const fill = isDark ? "#e2e8f0" : "#0f172a";
+              const track = isDark ? "#334155" : "#cbd5e1";
+              return { background: `linear-gradient(to right, ${fill} ${pct}%, ${track} ${pct}%)` };
+            })()}
           />
           <input
             type="number"
@@ -852,7 +860,7 @@ const PerformanceMatrix = () => {
                     tick={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     tickLine={false}
                     axisLine={{ stroke: gridColor }}
-                    tickFormatter={(v) => (v === 0 ? "" : v.toFixed(1) + "%")}
+                    tickFormatter={(v) => (v === 0 ? "0%" : v.toFixed(1) + "%")}
                   >
                     <Label
                       value="SQL Conversion Rate (%) →"
@@ -868,7 +876,7 @@ const PerformanceMatrix = () => {
                     tick={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     tickLine={false}
                     axisLine={{ stroke: gridColor }}
-                    tickFormatter={(v) => (v === 0 ? "" : v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v))}
+                    tickFormatter={(v) => (v === 0 ? "0" : v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v))}
                   >
                     <Label
                       value="Total Dials →"
@@ -879,8 +887,30 @@ const PerformanceMatrix = () => {
                     />
                   </YAxis>
                   <Tooltip content={<MatrixTooltip />} />
-                  <ReferenceLine x={convTarget} stroke={refColor} strokeWidth={1.5} strokeDasharray="6 4" />
-                  <ReferenceLine y={dialTarget} stroke={refColor} strokeWidth={1.5} strokeDasharray="6 4" />
+                  <ReferenceLine
+                    x={convTarget}
+                    stroke={refColor}
+                    strokeWidth={1.5}
+                    strokeDasharray="6 4"
+                    label={{
+                      value: `${convTarget.toFixed(1)}% conv target`,
+                      position: "insideTopRight",
+                      fontSize: 10,
+                      fill: isDark ? "#64748b" : "#94a3b8",
+                    }}
+                  />
+                  <ReferenceLine
+                    y={dialTarget}
+                    stroke={refColor}
+                    strokeWidth={1.5}
+                    strokeDasharray="6 4"
+                    label={{
+                      value: `${dialTarget.toLocaleString()} dial target`,
+                      position: "insideTopRight",
+                      fontSize: 10,
+                      fill: isDark ? "#64748b" : "#94a3b8",
+                    }}
+                  />
                   <Scatter
                     data={points}
                     shape={(props: any) => (
