@@ -413,10 +413,79 @@ const PerformanceMatrix = () => {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-1">Performance Matrix</h1>
-          <p className="text-muted-foreground">Plot every SDR by output volume and SQL conversion quality</p>
+          <p className="text-muted-foreground mb-3">Plot every SDR by output volume and SQL conversion quality</p>
+          {/* Help toggle sits directly below subtitle */}
+          <button
+            onClick={() => setHelpOpen((v) => !v)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <HelpCircle className="h-4 w-4" />
+            What do the quadrants mean?
+            <ChevronDown className={cn("h-3 w-3 transition-transform", helpOpen && "rotate-180")} />
+          </button>
+          {helpOpen && (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl">
+              {[
+                {
+                  q: "HOHC" as Quadrant,
+                  title: "HO HC — Star performer",
+                  body: "High dials, high conversion. Your best people. Consistent activity and quality SQLs.",
+                  action: "Reinforce and scale. Recognise their work.",
+                  bg: "#f0fdf4",
+                  border: "#86efac",
+                  titleColor: "#166534",
+                  actionColor: "#16a34a",
+                },
+                {
+                  q: "LOHC" as Quadrant,
+                  title: "LO HC — Coach quantity",
+                  body: "Low dials but high conversion. Has the skill but isn't doing enough of it.",
+                  action: "Address motivation, time management, or blockers.",
+                  bg: "#eff6ff",
+                  border: "#93c5fd",
+                  titleColor: "#1e40af",
+                  actionColor: "#2563eb",
+                },
+                {
+                  q: "HOLC" as Quadrant,
+                  title: "HO LC — Coach quality",
+                  body: "High dials, low conversion. Working hard but quality is poor. SQLs getting rejected.",
+                  action: "Review calls together. Coach SQL quality. Set a timeframe.",
+                  bg: "#fefce8",
+                  border: "#fde047",
+                  titleColor: "#854d0e",
+                  actionColor: "#d97706",
+                },
+                {
+                  q: "LOLC" as Quadrant,
+                  title: "LO LC — At risk",
+                  body: "Low dials and low conversion. Not doing the work and the work they do is poor.",
+                  action: "Replace quickly. Use the recruitment pipeline.",
+                  bg: "#fef2f2",
+                  border: "#fca5a5",
+                  titleColor: "#991b1b",
+                  actionColor: "#dc2626",
+                },
+              ].map((h) => (
+                <div
+                  key={h.q}
+                  className="rounded-lg p-3 border text-sm"
+                  style={{ background: h.bg, borderColor: h.border }}
+                >
+                  <p className="font-medium mb-1" style={{ color: h.titleColor }}>
+                    {h.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-2">{h.body}</p>
+                  <p className="text-xs italic" style={{ color: h.actionColor }}>
+                    {h.action}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          {/* Export */}
+        {/* Export — top right */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -546,43 +615,6 @@ const PerformanceMatrix = () => {
               />
             </PopoverContent>
           </Popover>
-
-          {/* Client filter */}
-          <div className="ml-auto">
-            <Select
-              value={clientFilter}
-              onValueChange={(v) => {
-                setClientFilter(v);
-                setQFilter("all");
-              }}
-            >
-              <SelectTrigger
-                className={cn(
-                  "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md",
-                  "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white font-semibold",
-                )}
-              >
-                <SelectValue placeholder="All Clients" />
-              </SelectTrigger>
-              <SelectContent className="z-[100] bg-card">
-                <SelectItem value="all">All Clients</SelectItem>
-                {clients.map((c) => (
-                  <SelectItem key={c.client_id} value={c.client_id}>
-                    <span className="flex items-center gap-2">
-                      {c.logo_url ? (
-                        <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
-                      ) : (
-                        <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
-                          {c.client_name.charAt(0)}
-                        </span>
-                      )}
-                      {c.client_name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         {/* Date range display */}
@@ -597,83 +629,19 @@ const PerformanceMatrix = () => {
         )}
       </div>
 
-      {/* ── Help panel ── */}
-      <div>
-        <button
-          onClick={() => setHelpOpen((v) => !v)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <HelpCircle className="h-4 w-4" />
-          What do the quadrants mean?
-          <ChevronDown className={cn("h-3 w-3 transition-transform", helpOpen && "rotate-180")} />
-        </button>
-        {helpOpen && (
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              {
-                q: "HOHC" as Quadrant,
-                title: "HO HC — Star performer",
-                body: "High dials, high conversion. Your best people. Consistent activity and quality SQLs.",
-                action: "Reinforce and scale. Recognise their work.",
-                bg: "#f0fdf4",
-                border: "#86efac",
-                titleColor: "#166534",
-                actionColor: "#16a34a",
-              },
-              {
-                q: "LOHC" as Quadrant,
-                title: "LO HC — Coach quantity",
-                body: "Low dials but high conversion. Has the skill but isn't doing enough of it.",
-                action: "Address motivation, time management, or blockers.",
-                bg: "#eff6ff",
-                border: "#93c5fd",
-                titleColor: "#1e40af",
-                actionColor: "#2563eb",
-              },
-              {
-                q: "HOLC" as Quadrant,
-                title: "HO LC — Coach quality",
-                body: "High dials, low conversion. Working hard but quality is poor. SQLs getting rejected.",
-                action: "Review calls together. Coach SQL quality. Set a timeframe.",
-                bg: "#fefce8",
-                border: "#fde047",
-                titleColor: "#854d0e",
-                actionColor: "#d97706",
-              },
-              {
-                q: "LOLC" as Quadrant,
-                title: "LO LC — At risk",
-                body: "Low dials and low conversion. Not doing the work and the work they do is poor.",
-                action: "Replace quickly. Use the recruitment pipeline.",
-                bg: "#fef2f2",
-                border: "#fca5a5",
-                titleColor: "#991b1b",
-                actionColor: "#dc2626",
-              },
-            ].map((h) => (
-              <div
-                key={h.q}
-                className="rounded-lg p-3 border text-sm"
-                style={{ background: h.bg, borderColor: h.border }}
-              >
-                <p className="font-medium mb-1" style={{ color: h.titleColor }}>
-                  {h.title}
-                </p>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-2">{h.body}</p>
-                <p className="text-xs italic" style={{ color: h.actionColor }}>
-                  {h.action}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Threshold controls ── */}
+      {/* ── Threshold controls + client filter ── */}
+      <style>{`
+        .j2-slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: #e2e8f0; outline: none; }
+        .j2-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; }
+        .j2-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; border: none; }
+        .dark .j2-slider { background: #334155; }
+        .dark .j2-slider::-webkit-slider-thumb { background: #ffffff; }
+        .dark .j2-slider::-moz-range-thumb { background: #ffffff; }
+      `}</style>
       <div className="flex flex-wrap items-center gap-6 p-4 bg-card border border-border rounded-lg">
         <span className="text-sm font-medium text-foreground">Thresholds</span>
         <div className="flex items-center gap-3">
-          <label className="text-sm text-muted-foreground">Dial target (O)</label>
+          <label className="text-sm text-muted-foreground">Dial target</label>
           <input
             type="range"
             min={10}
@@ -681,12 +649,17 @@ const PerformanceMatrix = () => {
             value={dialTarget}
             step={10}
             onChange={(e) => setDialTarget(Number(e.target.value))}
-            className="w-32"
+            className="j2-slider w-32"
           />
           <span className="text-sm font-medium text-foreground w-20">{dialTarget.toLocaleString()} dials</span>
         </div>
         <div className="flex items-center gap-3">
-          <label className="text-sm text-muted-foreground">Conv % target (C)</label>
+          <label className="text-sm text-muted-foreground cursor-help" title="Conv % = (SQLs ÷ Total Dials) × 100">
+            Conv % target
+            <span className="ml-1 text-xs text-muted-foreground/60" title="Conv % = (SQLs ÷ Total Dials) × 100">
+              ⓘ
+            </span>
+          </label>
           <input
             type="range"
             min={0.1}
@@ -694,9 +667,45 @@ const PerformanceMatrix = () => {
             value={convTarget}
             step={0.1}
             onChange={(e) => setConvTarget(parseFloat(Number(e.target.value).toFixed(1)))}
-            className="w-32"
+            className="j2-slider w-32"
           />
           <span className="text-sm font-medium text-foreground w-16">{convTarget.toFixed(1)}%</span>
+        </div>
+        {/* Client filter — far right of threshold bar */}
+        <div className="ml-auto">
+          <Select
+            value={clientFilter}
+            onValueChange={(v) => {
+              setClientFilter(v);
+              setQFilter("all");
+            }}
+          >
+            <SelectTrigger
+              className={cn(
+                "w-[180px] min-h-[36px] text-xs sm:text-sm rounded-md",
+                "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white font-semibold",
+              )}
+            >
+              <SelectValue placeholder="All Clients" />
+            </SelectTrigger>
+            <SelectContent className="z-[100] bg-card">
+              <SelectItem value="all">All Clients</SelectItem>
+              {clients.map((c) => (
+                <SelectItem key={c.client_id} value={c.client_id}>
+                  <span className="flex items-center gap-2">
+                    {c.logo_url ? (
+                      <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
+                    ) : (
+                      <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                        {c.client_name.charAt(0)}
+                      </span>
+                    )}
+                    {c.client_name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -718,13 +727,13 @@ const PerformanceMatrix = () => {
             valueColor: undefined,
           },
           {
-            label: "Hitting dial target",
+            label: "Hitting dial target (O)",
             value: `${stats.hitO}/${stats.n}`,
             sub: `${Math.round((stats.hitO / stats.n) * 100)}% of team`,
             valueColor: undefined,
           },
           {
-            label: "Hitting conv target",
+            label: "Hitting conv target (C)",
             value: `${stats.hitC}/${stats.n}`,
             sub: `${Math.round((stats.hitC / stats.n) * 100)}% of team`,
             valueColor: undefined,
