@@ -232,7 +232,7 @@ const PerformanceMatrix = () => {
   const [convTarget, setConvTarget] = useState(1.5);
 
   // ── Data ───────────────────────────────────────────────────────
-  const [rawData, setRawData] = useState<LeaderboardRow[]>([]);
+  const [rawData, setRawData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [qFilter, setQFilter] = useState<Quadrant | "all">("all");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -245,14 +245,14 @@ const PerformanceMatrix = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.rpc("get_team_leaderboard", {
-        p_start_date: format(dateRange.from, "yyyy-MM-dd"),
-        p_end_date: format(dateRange.to, "yyyy-MM-dd"),
+        p_start_date: format(dateRange.from, "yyyy-MM-dd") + "T00:00:00+11:00",
+        p_end_date: format(dateRange.to, "yyyy-MM-dd") + "T23:59:59+11:00",
         p_client_id: clientFilter === "all" ? null : clientFilter,
       } as any);
       if (error) {
         console.error(error);
       } else {
-        setRawData((data || []) as LeaderboardRow[]);
+        setRawData((data || []) as any[]);
       }
     } finally {
       setLoading(false);
@@ -267,16 +267,18 @@ const PerformanceMatrix = () => {
   const points: SDRPoint[] = useMemo(
     () =>
       rawData
-        .filter((r) => r.totalDials > 0)
-        .map((r) => {
-          const conv = parseFloat(((r.totalSQLs / r.totalDials) * 100).toFixed(2));
+        .filter((r: any) => Number(r.total_dials) > 0)
+        .map((r: any) => {
+          const dials = Number(r.total_dials) || 0;
+          const sqls = Number(r.sqls) || 0;
+          const conv = dials > 0 ? parseFloat(((sqls / dials) * 100).toFixed(2)) : 0;
           return {
-            name: r.name,
-            client: r.clientId,
-            dials: r.totalDials,
-            sqls: r.totalSQLs,
+            name: r.sdr_name || r.name || "",
+            client: r.client_id || "",
+            dials,
+            sqls,
             conv,
-            q: getQuadrant(r.totalDials, conv, dialTarget, convTarget),
+            q: getQuadrant(dials, conv, dialTarget, convTarget),
           };
         }),
     [rawData, dialTarget, convTarget],
