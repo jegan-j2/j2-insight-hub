@@ -316,6 +316,18 @@ const PerformanceMatrix = () => {
   );
   const maxConv = useMemo(() => Math.max(...points.map((p) => p.conv), convTarget * 1.5) * 1.2, [points, convTarget]);
 
+  // 95th percentile cap for X axis — prevents outliers like PE (50%+ conv) squishing everyone else
+  const xAxisMax = useMemo(() => {
+    if (points.length === 0) return 5;
+    const sorted = [...points].map((p) => p.conv).sort((a, b) => a - b);
+    const p95idx = Math.floor(sorted.length * 0.95);
+    const p95val = sorted[Math.min(p95idx, sorted.length - 1)];
+    // If the outlier is more than 3x the median, cap at p95 * 1.3, else use normal maxConv
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const hasOutlier = p95val > median * 2.5;
+    return hasOutlier ? p95val * 1.3 : maxConv;
+  }, [points, maxConv]);
+
   // ── Export ─────────────────────────────────────────────────────
   const buildExportRows = useCallback(() => {
     const headers = [
@@ -441,7 +453,7 @@ const PerformanceMatrix = () => {
           {[
             {
               q: "HOHC" as Quadrant,
-              title: "HO HC — Star performer",
+              title: "HO HC - Star performer",
               body: "High dials, high conversion. Your best people. Consistent activity and quality SQLs.",
               action: "Reinforce and scale. Recognise their work.",
               bg: "#f0fdf4",
@@ -451,7 +463,7 @@ const PerformanceMatrix = () => {
             },
             {
               q: "LOHC" as Quadrant,
-              title: "LO HC — Coach quantity",
+              title: "LO HC - Coach quantity",
               body: "Low dials but high conversion. Has the skill but isn't doing enough of it.",
               action: "Address motivation, time management, or blockers.",
               bg: "#eff6ff",
@@ -461,7 +473,7 @@ const PerformanceMatrix = () => {
             },
             {
               q: "HOLC" as Quadrant,
-              title: "HO LC — Coach quality",
+              title: "HO LC - Coach quality",
               body: "High dials, low conversion. Working hard but quality is poor. SQLs getting rejected.",
               action: "Review calls together. Coach SQL quality. Set a timeframe.",
               bg: "#fefce8",
@@ -471,7 +483,7 @@ const PerformanceMatrix = () => {
             },
             {
               q: "LOLC" as Quadrant,
-              title: "LO LC — At risk",
+              title: "LO LC - At risk",
               body: "Low dials and low conversion. Not doing the work and the work they do is poor.",
               action: "Replace quickly. Use the recruitment pipeline.",
               bg: "#fef2f2",
@@ -651,13 +663,14 @@ const PerformanceMatrix = () => {
         .j2-num-input { width: 64px; border: 1px solid hsl(var(--border)); border-radius: 6px; padding: 2px 6px; font-size: 13px; font-weight: 500; background: hsl(var(--background)); color: hsl(var(--foreground)); text-align: right; outline: none; }
         .j2-num-input:focus { border-color: #0f172a; }
       `}</style>
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-lg">
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-card border border-border rounded-lg">
         <span className="text-sm font-medium text-foreground flex-shrink-0">Thresholds</span>
+        <div className="w-px h-5 bg-border flex-shrink-0" />
 
         {/* Dial target */}
         <div className="flex items-center gap-2">
           <span
-            className="text-sm text-muted-foreground cursor-help flex items-center gap-1"
+            className="text-sm text-muted-foreground cursor-help flex items-center gap-1 whitespace-nowrap"
             title="Total dials made in the selected period"
           >
             Dial target
@@ -672,7 +685,7 @@ const PerformanceMatrix = () => {
             onChange={(e) => setPendingDial(Number(e.target.value))}
             className="j2-slider w-28"
             style={{
-              background: `linear-gradient(to right, ${isDark ? "#ffffff" : "#0f172a"} ${((pendingDial - 10) / (Math.max(Math.ceil((maxDials || 3000) * 0.9), 500) - 10)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
+              background: `linear-gradient(to right, ${isDark ? "#e2e8f0" : "#0f172a"} ${((pendingDial - 10) / (Math.max(Math.ceil((maxDials || 3000) * 0.9), 500) - 10)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
             }}
           />
           <input
@@ -687,11 +700,13 @@ const PerformanceMatrix = () => {
           <span className="text-sm text-muted-foreground">dials</span>
         </div>
 
+        <div className="w-px h-5 bg-border flex-shrink-0" />
+
         {/* Conv % target */}
         <div className="flex items-center gap-2">
           <span
-            className="text-sm text-muted-foreground cursor-help flex items-center gap-1"
-            title="Conv % = (SQLs ÷ Total Dials) × 100"
+            className="text-sm text-muted-foreground cursor-help flex items-center gap-1 whitespace-nowrap"
+            title="SQLs ÷ Total Dials × 100"
           >
             Conv % target
             <span className="text-xs text-muted-foreground/60">ⓘ</span>
@@ -705,7 +720,7 @@ const PerformanceMatrix = () => {
             onChange={(e) => setPendingConv(parseFloat(Number(e.target.value).toFixed(1)))}
             className="j2-slider w-28"
             style={{
-              background: `linear-gradient(to right, ${isDark ? "#ffffff" : "#0f172a"} ${((pendingConv - 0.1) / (Math.max((maxConv || 5) * 0.9, 5) - 0.1)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
+              background: `linear-gradient(to right, ${isDark ? "#e2e8f0" : "#0f172a"} ${((pendingConv - 0.1) / (Math.max((maxConv || 5) * 0.9, 5) - 0.1)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
             }}
           />
           <input
@@ -719,6 +734,8 @@ const PerformanceMatrix = () => {
           />
           <span className="text-sm text-muted-foreground">%</span>
         </div>
+
+        <div className="w-px h-5 bg-border flex-shrink-0" />
 
         {/* Apply button */}
         <button
@@ -814,7 +831,7 @@ const PerformanceMatrix = () => {
       {/* ── Scatter chart ── */}
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-border">
-          <h3 className="text-base font-semibold text-foreground">Performance scatter - dials vs SQL conversion %</h3>
+          <h3 className="text-base font-semibold text-foreground">Performance Scatter - Dials vs SQL Conversion %</h3>
         </div>
         <CardContent className="p-5">
           {loading ? (
@@ -831,14 +848,14 @@ const PerformanceMatrix = () => {
                   <XAxis
                     type="number"
                     dataKey="conv"
-                    domain={[0, maxConv]}
+                    domain={[0, xAxisMax]}
                     tick={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     tickLine={false}
                     axisLine={{ stroke: gridColor }}
-                    tickFormatter={(v) => v.toFixed(1) + "%"}
+                    tickFormatter={(v) => (v === 0 ? "" : v.toFixed(1) + "%")}
                   >
                     <Label
-                      value="SQL conversion rate (%) →"
+                      value="SQL Conversion Rate (%) →"
                       position="insideBottom"
                       offset={-20}
                       style={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
@@ -851,10 +868,10 @@ const PerformanceMatrix = () => {
                     tick={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     tickLine={false}
                     axisLine={{ stroke: gridColor }}
-                    tickFormatter={(v) => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v))}
+                    tickFormatter={(v) => (v === 0 ? "" : v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v))}
                   >
                     <Label
-                      value="Total dials →"
+                      value="Total Dials →"
                       angle={-90}
                       position="insideLeft"
                       offset={15}
@@ -862,16 +879,10 @@ const PerformanceMatrix = () => {
                     />
                   </YAxis>
                   <Tooltip content={<MatrixTooltip />} />
-                  {/* Threshold lines */}
                   <ReferenceLine x={convTarget} stroke={refColor} strokeWidth={1.5} strokeDasharray="6 4" />
                   <ReferenceLine y={dialTarget} stroke={refColor} strokeWidth={1.5} strokeDasharray="6 4" />
                   <Scatter
-                    data={points.map((p, i) => ({
-                      ...p,
-                      // slight jitter to prevent overlap
-                      conv: p.conv + (i % 3 === 0 ? 0 : i % 3 === 1 ? 0.01 : -0.01),
-                      dials: p.dials + (i % 2 === 0 ? 0 : 8),
-                    }))}
+                    data={points}
                     shape={(props: any) => (
                       <SDRDot {...props} dimmed={qFilter !== "all" && !filteredNames.has(props.payload.name)} />
                     )}
