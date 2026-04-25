@@ -672,7 +672,7 @@ const PerformanceMatrix = () => {
             onChange={(e) => setPendingDial(Number(e.target.value))}
             className="j2-slider w-28"
             style={{
-              background: `linear-gradient(to right, #0f172a ${((pendingDial - 10) / (Math.max(Math.ceil((maxDials || 3000) * 0.9), 500) - 10)) * 100}%, #e2e8f0 0%)`,
+              background: `linear-gradient(to right, ${isDark ? "#ffffff" : "#0f172a"} ${((pendingDial - 10) / (Math.max(Math.ceil((maxDials || 3000) * 0.9), 500) - 10)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
             }}
           />
           <input
@@ -705,7 +705,7 @@ const PerformanceMatrix = () => {
             onChange={(e) => setPendingConv(parseFloat(Number(e.target.value).toFixed(1)))}
             className="j2-slider w-28"
             style={{
-              background: `linear-gradient(to right, #0f172a ${((pendingConv - 0.1) / (Math.max((maxConv || 5) * 0.9, 5) - 0.1)) * 100}%, #e2e8f0 0%)`,
+              background: `linear-gradient(to right, ${isDark ? "#ffffff" : "#0f172a"} ${((pendingConv - 0.1) / (Math.max((maxConv || 5) * 0.9, 5) - 0.1)) * 100}%, ${isDark ? "#334155" : "#e2e8f0"} 0%)`,
             }}
           />
           <input
@@ -814,25 +814,25 @@ const PerformanceMatrix = () => {
       {/* ── Scatter chart ── */}
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-border">
-          <h3 className="text-base font-semibold text-foreground">Performance scatter — dials vs SQL conversion %</h3>
+          <h3 className="text-base font-semibold text-foreground">Performance scatter - dials vs SQL conversion %</h3>
         </div>
         <CardContent className="p-5">
           {loading ? (
-            <div className="h-[400px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
+            <div className="h-[460px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
           ) : points.length === 0 ? (
-            <div className="h-[400px] flex items-center justify-center text-muted-foreground text-sm">
+            <div className="h-[460px] flex items-center justify-center text-muted-foreground text-sm">
               No data for this period
             </div>
           ) : (
-            <div className="h-[400px]">
+            <div className="h-[460px] relative">
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
+                <ScatterChart margin={{ top: 20, right: 160, bottom: 40, left: 20 }}>
                   <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
                   <XAxis
                     type="number"
                     dataKey="conv"
                     domain={[0, maxConv]}
-                    tick={{ fontSize: 11, fill: axisColor }}
+                    tick={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     tickLine={false}
                     axisLine={{ stroke: gridColor }}
                     tickFormatter={(v) => v.toFixed(1) + "%"}
@@ -840,25 +840,25 @@ const PerformanceMatrix = () => {
                     <Label
                       value="SQL conversion rate (%) →"
                       position="insideBottom"
-                      offset={-15}
-                      style={{ fontSize: 11, fill: axisColor }}
+                      offset={-20}
+                      style={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     />
                   </XAxis>
                   <YAxis
                     type="number"
                     dataKey="dials"
                     domain={[0, maxDials]}
-                    tick={{ fontSize: 11, fill: axisColor }}
+                    tick={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     tickLine={false}
                     axisLine={{ stroke: gridColor }}
-                    tickFormatter={(v) => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : v)}
+                    tickFormatter={(v) => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v))}
                   >
                     <Label
                       value="Total dials →"
                       angle={-90}
                       position="insideLeft"
                       offset={15}
-                      style={{ fontSize: 11, fill: axisColor }}
+                      style={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     />
                   </YAxis>
                   <Tooltip content={<MatrixTooltip />} />
@@ -866,29 +866,43 @@ const PerformanceMatrix = () => {
                   <ReferenceLine x={convTarget} stroke={refColor} strokeWidth={1.5} strokeDasharray="6 4" />
                   <ReferenceLine y={dialTarget} stroke={refColor} strokeWidth={1.5} strokeDasharray="6 4" />
                   <Scatter
-                    data={points}
+                    data={points.map((p, i) => ({
+                      ...p,
+                      // slight jitter to prevent overlap
+                      conv: p.conv + (i % 3 === 0 ? 0 : i % 3 === 1 ? 0.01 : -0.01),
+                      dials: p.dials + (i % 2 === 0 ? 0 : 8),
+                    }))}
                     shape={(props: any) => (
                       <SDRDot {...props} dimmed={qFilter !== "all" && !filteredNames.has(props.payload.name)} />
                     )}
                   />
                 </ScatterChart>
               </ResponsiveContainer>
+
+              {/* Legend — inside chart top-right */}
+              <div
+                className="absolute top-4 right-4 rounded-lg border border-border px-3 py-2.5 space-y-1.5"
+                style={{
+                  background: isDark ? "rgba(15,23,42,0.85)" : "rgba(255,255,255,0.9)",
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                {(["HOHC", "LOHC", "HOLC", "LOLC"] as Quadrant[]).map((q) => {
+                  const b = Q_BADGES[q];
+                  const count = stats.counts[q];
+                  return (
+                    <div key={q} className="flex items-center gap-2 text-xs">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: Q_COLORS[q] }} />
+                      <span className="font-medium" style={{ color: b.color }}>
+                        {b.label}
+                      </span>
+                      <span className="text-muted-foreground ml-auto pl-3">({count})</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-          {/* Quadrant labels overlay */}
-          <div className="mt-2 flex flex-wrap gap-3 justify-center">
-            {(["HOHC", "LOHC", "HOLC", "LOLC"] as Quadrant[]).map((q) => {
-              const b = Q_BADGES[q];
-              const count = stats.counts[q];
-              return (
-                <span key={q} className="flex items-center gap-1.5 text-xs">
-                  <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: Q_COLORS[q] }} />
-                  <span style={{ color: b.color }}>{b.label}</span>
-                  <span className="text-muted-foreground">({count})</span>
-                </span>
-              );
-            })}
-          </div>
         </CardContent>
       </Card>
 
