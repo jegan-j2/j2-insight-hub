@@ -879,7 +879,7 @@ const PerformanceMatrix = () => {
                     tickFormatter={(v) => (v === 0 ? "0" : v >= 1000 ? Math.round(v / 100) / 10 + "k" : String(v))}
                   >
                     <Label
-                      value="↑ Dials"
+                      value="Dials →"
                       angle={-90}
                       position="insideLeft"
                       offset={10}
@@ -954,7 +954,7 @@ const PerformanceMatrix = () => {
 
       {/* ── Quadrant filter + table ── */}
       <div>
-        <div className="flex flex-wrap gap-2 mb-3 items-center px-1">
+        <div className="flex flex-wrap gap-2 mb-3 items-center px-4">
           {[
             { key: "all" as const, label: "All SDRs", bg: "#f1f5f9", color: "#475569", border: "#cbd5e1" },
             { key: "HOHC" as const, label: "⭐ HO HC", bg: "#dcfce7", color: "#166534", border: "#86efac" },
@@ -977,7 +977,7 @@ const PerformanceMatrix = () => {
             </button>
           ))}
           {/* Count badge — right-aligned, navy bg white text, same height as pills */}
-          <span className="ml-auto mr-1 px-3 py-1.5 rounded-full text-xs font-medium bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]">
+          <span className="ml-auto mr-3 px-3 py-1.5 rounded-full text-xs font-medium bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]">
             {filteredPoints.length} SDR{filteredPoints.length !== 1 ? "s" : ""}
           </span>
         </div>
