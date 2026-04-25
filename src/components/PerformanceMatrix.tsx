@@ -175,7 +175,7 @@ const MatrixTooltip = ({ active, payload }: any) => {
         className="inline-block mt-2 text-[10px] font-medium px-2 py-0.5 rounded"
         style={{ background: b.bg, color: b.color }}
       >
-        {b.label} — {Q_LABELS[d.q]}
+        {b.label} - {Q_LABELS[d.q]}
       </span>
     </div>
   );
@@ -863,7 +863,7 @@ const PerformanceMatrix = () => {
                     tickFormatter={(v) => (v === 0 ? "0%" : v.toFixed(1) + "%")}
                   >
                     <Label
-                      value="SQL Conversion Rate (%) →"
+                      value="Conv % →"
                       position="insideBottom"
                       offset={-20}
                       style={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
@@ -876,13 +876,13 @@ const PerformanceMatrix = () => {
                     tick={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     tickLine={false}
                     axisLine={{ stroke: gridColor }}
-                    tickFormatter={(v) => (v === 0 ? "0" : v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(v))}
+                    tickFormatter={(v) => (v === 0 ? "0" : v >= 1000 ? Math.round(v / 100) / 10 + "k" : String(v))}
                   >
                     <Label
-                      value="Total Dials →"
+                      value="Dials →"
                       angle={-90}
                       position="insideLeft"
-                      offset={25}
+                      offset={35}
                       style={{ fontSize: 12, fill: isDark ? "#94a3b8" : "#475569", fontWeight: 500 }}
                     />
                   </YAxis>
@@ -971,8 +971,8 @@ const PerformanceMatrix = () => {
               {btn.label}
             </button>
           ))}
-          {/* Count badge — right-aligned, navy bg white text */}
-          <span className="ml-auto px-3 py-1 rounded-lg text-xs font-medium bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]">
+          {/* Count badge — right-aligned, navy bg white text, same height as pills */}
+          <span className="ml-auto px-3 py-1.5 rounded-full text-xs font-medium bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]">
             {filteredPoints.length} SDR{filteredPoints.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -984,11 +984,11 @@ const PerformanceMatrix = () => {
                 {[
                   { label: "SDR Name", align: "left" },
                   { label: "Client", align: "left" },
-                  { label: "Dials", align: "right" },
-                  { label: "SQLs", align: "right" },
-                  { label: "Conv %", align: "right" },
-                  { label: "vs Dial target", align: "right" },
-                  { label: "vs Conv target", align: "right" },
+                  { label: "Dials", align: "center" },
+                  { label: "SQLs", align: "center" },
+                  { label: "Conv %", align: "center" },
+                  { label: "vs Dial target", align: "center" },
+                  { label: "vs Conv % target", align: "center" },
                   { label: "Quadrant", align: "left" },
                 ].map((h) => (
                   <th
@@ -1084,21 +1084,21 @@ const PerformanceMatrix = () => {
                             </span>
                           </div>
                         </td>
-                        {/* Numbers — right-aligned, no font-mono, text-sm */}
-                        <td className="px-4 py-3 text-sm text-right" style={{ color: textCol }}>
+                        {/* Numbers — centre-aligned, text-sm */}
+                        <td className="px-4 py-3 text-sm text-center" style={{ color: textCol }}>
                           {p.dials.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right" style={{ color: textCol }}>
+                        <td className="px-4 py-3 text-sm text-center" style={{ color: textCol }}>
                           {p.sqls}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right" style={{ color: textCol }}>
+                        <td className="px-4 py-3 text-sm text-center" style={{ color: textCol }}>
                           {p.conv.toFixed(2)}%
                         </td>
-                        <td className="px-4 py-3 text-sm text-right" style={{ color: oColor }}>
+                        <td className="px-4 py-3 text-sm text-center" style={{ color: oColor }}>
                           {oDiff >= 0 ? "+" : ""}
                           {oDiff.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right" style={{ color: cColor }}>
+                        <td className="px-4 py-3 text-sm text-center" style={{ color: cColor }}>
                           {cDiff >= 0 ? "+" : ""}
                           {cDiff.toFixed(2)}%
                         </td>
@@ -1123,7 +1123,7 @@ const PerformanceMatrix = () => {
         {points.length > 0 && (
           <div className="mt-4 p-4 bg-card border border-border rounded-lg">
             <p className="text-xs text-muted-foreground mb-2">
-              Team distribution — {points.length} SDR{points.length !== 1 ? "s" : ""}
+              Team distribution - {points.length} SDR{points.length !== 1 ? "s" : ""}
             </p>
             <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5">
               {(["HOHC", "LOHC", "HOLC", "LOLC"] as Quadrant[]).map(
