@@ -227,9 +227,16 @@ const PerformanceMatrix = () => {
 
   const showCampaignFilter = !!selectedClient?.campaign_start && !!selectedClient?.campaign_end;
 
-  // ── Thresholds ─────────────────────────────────────────────────
+  // ── Thresholds (applied on click) ─────────────────────────────
   const [dialTarget, setDialTarget] = useState(100);
   const [convTarget, setConvTarget] = useState(1.5);
+  const [pendingDial, setPendingDial] = useState(100);
+  const [pendingConv, setPendingConv] = useState(1.5);
+
+  const applyThresholds = useCallback(() => {
+    setDialTarget(pendingDial);
+    setConvTarget(pendingConv);
+  }, [pendingDial, pendingConv]);
 
   // ── Data ───────────────────────────────────────────────────────
   const [rawData, setRawData] = useState<any[]>([]);
@@ -414,102 +421,81 @@ const PerformanceMatrix = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-1">Performance Matrix</h1>
           <p className="text-muted-foreground mb-3">Plot every SDR by output volume and SQL conversion quality</p>
-          {/* Help toggle sits directly below subtitle */}
+        </div>
+        {/* Quadrant help — top right */}
+        <div className="flex-shrink-0">
           <button
             onClick={() => setHelpOpen((v) => !v)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-2 bg-card"
           >
             <HelpCircle className="h-4 w-4" />
             What do the quadrants mean?
             <ChevronDown className={cn("h-3 w-3 transition-transform", helpOpen && "rotate-180")} />
           </button>
-          {helpOpen && (
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl">
-              {[
-                {
-                  q: "HOHC" as Quadrant,
-                  title: "HO HC — Star performer",
-                  body: "High dials, high conversion. Your best people. Consistent activity and quality SQLs.",
-                  action: "Reinforce and scale. Recognise their work.",
-                  bg: "#f0fdf4",
-                  border: "#86efac",
-                  titleColor: "#166534",
-                  actionColor: "#16a34a",
-                },
-                {
-                  q: "LOHC" as Quadrant,
-                  title: "LO HC — Coach quantity",
-                  body: "Low dials but high conversion. Has the skill but isn't doing enough of it.",
-                  action: "Address motivation, time management, or blockers.",
-                  bg: "#eff6ff",
-                  border: "#93c5fd",
-                  titleColor: "#1e40af",
-                  actionColor: "#2563eb",
-                },
-                {
-                  q: "HOLC" as Quadrant,
-                  title: "HO LC — Coach quality",
-                  body: "High dials, low conversion. Working hard but quality is poor. SQLs getting rejected.",
-                  action: "Review calls together. Coach SQL quality. Set a timeframe.",
-                  bg: "#fefce8",
-                  border: "#fde047",
-                  titleColor: "#854d0e",
-                  actionColor: "#d97706",
-                },
-                {
-                  q: "LOLC" as Quadrant,
-                  title: "LO LC — At risk",
-                  body: "Low dials and low conversion. Not doing the work and the work they do is poor.",
-                  action: "Replace quickly. Use the recruitment pipeline.",
-                  bg: "#fef2f2",
-                  border: "#fca5a5",
-                  titleColor: "#991b1b",
-                  actionColor: "#dc2626",
-                },
-              ].map((h) => (
-                <div
-                  key={h.q}
-                  className="rounded-lg p-3 border text-sm"
-                  style={{ background: h.bg, borderColor: h.border }}
-                >
-                  <p className="font-medium mb-1" style={{ color: h.titleColor }}>
-                    {h.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-2">{h.body}</p>
-                  <p className="text-xs italic" style={{ color: h.actionColor }}>
-                    {h.action}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        {/* Export — top right */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                disabled={loading || points.length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50 min-h-[40px]"
-              >
-                <Download className="h-4 w-4" />
-                Export
-                <ChevronDown className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportCSV} disabled={exportingCSV}>
-                <FileText className="h-4 w-4 mr-2" />
-                Export as CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel} disabled={exportingExcel}>
-                <Table2 className="h-4 w-4 mr-2" />
-                Export as Excel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
+
+      {/* Quadrant help panel — below header when open */}
+      {helpOpen && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            {
+              q: "HOHC" as Quadrant,
+              title: "HO HC — Star performer",
+              body: "High dials, high conversion. Your best people. Consistent activity and quality SQLs.",
+              action: "Reinforce and scale. Recognise their work.",
+              bg: "#f0fdf4",
+              border: "#86efac",
+              titleColor: "#166534",
+              actionColor: "#16a34a",
+            },
+            {
+              q: "LOHC" as Quadrant,
+              title: "LO HC — Coach quantity",
+              body: "Low dials but high conversion. Has the skill but isn't doing enough of it.",
+              action: "Address motivation, time management, or blockers.",
+              bg: "#eff6ff",
+              border: "#93c5fd",
+              titleColor: "#1e40af",
+              actionColor: "#2563eb",
+            },
+            {
+              q: "HOLC" as Quadrant,
+              title: "HO LC — Coach quality",
+              body: "High dials, low conversion. Working hard but quality is poor. SQLs getting rejected.",
+              action: "Review calls together. Coach SQL quality. Set a timeframe.",
+              bg: "#fefce8",
+              border: "#fde047",
+              titleColor: "#854d0e",
+              actionColor: "#d97706",
+            },
+            {
+              q: "LOLC" as Quadrant,
+              title: "LO LC — At risk",
+              body: "Low dials and low conversion. Not doing the work and the work they do is poor.",
+              action: "Replace quickly. Use the recruitment pipeline.",
+              bg: "#fef2f2",
+              border: "#fca5a5",
+              titleColor: "#991b1b",
+              actionColor: "#dc2626",
+            },
+          ].map((h) => (
+            <div
+              key={h.q}
+              className="rounded-lg p-3 border text-sm"
+              style={{ background: h.bg, borderColor: h.border }}
+            >
+              <p className="font-medium mb-1" style={{ color: h.titleColor }}>
+                {h.title}
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-2">{h.body}</p>
+              <p className="text-xs italic" style={{ color: h.actionColor }}>
+                {h.action}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Filter row ── */}
       <div className="space-y-2">
@@ -615,6 +601,32 @@ const PerformanceMatrix = () => {
               />
             </PopoverContent>
           </Popover>
+
+          {/* Export — right-aligned in filter row */}
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  disabled={loading || points.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors disabled:opacity-50 min-h-[40px]"
+                >
+                  <Download className="h-4 w-4" />
+                  Export
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportCSV} disabled={exportingCSV}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} disabled={exportingExcel}>
+                  <Table2 className="h-4 w-4 mr-2" />
+                  Export as Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Date range display */}
@@ -631,47 +643,92 @@ const PerformanceMatrix = () => {
 
       {/* ── Threshold controls + client filter ── */}
       <style>{`
-        .j2-slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: #e2e8f0; outline: none; }
-        .j2-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; }
-        .j2-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; border: none; }
-        .dark .j2-slider { background: #334155; }
-        .dark .j2-slider::-webkit-slider-thumb { background: #ffffff; }
+        .j2-slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; outline: none; cursor: pointer; }
+        .j2-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #0f172a; }
+        .j2-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #0f172a; cursor: pointer; border: 2px solid #fff; }
+        .dark .j2-slider::-webkit-slider-thumb { background: #ffffff; box-shadow: 0 0 0 2px #0f172a, 0 0 0 3px #ffffff; }
         .dark .j2-slider::-moz-range-thumb { background: #ffffff; }
+        .j2-num-input { width: 64px; border: 1px solid hsl(var(--border)); border-radius: 6px; padding: 2px 6px; font-size: 13px; font-weight: 500; background: hsl(var(--background)); color: hsl(var(--foreground)); text-align: right; outline: none; }
+        .j2-num-input:focus { border-color: #0f172a; }
       `}</style>
-      <div className="flex flex-wrap items-center gap-6 p-4 bg-card border border-border rounded-lg">
-        <span className="text-sm font-medium text-foreground">Thresholds</span>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-muted-foreground">Dial target</label>
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-lg">
+        <span className="text-sm font-medium text-foreground flex-shrink-0">Thresholds</span>
+
+        {/* Dial target */}
+        <div className="flex items-center gap-2">
+          <span
+            className="text-sm text-muted-foreground cursor-help flex items-center gap-1"
+            title="Total dials made in the selected period"
+          >
+            Dial target
+            <span className="text-xs text-muted-foreground/60">ⓘ</span>
+          </span>
           <input
             type="range"
             min={10}
-            max={Math.max(Math.ceil((maxDials || 3000) * 0.9), 200)}
-            value={dialTarget}
+            max={Math.max(Math.ceil((maxDials || 3000) * 0.9), 500)}
+            value={pendingDial}
             step={10}
-            onChange={(e) => setDialTarget(Number(e.target.value))}
-            className="j2-slider w-32"
+            onChange={(e) => setPendingDial(Number(e.target.value))}
+            className="j2-slider w-28"
+            style={{
+              background: `linear-gradient(to right, #0f172a ${((pendingDial - 10) / (Math.max(Math.ceil((maxDials || 3000) * 0.9), 500) - 10)) * 100}%, #e2e8f0 0%)`,
+            }}
           />
-          <span className="text-sm font-medium text-foreground w-20">{dialTarget.toLocaleString()} dials</span>
+          <input
+            type="number"
+            min={10}
+            max={Math.max(Math.ceil((maxDials || 3000) * 0.9), 500)}
+            step={10}
+            value={pendingDial}
+            onChange={(e) => setPendingDial(Math.max(10, Number(e.target.value)))}
+            className="j2-num-input"
+          />
+          <span className="text-sm text-muted-foreground">dials</span>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-muted-foreground cursor-help" title="Conv % = (SQLs ÷ Total Dials) × 100">
+
+        {/* Conv % target */}
+        <div className="flex items-center gap-2">
+          <span
+            className="text-sm text-muted-foreground cursor-help flex items-center gap-1"
+            title="Conv % = (SQLs ÷ Total Dials) × 100"
+          >
             Conv % target
-            <span className="ml-1 text-xs text-muted-foreground/60" title="Conv % = (SQLs ÷ Total Dials) × 100">
-              ⓘ
-            </span>
-          </label>
+            <span className="text-xs text-muted-foreground/60">ⓘ</span>
+          </span>
           <input
             type="range"
             min={0.1}
             max={Math.max((maxConv || 5) * 0.9, 5)}
-            value={convTarget}
+            value={pendingConv}
             step={0.1}
-            onChange={(e) => setConvTarget(parseFloat(Number(e.target.value).toFixed(1)))}
-            className="j2-slider w-32"
+            onChange={(e) => setPendingConv(parseFloat(Number(e.target.value).toFixed(1)))}
+            className="j2-slider w-28"
+            style={{
+              background: `linear-gradient(to right, #0f172a ${((pendingConv - 0.1) / (Math.max((maxConv || 5) * 0.9, 5) - 0.1)) * 100}%, #e2e8f0 0%)`,
+            }}
           />
-          <span className="text-sm font-medium text-foreground w-16">{convTarget.toFixed(1)}%</span>
+          <input
+            type="number"
+            min={0.1}
+            max={Math.max((maxConv || 5) * 0.9, 5)}
+            step={0.1}
+            value={pendingConv}
+            onChange={(e) => setPendingConv(Math.max(0.1, parseFloat(Number(e.target.value).toFixed(1))))}
+            className="j2-num-input"
+          />
+          <span className="text-sm text-muted-foreground">%</span>
         </div>
-        {/* Client filter — far right of threshold bar */}
+
+        {/* Apply button */}
+        <button
+          onClick={applyThresholds}
+          className="px-4 py-1.5 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors"
+        >
+          Apply
+        </button>
+
+        {/* Client filter — far right */}
         <div className="ml-auto">
           <Select
             value={clientFilter}
