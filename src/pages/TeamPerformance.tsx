@@ -683,6 +683,10 @@ const TeamPerformance = () => {
             const displayRunRate = notStarted ? 0 : wp.run_rate;
             const displayProjected = notStarted ? 0 : wp.projected_by_friday;
 
+            const weekEndDayLabel = wp.week_end
+              ? format(new Date(wp.week_end + "T00:00:00"), "EEE")
+              : "Fri";
+
             return (
               <>
                 {/* Line 1: Summary */}
@@ -701,7 +705,7 @@ const TeamPerformance = () => {
                 </p>
                 {/* Line 2: Sub-line */}
                 <p className="text-[12px] text-muted-foreground">
-                  Week {wp.week_number} of {wp.total_weeks} · Mon {fmtDate(wp.week_start)} – Fri {fmtDate(wp.week_end)} · {wp.days_remaining} working day{wp.days_remaining === 1 ? "" : "s"} remaining
+                  Week {wp.week_number} of {wp.total_weeks} · Mon {fmtDate(wp.week_start)} – {weekEndDayLabel} {fmtDate(wp.week_end)} · {wp.days_remaining} working day{wp.days_remaining === 1 ? "" : "s"} remaining
                 </p>
                 {/* Line 3: Progress bar */}
                 {wp.week_target > 0 && (
