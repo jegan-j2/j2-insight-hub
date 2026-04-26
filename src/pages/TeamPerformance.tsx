@@ -663,7 +663,7 @@ const TeamPerformance = () => {
               return format(d, "d MMM");
             };
             const roundedTarget = Math.round(wp.week_target);
-            const targetHit = (roundedTarget > 0 && wp.needed_per_day <= 0) || (roundedTarget > 0 && wp.sqls_this_week >= roundedTarget);
+            const targetHit = roundedTarget > 0 && wp.sqls_this_week >= roundedTarget;
             const weekComplete = wp.days_remaining === 0 && !targetHit;
             const notStarted = wp.days_elapsed === 0;
 
