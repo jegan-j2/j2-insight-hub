@@ -548,7 +548,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
   return (
     <div className="space-y-4">
       {/* ── Filter row: mode tabs + date picker + Export (right-aligned) ── */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-2">
         {/* Mode tabs */}
         <div className="flex flex-wrap items-center gap-2">
           {(
@@ -699,7 +699,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
         </div>
 
         {/* Export — right-aligned, matches leaderboard pattern */}
-        <div className="ml-auto">
+        <div className="md:ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -1026,7 +1026,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       {/* Summary stat cards */}
       {!loading && !errored && sdrs.length > 0 && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               {
                 title: "Total Dials",
@@ -1091,7 +1091,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
               </h3>
             </div>
             <CardContent className="p-5">
-              <div className="h-[280px] w-full">
+              <div className="h-[200px] sm:h-[280px] w-full" style={{ minHeight: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />

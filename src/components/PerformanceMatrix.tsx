@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { J2Loader } from "@/components/J2Loader";
 import { useToast } from "@/hooks/use-toast";
 import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
@@ -127,14 +128,16 @@ interface ClientOption {
 
 // ─── Custom scatter dot with initials ─────────────────────────────
 const SDRDot = (props: any) => {
-  const { cx, cy, payload, dimmed } = props;
+  const { cx, cy, payload, dimmed, isMobile } = props;
   if (!cx || !cy) return null;
   const color = Q_COLORS[payload.q as Quadrant];
   const initials = getInitials(payload.name);
+  const r = isMobile ? 22 : 14; // 44px touch target on mobile
+  const fontSize = isMobile ? 11 : 9;
   return (
     <g opacity={dimmed ? 0.2 : 1}>
-      <circle cx={cx} cy={cy} r={14} fill={color + "cc"} stroke={color} strokeWidth={1.5} />
-      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={9} fontWeight={700}>
+      <circle cx={cx} cy={cy} r={r} fill={color + "cc"} stroke={color} strokeWidth={1.5} />
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={fontSize} fontWeight={700}>
         {initials}
       </text>
     </g>
@@ -185,6 +188,7 @@ const MatrixTooltip = ({ active, payload }: any) => {
 const PerformanceMatrix = () => {
   const { toast } = useToast();
   const { isSdr, isClient } = useUserRole();
+  const isMobile = useIsMobile();
 
   // Block SDR and Client roles
   if (isSdr || isClient) {
@@ -677,12 +681,12 @@ const PerformanceMatrix = () => {
         .j2-num-input { width: 64px; border: 1px solid hsl(var(--border)); border-radius: 6px; padding: 2px 6px; font-size: 13px; font-weight: 500; background: hsl(var(--background)); color: hsl(var(--foreground)); text-align: right; outline: none; }
         .j2-num-input:focus { border-color: #0f172a; }
       `}</style>
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-card border border-border rounded-lg">
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-3 p-4 bg-card border border-border rounded-lg">
         <span className="text-sm font-medium text-foreground flex-shrink-0">Thresholds</span>
-        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <div className="w-px h-5 bg-border flex-shrink-0 hidden md:block" />
 
         {/* Dial target */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <span
             className="text-sm text-muted-foreground cursor-help flex items-center gap-1 whitespace-nowrap"
             title="Total dials made in the selected period"
@@ -697,7 +701,7 @@ const PerformanceMatrix = () => {
             value={pendingDial}
             step={10}
             onChange={(e) => setPendingDial(Number(e.target.value))}
-            className="j2-slider w-28"
+            className="j2-slider flex-1 md:flex-none md:w-28"
             style={(() => {
               const max = Math.max(Math.ceil((maxDials || 3000) * 0.9), 500);
               const pct = ((pendingDial - 10) / (max - 10)) * 100;
@@ -718,10 +722,10 @@ const PerformanceMatrix = () => {
           <span className="text-sm text-muted-foreground">dials</span>
         </div>
 
-        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <div className="w-px h-5 bg-border flex-shrink-0 hidden md:block" />
 
         {/* Conv % target */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <span
             className="text-sm text-muted-foreground cursor-help flex items-center gap-1 whitespace-nowrap"
             title="SQLs ÷ Total Dials × 100"
@@ -736,7 +740,7 @@ const PerformanceMatrix = () => {
             value={pendingConv}
             step={0.1}
             onChange={(e) => setPendingConv(parseFloat(Number(e.target.value).toFixed(1)))}
-            className="j2-slider w-28"
+            className="j2-slider flex-1 md:flex-none md:w-28"
             style={(() => {
               const max = Math.max((maxConv || 5) * 0.9, 5);
               const pct = ((pendingConv - 0.1) / (max - 0.1)) * 100;
@@ -757,18 +761,18 @@ const PerformanceMatrix = () => {
           <span className="text-sm text-muted-foreground">%</span>
         </div>
 
-        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <div className="w-px h-5 bg-border flex-shrink-0 hidden md:block" />
 
         {/* Apply button */}
         <button
           onClick={applyThresholds}
-          className="px-4 py-1.5 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors"
+          className="px-4 py-1.5 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors w-full md:w-auto min-h-[40px]"
         >
           Apply
         </button>
 
         {/* Client filter — far right */}
-        <div className="ml-auto">
+        <div className="md:ml-auto w-full md:w-auto">
           <Select
             value={clientFilter}
             onValueChange={(v) => {
@@ -778,7 +782,7 @@ const PerformanceMatrix = () => {
           >
             <SelectTrigger
               className={cn(
-                "w-[180px] min-h-[36px] text-xs sm:text-sm rounded-md",
+                "w-full md:w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md",
                 "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white font-semibold",
               )}
             >
@@ -806,7 +810,7 @@ const PerformanceMatrix = () => {
       </div>
 
       {/* ── Stat cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-6 gap-3">
         {[
           { label: "Star performers", value: stats.counts.HOHC, sub: "HO HC", valueColor: "#16a34a" },
           {
@@ -857,15 +861,15 @@ const PerformanceMatrix = () => {
         </div>
         <CardContent className="p-5">
           {loading ? (
-            <div className="h-[460px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
+            <div className="h-[280px] sm:h-[460px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
           ) : points.length === 0 ? (
-            <div className="h-[460px] flex items-center justify-center text-muted-foreground text-sm">
+            <div className="h-[280px] sm:h-[460px] flex items-center justify-center text-muted-foreground text-sm">
               No data for this period
             </div>
           ) : (
-            <div className="h-[460px] relative">
+            <div className="h-[280px] sm:h-[460px] relative" style={{ minHeight: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 20, right: 160, bottom: 40, left: 20 }}>
+                <ScatterChart margin={isMobile ? { top: 16, right: 16, bottom: 36, left: 8 } : { top: 20, right: 160, bottom: 40, left: 20 }}>
                   <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
                   <XAxis
                     type="number"
@@ -933,7 +937,7 @@ const PerformanceMatrix = () => {
                   <Scatter
                     data={points}
                     shape={(props: any) => (
-                      <SDRDot {...props} dimmed={qFilter !== "all" && !filteredNames.has(props.payload.name)} />
+                      <SDRDot {...props} isMobile={isMobile} dimmed={qFilter !== "all" && !filteredNames.has(props.payload.name)} />
                     )}
                   />
                 </ScatterChart>
@@ -941,7 +945,7 @@ const PerformanceMatrix = () => {
 
               {/* Legend — inside chart top-right */}
               <div
-                className="absolute top-4 right-4 rounded-lg border border-border px-3 py-2.5 space-y-1.5"
+                className="hidden sm:block absolute top-4 right-4 rounded-lg border border-border px-3 py-2.5 space-y-1.5"
                 style={{
                   background: isDark ? "rgba(15,23,42,0.85)" : "rgba(255,255,255,0.9)",
                   backdropFilter: "blur(4px)",
@@ -997,7 +1001,7 @@ const PerformanceMatrix = () => {
         </div>
 
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full border-collapse text-sm">
+          <table className="w-full border-collapse text-sm" style={{ minWidth: 880 }}>
             <thead>
               <tr>
                 {[
@@ -1009,19 +1013,24 @@ const PerformanceMatrix = () => {
                   { label: "vs Dial target", align: "center", field: "vsDial" as SortField },
                   { label: "vs Conv % target", align: "center", field: "vsConv" as SortField },
                   { label: "Quadrant", align: "left", field: "q" as SortField },
-                ].map((h) => {
+                ].map((h, hIdx) => {
                   const isActive = sortField === h.field;
                   const Icon = !isActive ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+                  const isFirst = hIdx === 0;
                   return (
                     <th
                       key={h.label}
                       onClick={() => handleSort(h.field)}
-                      className="px-4 py-3 text-sm font-bold whitespace-nowrap cursor-pointer select-none"
+                      className={cn(
+                        "px-4 py-3 text-sm font-bold whitespace-nowrap cursor-pointer select-none",
+                        isFirst && "sticky left-0 z-20",
+                      )}
                       style={{
                         background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
                         color: "#FFFFFF",
                         textAlign: h.align as any,
                         borderBottom: isDark ? "1px solid #334155" : "none",
+                        ...(isFirst ? { minWidth: 180 } : {}),
                       }}
                     >
                       <span className={cn("inline-flex items-center", h.align === "center" && "justify-center")}>
@@ -1111,7 +1120,10 @@ const PerformanceMatrix = () => {
                         onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = rowBg)}
                       >
                         {/* SDR Name */}
-                        <td className="px-4 py-3" style={{ color: textCol }}>
+                        <td
+                          className="px-4 py-3 sticky left-0 z-10"
+                          style={{ color: textCol, backgroundColor: rowBg, minWidth: 180 }}
+                        >
                           <div className="flex items-center gap-2">
                             <div
                               className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
