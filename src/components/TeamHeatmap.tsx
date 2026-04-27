@@ -1108,17 +1108,47 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         borderRadius: 8,
                         fontSize: 12,
                       }}
-                      formatter={(v: any) => [`${Number(v).toLocaleString()} dials`, "Dials"]}
+                      content={({ active, payload, label }: any) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const row = payload[0].payload as { dials: number; answered: number; dms: number };
+                        return (
+                          <div
+                            style={{
+                              background: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: 8,
+                              fontSize: 12,
+                              padding: "6px 10px",
+                              color: "hsl(var(--foreground))",
+                            }}
+                          >
+                            {label} — {row.dials.toLocaleString()} dials · {row.answered.toLocaleString()} answered ·{" "}
+                            {row.dms.toLocaleString()} DM conv.
+                          </div>
+                        );
+                      }}
                     />
-                    <Bar dataKey="dials" radius={[4, 4, 0, 0]} fill="hsl(var(--foreground))" />
+                    <Bar dataKey="dials" name="Dials" radius={[4, 4, 0, 0]} fill="#0f172a" />
+                    <Bar dataKey="answered" name="Answered" radius={[4, 4, 0, 0]} fill="#475569" />
+                    <Bar dataKey="dms" name="DM Conversations" radius={[4, 4, 0, 0]} fill="#94a3b8" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="mt-3 flex items-center justify-between text-xs">
                 <div className="text-muted-foreground font-medium">Total: {summary.dials.toLocaleString()} dials</div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <span className="text-base leading-none text-foreground">●</span>
-                  <span>Dials</span>
+                <div className="flex items-center gap-4 text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: "#0f172a" }} />
+                    <span>Dials</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: "#475569" }} />
+                    <span>Answered</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: "#94a3b8" }} />
+                    <span>DM Conv.</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
