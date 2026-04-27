@@ -1676,7 +1676,7 @@ const Settings = () => {
                       paginatedMembers.map((member) => {
                         const isInactive = member.status === 'inactive';
                         const memberInviteInfo = getMemberInviteInfo(member.email, isInactive);
-                        const memberClientData = member.client_id && member.role?.toLowerCase() === 'sdr'
+                        const memberClientData = member.client_id
                           ? clientsList.find(c => c.client_id === member.client_id)
                           : null;
                         return (
