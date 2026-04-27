@@ -1105,7 +1105,7 @@ const ActivityMonitor = () => {
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
            <div style={{ padding: '4px 0 8px 0' }}>
             {/* Date Mode Tabs */}
-            <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
+            <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([0, 24]); }}>
               <TabsList className="bg-muted/50" style={{ marginTop: 0, marginBottom: 4 }}>
                 <TabsTrigger value="day" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Day</TabsTrigger>
                 <TabsTrigger value="week" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Week</TabsTrigger>
