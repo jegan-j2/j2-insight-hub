@@ -1047,7 +1047,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
               {
                 title: "DM Conversations",
                 value: summary.dms.toLocaleString(),
-                subtitle: null,
+                subtitle: summary.dmRate === null ? "— DM conv. rate" : `${summary.dmRate}% DM conv. rate`,
                 icon: MessageSquare,
                 iconColor: "text-teal-500",
                 iconBg: "bg-teal-500/10",
