@@ -9,10 +9,43 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, CalendarDays, CalendarX, Search as SearchIcon, Check, Filter, FileText, Table2, SlidersHorizontal, RotateCcw } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Download,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  X,
+  CalendarDays,
+  CalendarX,
+  Search as SearchIcon,
+  Check,
+  Filter,
+  FileText,
+  Table2,
+  SlidersHorizontal,
+  RotateCcw,
+} from "lucide-react";
 import { format, isWithinInterval, parseISO, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
@@ -45,12 +78,11 @@ const STATUS_OPTIONS: { value: string; label: string; color: string; icon?: type
   { value: "reschedule", label: "Reschedule", color: "#3b82f6" },
 ];
 
-const getStatusConfig = (status: string) =>
-  STATUS_OPTIONS.find(s => s.value === status) ?? STATUS_OPTIONS[0];
+const getStatusConfig = (status: string) => STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0];
 
 const mapMeetings = (meetings: SQLMeeting[], clients?: Client[]): MeetingData[] =>
-  meetings.map(m => {
-    const client = clients?.find(c => c.client_id === m.client_id);
+  meetings.map((m) => {
+    const client = clients?.find((c) => c.client_id === m.client_id);
     return {
       id: m.id,
       sqlDate: parseISO(m.booking_date),
@@ -78,7 +110,14 @@ interface SQLBookedMeetingsTableProps {
   hideSDRColumn?: boolean;
 }
 
-export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings, clients, hideSDRFilter = false, hideSDRColumn = false }: SQLBookedMeetingsTableProps) => {
+export const SQLBookedMeetingsTable = ({
+  dateRange,
+  isLoading = false,
+  meetings,
+  clients,
+  hideSDRFilter = false,
+  hideSDRColumn = false,
+}: SQLBookedMeetingsTableProps) => {
   const { canEditSQL, isSdr, isAdmin, isManager } = usePermissions();
   const isMobile = useIsMobile();
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,64 +140,79 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   }, [meetings, clients]);
 
   const [localMeetings, setLocalMeetings] = useState<MeetingData[]>([]);
-  useEffect(() => { setLocalMeetings(displayMeetings); }, [displayMeetings]);
+  useEffect(() => {
+    setLocalMeetings(displayMeetings);
+  }, [displayMeetings]);
 
-  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, reinstateMeeting, updating } = useMeetingUpdate();
+  const { updateMeetingStatus, updateClientNotes, createRescheduleRow, reinstateMeeting, updating } =
+    useMeetingUpdate();
 
-  const handleStatusChange = useCallback(async (meeting: MeetingData, newStatus: string) => {
-    const oldStatus = meeting.meetingStatus;
-    setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: newStatus } : m));
-    const success = await updateMeetingStatus(meeting.id, newStatus);
-    if (!success) {
-      setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: oldStatus } : m));
-      return;
-    }
-    if (newStatus === "reschedule") {
-      const newRow = await createRescheduleRow({
-        client_id: meeting.clientId,
-        contact_person: meeting.contactPerson,
-        company_name: meeting.companyName,
-        sdr_name: meeting.sdr,
-      });
-      if (newRow) {
-        const client = clients?.find(c => c.client_id === newRow.client_id);
-        setLocalMeetings(prev => [{
-          id: newRow.id,
-          sqlDate: parseISO(newRow.booking_date),
-          clientId: newRow.client_id || "",
-          clientName: client?.client_name || newRow.client_id || "",
-          clientLogo: client?.logo_url || null,
-          contactPerson: newRow.contact_person,
-          companyName: newRow.company_name || "",
-          sdr: newRow.sdr_name || "",
-          meetingDate: newRow.meeting_date ? parseISO(newRow.meeting_date) : parseISO(newRow.booking_date),
-          meetingStatus: newRow.meeting_status ?? "pending",
-          clientNotes: newRow.client_notes ?? "",
-        }, ...prev]);
+  const handleStatusChange = useCallback(
+    async (meeting: MeetingData, newStatus: string) => {
+      const oldStatus = meeting.meetingStatus;
+      setLocalMeetings((prev) => prev.map((m) => (m.id === meeting.id ? { ...m, meetingStatus: newStatus } : m)));
+      const success = await updateMeetingStatus(meeting.id, newStatus);
+      if (!success) {
+        setLocalMeetings((prev) => prev.map((m) => (m.id === meeting.id ? { ...m, meetingStatus: oldStatus } : m)));
+        return;
       }
-    }
-  }, [updateMeetingStatus, createRescheduleRow, clients]);
+      if (newStatus === "reschedule") {
+        const newRow = await createRescheduleRow({
+          client_id: meeting.clientId,
+          contact_person: meeting.contactPerson,
+          company_name: meeting.companyName,
+          sdr_name: meeting.sdr,
+        });
+        if (newRow) {
+          const client = clients?.find((c) => c.client_id === newRow.client_id);
+          setLocalMeetings((prev) => [
+            {
+              id: newRow.id,
+              sqlDate: parseISO(newRow.booking_date),
+              clientId: newRow.client_id || "",
+              clientName: client?.client_name || newRow.client_id || "",
+              clientLogo: client?.logo_url || null,
+              contactPerson: newRow.contact_person,
+              companyName: newRow.company_name || "",
+              sdr: newRow.sdr_name || "",
+              meetingDate: newRow.meeting_date ? parseISO(newRow.meeting_date) : parseISO(newRow.booking_date),
+              meetingStatus: newRow.meeting_status ?? "pending",
+              clientNotes: newRow.client_notes ?? "",
+            },
+            ...prev,
+          ]);
+        }
+      }
+    },
+    [updateMeetingStatus, createRescheduleRow, clients],
+  );
 
-  const handleNotesChange = useCallback(async (meetingId: string, newNotes: string) => {
-    const original = localMeetings.find(m => m.id === meetingId)?.clientNotes || "";
-    if (newNotes === original) return;
-    setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, clientNotes: newNotes } : m));
-    const success = await updateClientNotes(meetingId, newNotes);
-    if (!success) {
-      setLocalMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, clientNotes: original } : m));
-    }
-  }, [updateClientNotes, localMeetings]);
+  const handleNotesChange = useCallback(
+    async (meetingId: string, newNotes: string) => {
+      const original = localMeetings.find((m) => m.id === meetingId)?.clientNotes || "";
+      if (newNotes === original) return;
+      setLocalMeetings((prev) => prev.map((m) => (m.id === meetingId ? { ...m, clientNotes: newNotes } : m)));
+      const success = await updateClientNotes(meetingId, newNotes);
+      if (!success) {
+        setLocalMeetings((prev) => prev.map((m) => (m.id === meetingId ? { ...m, clientNotes: original } : m)));
+      }
+    },
+    [updateClientNotes, localMeetings],
+  );
 
   const rowsPerPage = 15;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    else { setSortField(field); setSortOrder("asc"); }
+    else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
   };
 
   const exportData = (type: "csv" | "excel") => {
     const headers = ["Booking Date", "Client", "Contact Person", "Company", "SDR", "Meeting Date", "Status", "Notes"];
-    const rows = filteredMeetings.map(m => [
+    const rows = filteredMeetings.map((m) => [
       format(m.sqlDate, "MMM dd, yyyy"),
       m.clientName,
       m.contactPerson,
@@ -175,7 +229,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     };
 
     if (type === "csv") {
-      const csv = [headers.map(escapeCsv).join(","), ...rows.map(r => r.map(escapeCsv).join(","))].join("\n");
+      const csv = [headers.map(escapeCsv).join(","), ...rows.map((r) => r.map(escapeCsv).join(","))].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -186,8 +240,14 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     } else {
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       ws["!cols"] = [
-        { wch: 15 }, { wch: 20 }, { wch: 25 }, { wch: 25 },
-        { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 30 },
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 25 },
+        { wch: 25 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 30 },
       ];
 
       const headerStyle = {
@@ -217,57 +277,95 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   };
 
   const clearAllFilters = () => {
-    setClientFilter("all"); setStatusFilter("all"); setSdrFilter("all");
-    setSearchQuery(""); setBookingDateRange(undefined); setMeetingDateRange(undefined);
+    setClientFilter("all");
+    setStatusFilter("all");
+    setSdrFilter("all");
+    setSearchQuery("");
+    setBookingDateRange(undefined);
+    setMeetingDateRange(undefined);
     setCurrentPage(1);
   };
 
-  const hiddenFiltersCount = [
-    bookingDateRange !== undefined,
-    meetingDateRange !== undefined,
-  ].filter(Boolean).length;
+  const hiddenFiltersCount = [bookingDateRange !== undefined, meetingDateRange !== undefined].filter(Boolean).length;
 
   const activeFiltersCount = [
-    clientFilter !== "all", statusFilter !== "all", sdrFilter !== "all",
-    searchQuery !== "", bookingDateRange !== undefined, meetingDateRange !== undefined,
+    clientFilter !== "all",
+    statusFilter !== "all",
+    sdrFilter !== "all",
+    searchQuery !== "",
+    bookingDateRange !== undefined,
+    meetingDateRange !== undefined,
   ].filter(Boolean).length;
 
   const filteredMeetings = useMemo(() => {
     let filtered = [...localMeetings];
     if (dateRange?.from && dateRange?.to) {
-      filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
+      filtered = filtered.filter((m) => isWithinInterval(m.sqlDate, { start: dateRange.from!, end: dateRange.to! }));
     }
-    if (clientFilter !== "all") filtered = filtered.filter(m => m.clientId === clientFilter);
+    if (clientFilter !== "all") filtered = filtered.filter((m) => m.clientId === clientFilter);
     if (statusFilter !== "all") {
-      filtered = filtered.filter(m => m.meetingStatus === statusFilter);
+      filtered = filtered.filter((m) => m.meetingStatus === statusFilter);
     } else {
-      filtered = filtered.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled' || m.meetingStatus === 'no_show');
+      filtered = filtered.filter(
+        (m) =>
+          isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === "cancelled" || m.meetingStatus === "no_show",
+      );
     }
-    if (sdrFilter !== "all") filtered = filtered.filter(m => m.sdr === sdrFilter);
-    if (bookingDateRange?.from && bookingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.sqlDate, { start: bookingDateRange.from!, end: bookingDateRange.to! }));
-    if (meetingDateRange?.from && meetingDateRange?.to) filtered = filtered.filter(m => isWithinInterval(m.meetingDate, { start: meetingDateRange.from!, end: meetingDateRange.to! }));
+    if (sdrFilter !== "all") filtered = filtered.filter((m) => m.sdr === sdrFilter);
+    if (bookingDateRange?.from && bookingDateRange?.to)
+      filtered = filtered.filter((m) =>
+        isWithinInterval(m.sqlDate, { start: bookingDateRange.from!, end: bookingDateRange.to! }),
+      );
+    if (meetingDateRange?.from && meetingDateRange?.to)
+      filtered = filtered.filter((m) =>
+        isWithinInterval(m.meetingDate, { start: meetingDateRange.from!, end: meetingDateRange.to! }),
+      );
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(m => m.contactPerson.toLowerCase().includes(q) || m.companyName.toLowerCase().includes(q) || m.sdr.toLowerCase().includes(q));
+      filtered = filtered.filter(
+        (m) =>
+          m.contactPerson.toLowerCase().includes(q) ||
+          m.companyName.toLowerCase().includes(q) ||
+          m.sdr.toLowerCase().includes(q),
+      );
     }
     filtered.sort((a, b) => {
-      let aVal: any = a[sortField]; let bVal: any = b[sortField];
-      if (sortField === "sqlDate" || sortField === "meetingDate") { aVal = aVal.getTime(); bVal = bVal.getTime(); }
-      else if (typeof aVal === "string") return sortOrder === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
+      if (sortField === "sqlDate" || sortField === "meetingDate") {
+        aVal = aVal.getTime();
+        bVal = bVal.getTime();
+      } else if (typeof aVal === "string")
+        return sortOrder === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
     });
     return filtered;
-  }, [localMeetings, dateRange, clientFilter, statusFilter, sdrFilter, searchQuery, bookingDateRange, meetingDateRange, sortField, sortOrder]);
+  }, [
+    localMeetings,
+    dateRange,
+    clientFilter,
+    statusFilter,
+    sdrFilter,
+    searchQuery,
+    bookingDateRange,
+    meetingDateRange,
+    sortField,
+    sortOrder,
+  ]);
 
   const activeMeetings = useMemo(
-    () => localMeetings.filter(m => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === 'cancelled'),
-    [localMeetings]
+    () => localMeetings.filter((m) => isActiveSqlMeetingStatus(m.meetingStatus) || m.meetingStatus === "cancelled"),
+    [localMeetings],
   );
 
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
   const paginatedMeetings = filteredMeetings.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-  const uniqueClients = Array.from(new Set(activeMeetings.map(m => m.clientId).filter((v): v is string => typeof v === "string" && v.length > 0))).sort();
-  const uniqueSdrs = Array.from(new Set(activeMeetings.map(m => m.sdr).filter((v): v is string => typeof v === "string" && v.length > 0))).sort();
+  const uniqueClients = Array.from(new Set(activeMeetings.map((m) => m.clientId)))
+    .filter((v) => !!v)
+    .sort();
+  const uniqueSdrs = Array.from(new Set(activeMeetings.map((m) => m.sdr)))
+    .filter((v) => !!v)
+    .sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
@@ -276,9 +374,11 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
     >
       {label}
       {sortField === field ? (
-        sortOrder === "asc"
-          ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
-          : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+        sortOrder === "asc" ? (
+          <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+        ) : (
+          <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+        )
       ) : (
         <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50" />
       )}
@@ -286,23 +386,25 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   );
 
   const isOverdue = (meeting: MeetingData) =>
-    meeting.meetingStatus.toLowerCase() === "pending" &&
-    isBefore(meeting.meetingDate, startOfDay(new Date()));
+    meeting.meetingStatus.toLowerCase() === "pending" && isBefore(meeting.meetingDate, startOfDay(new Date()));
 
-  const handleReinstate = useCallback(async (meeting: MeetingData) => {
-    setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: 'pending' } : m));
-    const success = await reinstateMeeting(meeting.id);
-    if (!success) {
-      setLocalMeetings(prev => prev.map(m => m.id === meeting.id ? { ...m, meetingStatus: 'cancelled' } : m));
-    }
-    setReinstateTarget(null);
-  }, [reinstateMeeting]);
+  const handleReinstate = useCallback(
+    async (meeting: MeetingData) => {
+      setLocalMeetings((prev) => prev.map((m) => (m.id === meeting.id ? { ...m, meetingStatus: "pending" } : m)));
+      const success = await reinstateMeeting(meeting.id);
+      if (!success) {
+        setLocalMeetings((prev) => prev.map((m) => (m.id === meeting.id ? { ...m, meetingStatus: "cancelled" } : m)));
+      }
+      setReinstateTarget(null);
+    },
+    [reinstateMeeting],
+  );
 
   const StatusBadge = ({ meeting }: { meeting: MeetingData }) => {
     const config = getStatusConfig(meeting.meetingStatus);
     const canEdit = !isSdr && canEditSQL(meeting.clientId);
     const overdue = isOverdue(meeting);
-    const isCancelled = meeting.meetingStatus === 'cancelled';
+    const isCancelled = meeting.meetingStatus === "cancelled";
     const canReinstate = isCancelled && (isAdmin || isManager);
 
     const badgeContent = (
@@ -316,7 +418,10 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
             variant="ghost"
             size="sm"
             className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
-            onClick={(e) => { e.stopPropagation(); setReinstateTarget(meeting); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setReinstateTarget(meeting);
+            }}
           >
             <RotateCcw className="h-3 w-3" />
             Reinstate
@@ -331,13 +436,16 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
       <div className="flex items-center justify-center gap-1.5">
         <Select value={meeting.meetingStatus} onValueChange={(v) => handleStatusChange(meeting, v)}>
           <SelectTrigger className="border-0 bg-transparent p-0 h-auto w-auto shadow-none focus:ring-0 [&>svg]:hidden">
-            <Badge className="gap-1 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity" style={{ backgroundColor: config.color }}>
+            <Badge
+              className="gap-1 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: config.color }}
+            >
               {config.icon && <config.icon className="h-3 w-3" />}
               {config.label}
             </Badge>
           </SelectTrigger>
           <SelectContent className="bg-popover border-border z-50">
-            {STATUS_OPTIONS.map(opt => (
+            {STATUS_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.color }} />
@@ -355,35 +463,63 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
   const FilterFields = () => (
     <div className="space-y-4">
       <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Search</label>
-        <Input placeholder="Search contact, company..." value={searchQuery}
-          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-          className="bg-background/50 border-border min-h-[44px]" />
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+          Search
+        </label>
+        <Input
+          placeholder="Search contact, company..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="bg-background/50 border-border min-h-[44px]"
+        />
       </div>
       <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Client</label>
-        <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+          Client
+        </label>
+        <Select
+          value={clientFilter}
+          onValueChange={(v) => {
+            setClientFilter(v);
+            setCurrentPage(1);
+          }}
+        >
           <SelectTrigger className="bg-background/50 border-border min-h-[44px] w-full">
             <SelectValue placeholder="All Clients" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border z-[200]">
             <SelectItem value="all">All Clients</SelectItem>
-            {uniqueClients.map(cid => {
-              const c = clients?.find(cl => cl.client_id === cid);
-              return <SelectItem key={cid} value={cid}>{c?.client_name || cid}</SelectItem>;
+            {uniqueClients.map((cid) => {
+              const c = clients?.find((cl) => cl.client_id === cid);
+              return (
+                <SelectItem key={cid} value={cid}>
+                  {c?.client_name || cid}
+                </SelectItem>
+              );
             })}
           </SelectContent>
         </Select>
       </div>
       <div>
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Status</label>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+          Status
+        </label>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => {
+            setStatusFilter(v);
+            setCurrentPage(1);
+          }}
+        >
           <SelectTrigger className="bg-background/50 border-border min-h-[44px] w-full">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border z-[200]">
             <SelectItem value="all">All Statuses</SelectItem>
-            {STATUS_OPTIONS.map(s => (
+            {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s.value} value={s.value}>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
@@ -397,13 +533,23 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
       {!hideSDRFilter && (
         <div>
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">SDR</label>
-          <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+          <Select
+            value={sdrFilter}
+            onValueChange={(v) => {
+              setSdrFilter(v);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="bg-background/50 border-border min-h-[44px] w-full">
               <SelectValue placeholder="All SDRs" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border z-[200]">
               <SelectItem value="all">All SDRs</SelectItem>
-              {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {uniqueSdrs.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -415,381 +561,507 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
 
   return (
     <>
-    <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "600ms" }}>
-      <CardHeader>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle className="text-foreground">SQL Meetings</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Showing {filteredMeetings.length} of {activeMeetings.length} meetings
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {activeFiltersCount > 0 && (
-                <Button onClick={clearAllFilters} variant="outline" size="sm" className="gap-2">
-                  <X className="h-4 w-4" /> Clear ({activeFiltersCount})
-                </Button>
-              )}
-              {isMobile ? (
-                <>
-                  <Button
-                    className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
-                    size="sm"
-                    onClick={() => setFilterDrawerOpen(true)}
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filters
-                    {activeFiltersCount > 0 && (
-                      <Badge className="ml-0.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-white text-[#0f172a] dark:bg-[#0f172a] dark:text-white">
-                        {activeFiltersCount}
-                      </Badge>
-                    )}
+      <Card className="bg-card/50 backdrop-blur-sm border-border animate-fade-in" style={{ animationDelay: "600ms" }}>
+        <CardHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle className="text-foreground">SQL Meetings</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Showing {filteredMeetings.length} of {activeMeetings.length} meetings
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {activeFiltersCount > 0 && (
+                  <Button onClick={clearAllFilters} variant="outline" size="sm" className="gap-2">
+                    <X className="h-4 w-4" /> Clear ({activeFiltersCount})
                   </Button>
-                  {!isSdr && (
+                )}
+                {isMobile ? (
+                  <>
+                    <Button
+                      className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2"
+                      size="sm"
+                      onClick={() => setFilterDrawerOpen(true)}
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                      Filters
+                      {activeFiltersCount > 0 && (
+                        <Badge className="ml-0.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-white text-[#0f172a] dark:bg-[#0f172a] dark:text-white">
+                          {activeFiltersCount}
+                        </Badge>
+                      )}
+                    </Button>
+                    {!isSdr && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+                          <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
+                            <FileText className="h-4 w-4 mr-2" /> CSV
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
+                            <Table2 className="h-4 w-4 mr-2" /> Excel
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </>
+                ) : (
+                  !isSdr && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
-                          <Download className="h-4 w-4" />
+                        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
+                          <Download className="h-4 w-4" /> Export <ChevronDown className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-popover border-border z-50">
                         <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
-                          <FileText className="h-4 w-4 mr-2" /> CSV
+                          <FileText className="h-4 w-4 mr-2" /> Export as CSV
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
-                          <Table2 className="h-4 w-4 mr-2" /> Excel
+                          <Table2 className="h-4 w-4 mr-2" /> Export as Excel
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  )}
-                </>
-              ) : (
-                !isSdr && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors">
-                        <Download className="h-4 w-4" /> Export <ChevronDown className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover border-border z-50">
-                      <DropdownMenuItem onClick={() => exportData("csv")} className="cursor-pointer">
-                        <FileText className="h-4 w-4 mr-2" /> Export as CSV
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => exportData("excel")} className="cursor-pointer">
-                        <Table2 className="h-4 w-4 mr-2" /> Export as Excel
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )
-              )}
+                  )
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Desktop filters — hidden on mobile */}
-          {!isMobile && (
-            <>
-              <div className="flex flex-wrap items-center gap-3">
-                <Input placeholder="Search contact, company..." value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                  className="bg-background/50 border-border min-h-[40px] min-w-[280px] flex-1" />
-                <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
-                    <SelectValue placeholder="All Clients" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50">
-                    <SelectItem value="all">All Clients</SelectItem>
-                    {uniqueClients.map(cid => {
-                      const c = clients?.find(cl => cl.client_id === cid);
-                      return <SelectItem key={cid} value={cid}>{c?.client_name || cid}</SelectItem>;
-                    })}
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[160px]">
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50">
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {STATUS_OPTIONS.map(s => (
-                      <SelectItem key={s.value} value={s.value}>
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                          {s.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!hideSDRFilter && (
-                  <Select value={sdrFilter} onValueChange={(v) => { setSdrFilter(v); setCurrentPage(1); }}>
+            {/* Desktop filters — hidden on mobile */}
+            {!isMobile && (
+              <>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Input
+                    placeholder="Search contact, company..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="bg-background/50 border-border min-h-[40px] min-w-[280px] flex-1"
+                  />
+                  <Select
+                    value={clientFilter}
+                    onValueChange={(v) => {
+                      setClientFilter(v);
+                      setCurrentPage(1);
+                    }}
+                  >
                     <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
-                      <SelectValue placeholder="All SDRs" />
+                      <SelectValue placeholder="All Clients" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border z-50">
-                      <SelectItem value="all">All SDRs</SelectItem>
-                      {uniqueSdrs.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      <SelectItem value="all">All Clients</SelectItem>
+                      {uniqueClients.map((cid) => {
+                        const c = clients?.find((cl) => cl.client_id === cid);
+                        return (
+                          <SelectItem key={cid} value={cid}>
+                            {c?.client_name || cid}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
-                )}
-                <Button variant="outline" size="sm" onClick={() => setShowMoreFilters(!showMoreFilters)}
-                  className={cn("gap-2 min-h-[40px]", showMoreFilters && "bg-muted")}>
-                  <Filter className="h-4 w-4" /> More Filters
-                  {hiddenFiltersCount > 0 && (
-                    <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
-                      {hiddenFiltersCount}
-                    </Badge>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={(v) => {
+                      setStatusFilter(v);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[160px]">
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                            {s.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!hideSDRFilter && (
+                    <Select
+                      value={sdrFilter}
+                      onValueChange={(v) => {
+                        setSdrFilter(v);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="bg-background/50 border-border min-h-[40px] w-[180px]">
+                        <SelectValue placeholder="All SDRs" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        <SelectItem value="all">All SDRs</SelectItem>
+                        {uniqueSdrs.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
-                </Button>
-              </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMoreFilters(!showMoreFilters)}
+                    className={cn("gap-2 min-h-[40px]", showMoreFilters && "bg-muted")}
+                  >
+                    <Filter className="h-4 w-4" /> More Filters
+                    {hiddenFiltersCount > 0 && (
+                      <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
+                        {hiddenFiltersCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
 
-              {showMoreFilters && (
-                 <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50">
-                   <Popover>
-                     <PopoverTrigger asChild>
-                       <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !bookingDateRange && "text-muted-foreground")}>
-                         <CalendarIcon className="mr-2 h-4 w-4" />
-                         {bookingDateRange?.from ? (
-                           bookingDateRange.to ? (
-                             `${format(bookingDateRange.from, "MMM dd")} – ${format(bookingDateRange.to, "MMM dd, yyyy")}`
-                           ) : format(bookingDateRange.from, "MMM dd, yyyy")
-                         ) : "Booking Date Range"}
-                       </Button>
-                     </PopoverTrigger>
-                     <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                       <Calendar mode="range" selected={bookingDateRange} onSelect={(d) => { setBookingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
-                     </PopoverContent>
-                   </Popover>
-                   <Popover>
-                     <PopoverTrigger asChild>
-                       <Button variant="outline" className={cn("justify-start text-left font-normal min-h-[40px] w-[260px]", !meetingDateRange && "text-muted-foreground")}>
-                         <CalendarDays className="mr-2 h-4 w-4" />
-                         {meetingDateRange?.from ? (
-                           meetingDateRange.to ? (
-                             `${format(meetingDateRange.from, "MMM dd")} – ${format(meetingDateRange.to, "MMM dd, yyyy")}`
-                           ) : format(meetingDateRange.from, "MMM dd, yyyy")
-                         ) : "Meeting Date Range"}
-                       </Button>
-                     </PopoverTrigger>
-                     <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
-                       <Calendar mode="range" selected={meetingDateRange} onSelect={(d) => { setMeetingDateRange(d); setCurrentPage(1); }} initialFocus className="pointer-events-auto" numberOfMonths={2} />
-                     </PopoverContent>
-                   </Popover>
-                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isMobile ? (
-          /* Mobile: compact card-style rows with expandable details */
-          <div className="space-y-2">
-            {paginatedMeetings.length === 0 ? (
-              <div className="py-12">
-                {activeFiltersCount > 0 ? (
-                  <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
-                ) : (
-                  <EmptyState icon={CalendarX} title="No meetings booked yet" description="SQL meetings will appear here once leads are generated" />
-                )}
-              </div>
-            ) : paginatedMeetings.map((meeting) => {
-              const isExpanded = expandedRowId === meeting.id;
-              const overdue = isOverdue(meeting);
-              return (
-                <div
-                  key={meeting.id}
-                  className={cn(
-                    "rounded-lg border border-border/50 p-3 cursor-pointer transition-colors",
-                    updating === meeting.id && "opacity-60"
-                  )}
-                  onClick={() => setExpandedRowId(isExpanded ? null : meeting.id)}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground text-sm truncate">{meeting.contactPerson}</p>
-                      <p className="text-xs text-muted-foreground">{format(meeting.sqlDate, "MMM dd, yyyy")}</p>
-                    </div>
-                    <StatusBadge meeting={meeting} />
+                {showMoreFilters && (
+                  <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal min-h-[40px] w-[260px]",
+                            !bookingDateRange && "text-muted-foreground",
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {bookingDateRange?.from
+                            ? bookingDateRange.to
+                              ? `${format(bookingDateRange.from, "MMM dd")} – ${format(bookingDateRange.to, "MMM dd, yyyy")}`
+                              : format(bookingDateRange.from, "MMM dd, yyyy")
+                            : "Booking Date Range"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                        <Calendar
+                          mode="range"
+                          selected={bookingDateRange}
+                          onSelect={(d) => {
+                            setBookingDateRange(d);
+                            setCurrentPage(1);
+                          }}
+                          initialFocus
+                          className="pointer-events-auto"
+                          numberOfMonths={2}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal min-h-[40px] w-[260px]",
+                            !meetingDateRange && "text-muted-foreground",
+                          )}
+                        >
+                          <CalendarDays className="mr-2 h-4 w-4" />
+                          {meetingDateRange?.from
+                            ? meetingDateRange.to
+                              ? `${format(meetingDateRange.from, "MMM dd")} – ${format(meetingDateRange.to, "MMM dd, yyyy")}`
+                              : format(meetingDateRange.from, "MMM dd, yyyy")
+                            : "Meeting Date Range"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-card border-border z-50" align="start">
+                        <Calendar
+                          mode="range"
+                          selected={meetingDateRange}
+                          onSelect={(d) => {
+                            setMeetingDateRange(d);
+                            setCurrentPage(1);
+                          }}
+                          initialFocus
+                          className="pointer-events-auto"
+                          numberOfMonths={2}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  {isExpanded && (
-                    <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Company</span>
-                        <span className="text-foreground font-medium">{meeting.companyName || "-"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Client</span>
-                        <span className="text-foreground flex items-center gap-1.5">
-                          {meeting.clientLogo && <img src={meeting.clientLogo} alt="" className="h-4 w-4 rounded-full object-cover" />}
-                          {meeting.clientName}
-                        </span>
-                      </div>
-                      {!hideSDRColumn && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">SDR</span>
-                          <span className="text-foreground">{meeting.sdr}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Meeting Date</span>
-                        <span className="text-foreground">{format(meeting.meetingDate, "MMM dd, yyyy")}</span>
-                      </div>
-                      {meeting.clientNotes && (
-                        <div>
-                          <span className="text-muted-foreground text-xs">Notes</span>
-                          <p className="text-foreground text-xs mt-0.5">{meeting.clientNotes}</p>
-                        </div>
-                      )}
-                    </div>
+                )}
+              </>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isMobile ? (
+            /* Mobile: compact card-style rows with expandable details */
+            <div className="space-y-2">
+              {paginatedMeetings.length === 0 ? (
+                <div className="py-12">
+                  {activeFiltersCount > 0 ? (
+                    <EmptyState
+                      icon={SearchIcon}
+                      title="No results found"
+                      description="Try adjusting your filters"
+                      actionLabel="Clear Filters"
+                      onAction={clearAllFilters}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon={CalendarX}
+                      title="No meetings booked yet"
+                      description="SQL meetings will appear here once leads are generated"
+                    />
                   )}
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="overflow-x-auto scrollbar-thin scroll-gradient">
-            <Table>
-              <TableHeader className="table-header-navy">
-                <TableRow>
-                  <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] dark:bg-[#1E293B] text-center">
-                    <SortButton field="sqlDate" label="Booking Date" />
-                  </TableHead>
-                  <TableHead className="px-4 py-3 text-left">
-                    <SortButton field="clientName" label="Client" />
-                  </TableHead>
-                  <TableHead className="px-4 py-3 text-left">
-                    <SortButton field="contactPerson" label="Contact Person" />
-                  </TableHead>
-                  <TableHead className="px-4 py-3 text-left">
-                    <SortButton field="companyName" label="Company" />
-                  </TableHead>
-                  {!hideSDRColumn && (
-                  <TableHead className="px-4 py-3 text-left">
-                    <SortButton field="sdr" label="SDR" />
-                  </TableHead>
-                  )}
-                  <TableHead className="px-4 py-3 text-center">
-                    <SortButton field="meetingDate" label="Meeting Date" />
-                  </TableHead>
-                  <TableHead className="px-4 py-3 text-center">
-                    <SortButton field="meetingStatus" label="Status" />
-                  </TableHead>
-                  <TableHead className="px-4 py-3 text-left" style={{ minWidth: 200 }}>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="table-striped">
-                {paginatedMeetings.map((meeting) => (
-                  <TableRow key={meeting.id} className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`}>
-                    <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums sticky left-0 z-10">{format(meeting.sqlDate, "MMM dd, yyyy")}</TableCell>
-                    <TableCell className="text-foreground whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {meeting.clientLogo ? (
-                          <img src={meeting.clientLogo} alt="" className="h-6 w-6 rounded-full object-cover" />
-                        ) : (
-                          <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-                            {meeting.clientName.charAt(0)}
-                          </div>
-                        )}
-                        <span className="font-medium">{meeting.clientName}</span>
+              ) : (
+                paginatedMeetings.map((meeting) => {
+                  const isExpanded = expandedRowId === meeting.id;
+                  const overdue = isOverdue(meeting);
+                  return (
+                    <div
+                      key={meeting.id}
+                      className={cn(
+                        "rounded-lg border border-border/50 p-3 cursor-pointer transition-colors",
+                        updating === meeting.id && "opacity-60",
+                      )}
+                      onClick={() => setExpandedRowId(isExpanded ? null : meeting.id)}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-foreground text-sm truncate">{meeting.contactPerson}</p>
+                          <p className="text-xs text-muted-foreground">{format(meeting.sqlDate, "MMM dd, yyyy")}</p>
+                        </div>
+                        <StatusBadge meeting={meeting} />
                       </div>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {meeting.contactPerson && meeting.companyName && meeting.contactPerson.trim().toLowerCase() === meeting.companyName.trim().toLowerCase() ? (
-                        <span className="text-muted-foreground italic">Name pending</span>
-                      ) : (
-                        <span className="text-foreground">{meeting.contactPerson}</span>
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Company</span>
+                            <span className="text-foreground font-medium">{meeting.companyName || "-"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Client</span>
+                            <span className="text-foreground flex items-center gap-1.5">
+                              {meeting.clientLogo && (
+                                <img src={meeting.clientLogo} alt="" className="h-4 w-4 rounded-full object-cover" />
+                              )}
+                              {meeting.clientName}
+                            </span>
+                          </div>
+                          {!hideSDRColumn && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">SDR</span>
+                              <span className="text-foreground">{meeting.sdr}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Meeting Date</span>
+                            <span className="text-foreground">{format(meeting.meetingDate, "MMM dd, yyyy")}</span>
+                          </div>
+                          {meeting.clientNotes && (
+                            <div>
+                              <span className="text-muted-foreground text-xs">Notes</span>
+                              <p className="text-foreground text-xs mt-0.5">{meeting.clientNotes}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
-                    </TableCell>
-                    <TableCell className="text-foreground">{meeting.companyName}</TableCell>
-                    {!hideSDRColumn && <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>}
-                    <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums">{format(meeting.meetingDate, "MMM dd, yyyy")}</TableCell>
-                    <TableCell className="text-center"><StatusBadge meeting={meeting} /></TableCell>
-                    <TableCell style={{ minWidth: 200 }}>
-                      {isSdr || !canEditSQL(meeting.clientId) ? (
-                        <span className="text-sm text-foreground">{meeting.clientNotes || ""}</span>
-                      ) : (
-                        <Input
-                          defaultValue={meeting.clientNotes}
-                          onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
-                          placeholder="Add notes..."
-                          disabled={updating === meeting.id}
-                          className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
-                        />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {paginatedMeetings.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={hideSDRColumn ? 7 : 8} className="py-12">
-                      {activeFiltersCount > 0 ? (
-                        <EmptyState icon={SearchIcon} title="No results found" description="Try adjusting your filters" actionLabel="Clear Filters" onAction={clearAllFilters} />
-                      ) : (
-                        <EmptyState icon={CalendarX} title="No meetings booked yet" description="SQL meetings will appear here once leads are generated" />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="border-border">
-                <ChevronLeft className="h-4 w-4" /> Previous
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="border-border">
-                Next <ChevronRight className="h-4 w-4" />
-              </Button>
+                    </div>
+                  );
+                })
+              )}
             </div>
+          ) : (
+            <div className="overflow-x-auto scrollbar-thin scroll-gradient">
+              <Table>
+                <TableHeader className="table-header-navy">
+                  <TableRow>
+                    <TableHead className="px-4 py-3 sticky left-0 z-20 bg-[#0F172A] dark:bg-[#1E293B] text-center">
+                      <SortButton field="sqlDate" label="Booking Date" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left">
+                      <SortButton field="clientName" label="Client" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left">
+                      <SortButton field="contactPerson" label="Contact Person" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left">
+                      <SortButton field="companyName" label="Company" />
+                    </TableHead>
+                    {!hideSDRColumn && (
+                      <TableHead className="px-4 py-3 text-left">
+                        <SortButton field="sdr" label="SDR" />
+                      </TableHead>
+                    )}
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortButton field="meetingDate" label="Meeting Date" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortButton field="meetingStatus" label="Status" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left" style={{ minWidth: 200 }}>
+                      Notes
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="table-striped">
+                  {paginatedMeetings.map((meeting) => (
+                    <TableRow
+                      key={meeting.id}
+                      className={`border-border/50 transition-colors ${updating === meeting.id ? "opacity-60" : ""}`}
+                    >
+                      <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums sticky left-0 z-10">
+                        {format(meeting.sqlDate, "MMM dd, yyyy")}
+                      </TableCell>
+                      <TableCell className="text-foreground whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {meeting.clientLogo ? (
+                            <img src={meeting.clientLogo} alt="" className="h-6 w-6 rounded-full object-cover" />
+                          ) : (
+                            <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                              {meeting.clientName.charAt(0)}
+                            </div>
+                          )}
+                          <span className="font-medium">{meeting.clientName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {meeting.contactPerson &&
+                        meeting.companyName &&
+                        meeting.contactPerson.trim().toLowerCase() === meeting.companyName.trim().toLowerCase() ? (
+                          <span className="text-muted-foreground italic">Name pending</span>
+                        ) : (
+                          <span className="text-foreground">{meeting.contactPerson}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-foreground">{meeting.companyName}</TableCell>
+                      {!hideSDRColumn && (
+                        <TableCell className="text-foreground whitespace-nowrap">{meeting.sdr}</TableCell>
+                      )}
+                      <TableCell className="text-foreground whitespace-nowrap text-center tabular-nums">
+                        {format(meeting.meetingDate, "MMM dd, yyyy")}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <StatusBadge meeting={meeting} />
+                      </TableCell>
+                      <TableCell style={{ minWidth: 200 }}>
+                        {isSdr || !canEditSQL(meeting.clientId) ? (
+                          <span className="text-sm text-foreground">{meeting.clientNotes || ""}</span>
+                        ) : (
+                          <Input
+                            defaultValue={meeting.clientNotes}
+                            onBlur={(e) => handleNotesChange(meeting.id, e.target.value)}
+                            placeholder="Add notes..."
+                            disabled={updating === meeting.id}
+                            className="bg-transparent border border-border/40 hover:border-border focus:border-ring h-8 text-sm rounded px-2"
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {paginatedMeetings.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={hideSDRColumn ? 7 : 8} className="py-12">
+                        {activeFiltersCount > 0 ? (
+                          <EmptyState
+                            icon={SearchIcon}
+                            title="No results found"
+                            description="Try adjusting your filters"
+                            actionLabel="Clear Filters"
+                            onAction={clearAllFilters}
+                          />
+                        ) : (
+                          <EmptyState
+                            icon={CalendarX}
+                            title="No meetings booked yet"
+                            description="SQL meetings will appear here once leads are generated"
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="border-border"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="border-border"
+                >
+                  Next <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Mobile Filter Drawer */}
+      <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Filters</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-2 overflow-y-auto">
+            <FilterFields />
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <DrawerFooter>
+            <Button
+              className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+              onClick={() => setFilterDrawerOpen(false)}
+            >
+              Apply
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
-    {/* Mobile Filter Drawer */}
-    <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader>
-          <DrawerTitle>Filters</DrawerTitle>
-        </DrawerHeader>
-        <div className="px-4 pb-2 overflow-y-auto">
-          <FilterFields />
-        </div>
-        <DrawerFooter>
-          <Button
-            className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
-            onClick={() => setFilterDrawerOpen(false)}
-          >
-            Apply
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-
-    <AlertDialog open={!!reinstateTarget} onOpenChange={(open) => { if (!open) setReinstateTarget(null); }}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Reinstate this meeting?</AlertDialogTitle>
-          <AlertDialogDescription>
-            It will be marked as pending and protected from HubSpot sync.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
-            onClick={() => reinstateTarget && handleReinstate(reinstateTarget)}
-          >
-            Reinstate
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      <AlertDialog
+        open={!!reinstateTarget}
+        onOpenChange={(open) => {
+          if (!open) setReinstateTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reinstate this meeting?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It will be marked as pending and protected from HubSpot sync.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100"
+              onClick={() => reinstateTarget && handleReinstate(reinstateTarget)}
+            >
+              Reinstate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
