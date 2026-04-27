@@ -1555,7 +1555,7 @@ const Settings = () => {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="member-role">Role *</Label>
-                        <Select value={memberForm.role} onValueChange={(value) => setMemberForm({ ...memberForm, role: value, client_id: value === 'SDR' ? memberForm.client_id : '' })}>
+                        <Select value={memberForm.role} onValueChange={(value) => setMemberForm({ ...memberForm, role: value })}>
                           <SelectTrigger className="bg-background/50 border-border">
                             <SelectValue placeholder="Select a role" />
                           </SelectTrigger>
