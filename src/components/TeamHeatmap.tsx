@@ -500,18 +500,19 @@ export const TeamHeatmap = ({ clients }: Props) => {
   }, [data]);
 
   const chartData = useMemo(() => {
-    const totals = new Map<string, { dials: number; answered: number; dms: number }>();
-    for (const k of columnKeys) totals.set(k, { dials: 0, answered: 0, dms: 0 });
+    const totals = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+    for (const k of columnKeys) totals.set(k, { dials: 0, answered: 0, dms: 0, sqls: 0 });
     for (const r of data) {
       const t = totals.get(r.period_key);
       if (t) {
         t.dials += r.dials || 0;
         t.answered += r.answered || 0;
         t.dms += r.dms || 0;
+        t.sqls += r.sqls || 0;
       }
     }
     return columnKeys.map((k) => {
-      const t = totals.get(k) || { dials: 0, answered: 0, dms: 0 };
+      const t = totals.get(k) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
       const otherDials = Math.max(0, t.dials - t.answered - t.dms);
       return {
         key: k,
@@ -519,6 +520,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
         dials: t.dials,
         answered: t.answered,
         dms: t.dms,
+        sqls: t.sqls,
         dialsOnly: otherDials,
       };
     });
