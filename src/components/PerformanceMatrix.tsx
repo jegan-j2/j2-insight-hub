@@ -1013,19 +1013,24 @@ const PerformanceMatrix = () => {
                   { label: "vs Dial target", align: "center", field: "vsDial" as SortField },
                   { label: "vs Conv % target", align: "center", field: "vsConv" as SortField },
                   { label: "Quadrant", align: "left", field: "q" as SortField },
-                ].map((h) => {
+                ].map((h, hIdx) => {
                   const isActive = sortField === h.field;
                   const Icon = !isActive ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+                  const isFirst = hIdx === 0;
                   return (
                     <th
                       key={h.label}
                       onClick={() => handleSort(h.field)}
-                      className="px-4 py-3 text-sm font-bold whitespace-nowrap cursor-pointer select-none"
+                      className={cn(
+                        "px-4 py-3 text-sm font-bold whitespace-nowrap cursor-pointer select-none",
+                        isFirst && "sticky left-0 z-20",
+                      )}
                       style={{
                         background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
                         color: "#FFFFFF",
                         textAlign: h.align as any,
                         borderBottom: isDark ? "1px solid #334155" : "none",
+                        ...(isFirst ? { minWidth: 180 } : {}),
                       }}
                     >
                       <span className={cn("inline-flex items-center", h.align === "center" && "justify-center")}>
