@@ -496,7 +496,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
     }
     const answerRate = dials > 0 ? Math.round((answered / dials) * 1000) / 10 : 0;
     const convRate = dials > 0 ? Math.round((sqls / dials) * 1000) / 10 : 0;
-    return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate };
+    const dmRate = answered > 0 ? Math.round((dms / answered) * 1000) / 10 : null;
+    return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate, dmRate };
   }, [data]);
 
   const chartData = useMemo(() => {
