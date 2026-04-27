@@ -937,7 +937,7 @@ const PerformanceMatrix = () => {
                   <Scatter
                     data={points}
                     shape={(props: any) => (
-                      <SDRDot {...props} dimmed={qFilter !== "all" && !filteredNames.has(props.payload.name)} />
+                      <SDRDot {...props} isMobile={isMobile} dimmed={qFilter !== "all" && !filteredNames.has(props.payload.name)} />
                     )}
                   />
                 </ScatterChart>
