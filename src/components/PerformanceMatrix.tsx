@@ -1001,7 +1001,7 @@ const PerformanceMatrix = () => {
         </div>
 
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full border-collapse text-sm">
+          <table className="w-full border-collapse text-sm" style={{ minWidth: 880 }}>
             <thead>
               <tr>
                 {[
