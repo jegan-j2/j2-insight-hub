@@ -418,7 +418,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       const ratio = presentDays / totalDays;
       const bg = ratio >= 1 ? "#dcfce7" : ratio >= 0.5 ? "#fef9c3" : "#fee2e2";
       const color = ratio >= 1 ? "#166534" : ratio >= 0.5 ? "#854d0e" : "#991b1b";
-      return { label: `${presentDays}/${totalDays} Days`, bg, color };
+      return { label: `${presentDays}/${totalDays} ${totalDays === 1 ? "Day" : "Days"}`, bg, color };
     },
     [isHourMode, columnKeys, cellMap],
   );
@@ -496,7 +496,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
     }
     const answerRate = dials > 0 ? Math.round((answered / dials) * 1000) / 10 : 0;
     const convRate = dials > 0 ? Math.round((sqls / dials) * 1000) / 10 : 0;
-    return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate };
+    const dmRate = answered > 0 ? Math.round((dms / answered) * 1000) / 10 : null;
+    return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate, dmRate };
   }, [data]);
 
   const chartData = useMemo(() => {
@@ -1046,7 +1047,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
               {
                 title: "DM Conversations",
                 value: summary.dms.toLocaleString(),
-                subtitle: null,
+                subtitle: summary.dmRate === null ? "— DM conv. rate" : `${summary.dmRate}% DM conv. rate`,
                 icon: MessageSquare,
                 iconColor: "text-teal-500",
                 iconBg: "bg-teal-500/10",
