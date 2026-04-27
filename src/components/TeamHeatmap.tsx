@@ -1142,11 +1142,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs">
-                <div className="text-muted-foreground font-medium">
-                  Total: {summary.dials.toLocaleString()} dials · {summary.answered.toLocaleString()} answered ·{" "}
-                  {summary.dms.toLocaleString()} DM conv.
-                </div>
+              <div className="mt-3 flex items-center justify-end text-xs">
                 <div className="flex items-center gap-4 text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: "#0f172a" }} />
