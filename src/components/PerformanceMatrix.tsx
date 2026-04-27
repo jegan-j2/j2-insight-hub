@@ -945,7 +945,7 @@ const PerformanceMatrix = () => {
 
               {/* Legend — inside chart top-right */}
               <div
-                className="absolute top-4 right-4 rounded-lg border border-border px-3 py-2.5 space-y-1.5"
+                className="hidden sm:block absolute top-4 right-4 rounded-lg border border-border px-3 py-2.5 space-y-1.5"
                 style={{
                   background: isDark ? "rgba(15,23,42,0.85)" : "rgba(255,255,255,0.9)",
                   backdropFilter: "blur(4px)",
