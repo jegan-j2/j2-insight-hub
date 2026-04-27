@@ -127,14 +127,16 @@ interface ClientOption {
 
 // ─── Custom scatter dot with initials ─────────────────────────────
 const SDRDot = (props: any) => {
-  const { cx, cy, payload, dimmed } = props;
+  const { cx, cy, payload, dimmed, isMobile } = props;
   if (!cx || !cy) return null;
   const color = Q_COLORS[payload.q as Quadrant];
   const initials = getInitials(payload.name);
+  const r = isMobile ? 22 : 14; // 44px touch target on mobile
+  const fontSize = isMobile ? 11 : 9;
   return (
     <g opacity={dimmed ? 0.2 : 1}>
-      <circle cx={cx} cy={cy} r={14} fill={color + "cc"} stroke={color} strokeWidth={1.5} />
-      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={9} fontWeight={700}>
+      <circle cx={cx} cy={cy} r={r} fill={color + "cc"} stroke={color} strokeWidth={1.5} />
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={fontSize} fontWeight={700}>
         {initials}
       </text>
     </g>
