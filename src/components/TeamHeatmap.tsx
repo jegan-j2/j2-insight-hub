@@ -512,7 +512,15 @@ export const TeamHeatmap = ({ clients }: Props) => {
     }
     return columnKeys.map((k) => {
       const t = totals.get(k) || { dials: 0, answered: 0, dms: 0 };
-      return { key: k, label: formatColumnHeader(k), dials: t.dials, answered: t.answered, dms: t.dms };
+      const otherDials = Math.max(0, t.dials - t.answered - t.dms);
+      return {
+        key: k,
+        label: formatColumnHeader(k),
+        dials: t.dials,
+        answered: t.answered,
+        dms: t.dms,
+        dialsOnly: otherDials,
+      };
     });
   }, [columnKeys, data, isHourMode]);
 
