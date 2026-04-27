@@ -1091,7 +1091,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
               </h3>
             </div>
             <CardContent className="p-5">
-              <div className="h-[280px] w-full">
+              <div className="h-[200px] sm:h-[280px] w-full" style={{ minHeight: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
