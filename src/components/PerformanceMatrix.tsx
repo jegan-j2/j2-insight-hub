@@ -718,10 +718,10 @@ const PerformanceMatrix = () => {
           <span className="text-sm text-muted-foreground">dials</span>
         </div>
 
-        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <div className="w-px h-5 bg-border flex-shrink-0 hidden md:block" />
 
         {/* Conv % target */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <span
             className="text-sm text-muted-foreground cursor-help flex items-center gap-1 whitespace-nowrap"
             title="SQLs ÷ Total Dials × 100"
@@ -736,7 +736,7 @@ const PerformanceMatrix = () => {
             value={pendingConv}
             step={0.1}
             onChange={(e) => setPendingConv(parseFloat(Number(e.target.value).toFixed(1)))}
-            className="j2-slider w-28"
+            className="j2-slider flex-1 md:flex-none md:w-28"
             style={(() => {
               const max = Math.max((maxConv || 5) * 0.9, 5);
               const pct = ((pendingConv - 0.1) / (max - 0.1)) * 100;
@@ -757,7 +757,7 @@ const PerformanceMatrix = () => {
           <span className="text-sm text-muted-foreground">%</span>
         </div>
 
-        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <div className="w-px h-5 bg-border flex-shrink-0 hidden md:block" />
 
         {/* Apply button */}
         <button
