@@ -242,6 +242,17 @@ const PerformanceMatrix = () => {
   const [rawData, setRawData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [qFilter, setQFilter] = useState<Quadrant | "all">("all");
+  type SortField = "name" | "client" | "dials" | "sqls" | "conv" | "vsDial" | "vsConv" | "q";
+  type SortDir = "asc" | "desc";
+  const [sortField, setSortField] = useState<SortField>("dials");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const handleSort = (f: SortField) => {
+    if (sortField === f) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortField(f);
+      setSortDir(f === "dials" || f === "sqls" || f === "conv" || f === "vsDial" || f === "vsConv" ? "desc" : "asc");
+    }
+  };
   const [helpOpen, setHelpOpen] = useState(false);
   const [exportingCSV, setExportingCSV] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
