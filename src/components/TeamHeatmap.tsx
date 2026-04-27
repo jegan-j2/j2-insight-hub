@@ -500,12 +500,20 @@ export const TeamHeatmap = ({ clients }: Props) => {
   }, [data]);
 
   const chartData = useMemo(() => {
-    const totals = new Map<string, number>();
-    for (const k of columnKeys) totals.set(k, 0);
+    const totals = new Map<string, { dials: number; answered: number; dms: number }>();
+    for (const k of columnKeys) totals.set(k, { dials: 0, answered: 0, dms: 0 });
     for (const r of data) {
-      if (totals.has(r.period_key)) totals.set(r.period_key, (totals.get(r.period_key) || 0) + (r.dials || 0));
+      const t = totals.get(r.period_key);
+      if (t) {
+        t.dials += r.dials || 0;
+        t.answered += r.answered || 0;
+        t.dms += r.dms || 0;
+      }
     }
-    return columnKeys.map((k) => ({ key: k, label: formatColumnHeader(k), dials: totals.get(k) || 0 }));
+    return columnKeys.map((k) => {
+      const t = totals.get(k) || { dials: 0, answered: 0, dms: 0 };
+      return { key: k, label: formatColumnHeader(k), dials: t.dials, answered: t.answered, dms: t.dms };
+    });
   }, [columnKeys, data, isHourMode]);
 
   const buildTooltip = (sdr: string, key: string): string => {
