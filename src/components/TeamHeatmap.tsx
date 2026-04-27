@@ -1097,10 +1097,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                       axisLine={{ stroke: "hsl(var(--border))" }}
                       tickLine={false}
-                      interval={columnKeys.length <= 7 ? 0 : columnKeys.length <= 15 ? 1 : 2}
-                      angle={columnKeys.length > 10 ? -35 : 0}
-                      textAnchor={columnKeys.length > 10 ? "end" : "middle"}
-                      height={columnKeys.length > 10 ? 50 : 30}
+                      interval={0}
+                      angle={-35}
+                      textAnchor="end"
+                      height={50}
                     />
                     <YAxis
                       tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
