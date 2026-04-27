@@ -1566,36 +1566,32 @@ const Settings = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      {/* Assigned Client dropdown - only for SDR role */}
-                      {memberForm.role === 'SDR' && (
-                        <div className="grid gap-2">
-                          <Label htmlFor="member-client">Assigned Client</Label>
-                          <Select value={memberForm.client_id} onValueChange={(value) => setMemberForm({ ...memberForm, client_id: value === '__none__' ? '' : value })}>
-                            <SelectTrigger className="bg-background/50 border-border">
-                              <SelectValue placeholder="Select a client" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">None</SelectItem>
-                              {clientsList.map((c) => (
-                                <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                      {memberForm.role === 'SDR' && (
-                        <div className="grid gap-2">
-                          <Label htmlFor="member-hubspot-id">HubSpot Owner ID</Label>
-                          <Input
-                            id="member-hubspot-id"
-                            placeholder="e.g. 163977662"
-                            value={memberForm.hubspot_owner_id}
-                            onChange={(e) => setMemberForm({ ...memberForm, hubspot_owner_id: e.target.value })}
-                            className="bg-background/50 border-border"
-                          />
-                          <p className="text-xs text-muted-foreground">Find this in HubSpot → Settings → Users. Required for call data to sync correctly.</p>
-                        </div>
-                      )}
+                      {/* Assigned Client dropdown - always visible */}
+                      <div className="grid gap-2">
+                        <Label htmlFor="member-client">Assigned Client</Label>
+                        <Select value={memberForm.client_id} onValueChange={(value) => setMemberForm({ ...memberForm, client_id: value === '__none__' ? '' : value })}>
+                          <SelectTrigger className="bg-background/50 border-border">
+                            <SelectValue placeholder="Select a client" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">None</SelectItem>
+                            {clientsList.map((c) => (
+                              <SelectItem key={c.client_id} value={c.client_id}>{c.client_name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="member-hubspot-id">HubSpot Owner ID</Label>
+                        <Input
+                          id="member-hubspot-id"
+                          placeholder="e.g. 163977662"
+                          value={memberForm.hubspot_owner_id}
+                          onChange={(e) => setMemberForm({ ...memberForm, hubspot_owner_id: e.target.value })}
+                          className="bg-background/50 border-border"
+                        />
+                        <p className="text-xs text-muted-foreground">Find this in HubSpot → Settings → Users. Required for call data to sync correctly.</p>
+                      </div>
                     </div>
                     <DialogFooter>
                       <button
