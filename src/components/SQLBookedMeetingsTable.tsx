@@ -266,8 +266,8 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
 
   const totalPages = Math.ceil(filteredMeetings.length / rowsPerPage);
   const paginatedMeetings = filteredMeetings.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-  const uniqueClients = Array.from(new Set(activeMeetings.map(m => m.clientId))).sort();
-  const uniqueSdrs = Array.from(new Set(activeMeetings.map(m => m.sdr))).sort();
+  const uniqueClients = Array.from(new Set(activeMeetings.map(m => m.clientId).filter((v): v is string => typeof v === "string" && v.length > 0))).sort();
+  const uniqueSdrs = Array.from(new Set(activeMeetings.map(m => m.sdr).filter((v): v is string => typeof v === "string" && v.length > 0))).sort();
 
   const SortButton = ({ field, label }: { field: SortField; label: string }) => (
     <button
