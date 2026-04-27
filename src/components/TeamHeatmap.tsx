@@ -512,7 +512,15 @@ export const TeamHeatmap = ({ clients }: Props) => {
     }
     return columnKeys.map((k) => {
       const t = totals.get(k) || { dials: 0, answered: 0, dms: 0 };
-      return { key: k, label: formatColumnHeader(k), dials: t.dials, answered: t.answered, dms: t.dms };
+      const otherDials = Math.max(0, t.dials - t.answered - t.dms);
+      return {
+        key: k,
+        label: formatColumnHeader(k),
+        dials: t.dials,
+        answered: t.answered,
+        dms: t.dms,
+        dialsOnly: otherDials,
+      };
     });
   }, [columnKeys, data, isHourMode]);
 
@@ -1128,14 +1136,17 @@ export const TeamHeatmap = ({ clients }: Props) => {
                         );
                       }}
                     />
-                    <Bar dataKey="dials" name="Dials" radius={[4, 4, 0, 0]} fill="#0f172a" />
-                    <Bar dataKey="answered" name="Answered" radius={[4, 4, 0, 0]} fill="#475569" />
-                    <Bar dataKey="dms" name="DM Conversations" radius={[4, 4, 0, 0]} fill="#94a3b8" />
+                    <Bar dataKey="dialsOnly" name="Dials" stackId="a" fill="#0f172a" />
+                    <Bar dataKey="answered" name="Answered" stackId="a" fill="#475569" />
+                    <Bar dataKey="dms" name="DM Conversations" stackId="a" radius={[4, 4, 0, 0]} fill="#94a3b8" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="mt-3 flex items-center justify-between text-xs">
-                <div className="text-muted-foreground font-medium">Total: {summary.dials.toLocaleString()} dials</div>
+                <div className="text-muted-foreground font-medium">
+                  Total: {summary.dials.toLocaleString()} dials · {summary.answered.toLocaleString()} answered ·{" "}
+                  {summary.dms.toLocaleString()} DM conv.
+                </div>
                 <div className="flex items-center gap-4 text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: "#0f172a" }} />
