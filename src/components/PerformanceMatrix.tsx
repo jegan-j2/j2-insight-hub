@@ -188,6 +188,7 @@ const MatrixTooltip = ({ active, payload }: any) => {
 const PerformanceMatrix = () => {
   const { toast } = useToast();
   const { isSdr, isClient } = useUserRole();
+  const isMobile = useIsMobile();
 
   // Block SDR and Client roles
   if (isSdr || isClient) {
