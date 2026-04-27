@@ -214,7 +214,7 @@ export const SDRLeaderboardTable = ({
               </SelectTrigger>
               <SelectContent className="z-[100] bg-card">
                 <SelectItem value="all">All Clients</SelectItem>
-                {clients.map((c) => (
+                {clients.filter(c => c.client_id && c.client_id.length > 0).map((c) => (
                   <SelectItem key={c.client_id} value={c.client_id}>
                     <span className="flex items-center gap-2">
                       {c.logo_url ? (
