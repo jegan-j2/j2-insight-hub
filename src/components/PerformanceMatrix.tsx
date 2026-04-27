@@ -677,12 +677,12 @@ const PerformanceMatrix = () => {
         .j2-num-input { width: 64px; border: 1px solid hsl(var(--border)); border-radius: 6px; padding: 2px 6px; font-size: 13px; font-weight: 500; background: hsl(var(--background)); color: hsl(var(--foreground)); text-align: right; outline: none; }
         .j2-num-input:focus { border-color: #0f172a; }
       `}</style>
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-card border border-border rounded-lg">
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-3 p-4 bg-card border border-border rounded-lg">
         <span className="text-sm font-medium text-foreground flex-shrink-0">Thresholds</span>
-        <div className="w-px h-5 bg-border flex-shrink-0" />
+        <div className="w-px h-5 bg-border flex-shrink-0 hidden md:block" />
 
         {/* Dial target */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <span
             className="text-sm text-muted-foreground cursor-help flex items-center gap-1 whitespace-nowrap"
             title="Total dials made in the selected period"
@@ -697,7 +697,7 @@ const PerformanceMatrix = () => {
             value={pendingDial}
             step={10}
             onChange={(e) => setPendingDial(Number(e.target.value))}
-            className="j2-slider w-28"
+            className="j2-slider flex-1 md:flex-none md:w-28"
             style={(() => {
               const max = Math.max(Math.ceil((maxDials || 3000) * 0.9), 500);
               const pct = ((pendingDial - 10) / (max - 10)) * 100;
