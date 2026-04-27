@@ -81,7 +81,7 @@ export const SDRMeetingsResults = ({ sdrName, dateRange, clientId }: SDRMeetings
         }
       }
     }
-    const avgDays = dayCount > 0 ? (totalDays / dayCount).toFixed(1) : "—";
+    const avgDays = dayCount > 0 ? (totalDays / dayCount).toFixed(1) : "-";
 
     return {
       showUpRate: showUpRate.toFixed(0),

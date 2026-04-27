@@ -118,7 +118,7 @@ export const SDRDetailModal = ({ isOpen, onClose, sdr, globalDateRange, campaign
   // Log warning if clientId missing
   useEffect(() => {
     if (isOpen && !sdr.clientId) {
-      console.warn(`SDRDetailModal opened for "${sdr.name}" without clientId — falling back to all clients`);
+      console.warn(`SDRDetailModal opened for "${sdr.name}" without clientId - falling back to all clients`);
     }
   }, [isOpen, sdr.clientId, sdr.name]);
 

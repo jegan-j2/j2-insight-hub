@@ -338,7 +338,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
               </div>
             )}
             <div>
-              <h2 className="text-lg font-semibold text-foreground">{client.client_name} — Contacts</h2>
+              <h2 className="text-lg font-semibold text-foreground">{client.client_name} - Contacts</h2>
               <p className="text-sm text-muted-foreground">
                 {contactCount} contact{contactCount !== 1 ? "s" : ""}
                 {client.campaign_end && ` • Campaign ends ${format(new Date(client.campaign_end), "d MMM yyyy")}`}
@@ -475,7 +475,7 @@ export const ClientContactsModal = ({ client, open, onClose, onContactsChanged }
                         {contact.contact_title ? (
                           <span className="text-sm text-muted-foreground">{contact.contact_title}</span>
                         ) : (
-                          <span className="text-sm text-muted-foreground italic">—</span>
+                          <span className="text-sm text-muted-foreground italic">-</span>
                         )}
                       </TableCell>
                       <TableCell>

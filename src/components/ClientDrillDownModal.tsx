@@ -21,7 +21,7 @@ interface ClientDrillDownModalProps {
 }
 
 const formatDuration = (seconds: number | null): { text: string; colorClass: string } => {
-  if (!seconds || seconds <= 0) return { text: "—", colorClass: "text-muted-foreground" };
+  if (!seconds || seconds <= 0) return { text: "-", colorClass: "text-muted-foreground" };
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   const text = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
@@ -81,8 +81,8 @@ export const ClientDrillDownModal = ({ open, onOpenChange, title, records }: Cli
                       <TableCell className="px-4 py-2 text-foreground whitespace-nowrap">
                         {format(new Date(record.activity_date), "MMM dd, yyyy")}
                       </TableCell>
-                      <TableCell className="px-4 py-2 text-foreground">{record.contact_name || "—"}</TableCell>
-                      <TableCell className="px-4 py-2 text-foreground">{record.company_name || "—"}</TableCell>
+                      <TableCell className="px-4 py-2 text-foreground">{record.contact_name || "-"}</TableCell>
+                      <TableCell className="px-4 py-2 text-foreground">{record.company_name || "-"}</TableCell>
                       <TableCell className={`px-4 py-2 ${dur.colorClass}`}>{dur.text}</TableCell>
                     </TableRow>
                   );

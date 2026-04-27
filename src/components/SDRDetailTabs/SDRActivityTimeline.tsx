@@ -193,7 +193,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
       mostActiveDay,
       mostActiveDayAvg: mostActiveDayAvg.toFixed(1),
       avgDailyDials: totalWorkingDays > 0 ? (totalDials / totalWorkingDays).toFixed(1) : "0",
-      bestWeekLabel: weeks[bestWeekIdx]?.label || "—",
+      bestWeekLabel: weeks[bestWeekIdx]?.label || "-",
       consistencyScore,
     };
   }, [dialsByDate, weeks, melbourneNow]);
@@ -240,7 +240,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
                     const tooltipDate = format(date, "MMM d");
                     const tooltipText = value === 0
                       ? "No activity"
-                      : `${tooltipDate} — ${value} dials · ${answered} answered${sqls > 0 ? ` · ${sqls} 🎯` : ""}`;
+                      : `${tooltipDate} - ${value} dials · ${answered} answered${sqls > 0 ? ` · ${sqls} 🎯` : ""}`;
 
                     return (
                       <div
@@ -261,7 +261,7 @@ export const SDRActivityTimeline = ({ sdrName, dateRange, clientId }: SDRActivit
                         onClick={() => handleDayClick(key, isFuture)}
                       >
                         {isFuture ? (
-                          <span className="text-muted-foreground/30 text-[11px]">—</span>
+                          <span className="text-muted-foreground/30 text-[11px]">-</span>
                         ) : value === 0 ? (
                           <span style={{ color: "#94a3b8", fontWeight: 400 }}>0</span>
                         ) : (

@@ -263,7 +263,7 @@ export const HourlyBreakdownPanel = ({
                     ? selectedHourData.dials
                     : dayTotals.peakDials > 0
                     ? `${getHourLabel(dayTotals.peakHour)} (${dayTotals.peakDials})`
-                    : "—"}
+                    : "-"}
                 </p>
               </div>
 

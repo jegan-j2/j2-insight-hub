@@ -414,7 +414,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       const pastKeys = columnKeys.filter((k) => !isFutureColumn(k));
       const totalDays = pastKeys.length;
       const presentDays = pastKeys.filter((k) => (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0).length;
-      if (totalDays === 0) return { label: "—", bg: "#f1f5f9", color: "#94a3b8" };
+      if (totalDays === 0) return { label: "-", bg: "#f1f5f9", color: "#94a3b8" };
       const ratio = presentDays / totalDays;
       const bg = ratio >= 1 ? "#dcfce7" : ratio >= 0.5 ? "#fef9c3" : "#fee2e2";
       const color = ratio >= 1 ? "#166534" : ratio >= 0.5 ? "#854d0e" : "#991b1b";
@@ -533,7 +533,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
     const answered = cell?.answered || 0;
     const sqls = cell?.sqls || 0;
     const sqlPart = sqls > 0 ? ` · ${sqls} 🎯` : "";
-    return `${formatColumnHeader(key)} — ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
+    return `${formatColumnHeader(key)} - ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
   };
 
   const showCampaignTab = clientFilter !== "all" && !!selectedClient?.campaign_start && !!selectedClient?.campaign_end;
@@ -927,7 +927,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                             </span>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </td>
                       <td
@@ -1004,7 +1004,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                               }}
                               title={buildTooltip(sdr, k)}
                             >
-                              {future ? <span>—</span> : dials}
+                              {future ? <span>-</span> : dials}
                               {sqls > 0 && (
                                 <span className="absolute leading-none" style={{ top: 3, right: 4, fontSize: 12 }}>
                                   🎯
@@ -1047,7 +1047,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
               {
                 title: "DM Conversations",
                 value: summary.dms.toLocaleString(),
-                subtitle: summary.dmRate === null ? "— DM conv. rate" : `${summary.dmRate}% DM conv. rate`,
+                subtitle: summary.dmRate === null ? "- DM conv. rate" : `${summary.dmRate}% DM conv. rate`,
                 icon: MessageSquare,
                 iconColor: "text-teal-500",
                 iconBg: "bg-teal-500/10",
@@ -1133,7 +1133,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                               color: "hsl(var(--foreground))",
                             }}
                           >
-                            {label} — {row.dials.toLocaleString()} dials · {row.answered.toLocaleString()} answered ·{" "}
+                            {label} - {row.dials.toLocaleString()} dials · {row.answered.toLocaleString()} answered ·{" "}
                             {row.dms.toLocaleString()} DM conv.
                             {row.sqls > 0 && <> · {row.sqls.toLocaleString()} 🎯</>}
                           </div>

@@ -83,7 +83,7 @@ const Navbar = () => {
                   'Australia/Melbourne', 
                   'MMMM dd, yyyy, h:mm a'
                 ) + ' AEDT'
-              : '—'
+              : '-'
             }
           </p>
         </div>

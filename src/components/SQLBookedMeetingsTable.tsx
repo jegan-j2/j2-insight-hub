@@ -616,7 +616,7 @@ export const SQLBookedMeetingsTable = ({ dateRange, isLoading = false, meetings,
                     <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Company</span>
-                        <span className="text-foreground font-medium">{meeting.companyName || "—"}</span>
+                        <span className="text-foreground font-medium">{meeting.companyName || "-"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Client</span>
