@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { J2Loader } from "@/components/J2Loader";
 import { useToast } from "@/hooks/use-toast";
 import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
