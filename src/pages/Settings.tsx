@@ -350,7 +350,7 @@ const Settings = () => {
   };
 
   const getDaysLeft = (client: ClientRow) => {
-    if (!client.campaign_start || !client.campaign_end) return "—";
+    if (!client.campaign_start || !client.campaign_end) return "-";
     const now = new Date();
     const end = new Date(client.campaign_end + "T00:00:00");
     if (now > end) return "Ended";
@@ -361,7 +361,7 @@ const Settings = () => {
   };
 
   const formatCampaignPeriod = (start: string | null, end: string | null) => {
-    if (!start || !end) return "—";
+    if (!start || !end) return "-";
     return `${format(new Date(start), "d MMM")} → ${format(new Date(end), "d MMM yyyy")}`;
   };
 
@@ -985,7 +985,7 @@ const Settings = () => {
 
       toast({
         title: "Test report sent",
-        description: `Report dispatched to ${reportEmails} — check your inbox in 30 seconds`,
+        description: `Report dispatched to ${reportEmails} - check your inbox in 30 seconds`,
         className: "border-[#10b981] text-[#10b981]"
       });
     } catch (error: any) {
@@ -1333,7 +1333,7 @@ const Settings = () => {
                                   {campaignStatus.label}
                                 </Badge>
                               ) : (
-                                <span className="text-sm text-muted-foreground">—</span>
+                                <span className="text-sm text-muted-foreground">-</span>
                               )}
                             </TableCell>
 
@@ -1691,7 +1691,7 @@ const Settings = () => {
                               </div>
                             </TableCell>
                             {!isMobile && <TableCell className="text-muted-foreground">{member.email}</TableCell>}
-                            <TableCell className="text-muted-foreground">{member.role || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{member.role || "-"}</TableCell>
                             {!isMobile && (
                               <TableCell className="text-muted-foreground">
                                 {memberClientData ? (
@@ -1705,7 +1705,7 @@ const Settings = () => {
                                     )}
                                     <span className="truncate">{memberClientData.client_name}</span>
                                   </span>
-                                ) : '—'}
+                                ) : '-'}
                               </TableCell>
                             )}
                             <TableCell>

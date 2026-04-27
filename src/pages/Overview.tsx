@@ -232,7 +232,7 @@ const Overview = () => {
         ? format(dateRange.from, "MMM dd, yyyy") : "";
       const endStr = dateRange?.to 
         ? format(dateRange.to, "MMM dd, yyyy") : "";
-      const reportTitle = `Overview Report — ${startStr} to ${endStr}`;
+      const reportTitle = `Overview Report - ${startStr} to ${endStr}`;
       const exportDate = format(new Date(), "MMM dd, yyyy h:mm a");
 
       const wb = XLSX.utils.book_new();

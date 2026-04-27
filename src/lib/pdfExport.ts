@@ -120,7 +120,7 @@ const addCoverPage = (
   pdf.line(40, pageHeight - 20, pageWidth - 40, pageHeight - 20);
   pdf.setFontSize(8);
   pdf.setTextColor(150, 160, 170);
-  pdf.text("Confidential — J2 Group", centerX, pageHeight - 14, { align: "center" });
+  pdf.text("Confidential - J2 Group", centerX, pageHeight - 14, { align: "center" });
 };
 
 export const exportToPDF = async (

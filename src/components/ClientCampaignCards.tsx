@@ -107,13 +107,13 @@ export const ClientCampaignCards = ({ campaign, meetingOutcomes, nextMeeting, we
             <div className="p-3 rounded-lg bg-muted/20 border border-border">
               <p className="text-xs text-muted-foreground mb-1">Campaign Start</p>
               <p className="text-lg font-bold text-foreground">
-                {campaign.campaignStart ? format(new Date(campaign.campaignStart), "MMM d") : "—"}
+                {campaign.campaignStart ? format(new Date(campaign.campaignStart), "MMM d") : "-"}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-muted/20 border border-border">
               <p className="text-xs text-muted-foreground mb-1">Campaign End</p>
               <p className="text-lg font-bold text-foreground">
-                {campaign.campaignEnd ? format(new Date(campaign.campaignEnd), "MMM d") : "—"}
+                {campaign.campaignEnd ? format(new Date(campaign.campaignEnd), "MMM d") : "-"}
               </p>
             </div>
           </div>

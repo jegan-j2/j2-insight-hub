@@ -285,7 +285,7 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
                   </div>
 
                   {client.dials === 0 ? (
-                    <p className="text-sm text-muted-foreground italic text-center py-2">Campaign active — no calls recorded yet</p>
+                    <p className="text-sm text-muted-foreground italic text-center py-2">Campaign active - no calls recorded yet</p>
                   ) : (
                     <>
                       <div className="grid grid-cols-3 gap-2 mb-3">
@@ -407,7 +407,7 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
                       </TableCell>
                       {client.dials === 0 ? (
                         <TableCell colSpan={8} className="text-sm text-muted-foreground italic text-center py-4">
-                          Campaign active — no calls recorded yet
+                          Campaign active - no calls recorded yet
                         </TableCell>
                       ) : (
                         <>
@@ -468,13 +468,13 @@ export const ClientPerformanceTable = ({ clientPerformance }: ClientPerformanceT
                                 <TooltipContent side="top">
                                   <div className="flex flex-col gap-1 text-xs">
                                     <span className="font-semibold">
-                                      {client.sqls.toLocaleString()} of {client.target.toLocaleString()} SQLs booked — {client.progress.toFixed(0)}% of target
+                                      {client.sqls.toLocaleString()} of {client.target.toLocaleString()} SQLs booked - {client.progress.toFixed(0)}% of target
                                     </span>
                                     <span className={cn(
                                       "font-medium",
                                       client.signal === "red" ? "text-rose-500" : client.signal === "amber" ? "text-amber-500" : client.signal === "grey" ? "text-gray-400" : "text-emerald-500"
                                     )}>
-                                      {client.signal === "red" ? "Behind — at risk" : client.signal === "amber" ? "At risk — slightly behind" : client.signal === "grey" ? "No activity recorded" : "On track"}
+                                      {client.signal === "red" ? "Behind - at risk" : client.signal === "amber" ? "At risk - slightly behind" : client.signal === "grey" ? "No activity recorded" : "On track"}
                                     </span>
                                   </div>
                                 </TooltipContent>

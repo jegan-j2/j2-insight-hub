@@ -119,7 +119,7 @@ const getMelbourneToday = () => {
 };
 
 const formatScheduledMeetingDateTime = (meetingDate: string | null, meetingTime: string | null) => {
-  if (!meetingDate) return "—";
+  if (!meetingDate) return "-";
 
   const dateLabel = format(new Date(`${meetingDate}T00:00:00`), "d MMM yyyy");
   if (!meetingTime) return dateLabel;
@@ -958,7 +958,7 @@ const ActivityMonitor = () => {
   };
 
   const formatRelativeTime = (d: Date | null): string => {
-    if (!d) return "—";
+    if (!d) return "-";
     const diffMs = Date.now() - d.getTime();
     const mins = Math.floor(diffMs / 60000);
     if (mins < 1) return "Just now";
@@ -1606,7 +1606,7 @@ const ActivityMonitor = () => {
                                   {formatRelativeTime(row.lastActivity)}
                                 </span>
                               );
-                            })() : <span className="text-sm text-muted-foreground">—</span>}
+                            })() : <span className="text-sm text-muted-foreground">-</span>}
                           </TableCell>
                         )}
                       </TableRow>
@@ -1693,8 +1693,8 @@ const ActivityMonitor = () => {
                                 })
                             }
                           </TableCell>
-                          <TableCell className="font-medium text-foreground">{a.contact_name || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{a.company_name || "—"}</TableCell>
+                          <TableCell className="font-medium text-foreground">{a.contact_name || "-"}</TableCell>
+                          <TableCell className="text-muted-foreground">{a.company_name || "-"}</TableCell>
                           <TableCell className="text-right">
                             {a.call_duration ? (
                               <span
@@ -1710,7 +1710,7 @@ const ActivityMonitor = () => {
                                 {Math.floor(a.call_duration / 60)}m {a.call_duration % 60}s
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">—</span>
+                              <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
                           <TableCell className="text-center">
@@ -1738,7 +1738,7 @@ const ActivityMonitor = () => {
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">
-                                  <p className="text-xs text-muted-foreground mb-1.5">Call Recording — {a.contact_name || "Unknown"}</p>
+                                  <p className="text-xs text-muted-foreground mb-1.5">Call Recording - {a.contact_name || "Unknown"}</p>
                                   <audio
                                     controls
                                     src={a.recording_url}
@@ -1785,7 +1785,7 @@ const ActivityMonitor = () => {
                           <TableCell className="text-left text-sm text-muted-foreground whitespace-nowrap tabular-nums">
                             {(() => {
                               const ts = m.created_at || m.activity_date || null;
-                              if (!ts) return "—";
+                              if (!ts) return "-";
                               const d = new Date(ts);
                               const timeStr = d.toLocaleTimeString("en-AU", {
                                 timeZone: "Australia/Melbourne",
@@ -1803,8 +1803,8 @@ const ActivityMonitor = () => {
                               return `${dateStr} · ${timeStr}`;
                             })()}
                           </TableCell>
-                          <TableCell className="text-left font-medium">{m.contact_person || "—"}</TableCell>
-                          <TableCell className="text-left">{m.company_name || "—"}</TableCell>
+                          <TableCell className="text-left font-medium">{m.contact_person || "-"}</TableCell>
+                          <TableCell className="text-left">{m.company_name || "-"}</TableCell>
                           <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
                           <TableCell className="text-center">
                             {m.recording_url ? (
@@ -1831,7 +1831,7 @@ const ActivityMonitor = () => {
                               <div className="flex items-center gap-3">
                                 <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
                                 <div className="flex-1">
-                                  <p className="text-xs text-muted-foreground mb-1.5">SQL Call Recording — {m.contact_person || "Unknown"}</p>
+                                  <p className="text-xs text-muted-foreground mb-1.5">SQL Call Recording - {m.contact_person || "Unknown"}</p>
                                   <audio
                                     controls
                                     src={m.recording_url}
