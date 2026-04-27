@@ -539,13 +539,20 @@ const TeamPerformance = () => {
       )}
 
       {/* Empty State */}
-      {!loading && !error && leaderboard.length === 0 && (
+      {!loading && !error && leaderboard.length === 0 && hasTeamMembers === false && (
         <EmptyState
           icon={Users}
           title="No team members yet"
           description="Add team members in Settings to start tracking performance metrics."
           actionLabel="Go to Settings"
           onAction={() => window.location.href = "/settings"}
+        />
+      )}
+      {!loading && !error && leaderboard.length === 0 && hasTeamMembers === true && (
+        <EmptyState
+          icon={CalendarX}
+          title="No activity in this period"
+          description="No team members have logged activity for the selected date range or client filter. Try adjusting the filters."
         />
       )}
 
