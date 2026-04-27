@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarIcon, ChevronDown, Download, FileText, HelpCircle, Table2, X } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, CalendarIcon, ChevronDown, Download, FileText, HelpCircle, Table2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
