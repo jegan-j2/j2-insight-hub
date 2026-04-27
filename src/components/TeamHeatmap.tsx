@@ -418,7 +418,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       const ratio = presentDays / totalDays;
       const bg = ratio >= 1 ? "#dcfce7" : ratio >= 0.5 ? "#fef9c3" : "#fee2e2";
       const color = ratio >= 1 ? "#166534" : ratio >= 0.5 ? "#854d0e" : "#991b1b";
-      return { label: `${presentDays}/${totalDays} Days`, bg, color };
+      return { label: `${presentDays}/${totalDays} ${totalDays === 1 ? "Day" : "Days"}`, bg, color };
     },
     [isHourMode, columnKeys, cellMap],
   );
