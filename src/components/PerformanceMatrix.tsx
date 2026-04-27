@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
-import { CalendarIcon, ChevronDown, Download, FileText, HelpCircle, Table2, X } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, CalendarIcon, ChevronDown, Download, FileText, HelpCircle, Table2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -242,6 +242,17 @@ const PerformanceMatrix = () => {
   const [rawData, setRawData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [qFilter, setQFilter] = useState<Quadrant | "all">("all");
+  type SortField = "name" | "client" | "dials" | "sqls" | "conv" | "vsDial" | "vsConv" | "q";
+  type SortDir = "asc" | "desc";
+  const [sortField, setSortField] = useState<SortField>("dials");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const handleSort = (f: SortField) => {
+    if (sortField === f) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortField(f);
+      setSortDir(f === "dials" || f === "sqls" || f === "conv" || f === "vsDial" || f === "vsConv" ? "desc" : "asc");
+    }
+  };
   const [helpOpen, setHelpOpen] = useState(false);
   const [exportingCSV, setExportingCSV] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
@@ -990,28 +1001,41 @@ const PerformanceMatrix = () => {
             <thead>
               <tr>
                 {[
-                  { label: "SDR Name", align: "left" },
-                  { label: "Client", align: "left" },
-                  { label: "Dials", align: "center" },
-                  { label: "SQLs", align: "center" },
-                  { label: "Conv %", align: "center" },
-                  { label: "vs Dial target", align: "center" },
-                  { label: "vs Conv % target", align: "center" },
-                  { label: "Quadrant", align: "left" },
-                ].map((h) => (
-                  <th
-                    key={h.label}
-                    className="px-4 py-3 text-sm font-bold whitespace-nowrap"
-                    style={{
-                      background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
-                      color: "#FFFFFF",
-                      textAlign: h.align as any,
-                      borderBottom: isDark ? "1px solid #334155" : "none",
-                    }}
-                  >
-                    {h.label}
-                  </th>
-                ))}
+                  { label: "SDR Name", align: "left", field: "name" as SortField },
+                  { label: "Client", align: "left", field: "client" as SortField },
+                  { label: "Dials", align: "center", field: "dials" as SortField },
+                  { label: "SQLs", align: "center", field: "sqls" as SortField },
+                  { label: "Conv %", align: "center", field: "conv" as SortField },
+                  { label: "vs Dial target", align: "center", field: "vsDial" as SortField },
+                  { label: "vs Conv % target", align: "center", field: "vsConv" as SortField },
+                  { label: "Quadrant", align: "left", field: "q" as SortField },
+                ].map((h) => {
+                  const isActive = sortField === h.field;
+                  const Icon = !isActive ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+                  return (
+                    <th
+                      key={h.label}
+                      onClick={() => handleSort(h.field)}
+                      className="px-4 py-3 text-sm font-bold whitespace-nowrap cursor-pointer select-none"
+                      style={{
+                        background: isDark ? "linear-gradient(to bottom, #1E293B, #162032)" : "#0F172A",
+                        color: "#FFFFFF",
+                        textAlign: h.align as any,
+                        borderBottom: isDark ? "1px solid #334155" : "none",
+                      }}
+                    >
+                      <span className={cn("inline-flex items-center", h.align === "center" && "justify-center")}>
+                        {h.label}
+                        <Icon
+                          className={cn(
+                            "ml-1 h-3 w-3 inline",
+                            isActive ? "text-white" : "text-white/50",
+                          )}
+                        />
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -1022,8 +1046,33 @@ const PerformanceMatrix = () => {
                   </td>
                 </tr>
               ) : (
-                filteredPoints
-                  .sort((a, b) => b.dials - a.dials)
+                [...filteredPoints]
+                  .sort((a, b) => {
+                    const dir = sortDir === "asc" ? 1 : -1;
+                    switch (sortField) {
+                      case "name":
+                        return a.name.localeCompare(b.name) * dir;
+                      case "client": {
+                        const an = clients.find((c) => c.client_id === a.client)?.client_name || a.client;
+                        const bn = clients.find((c) => c.client_id === b.client)?.client_name || b.client;
+                        return an.localeCompare(bn) * dir;
+                      }
+                      case "dials":
+                        return (a.dials - b.dials) * dir;
+                      case "sqls":
+                        return (a.sqls - b.sqls) * dir;
+                      case "conv":
+                        return (a.conv - b.conv) * dir;
+                      case "vsDial":
+                        return ((a.dials - dialTarget) - (b.dials - dialTarget)) * dir;
+                      case "vsConv":
+                        return ((a.conv - convTarget) - (b.conv - convTarget)) * dir;
+                      case "q":
+                        return a.q.localeCompare(b.q) * dir;
+                      default:
+                        return 0;
+                    }
+                  })
                   .map((p, idx) => {
                     const rowBg = isDark
                       ? idx % 2 === 0
