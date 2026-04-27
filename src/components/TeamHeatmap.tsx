@@ -1120,7 +1120,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       }}
                       content={({ active, payload, label }: any) => {
                         if (!active || !payload || !payload.length) return null;
-                        const row = payload[0].payload as { dials: number; answered: number; dms: number };
+                        const row = payload[0].payload as { dials: number; answered: number; dms: number; sqls: number };
                         return (
                           <div
                             style={{
@@ -1134,6 +1134,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           >
                             {label} — {row.dials.toLocaleString()} dials · {row.answered.toLocaleString()} answered ·{" "}
                             {row.dms.toLocaleString()} DM conv.
+                            {row.sqls > 0 && <> · {row.sqls.toLocaleString()} SQLs</>}
                           </div>
                         );
                       }}
