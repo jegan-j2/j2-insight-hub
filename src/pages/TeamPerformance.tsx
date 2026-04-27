@@ -48,6 +48,7 @@ const TeamPerformance = () => {
   const { isSdr } = useUserRole();
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [allClients, setAllClients] = useState<ClientLookup[]>([]);
+  const [hasTeamMembers, setHasTeamMembers] = useState<boolean | null>(null);
   const [exporting, setExporting] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialView = searchParams.get("tab") === "heatmap" ? "heatmap" : "leaderboard";
