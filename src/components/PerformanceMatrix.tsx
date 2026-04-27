@@ -861,15 +861,15 @@ const PerformanceMatrix = () => {
         </div>
         <CardContent className="p-5">
           {loading ? (
-            <div className="h-[460px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
+            <div className="h-[280px] sm:h-[460px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
           ) : points.length === 0 ? (
-            <div className="h-[460px] flex items-center justify-center text-muted-foreground text-sm">
+            <div className="h-[280px] sm:h-[460px] flex items-center justify-center text-muted-foreground text-sm">
               No data for this period
             </div>
           ) : (
-            <div className="h-[460px] relative">
+            <div className="h-[280px] sm:h-[460px] relative" style={{ minHeight: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 20, right: 160, bottom: 40, left: 20 }}>
+                <ScatterChart margin={isMobile ? { top: 16, right: 16, bottom: 36, left: 8 } : { top: 20, right: 160, bottom: 40, left: 20 }}>
                   <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
                   <XAxis
                     type="number"
