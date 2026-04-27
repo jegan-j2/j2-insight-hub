@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, AlertCircle, RefreshCw, Users, Download, Loader2, ChevronDown, FileText, Table2 } from "lucide-react";
+import { CalendarIcon, AlertCircle, RefreshCw, Users, Download, Loader2, ChevronDown, FileText, Table2, CalendarX } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useDateFilter, type FilterType } from "@/contexts/DateFilterContext";
 import { SDRActivityChart } from "@/components/SDRActivityChart";
@@ -48,6 +48,7 @@ const TeamPerformance = () => {
   const { isSdr } = useUserRole();
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [allClients, setAllClients] = useState<ClientLookup[]>([]);
+  const [hasTeamMembers, setHasTeamMembers] = useState<boolean | null>(null);
   const [exporting, setExporting] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialView = searchParams.get("tab") === "heatmap" ? "heatmap" : "leaderboard";
@@ -194,6 +195,12 @@ const TeamPerformance = () => {
         .select("client_id, client_name, logo_url")
         .order("client_name");
       if (all) setAllClients(all);
+      // Check if any team members exist (regardless of date/client filter)
+      const { count } = await supabase
+        .from("team_members")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active");
+      setHasTeamMembers((count ?? 0) > 0);
     };
     fetchClients();
   }, []);
@@ -532,13 +539,20 @@ const TeamPerformance = () => {
       )}
 
       {/* Empty State */}
-      {!loading && !error && leaderboard.length === 0 && (
+      {!loading && !error && leaderboard.length === 0 && hasTeamMembers === false && (
         <EmptyState
           icon={Users}
           title="No team members yet"
           description="Add team members in Settings to start tracking performance metrics."
           actionLabel="Go to Settings"
           onAction={() => window.location.href = "/settings"}
+        />
+      )}
+      {!loading && !error && leaderboard.length === 0 && hasTeamMembers === true && (
+        <EmptyState
+          icon={CalendarX}
+          title="No activity in this period"
+          description="No team members have logged activity for the selected date range or client filter. Try adjusting the filters."
         />
       )}
 
