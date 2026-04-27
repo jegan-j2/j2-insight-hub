@@ -1026,7 +1026,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       {/* Summary stat cards */}
       {!loading && !errored && sdrs.length > 0 && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               {
                 title: "Total Dials",
