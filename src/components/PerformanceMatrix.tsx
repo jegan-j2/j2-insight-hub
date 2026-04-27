@@ -1120,7 +1120,10 @@ const PerformanceMatrix = () => {
                         onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = rowBg)}
                       >
                         {/* SDR Name */}
-                        <td className="px-4 py-3" style={{ color: textCol }}>
+                        <td
+                          className="px-4 py-3 sticky left-0 z-10"
+                          style={{ color: textCol, backgroundColor: rowBg, minWidth: 180 }}
+                        >
                           <div className="flex items-center gap-2">
                             <div
                               className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
