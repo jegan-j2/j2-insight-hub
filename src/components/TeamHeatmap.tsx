@@ -548,7 +548,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
   return (
     <div className="space-y-4">
       {/* ── Filter row: mode tabs + date picker + Export (right-aligned) ── */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-2">
         {/* Mode tabs */}
         <div className="flex flex-wrap items-center gap-2">
           {(
