@@ -762,13 +762,13 @@ const PerformanceMatrix = () => {
         {/* Apply button */}
         <button
           onClick={applyThresholds}
-          className="px-4 py-1.5 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors"
+          className="px-4 py-1.5 rounded-lg bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 font-medium text-sm transition-colors w-full md:w-auto min-h-[40px]"
         >
           Apply
         </button>
 
         {/* Client filter — far right */}
-        <div className="ml-auto">
+        <div className="md:ml-auto w-full md:w-auto">
           <Select
             value={clientFilter}
             onValueChange={(v) => {
