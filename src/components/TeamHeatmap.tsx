@@ -699,7 +699,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
         </div>
 
         {/* Export — right-aligned, matches leaderboard pattern */}
-        <div className="ml-auto">
+        <div className="md:ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
