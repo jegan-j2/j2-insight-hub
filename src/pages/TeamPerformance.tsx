@@ -195,6 +195,12 @@ const TeamPerformance = () => {
         .select("client_id, client_name, logo_url")
         .order("client_name");
       if (all) setAllClients(all);
+      // Check if any team members exist (regardless of date/client filter)
+      const { count } = await supabase
+        .from("team_members")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active");
+      setHasTeamMembers((count ?? 0) > 0);
     };
     fetchClients();
   }, []);
