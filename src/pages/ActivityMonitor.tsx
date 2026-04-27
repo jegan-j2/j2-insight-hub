@@ -155,8 +155,8 @@ const ActivityMonitor = () => {
     if (d) { const p = new Date(d + "T00:00:00"); if (!Number.isNaN(p.getTime())) return p; }
     return new Date();
   })();
-  const initialStartHour = parseInt(searchParams.get("startHour") || "9", 10);
-  const initialEndHour = parseInt(searchParams.get("endHour") || "17", 10);
+  const initialStartHour = parseInt(searchParams.get("startHour") || "0", 10);
+  const initialEndHour = parseInt(searchParams.get("endHour") || "24", 10);
 
   const [mode, setMode] = useState<Mode>(initialMode);
   const [isDark, setIsDark] = useState(
