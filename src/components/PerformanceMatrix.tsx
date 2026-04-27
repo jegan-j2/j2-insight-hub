@@ -778,7 +778,7 @@ const PerformanceMatrix = () => {
           >
             <SelectTrigger
               className={cn(
-                "w-[180px] min-h-[36px] text-xs sm:text-sm rounded-md",
+                "w-full md:w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md",
                 "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white font-semibold",
               )}
             >
