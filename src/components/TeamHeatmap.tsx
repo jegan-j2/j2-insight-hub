@@ -1151,10 +1151,32 @@ export const TeamHeatmap = ({ clients }: Props) => {
           </div>
 
           <Card className="overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-2">
               <h3 className="text-base font-semibold text-foreground">
-                {isHourMode ? "Team Dials by Hour" : "Team Dials by Day"}
+                {showHourChart ? "Team Dials by Hour" : "Team Dials by Day"}
               </h3>
+              {!isHourMode && (
+                <div className="flex items-center gap-1">
+                  {(["day", "hour"] as const).map((v) => {
+                    const active = chartView === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setChartView(v)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                          active
+                            ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                            : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground",
+                        )}
+                      >
+                        {v === "day" ? "By Day" : "By Hour"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <CardContent className="p-5">
               <div className="h-[200px] sm:h-[280px] w-full" style={{ minHeight: 200 }}>
