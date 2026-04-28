@@ -181,6 +181,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [exportingCSV, setExportingCSV] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [data, setData] = useState<HeatmapRow[]>([]);
+  const [hourChartData, setHourChartData] = useState<HeatmapRow[]>([]);
+  const [chartView, setChartView] = useState<"day" | "hour">("day");
   const [loading, setLoading] = useState(false);
   const [errored, setErrored] = useState(false);
   const [cellWidth, setCellWidth] = useState(160);
