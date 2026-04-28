@@ -328,6 +328,42 @@ export const TeamHeatmap = ({ clients }: Props) => {
     };
   }, [startDate, endDate, clientFilter, isHourMode]);
 
+  // Reset chart view to "day" whenever the page-level date filter changes
+  useEffect(() => {
+    setChartView("day");
+  }, [mode, dayDate, weekAnchor, monthAnchor, customRange, clientFilter]);
+
+  // Fetch hour-aggregated data for "By Hour" chart view in non-day modes
+  useEffect(() => {
+    let cancelled = false;
+    if (isHourMode || chartView !== "hour" || !startDate || !endDate) {
+      setHourChartData([]);
+      return;
+    }
+    const fetchHour = async () => {
+      try {
+        const { data: rows, error } = await supabase.rpc("get_team_heatmap", {
+          p_mode: "hour",
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_client_id: clientFilter === "all" ? null : clientFilter,
+        } as any);
+        if (cancelled) return;
+        if (error) {
+          setHourChartData([]);
+        } else {
+          setHourChartData((rows || []) as HeatmapRow[]);
+        }
+      } catch {
+        if (!cancelled) setHourChartData([]);
+      }
+    };
+    fetchHour();
+    return () => {
+      cancelled = true;
+    };
+  }, [startDate, endDate, clientFilter, isHourMode, chartView]);
+
   const clientLookup = useMemo(() => {
     const m = new Map<string, ClientLite>();
     for (const c of clients) m.set(c.client_id, c);
