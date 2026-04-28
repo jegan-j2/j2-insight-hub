@@ -538,7 +538,35 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate, dmRate };
   }, [data]);
 
+  const showHourChart = !isHourMode && chartView === "hour";
+
   const chartData = useMemo(() => {
+    if (showHourChart) {
+      const totals = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+      for (const k of HOUR_KEYS) totals.set(k, { dials: 0, answered: 0, dms: 0, sqls: 0 });
+      for (const r of hourChartData) {
+        const t = totals.get(r.period_key);
+        if (t) {
+          t.dials += r.dials || 0;
+          t.answered += r.answered || 0;
+          t.dms += r.dms || 0;
+          t.sqls += r.sqls || 0;
+        }
+      }
+      return HOUR_KEYS.map((k) => {
+        const t = totals.get(k) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
+        const otherDials = Math.max(0, t.dials - t.answered - t.dms);
+        return {
+          key: k,
+          label: HOUR_LABELS[k] ?? k,
+          dials: t.dials,
+          answered: t.answered,
+          dms: t.dms,
+          sqls: t.sqls,
+          dialsOnly: otherDials,
+        };
+      });
+    }
     const totals = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
     for (const k of columnKeys) totals.set(k, { dials: 0, answered: 0, dms: 0, sqls: 0 });
     for (const r of data) {
@@ -563,7 +591,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
         dialsOnly: otherDials,
       };
     });
-  }, [columnKeys, data, isHourMode]);
+  }, [columnKeys, data, isHourMode, showHourChart, hourChartData]);
 
   const buildTooltip = (sdr: string, key: string): string => {
     const cell = cellMap.get(`${sdr}|${key}`);
