@@ -1223,7 +1223,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           >
                             {label} - {row.dials.toLocaleString()} dials · {row.answered.toLocaleString()} answered ·{" "}
                             {row.dms.toLocaleString()} DM conv.
-                            {row.sqls > 0 && <> · {row.sqls.toLocaleString()} 🎯</>}
+                            {row.sqls > 0 && <> · 🎯 SQLs: {row.sqls.toLocaleString()}</>}
                           </div>
                         );
                       }}
