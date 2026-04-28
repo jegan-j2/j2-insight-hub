@@ -181,6 +181,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [exportingCSV, setExportingCSV] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [data, setData] = useState<HeatmapRow[]>([]);
+  const [hourChartData, setHourChartData] = useState<HeatmapRow[]>([]);
+  const [chartView, setChartView] = useState<"day" | "hour">("day");
   const [loading, setLoading] = useState(false);
   const [errored, setErrored] = useState(false);
   const [cellWidth, setCellWidth] = useState(160);
@@ -325,6 +327,42 @@ export const TeamHeatmap = ({ clients }: Props) => {
       cancelled = true;
     };
   }, [startDate, endDate, clientFilter, isHourMode]);
+
+  // Reset chart view to "day" whenever the page-level date filter changes
+  useEffect(() => {
+    setChartView("day");
+  }, [mode, dayDate, weekAnchor, monthAnchor, customRange, clientFilter]);
+
+  // Fetch hour-aggregated data for "By Hour" chart view in non-day modes
+  useEffect(() => {
+    let cancelled = false;
+    if (isHourMode || chartView !== "hour" || !startDate || !endDate) {
+      setHourChartData([]);
+      return;
+    }
+    const fetchHour = async () => {
+      try {
+        const { data: rows, error } = await supabase.rpc("get_team_heatmap", {
+          p_mode: "hour",
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_client_id: clientFilter === "all" ? null : clientFilter,
+        } as any);
+        if (cancelled) return;
+        if (error) {
+          setHourChartData([]);
+        } else {
+          setHourChartData((rows || []) as HeatmapRow[]);
+        }
+      } catch {
+        if (!cancelled) setHourChartData([]);
+      }
+    };
+    fetchHour();
+    return () => {
+      cancelled = true;
+    };
+  }, [startDate, endDate, clientFilter, isHourMode, chartView]);
 
   const clientLookup = useMemo(() => {
     const m = new Map<string, ClientLite>();
@@ -500,7 +538,35 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate, dmRate };
   }, [data]);
 
+  const showHourChart = !isHourMode && chartView === "hour";
+
   const chartData = useMemo(() => {
+    if (showHourChart) {
+      const totals = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
+      for (const k of HOUR_KEYS) totals.set(k, { dials: 0, answered: 0, dms: 0, sqls: 0 });
+      for (const r of hourChartData) {
+        const t = totals.get(r.period_key);
+        if (t) {
+          t.dials += r.dials || 0;
+          t.answered += r.answered || 0;
+          t.dms += r.dms || 0;
+          t.sqls += r.sqls || 0;
+        }
+      }
+      return HOUR_KEYS.map((k) => {
+        const t = totals.get(k) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
+        const otherDials = Math.max(0, t.dials - t.answered - t.dms);
+        return {
+          key: k,
+          label: HOUR_LABELS[k] ?? k,
+          dials: t.dials,
+          answered: t.answered,
+          dms: t.dms,
+          sqls: t.sqls,
+          dialsOnly: otherDials,
+        };
+      });
+    }
     const totals = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
     for (const k of columnKeys) totals.set(k, { dials: 0, answered: 0, dms: 0, sqls: 0 });
     for (const r of data) {
@@ -525,7 +591,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
         dialsOnly: otherDials,
       };
     });
-  }, [columnKeys, data, isHourMode]);
+  }, [columnKeys, data, isHourMode, showHourChart, hourChartData]);
 
   const buildTooltip = (sdr: string, key: string): string => {
     const cell = cellMap.get(`${sdr}|${key}`);
@@ -1085,10 +1151,32 @@ export const TeamHeatmap = ({ clients }: Props) => {
           </div>
 
           <Card className="overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-2">
               <h3 className="text-base font-semibold text-foreground">
-                {isHourMode ? "Team Dials by Hour" : "Team Dials by Day"}
+                {showHourChart ? "Team Dials by Hour" : "Team Dials by Day"}
               </h3>
+              {!isHourMode && (
+                <div className="flex items-center gap-1">
+                  {(["day", "hour"] as const).map((v) => {
+                    const active = chartView === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setChartView(v)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                          active
+                            ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
+                            : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground",
+                        )}
+                      >
+                        {v === "day" ? "By Day" : "By Hour"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <CardContent className="p-5">
               <div className="h-[200px] sm:h-[280px] w-full" style={{ minHeight: 200 }}>
@@ -1135,7 +1223,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           >
                             {label} - {row.dials.toLocaleString()} dials · {row.answered.toLocaleString()} answered ·{" "}
                             {row.dms.toLocaleString()} DM conv.
-                            {row.sqls > 0 && <> · {row.sqls.toLocaleString()} 🎯</>}
+                            {row.sqls > 0 && <> · 🎯 SQLs: {row.sqls.toLocaleString()}</>}
                           </div>
                         );
                       }}
