@@ -140,10 +140,10 @@ function getInitials(name: string): string {
 }
 const SDR_COL_W = 200;
 const CLIENT_COL_W = 160;
-const ATT_COL_W = 120; // wider to fit "Fri, 24 Apr" without overflow
-const FROZEN_W = SDR_COL_W + CLIENT_COL_W + ATT_COL_W; // 480px
+const ATT_COL_W = 120;
+const FROZEN_W = SDR_COL_W + CLIENT_COL_W + ATT_COL_W;
 
-const CELL_H = 48; // row cell height — matches leaderboard row spacing
+const CELL_H = 48;
 
 interface Props {
   clients: ClientLite[];
@@ -188,7 +188,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [cellWidth, setCellWidth] = useState(160);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Dark mode detection — drives all table inline colours
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -380,7 +379,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
         inner = new Map<string, number>();
         totals.set(r.sdr_name, inner);
       }
-      inner.set(r.client_id, (inner.get(r.client_id) || 0) + (r.dials || 0));
+      inner.set(r.client_id, (inner.get(r.client_id) || 0) + (Number(r.dials) || 0));
       if (r.client_name && !namesByClient.has(r.client_id)) namesByClient.set(r.client_id, r.client_name);
     }
     const m = new Map<string, { client_id: string; client_name: string }>();
@@ -440,18 +439,17 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return isAfter(startOfDay(d), today);
   };
 
-  // attendancePill — after columnKeys, cellMap, isFutureColumn
   const attendancePill = useCallback(
     (sdr: string): { label: string; bg: string; color: string } => {
       if (isHourMode) {
-        const hasAny = columnKeys.some((k) => (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0);
+        const hasAny = columnKeys.some((k) => (Number(cellMap.get(`${sdr}|${k}`)?.dials) || 0) > 0);
         return hasAny
           ? { label: "✓ Present", bg: "#dcfce7", color: "#166534" }
           : { label: "✕ Absent", bg: "#fee2e2", color: "#991b1b" };
       }
       const pastKeys = columnKeys.filter((k) => !isFutureColumn(k));
       const totalDays = pastKeys.length;
-      const presentDays = pastKeys.filter((k) => (cellMap.get(`${sdr}|${k}`)?.dials || 0) > 0).length;
+      const presentDays = pastKeys.filter((k) => (Number(cellMap.get(`${sdr}|${k}`)?.dials) || 0) > 0).length;
       if (totalDays === 0) return { label: "-", bg: "#f1f5f9", color: "#94a3b8" };
       const ratio = presentDays / totalDays;
       const bg = ratio >= 1 ? "#dcfce7" : ratio >= 0.5 ? "#fef9c3" : "#fee2e2";
@@ -461,14 +459,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
     [isHourMode, columnKeys, cellMap],
   );
 
-  // Export — after sdrs, columnKeys, cellMap, sdrClientMap, attendancePill
   const buildExportRows = useCallback(() => {
     const headers = ["SDR", "Client", "Attendance", ...columnKeys.map((k) => formatColumnHeader(k))];
     const rows = sdrs.map((sdr) => {
       const sdrClientInfo = sdrClientMap.get(sdr);
       const clientName = sdrClientInfo?.client_name || "";
       const pill = attendancePill(sdr);
-      const cells = columnKeys.map((k) => cellMap.get(`${sdr}|${k}`)?.dials || 0);
+      const cells = columnKeys.map((k) => Number(cellMap.get(`${sdr}|${k}`)?.dials) || 0);
       return [sdr, clientName, pill.label, ...cells];
     });
     return { headers, rows };
@@ -526,11 +523,11 @@ export const TeamHeatmap = ({ clients }: Props) => {
     const activeSdrs = new Set<string>();
     for (const r of data) {
       if (!r.sdr_name) continue;
-      dials += r.dials || 0;
-      answered += r.answered || 0;
-      sqls += r.sqls || 0;
-      dms += r.dms || 0;
-      if ((r.dials || 0) > 0) activeSdrs.add(r.sdr_name);
+      dials += Number(r.dials) || 0;
+      answered += Number(r.answered) || 0;
+      sqls += Number(r.sqls) || 0;
+      dms += Number(r.dms) || 0;
+      if ((Number(r.dials) || 0) > 0) activeSdrs.add(r.sdr_name);
     }
     const answerRate = dials > 0 ? Math.round((answered / dials) * 1000) / 10 : 0;
     const convRate = dials > 0 ? Math.round((sqls / dials) * 1000) / 10 : 0;
@@ -540,6 +537,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
   const showHourChart = !isHourMode && chartView === "hour";
 
+  // FIX: wrap all numeric fields with Number() to prevent PostgreSQL bigint/string
+  // concatenation bug. Without this, r.dials is a string "296" not a number 296,
+  // so += concatenates instead of adding, giving wrong totals in the chart.
   const chartData = useMemo(() => {
     if (showHourChart) {
       const totals = new Map<string, { dials: number; answered: number; dms: number; sqls: number }>();
@@ -547,10 +547,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
       for (const r of hourChartData) {
         const t = totals.get(r.period_key);
         if (t) {
-          t.dials += r.dials || 0;
-          t.answered += r.answered || 0;
-          t.dms += r.dms || 0;
-          t.sqls += r.sqls || 0;
+          t.dials += Number(r.dials) || 0;
+          t.answered += Number(r.answered) || 0;
+          t.dms += Number(r.dms) || 0;
+          t.sqls += Number(r.sqls) || 0;
         }
       }
       return HOUR_KEYS.map((k) => {
@@ -572,10 +572,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
     for (const r of data) {
       const t = totals.get(r.period_key);
       if (t) {
-        t.dials += r.dials || 0;
-        t.answered += r.answered || 0;
-        t.dms += r.dms || 0;
-        t.sqls += r.sqls || 0;
+        t.dials += Number(r.dials) || 0;
+        t.answered += Number(r.answered) || 0;
+        t.dms += Number(r.dms) || 0;
+        t.sqls += Number(r.sqls) || 0;
       }
     }
     return columnKeys.map((k) => {
@@ -595,9 +595,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
   const buildTooltip = (sdr: string, key: string): string => {
     const cell = cellMap.get(`${sdr}|${key}`);
-    const dials = cell?.dials || 0;
-    const answered = cell?.answered || 0;
-    const sqls = cell?.sqls || 0;
+    const dials = Number(cell?.dials) || 0;
+    const answered = Number(cell?.answered) || 0;
+    const sqls = Number(cell?.sqls) || 0;
     const sqlPart = sqls > 0 ? ` · ${sqls} 🎯` : "";
     return `${formatColumnHeader(key)} - ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
   };
@@ -605,7 +605,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const showCampaignTab = clientFilter !== "all" && !!selectedClient?.campaign_start && !!selectedClient?.campaign_end;
   const tableMinWidth = columnKeys.length <= 5 ? "100%" : FROZEN_W + columnKeys.length * cellWidth;
 
-  // Selected client display for card header
   const selectedClientDisplay = useMemo(() => {
     if (clientFilter === "all") return null;
     return clients.find((c) => c.client_id === clientFilter) || null;
@@ -613,9 +612,8 @@ export const TeamHeatmap = ({ clients }: Props) => {
 
   return (
     <div className="space-y-4">
-      {/* ── Filter row: mode tabs + date picker + Export (right-aligned) ── */}
+      {/* Filter row */}
       <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-2">
-        {/* Mode tabs */}
         <div className="flex flex-wrap items-center gap-2">
           {(
             [
@@ -646,7 +644,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
           })}
         </div>
 
-        {/* Date picker */}
         <div className="flex items-center">
           {mode === "day" && (
             <Popover open={dayPopoverOpen} onOpenChange={setDayPopoverOpen}>
@@ -764,7 +761,6 @@ export const TeamHeatmap = ({ clients }: Props) => {
           )}
         </div>
 
-        {/* Export — right-aligned, matches leaderboard pattern */}
         <div className="md:ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -791,14 +787,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
         </div>
       </div>
 
-      {/* ── Heatmap card ── */}
+      {/* Heatmap card */}
       <Card className="overflow-hidden">
-        {/* Card header: title + loading spinner + client filter (matches leaderboard) */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="text-xl font-bold text-foreground">Team Activity Heatmap</h3>
           <div className="flex items-center gap-3">
             {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-            {/* Client filter in card header — matches leaderboard */}
             <Select value={clientFilter} onValueChange={setClientFilter}>
               <SelectTrigger
                 className={cn(
@@ -1028,11 +1022,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       </td>
                       {columnKeys.map((k) => {
                         const cell = cellMap.get(`${sdr}|${k}`);
-                        const dials = cell?.dials || 0;
-                        const sqls = cell?.sqls || 0;
+                        const dials = Number(cell?.dials) || 0;
+                        const sqls = Number(cell?.sqls) || 0;
                         const future = isFutureColumn(k);
                         const style = future ? FUTURE_CELL_STYLE : CELL_STYLES[intensityLevel(dials, isHourMode)];
-                        // Dark mode overrides for zero and future cells
                         const cellBg =
                           isDark && intensityLevel(dials, isHourMode) === 0 && !future
                             ? "#1e293b"
@@ -1209,7 +1202,12 @@ export const TeamHeatmap = ({ clients }: Props) => {
                       }}
                       content={({ active, payload, label }: any) => {
                         if (!active || !payload || !payload.length) return null;
-                        const row = payload[0].payload as { dials: number; answered: number; dms: number; sqls: number };
+                        const row = payload[0].payload as {
+                          dials: number;
+                          answered: number;
+                          dms: number;
+                          sqls: number;
+                        };
                         return (
                           <div
                             style={{
