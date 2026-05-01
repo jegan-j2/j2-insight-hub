@@ -183,6 +183,11 @@ export const TeamHeatmap = ({ clients }: Props) => {
   const [data, setData] = useState<HeatmapRow[]>([]);
   const [hourChartData, setHourChartData] = useState<HeatmapRow[]>([]);
   const [chartView, setChartView] = useState<"day" | "hour">("day");
+  // Demo counts per SDR per period key — only fetched when PEXA filter active
+  const [demoHeatmapData, setDemoHeatmapData] = useState<Map<string, { demo_booked: number; demo_attended: number }>>(
+    new Map(),
+  );
+  const isPexa = clientFilter === "pexa-clear";
   const [loading, setLoading] = useState(false);
   const [errored, setErrored] = useState(false);
   const [cellWidth, setCellWidth] = useState(160);
@@ -362,6 +367,34 @@ export const TeamHeatmap = ({ clients }: Props) => {
       cancelled = true;
     };
   }, [startDate, endDate, clientFilter, isHourMode, chartView]);
+
+  // Fetch demo heatmap counts when PEXA is active
+  useEffect(() => {
+    if (!isPexa || !startDate || !endDate) {
+      setDemoHeatmapData(new Map());
+      return;
+    }
+    const fetchDemoHeatmap = async () => {
+      try {
+        const { data: rows, error } = await supabase.rpc("get_demo_heatmap_counts", {
+          p_client_id: "pexa-clear",
+          p_start_date: startDate,
+          p_end_date: endDate,
+        });
+        if (!error && rows) {
+          const m = new Map<string, { demo_booked: number; demo_attended: number }>();
+          for (const r of rows) {
+            const key = `${r.sdr_name}|${r.period_key}`;
+            m.set(key, { demo_booked: Number(r.demo_booked) || 0, demo_attended: Number(r.demo_attended) || 0 });
+          }
+          setDemoHeatmapData(m);
+        }
+      } catch (err) {
+        console.error("Demo heatmap fetch error:", err);
+      }
+    };
+    fetchDemoHeatmap();
+  }, [isPexa, startDate, endDate]);
 
   const clientLookup = useMemo(() => {
     const m = new Map<string, ClientLite>();
@@ -599,7 +632,16 @@ export const TeamHeatmap = ({ clients }: Props) => {
     const answered = Number(cell?.answered) || 0;
     const sqls = Number(cell?.sqls) || 0;
     const sqlPart = sqls > 0 ? ` · ${sqls} 🎯` : "";
-    return `${formatColumnHeader(key)} - ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
+    let tooltip = `${formatColumnHeader(key)} - ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
+    // Add demo counts for PEXA when present
+    if (isPexa) {
+      const demoKey = `${sdr}|${key}`;
+      const demo = demoHeatmapData.get(demoKey);
+      if (demo && (demo.demo_booked > 0 || demo.demo_attended > 0)) {
+        tooltip += ` · 🎬 ${demo.demo_booked} booked · ✅ ${demo.demo_attended} attended`;
+      }
+    }
+    return tooltip;
   };
 
   const showCampaignTab = clientFilter !== "all" && !!selectedClient?.campaign_start && !!selectedClient?.campaign_end;
