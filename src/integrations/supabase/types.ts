@@ -269,6 +269,81 @@ export type Database = {
           },
         ]
       }
+      demo_meetings: {
+        Row: {
+          booking_date: string
+          client_id: string
+          company_name: string | null
+          contact_email: string | null
+          contact_person: string | null
+          created_at: string
+          demo_status: string
+          edited_in_dashboard: boolean
+          hubspot_contact_id: string | null
+          hubspot_engagement_id: string | null
+          id: string
+          meeting_date: string | null
+          meeting_time: string | null
+          parent_demo_id: string | null
+          remarks: string | null
+          sdr_name: string
+          updated_at: string
+        }
+        Insert: {
+          booking_date: string
+          client_id: string
+          company_name?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          created_at?: string
+          demo_status?: string
+          edited_in_dashboard?: boolean
+          hubspot_contact_id?: string | null
+          hubspot_engagement_id?: string | null
+          id?: string
+          meeting_date?: string | null
+          meeting_time?: string | null
+          parent_demo_id?: string | null
+          remarks?: string | null
+          sdr_name: string
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string
+          client_id?: string
+          company_name?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          created_at?: string
+          demo_status?: string
+          edited_in_dashboard?: boolean
+          hubspot_contact_id?: string | null
+          hubspot_engagement_id?: string | null
+          id?: string
+          meeting_date?: string | null
+          meeting_time?: string | null
+          parent_demo_id?: string | null
+          remarks?: string | null
+          sdr_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_meetings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "demo_meetings_parent_demo_id_fkey"
+            columns: ["parent_demo_id"]
+            isOneToOne: false
+            referencedRelation: "demo_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hubspot_lists: {
         Row: {
           client_id: string | null
@@ -696,6 +771,13 @@ export type Database = {
           sqls: number
         }[]
       }
+      get_client_demo_counts: {
+        Args: { p_client_id: string; p_end_date: string; p_start_date: string }
+        Returns: {
+          demo_attended: number
+          demo_booked: number
+        }[]
+      }
       get_client_performance: {
         Args: never
         Returns: {
@@ -728,6 +810,15 @@ export type Database = {
           answered: number
           dials: number
           dm_conversations: number
+        }[]
+      }
+      get_demo_heatmap_counts: {
+        Args: { p_client_id: string; p_end_date: string; p_start_date: string }
+        Returns: {
+          demo_attended: number
+          demo_booked: number
+          period_key: string
+          sdr_name: string
         }[]
       }
       get_invite_records: {
@@ -782,6 +873,34 @@ export type Database = {
           conv_rate: number
           dials: number
           sqls: number
+        }[]
+      }
+      get_sdr_demo_counts: {
+        Args: { p_client_id?: string; p_end_date: string; p_start_date: string }
+        Returns: {
+          client_id: string
+          demo_attended: number
+          demo_booked: number
+          sdr_name: string
+        }[]
+      }
+      get_sdr_demos: {
+        Args: {
+          p_client_id: string
+          p_end_date: string
+          p_sdr_name: string
+          p_start_date: string
+        }
+        Returns: {
+          booking_date: string
+          company_name: string
+          contact_person: string
+          created_at: string
+          demo_status: string
+          hubspot_contact_id: string
+          id: string
+          meeting_date: string
+          meeting_time: string
         }[]
       }
       get_sdr_heatmap: {
