@@ -476,6 +476,24 @@ export const SDRLeaderboardTable = ({
                     >
                       SQLs <SortIcon column="totalSQLs" />
                     </TableHead>
+                    {isPexa && (
+                      <TableHead
+                        className="text-center cursor-pointer select-none h-[44px]"
+                        style={{ padding: cellPad }}
+                        onClick={() => handleSort("demoBooked")}
+                      >
+                        Demo Booked <SortIcon column="demoBooked" />
+                      </TableHead>
+                    )}
+                    {isPexa && (
+                      <TableHead
+                        className="text-center cursor-pointer select-none h-[44px]"
+                        style={{ padding: cellPad }}
+                        onClick={() => handleSort("demoAttended")}
+                      >
+                        Demo Attended <SortIcon column="demoAttended" />
+                      </TableHead>
+                    )}
                     <TableHead
                       className="text-center cursor-pointer select-none h-[44px]"
                       style={{ padding: cellPad }}
@@ -490,24 +508,6 @@ export const SDRLeaderboardTable = ({
                     >
                       Avg Talk <SortIcon column="avgDuration" />
                     </TableHead>
-                    {isPexa && (
-                      <TableHead
-                        className="text-center cursor-pointer select-none h-[44px]"
-                        style={{ padding: cellPad }}
-                        onClick={() => handleSort("demoBooked")}
-                      >
-                        🎬 Demo Booked <SortIcon column="demoBooked" />
-                      </TableHead>
-                    )}
-                    {isPexa && (
-                      <TableHead
-                        className="text-center cursor-pointer select-none h-[44px]"
-                        style={{ padding: cellPad }}
-                        onClick={() => handleSort("demoAttended")}
-                      >
-                        ✅ Demo Attended <SortIcon column="demoAttended" />
-                      </TableHead>
-                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="table-striped">
@@ -589,24 +589,6 @@ export const SDRLeaderboardTable = ({
                         >
                           {sdr.totalSQLs.toLocaleString()}
                         </TableCell>
-                        <TableCell
-                          className="text-center"
-                          style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
-                        >
-                          {sdr.conversionRate}%
-                        </TableCell>
-                        <TableCell
-                          className="text-center"
-                          style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
-                        >
-                          {sdr.avgDuration > 0 ? (
-                            <span title={`${Math.round(sdr.avgDuration)} seconds avg`}>
-                              {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
                         {isPexa && (
                           <TableCell className="text-center" style={{ padding: cellPad }}>
                             <button
@@ -639,6 +621,24 @@ export const SDRLeaderboardTable = ({
                             </button>
                           </TableCell>
                         )}
+                        <TableCell
+                          className="text-center"
+                          style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
+                        >
+                          {sdr.conversionRate}%
+                        </TableCell>
+                        <TableCell
+                          className="text-center"
+                          style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
+                        >
+                          {sdr.avgDuration > 0 ? (
+                            <span title={`${Math.round(sdr.avgDuration)} seconds avg`}>
+                              {Math.floor(sdr.avgDuration / 60)}m {Math.round(sdr.avgDuration % 60)}s
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
