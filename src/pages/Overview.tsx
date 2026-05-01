@@ -5,8 +5,30 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowUpRight, ArrowDownRight, Phone, PhoneIncoming, TrendingUp, Handshake, Target, AlertCircle, RefreshCw, DatabaseZap, Download, Loader2, ChevronDown, CalendarIcon, FileText, Table2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  Phone,
+  PhoneIncoming,
+  TrendingUp,
+  Handshake,
+  Target,
+  AlertCircle,
+  RefreshCw,
+  DatabaseZap,
+  Download,
+  Loader2,
+  ChevronDown,
+  CalendarIcon,
+  FileText,
+  Table2,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
@@ -27,7 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 
 const getGreeting = () => {
-  const hour = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne', hour: 'numeric', hour12: false });
+  const hour = new Date().toLocaleString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", hour12: false });
   const h = parseInt(hour);
   if (h >= 5 && h <= 11) return "Good morning";
   if (h >= 12 && h <= 16) return "Good afternoon";
@@ -44,16 +66,21 @@ const FILTER_TYPE_TO_PARAM: Record<FilterType, string> = {
   campaign: "campaign",
 };
 const PARAM_TO_FILTER_TYPE: Record<string, FilterType> = Object.fromEntries(
-  Object.entries(FILTER_TYPE_TO_PARAM).map(([k, v]) => [v, k as FilterType])
+  Object.entries(FILTER_TYPE_TO_PARAM).map(([k, v]) => [v, k as FilterType]),
 ) as Record<string, FilterType>;
 
 const getDateRangeForFilter = (ft: FilterType): DateRange | undefined => {
   switch (ft) {
-    case "last7days": return { from: subDays(new Date(), 7), to: new Date() };
-    case "last30days": return { from: subDays(new Date(), 30), to: new Date() };
-    case "thisMonth": return { from: startOfMonth(new Date()), to: endOfMonth(new Date()) };
-    case "lastMonth": return { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) };
-    default: return undefined;
+    case "last7days":
+      return { from: subDays(new Date(), 7), to: new Date() };
+    case "last30days":
+      return { from: subDays(new Date(), 30), to: new Date() };
+    case "thisMonth":
+      return { from: startOfMonth(new Date()), to: endOfMonth(new Date()) };
+    case "lastMonth":
+      return { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) };
+    default:
+      return undefined;
   }
 };
 
@@ -114,10 +141,13 @@ const Overview = () => {
     setSearchParams(params, { replace: true });
   }, [filterType, dateRange, clientFilter, setSearchParams]);
 
-  const { kpis, dailyActivity, meetings, clientPerformance, clients, loading, error, refetch } = useOverviewData(dateRange, filterType);
+  const { kpis, dailyActivity, meetings, clientPerformance, clients, loading, error, refetch } = useOverviewData(
+    dateRange,
+    filterType,
+  );
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
-  
+
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
@@ -135,7 +165,7 @@ const Overview = () => {
   }, [kpis.totalSQLs]);
 
   const activeClientCount = clients.length;
-  
+
   const avgAnswerRate = useMemo(() => {
     return kpis.totalDials > 0 ? (kpis.totalAnswered / kpis.totalDials) * 100 : 0;
   }, [kpis.totalDials, kpis.totalAnswered]);
@@ -182,20 +212,46 @@ const Overview = () => {
       ];
 
       // Client performance section placeholder for CSV export
-      const clientHeaders = ["Client", "Campaign Period", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Progress %"];
-      const clientRows = clientPerformance.map(cp => {
-        const period = cp.campaign_start && cp.campaign_end
-          ? `${format(new Date(cp.campaign_start), "MMM dd, yyyy")} – ${format(new Date(cp.campaign_end), "MMM dd, yyyy")}`
-          : "";
-        const progressPct = cp.target_sqls && cp.target_sqls > 0
-          ? `${((cp.sqls / cp.target_sqls) * 100).toFixed(1)}%`
-          : "N/A";
-        return [cp.client_name, period, cp.dials, cp.answered, `${cp.answer_rate.toFixed(1)}%`, cp.dm_conversations, cp.sqls, progressPct];
+      const clientHeaders = [
+        "Client",
+        "Campaign Period",
+        "Dials",
+        "Answered",
+        "Answer Rate",
+        "DM Conversations",
+        "SQLs",
+        "Progress %",
+      ];
+      const clientRows = clientPerformance.map((cp) => {
+        const period =
+          cp.campaign_start && cp.campaign_end
+            ? `${format(new Date(cp.campaign_start), "MMM dd, yyyy")} – ${format(new Date(cp.campaign_end), "MMM dd, yyyy")}`
+            : "";
+        const progressPct =
+          cp.target_sqls && cp.target_sqls > 0 ? `${((cp.sqls / cp.target_sqls) * 100).toFixed(1)}%` : "N/A";
+        return [
+          cp.client_name,
+          period,
+          cp.dials,
+          cp.answered,
+          `${cp.answer_rate.toFixed(1)}%`,
+          cp.dm_conversations,
+          cp.sqls,
+          progressPct,
+        ];
       });
 
       // Meetings section
-      const meetingHeaders = ["Booking Date", "Client", "SDR", "Contact Person", "Company", "Meeting Date", "Meeting Held"];
-      const meetingRows = meetings.map(m => [
+      const meetingHeaders = [
+        "Booking Date",
+        "Client",
+        "SDR",
+        "Contact Person",
+        "Company",
+        "Meeting Date",
+        "Meeting Held",
+      ];
+      const meetingRows = meetings.map((m) => [
         formatDateForCSV(m.booking_date),
         m.client_id || "",
         m.sdr_name || "",
@@ -227,11 +283,9 @@ const Overview = () => {
     setExporting(true);
     try {
       const XLSX = await import("xlsx-js-style");
-      
-      const startStr = dateRange?.from 
-        ? format(dateRange.from, "MMM dd, yyyy") : "";
-      const endStr = dateRange?.to 
-        ? format(dateRange.to, "MMM dd, yyyy") : "";
+
+      const startStr = dateRange?.from ? format(dateRange.from, "MMM dd, yyyy") : "";
+      const endStr = dateRange?.to ? format(dateRange.to, "MMM dd, yyyy") : "";
       const reportTitle = `Overview Report - ${startStr} to ${endStr}`;
       const exportDate = format(new Date(), "MMM dd, yyyy h:mm a");
 
@@ -249,13 +303,21 @@ const Overview = () => {
         for (let c = 0; c < numCols; c++) {
           const cellRef = XLSX.utils.encode_cell({ r: 0, c });
           if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
-          ws[cellRef].s = { fill: navyFill, font: c === 0 ? whiteLarge : (c === numCols - 1 ? whiteNormal : whiteBold), alignment: { horizontal: c === 0 ? "left" : c === numCols - 1 ? "right" : "center", vertical: "center" } };
+          ws[cellRef].s = {
+            fill: navyFill,
+            font: c === 0 ? whiteLarge : c === numCols - 1 ? whiteNormal : whiteBold,
+            alignment: { horizontal: c === 0 ? "left" : c === numCols - 1 ? "right" : "center", vertical: "center" },
+          };
         }
         // Row 3 — report title
         for (let c = 0; c < numCols; c++) {
           const cellRef = XLSX.utils.encode_cell({ r: 2, c });
           if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
-          ws[cellRef].s = { fill: { patternType: "solid", fgColor: { rgb: "1E3A5F" } }, font: whiteBold, alignment: { horizontal: "left", vertical: "center" } };
+          ws[cellRef].s = {
+            fill: { patternType: "solid", fgColor: { rgb: "1E3A5F" } },
+            font: whiteBold,
+            alignment: { horizontal: "left", vertical: "center" },
+          };
         }
         // Row 5 — column headers
         for (let c = 0; c < numCols; c++) {
@@ -275,9 +337,9 @@ const Overview = () => {
         }
         ws["!rows"] = [
           { hpt: 30 }, // Row 1 — title
-          { hpt: 6 },  // Row 2 — spacer
+          { hpt: 6 }, // Row 2 — spacer
           { hpt: 22 }, // Row 3 — report title
-          { hpt: 6 },  // Row 4 — spacer
+          { hpt: 6 }, // Row 4 — spacer
           { hpt: 20 }, // Row 5 — column headers
         ];
       };
@@ -307,13 +369,13 @@ const Overview = () => {
         [reportTitle],
         [],
         ["Client", "Campaign Period", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Progress %"],
-        ...clientPerformance.map(cp => {
-          const period = cp.campaign_start && cp.campaign_end
-            ? `${format(new Date(cp.campaign_start), "MMM dd, yyyy")} – ${format(new Date(cp.campaign_end), "MMM dd, yyyy")}`
-            : "";
-          const progressPct = cp.target_sqls && cp.target_sqls > 0
-            ? `${((cp.sqls / cp.target_sqls) * 100).toFixed(1)}%`
-            : "N/A";
+        ...clientPerformance.map((cp) => {
+          const period =
+            cp.campaign_start && cp.campaign_end
+              ? `${format(new Date(cp.campaign_start), "MMM dd, yyyy")} – ${format(new Date(cp.campaign_end), "MMM dd, yyyy")}`
+              : "";
+          const progressPct =
+            cp.target_sqls && cp.target_sqls > 0 ? `${((cp.sqls / cp.target_sqls) * 100).toFixed(1)}%` : "N/A";
           return [
             cp.client_name,
             period,
@@ -328,8 +390,14 @@ const Overview = () => {
       ];
       const clientSheet = XLSX.utils.aoa_to_sheet(clientData);
       clientSheet["!cols"] = [
-        { wch: 25 }, { wch: 35 }, { wch: 12 },
-        { wch: 12 }, { wch: 15 }, { wch: 18 }, { wch: 12 }, { wch: 15 }
+        { wch: 25 },
+        { wch: 35 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 18 },
+        { wch: 12 },
+        { wch: 15 },
       ];
       styleSheet(clientSheet, 8, clientData.length - 5);
       XLSX.utils.book_append_sheet(wb, clientSheet, "Client Performance");
@@ -340,39 +408,33 @@ const Overview = () => {
         [],
         [reportTitle],
         [],
-        ["Booking Date", "Client", "SDR", 
-         "Contact Person", "Company", "Meeting Date"],
-        ...meetings.map(m => [
-          m.booking_date 
-            ? format(new Date(m.booking_date), "MMM dd, yyyy") : "",
+        ["Booking Date", "Client", "SDR", "Contact Person", "Company", "Meeting Date"],
+        ...meetings.map((m) => [
+          m.booking_date ? format(new Date(m.booking_date), "MMM dd, yyyy") : "",
           m.client_id || "",
           m.sdr_name || "",
           m.contact_person || "",
           m.company_name || "",
-          m.meeting_date 
-            ? format(new Date(m.meeting_date), "MMM dd, yyyy") : "",
+          m.meeting_date ? format(new Date(m.meeting_date), "MMM dd, yyyy") : "",
         ]),
       ];
       const meetingSheet = XLSX.utils.aoa_to_sheet(meetingData);
-      meetingSheet["!cols"] = [
-        { wch: 15 }, { wch: 20 }, { wch: 20 },
-        { wch: 25 }, { wch: 25 }, { wch: 15 }
-      ];
+      meetingSheet["!cols"] = [{ wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 25 }, { wch: 15 }];
       styleSheet(meetingSheet, 6, meetingData.length - 5);
       XLSX.utils.book_append_sheet(wb, meetingSheet, "SQL Meetings");
 
       const fileName = `j2-overview-${format(new Date(), "yyyy-MM-dd")}.xlsx`;
       XLSX.writeFile(wb, fileName, { bookSST: false, type: "binary", cellStyles: true });
 
-      toast({ 
-        title: "Excel exported successfully", 
-        className: "border-[#10b981]" 
+      toast({
+        title: "Excel exported successfully",
+        className: "border-[#10b981]",
       });
     } catch (err) {
-      toast({ 
-        title: "Export failed", 
-        description: String(err), 
-        variant: "destructive" 
+      toast({
+        title: "Export failed",
+        description: String(err),
+        variant: "destructive",
       });
     } finally {
       setExporting(false);
@@ -424,7 +486,7 @@ const Overview = () => {
     {
       title: "Total SQLs",
       value: kpis.totalSQLs.toLocaleString(),
-      
+
       icon: Target,
       iconColor: "text-rose-500",
       iconBg: "bg-rose-500/10",
@@ -439,13 +501,13 @@ const Overview = () => {
     <div id="overview-content" className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-         <div>
-           {firstName && (
-             <p className="font-medium text-base text-muted-foreground mb-3">
-               {getGreeting()}, {firstName}!
-             </p>
-           )}
-           <h1 className="text-3xl font-bold text-foreground mb-2">Campaign Overview</h1>
+        <div>
+          {firstName && (
+            <p className="font-medium text-base text-muted-foreground mb-3">
+              {getGreeting()}, {firstName}!
+            </p>
+          )}
+          <h1 className="text-3xl font-bold text-foreground mb-2">Campaign Overview</h1>
           <p className="text-muted-foreground">Monitor all client campaigns and performance metrics</p>
         </div>
         <div className="flex items-center gap-2">
@@ -477,24 +539,49 @@ const Overview = () => {
       {/* Date Filter Buttons */}
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
-          {([
-            { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },
-            { label: "Last 30 Days", type: "last30days" as FilterType, range: { from: subDays(new Date(), 30), to: new Date() } },
-            { label: "This Month", type: "thisMonth" as FilterType, range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) } },
-            { label: "Last Month", type: "lastMonth" as FilterType, range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
-          ]).map((filter) => {
-            const isActive = filterType === filter.type && dateRange?.from && dateRange?.to && isSameDay(dateRange.from, filter.range.from) && isSameDay(dateRange.to, filter.range.to);
+          {[
+            {
+              label: "Last 7 Days",
+              type: "last7days" as FilterType,
+              range: { from: subDays(new Date(), 7), to: new Date() },
+            },
+            {
+              label: "Last 30 Days",
+              type: "last30days" as FilterType,
+              range: { from: subDays(new Date(), 30), to: new Date() },
+            },
+            {
+              label: "This Month",
+              type: "thisMonth" as FilterType,
+              range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) },
+            },
+            {
+              label: "Last Month",
+              type: "lastMonth" as FilterType,
+              range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) },
+            },
+          ].map((filter) => {
+            const isActive =
+              filterType === filter.type &&
+              dateRange?.from &&
+              dateRange?.to &&
+              isSameDay(dateRange.from, filter.range.from) &&
+              isSameDay(dateRange.to, filter.range.to);
             return (
               <Button
                 key={filter.type}
                 variant={isActive ? "default" : "outline"}
                 size="sm"
-                onClick={() => { setDateRange(filter.range); setFilterType(filter.type); setCustomRange(undefined); }}
+                onClick={() => {
+                  setDateRange(filter.range);
+                  setFilterType(filter.type);
+                  setCustomRange(undefined);
+                }}
                 className={cn(
                   "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                   isActive
                     ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
-                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 {filter.label}
@@ -510,7 +597,7 @@ const Overview = () => {
                   "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                   filterType === "custom"
                     ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-md dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
-                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 Custom <ChevronDown className="h-3 w-3 ml-1" />
@@ -540,7 +627,9 @@ const Overview = () => {
         {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarIcon className="h-4 w-4" />
-            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+            <span>
+              Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}
+            </span>
           </div>
         )}
       </div>
@@ -558,61 +647,64 @@ const Overview = () => {
       )}
 
       {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 animate-fade-in">
-          {kpiCards.map((kpi) => (
-            <Card
-              key={kpi.title}
-              className={cn(
-                "bg-card border-border hover:shadow-md transition-all duration-300 overflow-hidden group",
-                kpi.title === "Total SQLs" && sqlPulse && "ring-2 ring-emerald-500/60 animate-[pulse_0.75s_ease-in-out_2]"
-              )}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm font-normal text-muted-foreground">{kpi.title}</p>
-                  <div className={cn("p-2 rounded-lg", kpi.iconBg)}>
-                    <kpi.icon className={cn("h-4 w-4", kpi.iconColor)} />
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 animate-fade-in">
+        {kpiCards.map((kpi) => (
+          <Card
+            key={kpi.title}
+            className={cn(
+              "bg-card border-border hover:shadow-md transition-all duration-300 overflow-hidden group",
+              kpi.title === "Total SQLs" &&
+                sqlPulse &&
+                "ring-2 ring-emerald-500/60 animate-[pulse_0.75s_ease-in-out_2]",
+            )}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-normal text-muted-foreground">{kpi.title}</p>
+                <div className={cn("p-2 rounded-lg", kpi.iconBg)}>
+                  <kpi.icon className={cn("h-4 w-4", kpi.iconColor)} />
+                </div>
+              </div>
+
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-3xl font-extrabold text-foreground">{kpi.value}</p>
                 </div>
 
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-3xl font-extrabold text-foreground">
-                        {kpi.value}
-                      </p>
-                  </div>
-
-                  {kpi.delta !== null ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-1 cursor-default">
-                            {kpi.delta >= 0 ? (
-                              <ArrowUpRight className="h-4 w-4 text-emerald-500" />
-                            ) : (
-                              <ArrowDownRight className="h-4 w-4 text-destructive" />
-                            )}
-                            <span className={cn(
+                {kpi.delta !== null ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 cursor-default">
+                          {kpi.delta >= 0 ? (
+                            <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                          ) : (
+                            <ArrowDownRight className="h-4 w-4 text-destructive" />
+                          )}
+                          <span
+                            className={cn(
                               "text-sm font-medium",
-                              kpi.delta >= 0 ? "text-emerald-500" : "text-destructive"
-                            )}>
-                              {kpi.delta >= 0 ? "+" : ""}{kpi.delta.toFixed(1)}%
-                            </span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          {getPeriodLabel()}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : (
-                    <div className="h-6" />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                              kpi.delta >= 0 ? "text-emerald-500" : "text-destructive",
+                            )}
+                          >
+                            {kpi.delta >= 0 ? "+" : ""}
+                            {kpi.delta.toFixed(1)}%
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {getPeriodLabel()}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <div className="h-6" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Empty State */}
       {!loading && !error && dailyActivity.length === 0 && clients.length === 0 && (
@@ -627,34 +719,30 @@ const Overview = () => {
 
       {/* Insight Banner */}
       {kpis && !loading && kpis.totalDials > 0 && (
-         <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
-           <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-           <span>
-             {filterType === "last7days"
-               ? "This week"
-               : filterType === "last30days"
-               ? "Last 30 days"
-               : filterType === "thisMonth"
-               ? "This month"
-               : filterType === "lastMonth"
-               ? "Last month"
-               : dateRange?.from && dateRange?.to
-               ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d, yyyy")}`
-               : "Selected period"}
-            : <span className="font-semibold text-foreground">
-              {kpis.totalDials.toLocaleString()} dials
-            </span> across <span className="font-semibold text-foreground">
-              {activeClientCount} clients
-            </span>.
-            {kpis.previousPeriod &&
-              avgAnswerRate < kpis.previousPeriod.answerRate ? (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/40 border border-border/50 text-sm text-muted-foreground">
+          <TrendingUp className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+          <span>
+            {filterType === "last7days"
+              ? "This week"
+              : filterType === "last30days"
+                ? "Last 30 days"
+                : filterType === "thisMonth"
+                  ? "This month"
+                  : filterType === "lastMonth"
+                    ? "Last month"
+                    : dateRange?.from && dateRange?.to
+                      ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d, yyyy")}`
+                      : "Selected period"}
+            : <span className="font-semibold text-foreground">{kpis.totalDials.toLocaleString()} dials</span> across{" "}
+            <span className="font-semibold text-foreground">{activeClientCount} clients</span>.
+            {kpis.previousPeriod && avgAnswerRate < kpis.previousPeriod.answerRate ? (
               <span className="ml-1">
                 Answer rate down{" "}
                 <span className="text-rose-500 font-semibold">
                   {Math.abs(
-                    ((avgAnswerRate - kpis.previousPeriod.answerRate) /
-                      kpis.previousPeriod.answerRate) * 100
-                  ).toFixed(1)}%
+                    ((avgAnswerRate - kpis.previousPeriod.answerRate) / kpis.previousPeriod.answerRate) * 100,
+                  ).toFixed(1)}
+                  %
                 </span>{" "}
                 vs previous period.
               </span>
@@ -663,9 +751,9 @@ const Overview = () => {
                 Answer rate up{" "}
                 <span className="text-emerald-500 font-semibold">
                   {Math.abs(
-                    ((avgAnswerRate - kpis.previousPeriod.answerRate) /
-                      kpis.previousPeriod.answerRate) * 100
-                  ).toFixed(1)}%
+                    ((avgAnswerRate - kpis.previousPeriod.answerRate) / kpis.previousPeriod.answerRate) * 100,
+                  ).toFixed(1)}
+                  %
                 </span>{" "}
                 vs previous period.
               </span>
@@ -675,23 +763,22 @@ const Overview = () => {
       )}
 
       {/* Client Performance Table */}
-        <ClientPerformanceTable clientPerformance={clientPerformance} />
+      <ClientPerformanceTable clientPerformance={clientPerformance} clientFilter={clientFilter} />
 
       {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-          <CallActivityChart dailyActivity={dailyActivity} dateRange={dateRange} />
-          <ConversionFunnelChart
-            dials={kpis.totalDials}
-            answered={kpis.totalAnswered}
-            dmConversations={kpis.totalConversations}
-            sqls={kpis.totalSQLs}
-            sqlPulse={sqlPulse}
-          />
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+        <CallActivityChart dailyActivity={dailyActivity} dateRange={dateRange} />
+        <ConversionFunnelChart
+          dials={kpis.totalDials}
+          answered={kpis.totalAnswered}
+          dmConversations={kpis.totalConversations}
+          sqls={kpis.totalSQLs}
+          sqlPulse={sqlPulse}
+        />
+      </div>
 
       {/* SQL Meetings Table */}
-        <SQLBookedMeetingsTable meetings={meetings} clients={clients as any} />
+      <SQLBookedMeetingsTable meetings={meetings} clients={clients as any} />
     </div>
   );
 };
