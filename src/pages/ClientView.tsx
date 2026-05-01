@@ -17,11 +17,12 @@ import { J2Loader } from "@/components/J2Loader";
 import { useClientViewData } from "@/hooks/useClientViewData";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
 
 type FilterType = "last7days" | "last30days" | "thisMonth" | "lastMonth" | "campaign" | "custom";
 
 const getGreeting = () => {
-  const hour = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne', hour: 'numeric', hour12: false });
+  const hour = new Date().toLocaleString("en-AU", { timeZone: "Australia/Melbourne", hour: "numeric", hour12: false });
   const h = parseInt(hour);
   if (h >= 5 && h <= 11) return "Good morning";
   if (h >= 12 && h <= 16) return "Good afternoon";
@@ -39,6 +40,8 @@ const ClientView = () => {
   const [answeredModalOpen, setAnsweredModalOpen] = useState(false);
   const [dmsModalOpen, setDmsModalOpen] = useState(false);
   const [campaignRangeInitialized, setCampaignRangeInitialized] = useState(false);
+  const [demoCounts, setDemoCounts] = useState<{ demo_booked: number; demo_attended: number } | null>(null);
+  const isPexa = clientSlug === "pexa-clear";
 
   // Reset campaign range when switching clients
   useEffect(() => {
@@ -47,10 +50,49 @@ const ClientView = () => {
     setFilterType(null);
   }, [clientSlug]);
 
-  const { loading, error, client, kpis, campaign, meetings, answeredCalls, dmConversations, meetingOutcomes, nextMeeting, weekActivity, refetch } =
-    useClientViewData(clientSlug || "", dateRange);
+  const {
+    loading,
+    error,
+    client,
+    kpis,
+    campaign,
+    meetings,
+    answeredCalls,
+    dmConversations,
+    meetingOutcomes,
+    nextMeeting,
+    weekActivity,
+    refetch,
+  } = useClientViewData(clientSlug || "", dateRange);
 
-  const clientName = client?.client_name || clientSlug?.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "Unknown Client";
+  // Fetch demo counts for PEXA client
+  useEffect(() => {
+    if (!isPexa || !dateRange?.from || !dateRange?.to) {
+      setDemoCounts(null);
+      return;
+    }
+    const fetchDemos = async () => {
+      try {
+        const { data: rows, error } = await supabase.rpc("get_client_demo_counts", {
+          p_client_id: "pexa-clear",
+          p_start_date: format(dateRange.from!, "yyyy-MM-dd"),
+          p_end_date: format(dateRange.to!, "yyyy-MM-dd"),
+        });
+        if (!error && rows && rows.length > 0) {
+          setDemoCounts({
+            demo_booked: Number(rows[0].demo_booked) || 0,
+            demo_attended: Number(rows[0].demo_attended) || 0,
+          });
+        }
+      } catch (err) {
+        console.error("Demo fetch error:", err);
+      }
+    };
+    fetchDemos();
+  }, [isPexa, dateRange]);
+
+  const clientName =
+    client?.client_name || clientSlug?.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Unknown Client";
 
   useEffect(() => {
     document.title = `J2 Insights Dashboard - ${clientName}`;
@@ -58,7 +100,12 @@ const ClientView = () => {
 
   // Initialize date range to campaign period once client loads
   useEffect(() => {
-    if (!campaignRangeInitialized && client?.campaign_start && client?.campaign_end && client.client_id === clientSlug) {
+    if (
+      !campaignRangeInitialized &&
+      client?.campaign_start &&
+      client?.campaign_end &&
+      client.client_id === clientSlug
+    ) {
       setDateRange({
         from: new Date(client.campaign_start + "T00:00:00"),
         to: new Date(client.campaign_end + "T00:00:00"),
@@ -68,12 +115,23 @@ const ClientView = () => {
     }
   }, [client, campaignRangeInitialized, clientSlug]);
 
-
   const filters = [
     { label: "Last 7 Days", type: "last7days" as FilterType, range: { from: subDays(new Date(), 7), to: new Date() } },
-    { label: "Last 30 Days", type: "last30days" as FilterType, range: { from: subDays(new Date(), 30), to: new Date() } },
-    { label: "This Month", type: "thisMonth" as FilterType, range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) } },
-    { label: "Last Month", type: "lastMonth" as FilterType, range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
+    {
+      label: "Last 30 Days",
+      type: "last30days" as FilterType,
+      range: { from: subDays(new Date(), 30), to: new Date() },
+    },
+    {
+      label: "This Month",
+      type: "thisMonth" as FilterType,
+      range: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) },
+    },
+    {
+      label: "Last Month",
+      type: "lastMonth" as FilterType,
+      range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) },
+    },
   ];
 
   if (loading) {
@@ -83,11 +141,7 @@ const ClientView = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Section 1: Banner */}
-      <ClientBanner
-        clientSlug={clientSlug || ""}
-        clientName={clientName}
-        dateRange={dateRange}
-      />
+      <ClientBanner clientSlug={clientSlug || ""} clientName={clientName} dateRange={dateRange} />
 
       {/* Section 2: Personalised Greeting */}
       <div>
@@ -103,18 +157,27 @@ const ClientView = () => {
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
           {filters.map((filter) => {
-                 const isActive = filterType === filter.type && dateRange?.from && dateRange?.to && isSameDay(dateRange.from, filter.range.from) && isSameDay(dateRange.to, filter.range.to);
+            const isActive =
+              filterType === filter.type &&
+              dateRange?.from &&
+              dateRange?.to &&
+              isSameDay(dateRange.from, filter.range.from) &&
+              isSameDay(dateRange.to, filter.range.to);
             return (
               <Button
                 key={filter.type}
                 variant={isActive ? "default" : "outline"}
                 size="sm"
-                onClick={() => { setDateRange(filter.range); setFilterType(filter.type); setCustomRange(undefined); }}
+                onClick={() => {
+                  setDateRange(filter.range);
+                  setFilterType(filter.type);
+                  setCustomRange(undefined);
+                }}
                 className={cn(
                   "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                   isActive
                     ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
-                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 {filter.label}
@@ -137,7 +200,7 @@ const ClientView = () => {
                 "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                 filterType === "campaign"
                   ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
-                  : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                  : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground",
               )}
             >
               Campaign
@@ -152,7 +215,7 @@ const ClientView = () => {
                   "transition-all duration-200 min-h-[44px] active:scale-95 text-xs sm:text-sm",
                   filterType === "custom"
                     ? "bg-[#0f172a] hover:bg-[#0f172a] text-white font-semibold shadow-sm dark:bg-white dark:hover:bg-white dark:text-[#0f172a]"
-                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                    : "bg-transparent text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground",
                 )}
               >
                 Custom <ChevronDown className="h-3 w-3 ml-1" />
@@ -181,7 +244,9 @@ const ClientView = () => {
         {dateRange?.from && dateRange?.to && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarIcon className="h-4 w-4" />
-            <span>Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}</span>
+            <span>
+              Filtered period: {format(dateRange.from, "MMM dd, yyyy")} – {format(dateRange.to, "MMM dd, yyyy")}
+            </span>
           </div>
         )}
       </div>
@@ -213,8 +278,35 @@ const ClientView = () => {
             onDMsClick={() => setDmsModalOpen(true)}
           />
 
+          {/* Demo Counts — PEXA only */}
+          {isPexa && demoCounts && (demoCounts.demo_booked > 0 || demoCounts.demo_attended > 0) && (
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-3 px-5 py-4 rounded-lg border border-border bg-card/50">
+                <span className="text-2xl">🎬</span>
+                <div>
+                  <p className="text-sm text-muted-foreground">Demo Booked</p>
+                  <p className="text-3xl font-bold text-[#3b82f6]">{demoCounts.demo_booked}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 px-5 py-4 rounded-lg border border-border bg-card/50">
+                <span className="text-2xl">✅</span>
+                <div>
+                  <p className="text-sm text-muted-foreground">Demo Attended</p>
+                  <p className="text-3xl font-bold text-[#10b981]">{demoCounts.demo_attended}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Section 6: Campaign Cards */}
-          {campaign && <ClientCampaignCards campaign={campaign} meetingOutcomes={meetingOutcomes} nextMeeting={nextMeeting} weekActivity={weekActivity} />}
+          {campaign && (
+            <ClientCampaignCards
+              campaign={campaign}
+              meetingOutcomes={meetingOutcomes}
+              nextMeeting={nextMeeting}
+              weekActivity={weekActivity}
+            />
+          )}
         </>
       )}
 
