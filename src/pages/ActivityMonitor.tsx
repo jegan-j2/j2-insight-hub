@@ -11,23 +11,63 @@ import { J2Loader } from "@/components/J2Loader";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
-import { Phone, PhoneIncoming, Percent, Target, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight, Play, Square, Volume2, Handshake, Download, FileText, Table2, ChevronDown, SlidersHorizontal } from "lucide-react";
+import {
+  Phone,
+  PhoneIncoming,
+  Percent,
+  Target,
+  CalendarIcon,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Square,
+  Volume2,
+  Handshake,
+  Download,
+  FileText,
+  Table2,
+  ChevronDown,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/lib/supabase";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { format, formatDistanceToNow, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval, getDaysInMonth } from "date-fns";
+import {
+  format,
+  formatDistanceToNow,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  addWeeks,
+  subWeeks,
+  addMonths,
+  subMonths,
+  eachDayOfInterval,
+  getDaysInMonth,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 import { SDRAvatar } from "@/components/SDRAvatar";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx-js-style";
 import { toCSV, downloadCSV } from "@/lib/csvExport";
 import { ACTIVE_SQL_MEETING_STATUSES, getRecordingUrlWithFallback } from "@/lib/sqlMeetings";
+import { DemoMeetingsModal } from "@/components/DemoMeetingsModal";
 
 type Mode = "live" | "historical";
 type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "conversations" | "answerRate" | "sqls" | "conversion";
@@ -92,6 +132,8 @@ interface SDRRow {
   sqls: number;
   conversion: number;
   lastActivity: Date | null;
+  demoBooked?: number;
+  demoAttended?: number;
 }
 
 const formatHour = (h: number) => {
@@ -102,7 +144,7 @@ const formatHour = (h: number) => {
 };
 
 const buildDateOrFilter = (dates: string[], field: string) =>
-  dates.map(d => `and(${field}.gte.${d}T00:00:00,${field}.lte.${d}T23:59:59)`).join(",");
+  dates.map((d) => `and(${field}.gte.${d}T00:00:00,${field}.lte.${d}T23:59:59)`).join(",");
 
 const getMelbourneToday = () => {
   const now = new Date();
@@ -112,9 +154,9 @@ const getMelbourneToday = () => {
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(now);
-  const y = melb.find(p => p.type === "year")!.value;
-  const m = melb.find(p => p.type === "month")!.value;
-  const d = melb.find(p => p.type === "day")!.value;
+  const y = melb.find((p) => p.type === "year")!.value;
+  const m = melb.find((p) => p.type === "month")!.value;
+  const d = melb.find((p) => p.type === "day")!.value;
   return `${y}-${m}-${d}`;
 };
 
@@ -139,7 +181,15 @@ const formatScheduledMeetingDateTime = (meetingDate: string | null, meetingTime:
 
 const ALL_WEEKDAYS: WeekDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const ALL_DAYS: AllDay[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const WEEKDAY_MAP: Record<AllDay, number> = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0 };
+const WEEKDAY_MAP: Record<AllDay, number> = {
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+  Sunday: 0,
+};
 
 const ActivityMonitor = () => {
   const isMobile = useIsMobile();
@@ -149,19 +199,22 @@ const ActivityMonitor = () => {
 
   // Initialise from URL params
   const initialMode = (searchParams.get("mode") === "historical" ? "historical" : "live") as Mode;
-  const initialDateMode = (["day", "week", "month"].includes(searchParams.get("dateMode") || "") ? searchParams.get("dateMode") : "day") as DateMode;
+  const initialDateMode = (
+    ["day", "week", "month"].includes(searchParams.get("dateMode") || "") ? searchParams.get("dateMode") : "day"
+  ) as DateMode;
   const initialDate = (() => {
     const d = searchParams.get("date");
-    if (d) { const p = new Date(d + "T00:00:00"); if (!Number.isNaN(p.getTime())) return p; }
+    if (d) {
+      const p = new Date(d + "T00:00:00");
+      if (!Number.isNaN(p.getTime())) return p;
+    }
     return new Date();
   })();
   const initialStartHour = parseInt(searchParams.get("startHour") || "0", 10);
   const initialEndHour = parseInt(searchParams.get("endHour") || "24", 10);
 
   const [mode, setMode] = useState<Mode>(initialMode);
-  const [isDark, setIsDark] = useState(
-    () => document.documentElement.classList.contains('dark')
-  );
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [snapshots, setSnapshots] = useState<SnapshotRow[]>([]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,7 +231,9 @@ const ActivityMonitor = () => {
   const { refreshKey, manualRefresh } = useAutoRefresh(300000);
   const [clientNameMap, setClientNameMap] = useState<Record<string, string>>({});
   const [clientLogoMap, setClientLogoMap] = useState<Record<string, string | null>>({});
-  const [allTeamMembers, setAllTeamMembers] = useState<{sdr_name: string, client_id: string, status: string | null}[]>([]);
+  const [allTeamMembers, setAllTeamMembers] = useState<
+    { sdr_name: string; client_id: string; status: string | null }[]
+  >([]);
   const [sdrPage, setSdrPage] = useState(0);
   const [drillPage, setDrillPage] = useState(0);
   const { toast } = useToast();
@@ -188,7 +243,15 @@ const ActivityMonitor = () => {
     clientId: string;
     createdAt: string;
   } | null>(null);
-  const [clientOptions, setClientOptions] = useState<{client_id: string; client_name: string; logo_url: string | null}[]>([]);
+  const [clientOptions, setClientOptions] = useState<
+    { client_id: string; client_name: string; logo_url: string | null }[]
+  >([]);
+
+  const [demoModalSdr, setDemoModalSdr] = useState<{ sdrName: string; dateRange: { from: Date; to: Date } } | null>(
+    null,
+  );
+  const [demoCounts, setDemoCounts] = useState<Map<string, { demo_booked: number; demo_attended: number }>>(new Map());
+  const isPexa = clientFilter === "pexa-clear";
 
   const SDR_PAGE_SIZE = 15;
   const DRILL_PAGE_SIZE = 15;
@@ -197,11 +260,11 @@ const ActivityMonitor = () => {
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'));
+      setIsDark(document.documentElement.classList.contains("dark"));
     });
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class']
+      attributeFilter: ["class"],
     });
     return () => observer.disconnect();
   }, []);
@@ -240,25 +303,71 @@ const ActivityMonitor = () => {
         }
         setClientNameMap(map);
         setClientLogoMap(logoMap);
-        setClientOptions(clients.filter(c => c.status === "active").map(c => ({ client_id: c.client_id, client_name: c.client_name, logo_url: c.logo_url })));
+        setClientOptions(
+          clients
+            .filter((c) => c.status === "active")
+            .map((c) => ({ client_id: c.client_id, client_name: c.client_name, logo_url: c.logo_url })),
+        );
       }
     };
     fetchPhotosAndMembers();
   }, []);
 
+  // Fetch demo counts when PEXA filter is active — date range follows active mode
+  useEffect(() => {
+    if (!isPexa) {
+      setDemoCounts(new Map());
+      return;
+    }
+    const fetchDemos = async () => {
+      try {
+        // Live Today: use today only. Historical: use the selected date range.
+        const startDate = mode === "live" ? todayMelbourne : dateRangeInfo.dates[0] || todayMelbourne;
+        const endDate =
+          mode === "live" ? todayMelbourne : dateRangeInfo.dates[dateRangeInfo.dates.length - 1] || todayMelbourne;
+        const { data: rows, error } = await supabase.rpc("get_sdr_demo_counts", {
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_client_id: "pexa-clear",
+        });
+        if (!error && rows) {
+          const m = new Map<string, { demo_booked: number; demo_attended: number }>();
+          for (const r of rows) {
+            m.set(r.sdr_name, { demo_booked: Number(r.demo_booked) || 0, demo_attended: Number(r.demo_attended) || 0 });
+          }
+          setDemoCounts(m);
+        }
+      } catch (err) {
+        console.error("Demo counts error:", err);
+      }
+    };
+    fetchDemos();
+  }, [isPexa, clientFilter, mode, todayMelbourne, dateRangeInfo]);
+
   const handleExportCSV = () => {
     const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
-    const headers = ["SDR Name", "Client", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Conversion Rate"];
-    const rows = sdrRows.filter(r => r.dials > 0).map(r => [
-      r.sdrName,
-      clientNameMap[r.clientId] || r.clientId,
-      r.dials,
-      r.answered,
-      r.answerRate.toFixed(1) + "%",
-      r.conversations,
-      r.sqls,
-      r.conversion.toFixed(1) + "%"
-    ]);
+    const headers = [
+      "SDR Name",
+      "Client",
+      "Dials",
+      "Answered",
+      "Answer Rate",
+      "DM Conversations",
+      "SQLs",
+      "Conversion Rate",
+    ];
+    const rows = sdrRows
+      .filter((r) => r.dials > 0)
+      .map((r) => [
+        r.sdrName,
+        clientNameMap[r.clientId] || r.clientId,
+        r.dials,
+        r.answered,
+        r.answerRate.toFixed(1) + "%",
+        r.conversations,
+        r.sqls,
+        r.conversion.toFixed(1) + "%",
+      ]);
     downloadCSV(toCSV(headers, rows), `j2-activity-${dateStr}.csv`);
     toast({ title: "CSV exported successfully", className: "border-[#10b981]" });
   };
@@ -268,7 +377,7 @@ const ActivityMonitor = () => {
       const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
       const headerStyle = {
         font: { bold: true, color: { rgb: "FFFFFF" }, name: "Arial", sz: 11 },
-        fill: { fgColor: { rgb: "0F172A" } }
+        fill: { fgColor: { rgb: "0F172A" } },
       };
       const evenRow = { fill: { fgColor: { rgb: "F1F5F9" } } };
       const oddRow = { fill: { fgColor: { rgb: "FFFFFF" } } };
@@ -286,7 +395,7 @@ const ActivityMonitor = () => {
       const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
       kpiSheet["!cols"] = [{ wch: 24 }, { wch: 20 }];
       kpiData.forEach((_, i) => {
-        const rowStyle = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
+        const rowStyle = i === 0 ? headerStyle : i % 2 === 0 ? evenRow : oddRow;
         const cell1 = XLSX.utils.encode_cell({ r: i, c: 0 });
         const cell2 = XLSX.utils.encode_cell({ r: i, c: 1 });
         if (kpiSheet[cell1]) kpiSheet[cell1].s = rowStyle;
@@ -294,24 +403,44 @@ const ActivityMonitor = () => {
       });
 
       // Sheet 2 — SDR Performance
-      const sdrHeaders = ["SDR Name", "Client", "Dials", "Answered", "Answer Rate", "DM Conversations", "SQLs", "Conversion Rate"];
+      const sdrHeaders = [
+        "SDR Name",
+        "Client",
+        "Dials",
+        "Answered",
+        "Answer Rate",
+        "DM Conversations",
+        "SQLs",
+        "Conversion Rate",
+      ];
       const sdrData = [
         sdrHeaders,
-        ...sdrRows.filter(r => r.dials > 0).map(r => [
-          r.sdrName,
-          clientNameMap[r.clientId] || r.clientId,
-          r.dials,
-          r.answered,
-          r.answerRate.toFixed(1) + "%",
-          r.conversations,
-          r.sqls,
-          r.conversion.toFixed(1) + "%"
-        ])
+        ...sdrRows
+          .filter((r) => r.dials > 0)
+          .map((r) => [
+            r.sdrName,
+            clientNameMap[r.clientId] || r.clientId,
+            r.dials,
+            r.answered,
+            r.answerRate.toFixed(1) + "%",
+            r.conversations,
+            r.sqls,
+            r.conversion.toFixed(1) + "%",
+          ]),
       ];
       const sdrSheet = XLSX.utils.aoa_to_sheet(sdrData);
-      sdrSheet["!cols"] = [{ wch: 22 }, { wch: 20 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 10 }, { wch: 18 }];
+      sdrSheet["!cols"] = [
+        { wch: 22 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 18 },
+      ];
       sdrData.forEach((_, i) => {
-        const rowStyle = i === 0 ? headerStyle : (i % 2 === 0 ? evenRow : oddRow);
+        const rowStyle = i === 0 ? headerStyle : i % 2 === 0 ? evenRow : oddRow;
         sdrHeaders.forEach((__, c) => {
           const cell = XLSX.utils.encode_cell({ r: i, c });
           if (sdrSheet[cell]) sdrSheet[cell].s = rowStyle;
@@ -327,7 +456,6 @@ const ActivityMonitor = () => {
       toast({ title: "Export failed", description: String(err), variant: "destructive" });
     }
   };
-
 
   // Historical filters
   const [histDate, setHistDate] = useState<Date>(initialDate);
@@ -349,8 +477,8 @@ const ActivityMonitor = () => {
   const dateRangeInfo = useMemo(() => {
     const filterByWeekdays = (days: Date[]) => {
       if (dateMode === "day") return days;
-      const selectedDayNumbers = selectedWeekdays.map(d => WEEKDAY_MAP[d]);
-      return days.filter(d => {
+      const selectedDayNumbers = selectedWeekdays.map((d) => WEEKDAY_MAP[d]);
+      return days.filter((d) => {
         const dow = d.getDay(); // 0=Sun, 1=Mon...
         return selectedDayNumbers.includes(dow);
       });
@@ -364,7 +492,7 @@ const ActivityMonitor = () => {
       const weekEnd = endOfWeek(histDate, { weekStartsOn: 1 });
       const days = filterByWeekdays(eachDayOfInterval({ start: weekStart, end: weekEnd }));
       return {
-        dates: days.map(d => format(d, "yyyy-MM-dd")),
+        dates: days.map((d) => format(d, "yyyy-MM-dd")),
         label: `${format(weekStart, "EEE, MMM d")} – ${format(weekEnd, "EEE, MMM d, yyyy")}`,
       };
     } else {
@@ -373,7 +501,7 @@ const ActivityMonitor = () => {
       const days = filterByWeekdays(eachDayOfInterval({ start: monthStart, end: monthEnd }));
       const totalDays = getDaysInMonth(histDate);
       return {
-        dates: days.map(d => format(d, "yyyy-MM-dd")),
+        dates: days.map((d) => format(d, "yyyy-MM-dd")),
         label: `${format(monthStart, "MMM d")} – ${format(monthEnd, "MMM d, yyyy")} · ${totalDays} days`,
       };
     }
@@ -389,12 +517,16 @@ const ActivityMonitor = () => {
       .limit(1);
     if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
     const { data } = await query;
-    setLatestSql(data?.[0] ? {
-      sdrName: data[0].sdr_name || "",
-      companyName: data[0].company_name || "",
-      clientId: data[0].client_id || "",
-      createdAt: data[0].created_at,
-    } : null);
+    setLatestSql(
+      data?.[0]
+        ? {
+            sdrName: data[0].sdr_name || "",
+            companyName: data[0].company_name || "",
+            clientId: data[0].client_id || "",
+            createdAt: data[0].created_at,
+          }
+        : null,
+    );
   }, [todayMelbourne, activeClientFilter]);
 
   // LIVE fetch
@@ -402,16 +534,22 @@ const ActivityMonitor = () => {
     if (mode !== "live") return;
     setLoading(true);
     try {
-      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
+      const activityCols =
+        "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
 
       const [liveActivities, liveSqls] = await Promise.all([
-        fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) => {
-          let filtered = q
-            .gte("activity_date", todayMelbourne + "T00:00:00")
-            .lte("activity_date", todayMelbourne + "T23:59:59");
-          if (activeClientFilter) filtered = filtered.eq("client_id", activeClientFilter);
-          return filtered;
-        }, "activity_date"),
+        fetchAllRows<ActivityRow>(
+          "activity_log",
+          activityCols,
+          (q: any) => {
+            let filtered = q
+              .gte("activity_date", todayMelbourne + "T00:00:00")
+              .lte("activity_date", todayMelbourne + "T23:59:59");
+            if (activeClientFilter) filtered = filtered.eq("client_id", activeClientFilter);
+            return filtered;
+          },
+          "activity_date",
+        ),
         (async () => {
           let sqlQ = supabase
             .from("sql_meetings")
@@ -438,18 +576,24 @@ const ActivityMonitor = () => {
     tableName: string,
     selectCols: string,
     filters: (query: any) => any,
-    orderCol?: string
+    orderCol?: string,
   ): Promise<T[]> => {
     const PAGE_SIZE = 1000;
     let allData: T[] = [];
     let from = 0;
     let hasMore = true;
     while (hasMore) {
-      let query = supabase.from(tableName).select(selectCols).range(from, from + PAGE_SIZE - 1);
+      let query = supabase
+        .from(tableName)
+        .select(selectCols)
+        .range(from, from + PAGE_SIZE - 1);
       query = filters(query);
       if (orderCol) query = query.order(orderCol, { ascending: false });
       const { data, error } = await query;
-      if (error) { console.error(`Fetch error ${tableName}:`, error); break; }
+      if (error) {
+        console.error(`Fetch error ${tableName}:`, error);
+        break;
+      }
       if (data) allData = allData.concat(data as T[]);
       hasMore = (data?.length || 0) === PAGE_SIZE;
       from += PAGE_SIZE;
@@ -469,28 +613,40 @@ const ActivityMonitor = () => {
       // Only use timeRange for day mode; week/month always use full day
       const isDayMode = dateMode === "day";
       const startHour = isDayMode ? String(timeRange[0]).padStart(2, "0") : "00";
-      const endTs = isDayMode ? (timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`) : "23:59:59";
+      const endTs = isDayMode
+        ? timeRange[1] === 24
+          ? "23:59:59"
+          : `${String(timeRange[1]).padStart(2, "0")}:00:00`
+        : "23:59:59";
 
       const startTimestamp = `${firstDate}T${startHour}:00:00`;
       const endTimestamp = `${lastDate}T${endTs}`;
 
       if (import.meta.env.DEV) console.log("📊 Historical query:", { startTimestamp, endTimestamp, dates });
 
-      const activityCols = "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
+      const activityCols =
+        "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, is_decision_maker, meeting_scheduled_date, client_id, recording_url";
 
       const [activityData, sqlRes, snapshotRes] = await Promise.all([
-        fetchAllRows<ActivityRow>("activity_log", activityCols, (q: any) => {
-          let filtered = q;
-          if (activeClientFilter) filtered = filtered.eq("client_id", activeClientFilter);
-          if (dates.length === 1) {
-            return filtered.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp);
-          }
-          return filtered.or(buildDateOrFilter(dates, "activity_date"));
-        }, "activity_date"),
+        fetchAllRows<ActivityRow>(
+          "activity_log",
+          activityCols,
+          (q: any) => {
+            let filtered = q;
+            if (activeClientFilter) filtered = filtered.eq("client_id", activeClientFilter);
+            if (dates.length === 1) {
+              return filtered.gte("activity_date", startTimestamp).lte("activity_date", endTimestamp);
+            }
+            return filtered.or(buildDateOrFilter(dates, "activity_date"));
+          },
+          "activity_date",
+        ),
         (() => {
           let q = supabase
             .from("sql_meetings")
-            .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, client_id")
+            .select(
+              "id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, client_id",
+            )
             .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]);
           if (activeClientFilter) q = q.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
@@ -511,16 +667,25 @@ const ActivityMonitor = () => {
         })(),
       ]);
 
-      if (import.meta.env.DEV) console.log("📊 Historical results:", {
-        activities: activityData.length,
-        sqlMeetings: sqlRes.data?.length,
-        snapshots: snapshotRes.data?.length,
-        error: sqlRes.error || snapshotRes.error,
-      });
+      if (import.meta.env.DEV)
+        console.log("📊 Historical results:", {
+          activities: activityData.length,
+          sqlMeetings: sqlRes.data?.length,
+          snapshots: snapshotRes.data?.length,
+          error: sqlRes.error || snapshotRes.error,
+        });
 
       setActivities(activityData);
-      setHistSqlMeetings((sqlRes.data || []).map((r: any) => ({ ...r, meeting_time: r.meeting_time ?? null, client_notes: r.client_notes ?? null })) as SqlMeetingRow[]);
-      setSnapshots(snapshotRes.data?.map(s => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || []);
+      setHistSqlMeetings(
+        (sqlRes.data || []).map((r: any) => ({
+          ...r,
+          meeting_time: r.meeting_time ?? null,
+          client_notes: r.client_notes ?? null,
+        })) as SqlMeetingRow[],
+      );
+      setSnapshots(
+        snapshotRes.data?.map((s) => ({ ...s, dials: null, answered: null, sqls: null, answer_rate: null })) || [],
+      );
 
       // Latest SQL in period
       const latestSqlInPeriod = sqlRes.data?.[0];
@@ -534,7 +699,6 @@ const ActivityMonitor = () => {
       } else {
         setLatestSql(null);
       }
-
     } catch (err) {
       console.error("Error fetching historical data:", err);
     } finally {
@@ -581,7 +745,6 @@ const ActivityMonitor = () => {
     setSearchParams(params, { replace: true });
   }, [mode, dateMode, histDate, timeRange, setSearchParams]);
 
-
   useRealtimeSubscription({
     table: "activity_log",
     onChange: mode === "live" ? fetchLiveData : undefined,
@@ -590,8 +753,10 @@ const ActivityMonitor = () => {
   // KPI totals
   const totals = useMemo(() => {
     const dials = activities.length;
-    const answered = activities.filter(a => a.call_outcome?.toLowerCase() === "connected").length;
-    const conversations = activities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length;
+    const answered = activities.filter((a) => a.call_outcome?.toLowerCase() === "connected").length;
+    const conversations = activities.filter(
+      (a) => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker,
+    ).length;
     const sqls = histSqlMeetings.length;
     return { dials, answered, conversations, sqls };
   }, [activities, histSqlMeetings]);
@@ -602,7 +767,7 @@ const ActivityMonitor = () => {
     const compositeKey = (name: string, clientId: string) => `${name}|||${clientId}`;
     // Build a set of active SDR composite keys for live mode filtering
     const activeSDRKeys = new Set(
-      allTeamMembers.filter(m => m.status === "active").map(m => compositeKey(m.sdr_name, m.client_id || ""))
+      allTeamMembers.filter((m) => m.status === "active").map((m) => compositeKey(m.sdr_name, m.client_id || "")),
     );
 
     if (mode === "live") {
@@ -660,14 +825,16 @@ const ActivityMonitor = () => {
 
       for (const key of allSdrKeys) {
         const [sdrName] = key.split("|||");
-        const sdrActivities = activities.filter(a => compositeKey(a.sdr_name || "", a.client_id || "") === key);
+        const sdrActivities = activities.filter((a) => compositeKey(a.sdr_name || "", a.client_id || "") === key);
         const clientId = sdrActivities[0]?.client_id || sqlClientMap.get(key) || "";
         map.set(key, {
           sdrName,
           clientId: typeof clientId === "string" ? clientId : "",
           dials: sdrActivities.length,
-          answered: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected").length,
-          conversations: sdrActivities.filter(a => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker).length,
+          answered: sdrActivities.filter((a) => a.call_outcome?.toLowerCase() === "connected").length,
+          conversations: sdrActivities.filter(
+            (a) => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker,
+          ).length,
           answerRate: 0,
           sqls: sqlCountByKey.get(key) || 0,
           conversion: 0,
@@ -735,15 +902,27 @@ const ActivityMonitor = () => {
     });
 
     return rows;
-  }, [snapshots, activities, histSqlMeetings, mode, sortKey, sortDir, allTeamMembers, clientNameMap, activeClientFilter]);
+  }, [
+    snapshots,
+    activities,
+    histSqlMeetings,
+    mode,
+    sortKey,
+    sortDir,
+    allTeamMembers,
+    clientNameMap,
+    activeClientFilter,
+  ]);
 
-  useEffect(() => { setSdrPage(0); }, [sdrRows]);
+  useEffect(() => {
+    setSdrPage(0);
+  }, [sdrRows]);
 
   const pagedSdrRows = sdrRows.slice(sdrPage * SDR_PAGE_SIZE, (sdrPage + 1) * SDR_PAGE_SIZE);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir(d => d === "desc" ? "asc" : "desc");
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
     } else {
       setSortKey(key);
       setSortDir("desc");
@@ -767,7 +946,9 @@ const ActivityMonitor = () => {
           const endTs2 = `${todayMelbourne}T23:59:59`;
           let query = supabase
             .from("activity_log")
-            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id")
+            .select(
+              "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id",
+            )
             .eq("sdr_name", sdrName)
             .ilike("call_outcome", "connected")
             .gte("activity_date", startTs)
@@ -776,55 +957,65 @@ const ActivityMonitor = () => {
           if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
-          const sorted = (data || []).map(r => ({
-            ...r,
-            recording_url: getRecordingUrlWithFallback({
-              recordingUrl: r.recording_url,
-              hubspotEngagementId: r.hubspot_engagement_id,
-            }),
-          })).sort((a, b) => {
-            const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
-            const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
-            if (dateB !== dateA) return dateB - dateA;
-            return (b.call_duration || 0) - (a.call_duration || 0);
-          });
+          const sorted = (data || [])
+            .map((r) => ({
+              ...r,
+              recording_url: getRecordingUrlWithFallback({
+                recordingUrl: r.recording_url,
+                hubspotEngagementId: r.hubspot_engagement_id,
+              }),
+            }))
+            .sort((a, b) => {
+              const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
+              const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
+              if (dateB !== dateA) return dateB - dateA;
+              return (b.call_duration || 0) - (a.call_duration || 0);
+            });
           setDrillDownData(sorted);
         } else {
           const dates = dateRangeInfo.dates;
           let query = supabase
             .from("activity_log")
-            .select("id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id")
+            .select(
+              "id, sdr_name, activity_date, contact_name, company_name, call_outcome, call_duration, activity_type, is_sql, meeting_scheduled_date, client_id, recording_url, is_decision_maker, hubspot_engagement_id",
+            )
             .eq("sdr_name", sdrName)
             .ilike("call_outcome", "connected");
           if (activeClientFilter) query = query.eq("client_id", activeClientFilter);
           if (dates.length === 1) {
             const startHour = String(timeRange[0]).padStart(2, "0");
             const endTs = timeRange[1] === 24 ? "23:59:59" : `${String(timeRange[1]).padStart(2, "0")}:00:00`;
-            query = query.gte("activity_date", `${dates[0]}T${startHour}:00:00`).lte("activity_date", `${dates[0]}T${endTs}`);
+            query = query
+              .gte("activity_date", `${dates[0]}T${startHour}:00:00`)
+              .lte("activity_date", `${dates[0]}T${endTs}`);
           } else {
             query = query.or(buildDateOrFilter(dates, "activity_date"));
           }
           query = query.order("activity_date", { ascending: false });
           if (metric === "conversations") query = query.eq("is_decision_maker", true);
           const { data } = await query;
-          const sorted = (data || []).map(r => ({
-            ...r,
-            recording_url: getRecordingUrlWithFallback({
-              recordingUrl: r.recording_url,
-              hubspotEngagementId: r.hubspot_engagement_id,
-            }),
-          })).sort((a, b) => {
-            const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
-            const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
-            if (dateB !== dateA) return dateB - dateA;
-            return (b.call_duration || 0) - (a.call_duration || 0);
-          });
+          const sorted = (data || [])
+            .map((r) => ({
+              ...r,
+              recording_url: getRecordingUrlWithFallback({
+                recordingUrl: r.recording_url,
+                hubspotEngagementId: r.hubspot_engagement_id,
+              }),
+            }))
+            .sort((a, b) => {
+              const dateA = new Date(a.activity_date).setHours(0, 0, 0, 0);
+              const dateB = new Date(b.activity_date).setHours(0, 0, 0, 0);
+              if (dateB !== dateA) return dateB - dateA;
+              return (b.call_duration || 0) - (a.call_duration || 0);
+            });
           setDrillDownData(sorted);
         }
       } else if (metric === "sqls") {
         let sqlQuery = supabase
           .from("sql_meetings")
-          .select("id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, contact_email, hubspot_engagement_id, client_id")
+          .select(
+            "id, sdr_name, contact_person, company_name, booking_date, meeting_date, meeting_time, meeting_status, client_notes, created_at, contact_email, hubspot_engagement_id, client_id",
+          )
           .eq("sdr_name", sdrName)
           .in("meeting_status", [...ACTIVE_SQL_MEETING_STATUSES]);
         if (activeClientFilter) sqlQuery = sqlQuery.eq("client_id", activeClientFilter);
@@ -846,10 +1037,11 @@ const ActivityMonitor = () => {
         const enrichedSqlData: SqlMeetingRow[] = [];
         if (sqlData && sqlData.length > 0) {
           // Batch 1: fetch by hubspot_engagement_id
-          const engagementIds = sqlData
-            .map(s => s.hubspot_engagement_id)
-            .filter((id): id is string => !!id);
-          const engagementMap = new Map<string, { recording_url: string | null; call_duration: number | null; activity_date: string | null }>();
+          const engagementIds = sqlData.map((s) => s.hubspot_engagement_id).filter((id): id is string => !!id);
+          const engagementMap = new Map<
+            string,
+            { recording_url: string | null; call_duration: number | null; activity_date: string | null }
+          >();
           if (engagementIds.length > 0) {
             const { data: engData } = await supabase
               .from("activity_log")
@@ -873,10 +1065,13 @@ const ActivityMonitor = () => {
 
           // Batch 2: fallback by contact_name for SQLs without engagement match
           const fallbackNames = sqlData
-            .filter(s => !s.hubspot_engagement_id || !engagementMap.has(s.hubspot_engagement_id))
-            .map(s => s.contact_person?.trim())
+            .filter((s) => !s.hubspot_engagement_id || !engagementMap.has(s.hubspot_engagement_id))
+            .map((s) => s.contact_person?.trim())
             .filter((n): n is string => !!n);
-          const nameMap = new Map<string, { recording_url: string | null; call_duration: number | null; activity_date: string | null }>();
+          const nameMap = new Map<
+            string,
+            { recording_url: string | null; call_duration: number | null; activity_date: string | null }
+          >();
           if (fallbackNames.length > 0) {
             const { data: nameData } = await supabase
               .from("activity_log")
@@ -925,12 +1120,22 @@ const ActivityMonitor = () => {
               hubspotEngagementId: sql.hubspot_engagement_id,
             });
 
-            enrichedSqlData.push({ ...sql, recording_url, call_duration, activity_date, created_at: sql.created_at ?? null, meeting_time: sql.meeting_time ?? null, meeting_status: sql.meeting_status ?? null, client_notes: sql.client_notes ?? null });
+            enrichedSqlData.push({
+              ...sql,
+              recording_url,
+              call_duration,
+              activity_date,
+              created_at: sql.created_at ?? null,
+              meeting_time: sql.meeting_time ?? null,
+              meeting_status: sql.meeting_status ?? null,
+              client_notes: sql.client_notes ?? null,
+            });
           }
         }
-        enrichedSqlData.sort((a, b) =>
-          new Date(b.created_at || b.activity_date || `${b.booking_date}T00:00:00`).getTime() -
-          new Date(a.created_at || a.activity_date || `${a.booking_date}T00:00:00`).getTime()
+        enrichedSqlData.sort(
+          (a, b) =>
+            new Date(b.created_at || b.activity_date || `${b.booking_date}T00:00:00`).getTime() -
+            new Date(a.created_at || a.activity_date || `${a.booking_date}T00:00:00`).getTime(),
         );
         setDrillDownSqlData(enrichedSqlData);
       }
@@ -945,7 +1150,7 @@ const ActivityMonitor = () => {
   const [, setTick] = useState(0);
   useEffect(() => {
     if (mode !== "live") return;
-    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    const interval = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(interval);
   }, [mode]);
 
@@ -964,7 +1169,7 @@ const ActivityMonitor = () => {
     if (mins < 1) return "Just now";
     if (mins < 60) return `${Math.floor(mins)} min ago`;
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs} ${hrs === 1 ? 'hr' : 'hrs'} ago`;
+    if (hrs < 24) return `${hrs} ${hrs === 1 ? "hr" : "hrs"} ago`;
     return format(d, "MMM d");
   };
 
@@ -974,10 +1179,10 @@ const ActivityMonitor = () => {
   };
 
   const toggleWeekday = (day: AllDay) => {
-    setSelectedWeekdays(prev => {
+    setSelectedWeekdays((prev) => {
       if (prev.includes(day)) {
         if (prev.length === 1) return prev;
-        return prev.filter(d => d !== day);
+        return prev.filter((d) => d !== day);
       }
       return [...prev, day];
     });
@@ -995,42 +1200,72 @@ const ActivityMonitor = () => {
     return () => window.removeEventListener("resize", measure);
   }, [dateMode, selectedWeekdays]);
 
-
   const daysSummary = useMemo(() => {
     const days = selectedWeekdays;
     if (days.length === 0) return "";
     if (days.length === 7) return "Monday – Sunday";
-    const isMonFri = days.length === 5 && ALL_WEEKDAYS.every(d => days.includes(d));
+    const isMonFri = days.length === 5 && ALL_WEEKDAYS.every((d) => days.includes(d));
     if (isMonFri) return "Monday – Friday";
     const isSatSun = days.length === 2 && days.includes("Saturday") && days.includes("Sunday");
     if (isSatSun) return "Saturday – Sunday";
     const sorted = [...days].sort((a, b) => ALL_DAYS.indexOf(a) - ALL_DAYS.indexOf(b));
     if (days.length === 1) return sorted[0];
-    const indices = sorted.map(d => ALL_DAYS.indexOf(d));
+    const indices = sorted.map((d) => ALL_DAYS.indexOf(d));
     const isConsecutive = indices.every((v, i) => i === 0 || v === indices[i - 1] + 1);
     if (isConsecutive) return `${sorted[0]} – ${sorted[sorted.length - 1]}`;
     if (sorted.length > 4) return `${sorted.length} of 7 days`;
-    return sorted.map(d => d.substring(0, 3)).join(", ");
+    return sorted.map((d) => d.substring(0, 3)).join(", ");
   }, [selectedWeekdays]);
 
   const navigateDate = (direction: "prev" | "next") => {
     if (dateMode === "day") {
-      setHistDate(d => direction === "next" ? new Date(d.getTime() + 86400000) : new Date(d.getTime() - 86400000));
+      setHistDate((d) => (direction === "next" ? new Date(d.getTime() + 86400000) : new Date(d.getTime() - 86400000)));
     } else if (dateMode === "week") {
-      setHistDate(d => direction === "next" ? addWeeks(d, 1) : subWeeks(d, 1));
+      setHistDate((d) => (direction === "next" ? addWeeks(d, 1) : subWeeks(d, 1)));
     } else {
-      setHistDate(d => direction === "next" ? addMonths(d, 1) : subMonths(d, 1));
+      setHistDate((d) => (direction === "next" ? addMonths(d, 1) : subMonths(d, 1)));
     }
   };
 
   const answerRateDisplay = totals.dials > 0 ? ((totals.answered / totals.dials) * 100).toFixed(1) + "%" : "0.0%";
 
   const kpiCards = [
-    { label: "Total Dials", value: totals.dials.toLocaleString(), icon: Phone, iconColor: "#f59e0b", iconBg: "rgba(245,158,11,0.1)" },
-    { label: "Total Answered", value: totals.answered.toLocaleString(), icon: PhoneIncoming, iconColor: "#10b981", iconBg: "rgba(16,185,129,0.1)" },
-    { label: "Answer Rate", value: answerRateDisplay, icon: Percent, iconColor: "#6366f1", iconBg: "rgba(99,102,241,0.1)" },
-    { label: "DM Conversations", value: totals.conversations.toLocaleString(), icon: Handshake, iconColor: "#0d9488", iconBg: "rgba(13,148,136,0.1)", clickable: true },
-    { label: "Total SQLs", value: totals.sqls.toLocaleString(), icon: Target, iconColor: "#f43f5e", iconBg: "rgba(244,63,94,0.1)" },
+    {
+      label: "Total Dials",
+      value: totals.dials.toLocaleString(),
+      icon: Phone,
+      iconColor: "#f59e0b",
+      iconBg: "rgba(245,158,11,0.1)",
+    },
+    {
+      label: "Total Answered",
+      value: totals.answered.toLocaleString(),
+      icon: PhoneIncoming,
+      iconColor: "#10b981",
+      iconBg: "rgba(16,185,129,0.1)",
+    },
+    {
+      label: "Answer Rate",
+      value: answerRateDisplay,
+      icon: Percent,
+      iconColor: "#6366f1",
+      iconBg: "rgba(99,102,241,0.1)",
+    },
+    {
+      label: "DM Conversations",
+      value: totals.conversations.toLocaleString(),
+      icon: Handshake,
+      iconColor: "#0d9488",
+      iconBg: "rgba(13,148,136,0.1)",
+      clickable: true,
+    },
+    {
+      label: "Total SQLs",
+      value: totals.sqls.toLocaleString(),
+      icon: Target,
+      iconColor: "#f43f5e",
+      iconBg: "rgba(244,63,94,0.1)",
+    },
   ];
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
@@ -1042,9 +1277,11 @@ const ActivityMonitor = () => {
     >
       {label}
       {sortKey === sortKeyName ? (
-        sortDir === "asc"
-          ? <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
-          : <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+        sortDir === "asc" ? (
+          <ArrowUp className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+        ) : (
+          <ArrowDown className="ml-1 h-3 w-3 text-[#0f172a] dark:text-white" />
+        )
       ) : (
         <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50" />
       )}
@@ -1059,9 +1296,7 @@ const ActivityMonitor = () => {
           <h1 className="text-3xl font-bold text-foreground">
             {mode === "live" ? "Today's Activity" : "Performance Analysis"}
           </h1>
-          <p className="text-muted-foreground">
-            {mode === "live" ? todayFormatted : dateRangeInfo.label}
-          </p>
+          <p className="text-muted-foreground">{mode === "live" ? todayFormatted : dateRangeInfo.label}</p>
         </div>
         <div className="flex items-center gap-2">
           {mode === "live" && (
@@ -1080,7 +1315,7 @@ const ActivityMonitor = () => {
                 "px-4 py-2 text-sm font-medium transition-colors",
                 mode === "live"
                   ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-r border-border"
-                  : "bg-card text-muted-foreground hover:text-foreground border-r border-border"
+                  : "bg-card text-muted-foreground hover:text-foreground border-r border-border",
               )}
             >
               Live Today
@@ -1091,7 +1326,7 @@ const ActivityMonitor = () => {
                 "px-4 py-2 text-sm font-medium transition-colors",
                 mode === "historical"
                   ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
-                  : "bg-card text-muted-foreground hover:text-foreground"
+                  : "bg-card text-muted-foreground hover:text-foreground",
               )}
             >
               Historical View
@@ -1103,26 +1338,51 @@ const ActivityMonitor = () => {
       {/* Historical Filters */}
       {mode === "historical" && !isMobile && (
         <Card className="bg-muted/30 backdrop-blur-sm border-border/80">
-           <div style={{ padding: '4px 0 8px 0' }}>
+          <div style={{ padding: "4px 0 8px 0" }}>
             {/* Date Mode Tabs */}
-            <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([0, 24]); }}>
+            <Tabs
+              value={dateMode}
+              onValueChange={(v) => {
+                const dm = v as DateMode;
+                setDateMode(dm);
+                if (dm === "week" || dm === "month") setTimeRange([0, 24]);
+                else setTimeRange([0, 24]);
+              }}
+            >
               <TabsList className="bg-muted/50" style={{ marginTop: 0, marginBottom: 4 }}>
-                <TabsTrigger value="day" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Day</TabsTrigger>
-                <TabsTrigger value="week" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Week</TabsTrigger>
-                <TabsTrigger value="month" className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground">Month</TabsTrigger>
+                <TabsTrigger
+                  value="day"
+                  className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground"
+                >
+                  Day
+                </TabsTrigger>
+                <TabsTrigger
+                  value="week"
+                  className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground"
+                >
+                  Week
+                </TabsTrigger>
+                <TabsTrigger
+                  value="month"
+                  className="data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a] data-[state=inactive]:text-muted-foreground"
+                >
+                  Month
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
             {/* Filter row — CSS Grid layout */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1px 2fr 1px auto',
-              alignItems: 'center',
-              gap: '0 24px',
-              padding: '0px 16px 2px 16px'
-            }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1px 2fr 1px auto",
+                alignItems: "center",
+                gap: "0 24px",
+                padding: "0px 16px 2px 16px",
+              }}
+            >
               {/* ZONE 1 — Date navigator */}
-              <div className="flex flex-col" style={{ gap: 6, padding: '2px 0' }}>
+              <div className="flex flex-col" style={{ gap: 6, padding: "2px 0" }}>
                 <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                   {dateMode === "day" ? "DATE" : dateMode === "week" ? "WEEK" : "MONTH"}
                 </span>
@@ -1138,8 +1398,8 @@ const ActivityMonitor = () => {
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
-                         className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-[#0f172a] dark:bg-white dark:text-[#0f172a] border border-white/20 dark:border-gray-300 rounded-md"
-                          style={{ padding: '0 12px', height: 34, minWidth: 140 }}
+                          className="flex items-center text-xs font-medium text-white whitespace-nowrap hover:opacity-80 transition-opacity bg-[#0f172a] dark:bg-white dark:text-[#0f172a] border border-white/20 dark:border-gray-300 rounded-md"
+                          style={{ padding: "0 12px", height: 34, minWidth: 140 }}
                         >
                           <CalendarIcon className="mr-1.5 h-3 w-3 shrink-0" />
                           {format(histDate, "EEEE, MMM d, yyyy")}
@@ -1158,7 +1418,7 @@ const ActivityMonitor = () => {
                   ) : (
                     <div
                       className="flex items-center justify-center text-xs font-medium text-white whitespace-nowrap bg-[#0f172a] dark:bg-white dark:text-[#0f172a] border border-white/20 dark:border-gray-300 rounded-md"
-                      style={{ padding: '0 12px', height: 34 }}
+                      style={{ padding: "0 12px", height: 34 }}
                     >
                       {dateRangeInfo.label}
                     </div>
@@ -1176,35 +1436,47 @@ const ActivityMonitor = () => {
               {/* DIVIDER */}
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
-              <div className="flex flex-col items-start" style={{ gap: 6, padding: '2px 0' }}>
+              <div className="flex flex-col items-start" style={{ gap: 6, padding: "2px 0" }}>
                 {dateMode === "day" ? (
                   <>
                     <span className="font-medium text-slate-500 dark:text-slate-400" style={{ fontSize: 11 }}>
                       TIME RANGE
                     </span>
                     <div className="flex items-center gap-2">
-                      <Select value={String(timeRange[0])} onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}>
+                      <Select
+                        value={String(timeRange[0])}
+                        onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}
+                      >
                         <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 24 }, (_, i) => (
-                            <SelectItem key={i} value={String(i)}>{formatHour(i)}</SelectItem>
+                            <SelectItem key={i} value={String(i)}>
+                              {formatHour(i)}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">→</span>
-                      <Select value={String(timeRange[1])} onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}>
+                      <Select
+                        value={String(timeRange[1])}
+                        onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}
+                      >
                         <SelectTrigger className="h-[34px] w-[130px] bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
-                            <SelectItem key={h} value={String(h)}>{h === 24 ? "11:59 PM" : formatHour(h)}</SelectItem>
+                            <SelectItem key={h} value={String(h)}>
+                              {h === 24 ? "11:59 PM" : formatHour(h)}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap ml-3">· {timeRange[1] - timeRange[0]} hrs selected</span>
+                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap ml-3">
+                        · {timeRange[1] - timeRange[0]} hrs selected
+                      </span>
                     </div>
                   </>
                 ) : (
@@ -1222,8 +1494,10 @@ const ActivityMonitor = () => {
                               onClick={() => toggleWeekday(day)}
                               className={cn(
                                 "font-semibold transition-colors rounded-lg text-xs h-[34px] px-2.5",
-                                isActive && "bg-[#0f172a] text-white hover:opacity-90 border-transparent dark:bg-white dark:text-[#0f172a]",
-                                !isActive && "bg-transparent text-[#94a3b8] hover:text-foreground border border-[#e2e8f0] dark:border-white/10"
+                                isActive &&
+                                  "bg-[#0f172a] text-white hover:opacity-90 border-transparent dark:bg-white dark:text-[#0f172a]",
+                                !isActive &&
+                                  "bg-transparent text-[#94a3b8] hover:text-foreground border border-[#e2e8f0] dark:border-white/10",
                               )}
                             >
                               {day}
@@ -1231,7 +1505,7 @@ const ActivityMonitor = () => {
                           );
                         })}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
                         <span className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8]">
                           <span className="text-[#cbd5e1]">· </span>
                           {daysSummary}
@@ -1246,7 +1520,7 @@ const ActivityMonitor = () => {
               <div className="self-stretch bg-slate-300 dark:bg-white/[0.08]" />
 
               {/* ZONE 3 — Apply Filters */}
-              <div style={{ padding: '14px 0' }}>
+              <div style={{ padding: "14px 0" }}>
                 <Button
                   onClick={() => setHistApplied(true)}
                   className="bg-[#0f172a] hover:bg-[#1e293b] text-white dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 px-5 text-sm shrink-0"
@@ -1265,10 +1539,7 @@ const ActivityMonitor = () => {
           <Card key={kpi.label} className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-bold text-[#0f172a] dark:text-[#f1f5f9]">{kpi.label}</CardTitle>
-              <div
-                className="p-2 rounded-lg"
-                style={{ backgroundColor: kpi.iconBg }}
-              >
+              <div className="p-2 rounded-lg" style={{ backgroundColor: kpi.iconBg }}>
                 <kpi.icon className="h-4 w-4" style={{ color: kpi.iconColor }} />
               </div>
             </CardHeader>
@@ -1357,12 +1628,16 @@ const ActivityMonitor = () => {
           <CardTitle>SDR Performance</CardTitle>
           <div className="flex items-center gap-3">
             {(() => {
-              const activeMembers = allTeamMembers.filter(m => m.status === "active" && (!activeClientFilter || m.client_id === activeClientFilter));
+              const activeMembers = allTeamMembers.filter(
+                (m) => m.status === "active" && (!activeClientFilter || m.client_id === activeClientFilter),
+              );
               const totalCount = activeMembers.length;
               const activeTodaySet = new Set(
-                sdrRows.filter(r => r.dials > 0).map(r => `${r.sdrName}|||${r.clientId}`)
+                sdrRows.filter((r) => r.dials > 0).map((r) => `${r.sdrName}|||${r.clientId}`),
               );
-              const activeToday = activeMembers.filter(m => activeTodaySet.has(`${m.sdr_name}|||${m.client_id || ""}`)).length;
+              const activeToday = activeMembers.filter((m) =>
+                activeTodaySet.has(`${m.sdr_name}|||${m.client_id || ""}`),
+              ).length;
               const notStarted = totalCount - activeToday;
               return (
                 <div className="flex items-center gap-3">
@@ -1393,10 +1668,12 @@ const ActivityMonitor = () => {
               </Button>
             ) : (
               <Select value={clientFilter} onValueChange={setClientFilter}>
-                <SelectTrigger className={cn(
-                  "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
-                  "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold"
-                )}>
+                <SelectTrigger
+                  className={cn(
+                    "w-[180px] min-h-[40px] text-xs sm:text-sm rounded-md transition-all duration-200",
+                    "bg-[#0f172a] text-white border-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:border-white dark:hover:bg-gray-100 font-semibold",
+                  )}
+                >
                   <SelectValue placeholder="All Clients" />
                 </SelectTrigger>
                 <SelectContent className="z-[100] bg-card">
@@ -1407,7 +1684,9 @@ const ActivityMonitor = () => {
                         {c.logo_url ? (
                           <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
                         ) : (
-                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                            {c.client_name.charAt(0)}
+                          </span>
                         )}
                         {c.client_name}
                       </span>
@@ -1429,7 +1708,11 @@ const ActivityMonitor = () => {
             <EmptyState
               icon={mode === "live" ? Phone : CalendarIcon}
               title={mode === "live" ? "No activity recorded yet" : "No activity found"}
-              description={mode === "live" ? "Calls will appear here once SDRs start dialing. Check back later!" : "Try adjusting the date or time range to find activity data."}
+              description={
+                mode === "live"
+                  ? "Calls will appear here once SDRs start dialing. Check back later!"
+                  : "Try adjusting the date or time range to find activity data."
+              }
             />
           ) : isMobile && mode === "live" ? (
             /* Mobile stacked card layout for Live Today */
@@ -1439,10 +1722,7 @@ const ActivityMonitor = () => {
                 return (
                   <div
                     key={`${row.sdrName}-${row.clientId}`}
-                    className={cn(
-                      "rounded-lg border border-border/50 p-3",
-                      recent && "bg-green-500/5"
-                    )}
+                    className={cn("rounded-lg border border-border/50 p-3", recent && "bg-green-500/5")}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="relative shrink-0">
@@ -1461,25 +1741,39 @@ const ActivityMonitor = () => {
                         <p className="font-semibold text-foreground text-sm truncate">{row.sdrName}</p>
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           {clientLogoMap[row.clientId] && (
-                            <img src={clientLogoMap[row.clientId]!} alt="" className="w-3.5 h-3.5 rounded-full object-contain" />
+                            <img
+                              src={clientLogoMap[row.clientId]!}
+                              alt=""
+                              className="w-3.5 h-3.5 rounded-full object-contain"
+                            />
                           )}
                           <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
                         </span>
                       </div>
                       {row.lastActivity && (
-                        <span className={cn(
-                          "text-xs shrink-0",
-                          (Date.now() - row.lastActivity.getTime()) / 60000 <= 5 ? "text-[#10b981] font-medium" : "text-muted-foreground"
-                        )}>
+                        <span
+                          className={cn(
+                            "text-xs shrink-0",
+                            (Date.now() - row.lastActivity.getTime()) / 60000 <= 5
+                              ? "text-[#10b981] font-medium"
+                              : "text-muted-foreground",
+                          )}
+                        >
                           {formatRelativeTime(row.lastActivity)}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                      <span><span className="font-medium text-foreground">{row.dials}</span> Dials</span>
-                      <span><span className="font-medium text-foreground">{row.answered}</span> Ans</span>
+                      <span>
+                        <span className="font-medium text-foreground">{row.dials}</span> Dials
+                      </span>
+                      <span>
+                        <span className="font-medium text-foreground">{row.answered}</span> Ans
+                      </span>
                       <span>{row.answerRate.toFixed(1)}%</span>
-                      <span><span className="font-medium text-foreground">{row.sqls}</span> SQLs</span>
+                      <span>
+                        <span className="font-medium text-foreground">{row.sqls}</span> SQLs
+                      </span>
                     </div>
                   </div>
                 );
@@ -1490,141 +1784,267 @@ const ActivityMonitor = () => {
               <Table>
                 <TableHeader className="table-header-navy">
                   <TableRow>
-                    <TableHead className="px-4 py-3 text-left" style={{ minWidth: 180 }}><SortHeader label="SDR Name" sortKeyName="sdrName" /></TableHead>
-                    <TableHead className="px-4 py-3 text-left"><SortHeader label="Client" sortKeyName="clientId" /></TableHead>
-                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Dials" sortKeyName="dials" /></TableHead>
-                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Answered" sortKeyName="answered" /></TableHead>
-                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Answer Rate" sortKeyName="answerRate" /></TableHead>
-                    <TableHead className="px-4 py-3 text-center"><SortHeader label="DM Conversations" sortKeyName="conversations" /></TableHead>
-                    <TableHead className="px-4 py-3 text-center"><SortHeader label="SQLs" sortKeyName="sqls" /></TableHead>
-                    <TableHead className="px-4 py-3 text-center"><SortHeader label="Conversion Rate" sortKeyName="conversion" /></TableHead>
+                    <TableHead className="px-4 py-3 text-left" style={{ minWidth: 180 }}>
+                      <SortHeader label="SDR Name" sortKeyName="sdrName" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left">
+                      <SortHeader label="Client" sortKeyName="clientId" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortHeader label="Dials" sortKeyName="dials" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortHeader label="Answered" sortKeyName="answered" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortHeader label="Answer Rate" sortKeyName="answerRate" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortHeader label="DM Conversations" sortKeyName="conversations" />
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortHeader label="SQLs" sortKeyName="sqls" />
+                    </TableHead>
+                    {isPexa && <TableHead className="px-4 py-3 text-center">Demo Booked</TableHead>}
+                    {isPexa && <TableHead className="px-4 py-3 text-center">Demo Attended</TableHead>}
+                    <TableHead className="px-4 py-3 text-center">
+                      <SortHeader label="Conversion Rate" sortKeyName="conversion" />
+                    </TableHead>
                     {mode === "live" && <TableHead className="px-4 py-3 text-center">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="table-striped">
-                  {(() => { let dividerShown = false; return pagedSdrRows.map((row) => {
-                    const recent = mode === "live" && isRecentActivity(row.lastActivity);
-                    const showDivider = !dividerShown && row.dials === 0;
-                    if (showDivider) dividerShown = true;
-                    return (
-                      <>{showDivider && (
-                        <TableRow key="inactive-divider" className="border-0 pointer-events-none">
-                          <TableCell 
-                            colSpan={mode === "live" ? 9 : 8}
-                            className="py-4 px-4"
+                  {(() => {
+                    let dividerShown = false;
+                    return pagedSdrRows.map((row) => {
+                      const recent = mode === "live" && isRecentActivity(row.lastActivity);
+                      const showDivider = !dividerShown && row.dials === 0;
+                      if (showDivider) dividerShown = true;
+                      return (
+                        <>
+                          {showDivider && (
+                            <TableRow key="inactive-divider" className="border-0 pointer-events-none">
+                              <TableCell colSpan={mode === "live" ? 9 : 8} className="py-4 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-1 h-px bg-border/50" />
+                                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                                    No Activity Today
+                                  </span>
+                                  <div className="flex-1 h-px bg-border/50" />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          <TableRow
+                            key={row.sdrName}
+                            className={cn(
+                              "border-border/50 transition-all",
+                              recent && "bg-green-500/5 shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]",
+                            )}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1 h-px bg-border/50" />
-                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                                No Activity Today
-                              </span>
-                              <div className="flex-1 h-px bg-border/50" />
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                      <TableRow
-                        key={row.sdrName}
-                        className={cn(
-                          "border-border/50 transition-all",
-                          recent && "bg-green-500/5 shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]"
-                        )}
-                      >
-                        <TableCell className="font-medium text-foreground px-4 py-2" style={{ minWidth: 180 }}>
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <div className="relative shrink-0">
-                              <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
-                              {mode === "live" && (
-                                <span
-                                  className={cn(
-                                    "absolute bottom-0 left-0 rounded-full border-2 border-white dark:border-white",
-                                    getStatusColor(row.lastActivity) === "green" && "bg-green-500",
-                                    getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
-                                    getStatusColor(row.lastActivity) === "red" && "bg-red-500",
+                            <TableCell className="font-medium text-foreground px-4 py-2" style={{ minWidth: 180 }}>
+                              <div className="flex items-center gap-2 whitespace-nowrap">
+                                <div className="relative shrink-0">
+                                  <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
+                                  {mode === "live" && (
+                                    <span
+                                      className={cn(
+                                        "absolute bottom-0 left-0 rounded-full border-2 border-white dark:border-white",
+                                        getStatusColor(row.lastActivity) === "green" && "bg-green-500",
+                                        getStatusColor(row.lastActivity) === "yellow" && "bg-yellow-500",
+                                        getStatusColor(row.lastActivity) === "red" && "bg-red-500",
+                                      )}
+                                      style={{ width: 10, height: 10 }}
+                                    />
                                   )}
-                                  style={{ width: 10, height: 10 }}
-                                />
-                              )}
-                            </div>
-                            {row.sdrName}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: 180 }}>
-                          <span className="flex items-center gap-1.5">
-                            {clientLogoMap[row.clientId] ? (
-                              <img src={clientLogoMap[row.clientId]!} alt="" className="w-5 h-5 rounded-full object-contain flex-shrink-0" />
-                            ) : null}
-                            <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">{row.dials}</TableCell>
-                        <TableCell className="text-center px-4 py-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="font-semibold text-foreground hover:text-foreground/80"
-                            onClick={() => handleDrillDown(row.sdrName, "answered")}
-                          >
-                            {row.answered}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
-                          {row.answerRate.toFixed(1)}%
-                        </TableCell>
-                        <TableCell className="text-center px-4 py-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="font-semibold text-foreground hover:text-foreground/80"
-                            onClick={() => handleDrillDown(row.sdrName, "conversations")}
-                          >
-                            {row.conversations}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-center px-4 py-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="font-bold text-foreground hover:text-foreground/80"
-                            onClick={() => handleDrillDown(row.sdrName, "sqls")}
-                          >
-                            {row.sqls}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
-                          {row.conversion.toFixed(1)}%
-                        </TableCell>
-                        {mode === "live" && (
-                          <TableCell className="text-center px-4 py-2">
-                            {row.lastActivity ? (() => {
-                              const minutesAgo = (Date.now() - new Date(row.lastActivity).getTime()) / 60000;
-                              return (
-                                <span className={minutesAgo <= 5
-                                  ? "text-sm text-[#10b981] font-medium"
-                                  : "text-sm text-muted-foreground"
-                                }>
-                                  {formatRelativeTime(row.lastActivity)}
-                                </span>
-                              );
-                            })() : <span className="text-sm text-muted-foreground">-</span>}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                      </>
-                    );
-                  }); })()}
+                                </div>
+                                {row.sdrName}
+                              </div>
+                            </TableCell>
+                            <TableCell
+                              className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis"
+                              style={{ maxWidth: 180 }}
+                            >
+                              <span className="flex items-center gap-1.5">
+                                {clientLogoMap[row.clientId] ? (
+                                  <img
+                                    src={clientLogoMap[row.clientId]!}
+                                    alt=""
+                                    className="w-5 h-5 rounded-full object-contain flex-shrink-0"
+                                  />
+                                ) : null}
+                                <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                              {row.dials}
+                            </TableCell>
+                            <TableCell className="text-center px-4 py-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="font-semibold text-foreground hover:text-foreground/80"
+                                onClick={() => handleDrillDown(row.sdrName, "answered")}
+                              >
+                                {row.answered}
+                              </Button>
+                            </TableCell>
+                            <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                              {row.answerRate.toFixed(1)}%
+                            </TableCell>
+                            <TableCell className="text-center px-4 py-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="font-semibold text-foreground hover:text-foreground/80"
+                                onClick={() => handleDrillDown(row.sdrName, "conversations")}
+                              >
+                                {row.conversations}
+                              </Button>
+                            </TableCell>
+                            <TableCell className="text-center px-4 py-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="font-bold text-foreground hover:text-foreground/80"
+                                onClick={() => handleDrillDown(row.sdrName, "sqls")}
+                              >
+                                {row.sqls}
+                              </Button>
+                            </TableCell>
+                            {isPexa &&
+                              (() => {
+                                const counts = demoCounts.get(row.sdrName);
+                                const booked = counts?.demo_booked || 0;
+                                const attended = counts?.demo_attended || 0;
+                                return (
+                                  <>
+                                    <TableCell className="text-center px-4 py-2">
+                                      <button
+                                        className={
+                                          booked > 0
+                                            ? "text-[#3b82f6] font-medium hover:underline cursor-pointer tabular-nums"
+                                            : "text-muted-foreground tabular-nums"
+                                        }
+                                        onClick={() =>
+                                          booked > 0 &&
+                                          setDemoModalSdr({
+                                            sdrName: row.sdrName,
+                                            dateRange:
+                                              mode === "live"
+                                                ? {
+                                                    from: new Date(todayMelbourne + "T00:00:00"),
+                                                    to: new Date(todayMelbourne + "T23:59:59"),
+                                                  }
+                                                : {
+                                                    from: new Date(
+                                                      (dateRangeInfo.dates[0] || todayMelbourne) + "T00:00:00",
+                                                    ),
+                                                    to: new Date(
+                                                      (dateRangeInfo.dates[dateRangeInfo.dates.length - 1] ||
+                                                        todayMelbourne) + "T23:59:59",
+                                                    ),
+                                                  },
+                                          })
+                                        }
+                                      >
+                                        {booked}
+                                      </button>
+                                    </TableCell>
+                                    <TableCell className="text-center px-4 py-2">
+                                      <button
+                                        className={
+                                          attended > 0
+                                            ? "text-[#10b981] font-medium hover:underline cursor-pointer tabular-nums"
+                                            : "text-muted-foreground tabular-nums"
+                                        }
+                                        onClick={() =>
+                                          attended > 0 &&
+                                          setDemoModalSdr({
+                                            sdrName: row.sdrName,
+                                            dateRange:
+                                              mode === "live"
+                                                ? {
+                                                    from: new Date(todayMelbourne + "T00:00:00"),
+                                                    to: new Date(todayMelbourne + "T23:59:59"),
+                                                  }
+                                                : {
+                                                    from: new Date(
+                                                      (dateRangeInfo.dates[0] || todayMelbourne) + "T00:00:00",
+                                                    ),
+                                                    to: new Date(
+                                                      (dateRangeInfo.dates[dateRangeInfo.dates.length - 1] ||
+                                                        todayMelbourne) + "T23:59:59",
+                                                    ),
+                                                  },
+                                          })
+                                        }
+                                      >
+                                        {attended}
+                                      </button>
+                                    </TableCell>
+                                  </>
+                                );
+                              })()}
+                            <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                              {row.conversion.toFixed(1)}%
+                            </TableCell>
+                            {mode === "live" && (
+                              <TableCell className="text-center px-4 py-2">
+                                {row.lastActivity ? (
+                                  (() => {
+                                    const minutesAgo = (Date.now() - new Date(row.lastActivity).getTime()) / 60000;
+                                    return (
+                                      <span
+                                        className={
+                                          minutesAgo <= 5
+                                            ? "text-sm text-[#10b981] font-medium"
+                                            : "text-sm text-muted-foreground"
+                                        }
+                                      >
+                                        {formatRelativeTime(row.lastActivity)}
+                                      </span>
+                                    );
+                                  })()
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        </>
+                      );
+                    });
+                  })()}
                 </TableBody>
               </Table>
-             </div>
+            </div>
           )}
           {sdrRows.length > SDR_PAGE_SIZE && (
             <div className="flex items-center justify-between px-4 pt-4 border-t border-border/50">
               <span className="text-sm text-muted-foreground">
-                Showing {sdrPage * SDR_PAGE_SIZE + 1}–{Math.min((sdrPage + 1) * SDR_PAGE_SIZE, sdrRows.length)} of {sdrRows.length} SDRs
+                Showing {sdrPage * SDR_PAGE_SIZE + 1}–{Math.min((sdrPage + 1) * SDR_PAGE_SIZE, sdrRows.length)} of{" "}
+                {sdrRows.length} SDRs
               </span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p - 1)} disabled={sdrPage === 0} className="gap-1"><ChevronLeft className="h-4 w-4" /> Previous</Button>
-                <Button variant="outline" size="sm" onClick={() => setSdrPage(p => p + 1)} disabled={(sdrPage + 1) * SDR_PAGE_SIZE >= sdrRows.length} className="gap-1">Next <ChevronRight className="h-4 w-4" /></Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSdrPage((p) => p - 1)}
+                  disabled={sdrPage === 0}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSdrPage((p) => p + 1)}
+                  disabled={(sdrPage + 1) * SDR_PAGE_SIZE >= sdrRows.length}
+                  className="gap-1"
+                >
+                  Next <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
@@ -1632,14 +2052,29 @@ const ActivityMonitor = () => {
       </Card>
 
       {/* Drill-down Modal */}
-      <Dialog open={!!drillDown} onOpenChange={(open) => { if (!open) { setDrillDown(null); setPlayingRecordingId(null); } }}>
-        <DialogContent className={cn(
-          "bg-card border-border overflow-hidden flex flex-col",
-          isMobile ? "w-full h-full max-w-full max-h-full rounded-none" : "sm:max-w-[900px] max-h-[80vh]"
-        )}>
+      <Dialog
+        open={!!drillDown}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDrillDown(null);
+            setPlayingRecordingId(null);
+          }
+        }}
+      >
+        <DialogContent
+          className={cn(
+            "bg-card border-border overflow-hidden flex flex-col",
+            isMobile ? "w-full h-full max-w-full max-h-full rounded-none" : "sm:max-w-[900px] max-h-[80vh]",
+          )}
+        >
           <DialogHeader className="shrink-0">
             <DialogTitle>
-              {drillDown?.sdrName} – {drillDown?.metric === "answered" ? "Answered Calls" : drillDown?.metric === "conversations" ? "DM Conversations" : "SQL Meetings"}
+              {drillDown?.sdrName} –{" "}
+              {drillDown?.metric === "answered"
+                ? "Answered Calls"
+                : drillDown?.metric === "conversations"
+                  ? "DM Conversations"
+                  : "SQL Meetings"}
             </DialogTitle>
             {drillDown?.metric === "sqls" ? (
               <p className="text-sm text-muted-foreground mt-1">
@@ -1656,16 +2091,18 @@ const ActivityMonitor = () => {
               <div className="h-8 w-8 rounded-full border-2 border-[#0f172a] border-t-transparent animate-spin dark:border-white dark:border-t-transparent" />
               <span className="text-sm text-muted-foreground">Loading...</span>
             </div>
-          ) : (drillDown?.metric === "answered" || drillDown?.metric === "conversations") ? (
+          ) : drillDown?.metric === "answered" || drillDown?.metric === "conversations" ? (
             drillDownData.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                {drillDown?.metric === "conversations" ? "No decision maker conversations found in this time range." : "No connected calls found for this SDR in the selected time range."}
+                {drillDown?.metric === "conversations"
+                  ? "No decision maker conversations found in this time range."
+                  : "No connected calls found for this SDR in the selected time range."}
               </p>
             ) : (
               <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
                 <Table>
                   <TableHeader className="table-header-navy sticky top-0 z-10">
-                     <TableRow>
+                    <TableRow>
                       <TableHead className="py-3 text-left">{mode === "live" ? "Time" : "Date"}</TableHead>
                       <TableHead className="py-3 text-left">Contact Person</TableHead>
                       <TableHead className="py-3 text-left">Company</TableHead>
@@ -1674,183 +2111,212 @@ const ActivityMonitor = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody className="table-striped">
-                    {drillDownData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((a, index) => (
-                      <>
-                        <TableRow key={a.id} className="border-border/50">
-                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                            {mode === "live"
-                              ? new Date(a.activity_date).toLocaleTimeString("en-AU", {
-                                  timeZone: "Australia/Melbourne",
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                }).replace(' am', ' AM').replace(' pm', ' PM')
-                              : new Date(a.activity_date).toLocaleDateString("en-AU", {
+                    {drillDownData
+                      .slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE)
+                      .map((a, index) => (
+                        <>
+                          <TableRow key={a.id} className="border-border/50">
+                            <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                              {mode === "live"
+                                ? new Date(a.activity_date)
+                                    .toLocaleTimeString("en-AU", {
+                                      timeZone: "Australia/Melbourne",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })
+                                    .replace(" am", " AM")
+                                    .replace(" pm", " PM")
+                                : new Date(a.activity_date).toLocaleDateString("en-AU", {
+                                    timeZone: "Australia/Melbourne",
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
+                            </TableCell>
+                            <TableCell className="font-medium text-foreground">{a.contact_name || "-"}</TableCell>
+                            <TableCell className="text-muted-foreground">{a.company_name || "-"}</TableCell>
+                            <TableCell className="text-right">
+                              {a.call_duration ? (
+                                <span
+                                  className={`font-medium ${
+                                    a.call_duration < 30
+                                      ? "text-muted-foreground"
+                                      : a.call_duration < 120
+                                        ? "text-orange-500"
+                                        : "text-green-500"
+                                  }`}
+                                  title={`${a.call_duration} seconds`}
+                                >
+                                  {Math.floor(a.call_duration / 60)}m {a.call_duration % 60}s
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {a.recording_url ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-2 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+                                  onClick={() => setPlayingRecordingId(playingRecordingId === a.id ? null : a.id)}
+                                >
+                                  {playingRecordingId === a.id ? (
+                                    <>
+                                      <Square className="h-3 w-3 mr-1" /> Stop
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Play className="h-3 w-3 mr-1" /> Play
+                                    </>
+                                  )}
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No recording</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          {playingRecordingId === a.id && a.recording_url && (
+                            <TableRow key={`${a.id}-audio`} className="border-border/50 bg-muted/30">
+                              <TableCell colSpan={5} className="py-3">
+                                <div className="flex items-center gap-3">
+                                  <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
+                                  <div className="flex-1">
+                                    <p className="text-xs text-muted-foreground mb-1.5">
+                                      Call Recording - {a.contact_name || "Unknown"}
+                                    </p>
+                                    <audio
+                                      controls
+                                      src={a.recording_url}
+                                      className="w-full h-8"
+                                      autoPlay
+                                      onError={() => {
+                                        setPlayingRecordingId(null);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )
+          ) : drillDownSqlData.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              No SQLs booked for this SDR in the selected time range.
+            </p>
+          ) : (
+            <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
+              <Table className="table-fixed w-full">
+                <TableHeader className="table-header-navy sticky top-0 z-10">
+                  <TableRow>
+                    <TableHead className={cn("text-left", mode === "live" ? "w-[14%]" : "w-[20%]")}>
+                      Booked At
+                    </TableHead>
+                    <TableHead className={cn("text-left", mode === "live" ? "w-[20%]" : "w-[18%]")}>
+                      Contact Person
+                    </TableHead>
+                    <TableHead className={cn("text-left", mode === "live" ? "w-[18%]" : "w-[16%]")}>Company</TableHead>
+                    <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[22%]")}>
+                      Meeting Date
+                    </TableHead>
+                    <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[24%]")}>
+                      Recording
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="table-striped">
+                  {drillDownSqlData
+                    .slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE)
+                    .map((m, index) => {
+                      const meetingDateStr = formatScheduledMeetingDateTime(m.meeting_date, m.meeting_time ?? null);
+                      return (
+                        <>
+                          <TableRow key={m.id} className={cn("border-border/50")}>
+                            <TableCell className="text-left text-sm text-muted-foreground whitespace-nowrap tabular-nums">
+                              {(() => {
+                                const ts = m.created_at || m.activity_date || null;
+                                if (!ts) return "-";
+                                const d = new Date(ts);
+                                const timeStr = d
+                                  .toLocaleTimeString("en-AU", {
+                                    timeZone: "Australia/Melbourne",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })
+                                  .replace(" am", " AM")
+                                  .replace(" pm", " PM");
+                                if (mode === "live") return timeStr;
+                                const dateStr = d.toLocaleDateString("en-AU", {
                                   timeZone: "Australia/Melbourne",
                                   month: "short",
                                   day: "numeric",
                                   year: "numeric",
-                                })
-                            }
-                          </TableCell>
-                          <TableCell className="font-medium text-foreground">{a.contact_name || "-"}</TableCell>
-                          <TableCell className="text-muted-foreground">{a.company_name || "-"}</TableCell>
-                          <TableCell className="text-right">
-                            {a.call_duration ? (
-                              <span
-                                className={`font-medium ${
-                                  a.call_duration < 30
-                                    ? "text-muted-foreground"
-                                    : a.call_duration < 120
-                                    ? "text-orange-500"
-                                    : "text-green-500"
-                                }`}
-                                title={`${a.call_duration} seconds`}
-                              >
-                                {Math.floor(a.call_duration / 60)}m {a.call_duration % 60}s
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {a.recording_url ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-2 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
-                                onClick={() => setPlayingRecordingId(playingRecordingId === a.id ? null : a.id)}
-                              >
-                                {playingRecordingId === a.id ? (
-                                  <><Square className="h-3 w-3 mr-1" /> Stop</>
-                                ) : (
-                                  <><Play className="h-3 w-3 mr-1" /> Play</>
-                                )}
-                              </Button>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">No recording</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                        {playingRecordingId === a.id && a.recording_url && (
-                          <TableRow key={`${a.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={5} className="py-3">
-                              <div className="flex items-center gap-3">
-                                <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
-                                <div className="flex-1">
-                                  <p className="text-xs text-muted-foreground mb-1.5">Call Recording - {a.contact_name || "Unknown"}</p>
-                                  <audio
-                                    controls
-                                    src={a.recording_url}
-                                    className="w-full h-8"
-                                    autoPlay
-                                    onError={() => {
-                                      setPlayingRecordingId(null);
-                                    }}
-                                  />
-                                </div>
-                              </div>
+                                });
+                                return `${dateStr} · ${timeStr}`;
+                              })()}
+                            </TableCell>
+                            <TableCell className="text-left font-medium">{m.contact_person || "-"}</TableCell>
+                            <TableCell className="text-left">{m.company_name || "-"}</TableCell>
+                            <TableCell className="text-center whitespace-nowrap tabular-nums">
+                              {meetingDateStr}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {m.recording_url ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-2 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+                                  onClick={() => setPlayingRecordingId(playingRecordingId === m.id ? null : m.id)}
+                                >
+                                  {playingRecordingId === m.id ? (
+                                    <>
+                                      <Square className="h-3 w-3 mr-1" /> Stop
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Play className="h-3 w-3 mr-1" /> Play
+                                    </>
+                                  )}
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No recording</span>
+                              )}
                             </TableCell>
                           </TableRow>
-                        )}
-                      </>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )
-          ) : (
-            drillDownSqlData.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No SQLs booked for this SDR in the selected time range.</p>
-            ) : (
-              <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
-                <Table className="table-fixed w-full">
-                  <TableHeader className="table-header-navy sticky top-0 z-10">
-                    <TableRow>
-                      <TableHead className={cn("text-left", mode === "live" ? "w-[14%]" : "w-[20%]")}>
-                        Booked At
-                      </TableHead>
-                      <TableHead className={cn("text-left", mode === "live" ? "w-[20%]" : "w-[18%]")}>Contact Person</TableHead>
-                      <TableHead className={cn("text-left", mode === "live" ? "w-[18%]" : "w-[16%]")}>Company</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[22%]")}>Meeting Date</TableHead>
-                      <TableHead className={cn("text-center", mode === "live" ? "w-[24%]" : "w-[24%]")}>Recording</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="table-striped">
-                    {drillDownSqlData.slice(drillPage * DRILL_PAGE_SIZE, (drillPage + 1) * DRILL_PAGE_SIZE).map((m, index) => {
-                      const meetingDateStr = formatScheduledMeetingDateTime(m.meeting_date, m.meeting_time ?? null);
-                      return (
-                      <>
-                        <TableRow key={m.id} className={cn("border-border/50")}>
-                          <TableCell className="text-left text-sm text-muted-foreground whitespace-nowrap tabular-nums">
-                            {(() => {
-                              const ts = m.created_at || m.activity_date || null;
-                              if (!ts) return "-";
-                              const d = new Date(ts);
-                              const timeStr = d.toLocaleTimeString("en-AU", {
-                                timeZone: "Australia/Melbourne",
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: true,
-                              }).replace(' am', ' AM').replace(' pm', ' PM');
-                              if (mode === "live") return timeStr;
-                              const dateStr = d.toLocaleDateString("en-AU", {
-                                timeZone: "Australia/Melbourne",
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              });
-                              return `${dateStr} · ${timeStr}`;
-                            })()}
-                          </TableCell>
-                          <TableCell className="text-left font-medium">{m.contact_person || "-"}</TableCell>
-                          <TableCell className="text-left">{m.company_name || "-"}</TableCell>
-                          <TableCell className="text-center whitespace-nowrap tabular-nums">{meetingDateStr}</TableCell>
-                          <TableCell className="text-center">
-                            {m.recording_url ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-2 text-xs border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
-                                onClick={() => setPlayingRecordingId(playingRecordingId === m.id ? null : m.id)}
-                              >
-                                {playingRecordingId === m.id ? (
-                                  <><Square className="h-3 w-3 mr-1" /> Stop</>
-                                ) : (
-                                  <><Play className="h-3 w-3 mr-1" /> Play</>
-                                )}
-                              </Button>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">No recording</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                        {playingRecordingId === m.id && m.recording_url && (
-                          <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
-                            <TableCell colSpan={5} className="py-3">
-                              <div className="flex items-center gap-3">
-                                <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
-                                <div className="flex-1">
-                                  <p className="text-xs text-muted-foreground mb-1.5">SQL Call Recording - {m.contact_person || "Unknown"}</p>
-                                  <audio
-                                    controls
-                                    src={m.recording_url}
-                                    className="w-full h-8"
-                                    autoPlay
-                                    onError={() => setPlayingRecordingId(null)}
-                                  />
+                          {playingRecordingId === m.id && m.recording_url && (
+                            <TableRow key={`${m.id}-audio`} className="border-border/50 bg-muted/30">
+                              <TableCell colSpan={5} className="py-3">
+                                <div className="flex items-center gap-3">
+                                  <Volume2 className="h-4 w-4 text-blue-500 shrink-0" />
+                                  <div className="flex-1">
+                                    <p className="text-xs text-muted-foreground mb-1.5">
+                                      SQL Call Recording - {m.contact_person || "Unknown"}
+                                    </p>
+                                    <audio
+                                      controls
+                                      src={m.recording_url}
+                                      className="w-full h-8"
+                                      autoPlay
+                                      onError={() => setPlayingRecordingId(null)}
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              </div>
-            )
+                </TableBody>
+              </Table>
+            </div>
           )}
           {(() => {
             const totalRecords = drillDown?.metric === "sqls" ? drillDownSqlData.length : drillDownData.length;
@@ -1858,12 +2324,29 @@ const ActivityMonitor = () => {
             return (
               <div className="flex items-center justify-between px-2 pt-3 border-t border-border/50 shrink-0">
                 <span className="text-sm text-muted-foreground">
-                  Showing {drillPage * DRILL_PAGE_SIZE + 1}–{Math.min((drillPage + 1) * DRILL_PAGE_SIZE, totalRecords)} of {totalRecords}
+                  Showing {drillPage * DRILL_PAGE_SIZE + 1}–{Math.min((drillPage + 1) * DRILL_PAGE_SIZE, totalRecords)}{" "}
+                  of {totalRecords}
                 </span>
                 {totalRecords > DRILL_PAGE_SIZE && (
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p - 1)} disabled={drillPage === 0} className="gap-1"><ChevronLeft className="h-4 w-4" /> Previous</Button>
-                    <Button variant="outline" size="sm" onClick={() => setDrillPage(p => p + 1)} disabled={(drillPage + 1) * DRILL_PAGE_SIZE >= totalRecords} className="gap-1">Next <ChevronRight className="h-4 w-4" /></Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDrillPage((p) => p - 1)}
+                      disabled={drillPage === 0}
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" /> Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDrillPage((p) => p + 1)}
+                      disabled={(drillPage + 1) * DRILL_PAGE_SIZE >= totalRecords}
+                      className="gap-1"
+                    >
+                      Next <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
@@ -1871,6 +2354,17 @@ const ActivityMonitor = () => {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Demo Meetings Modal — PEXA only */}
+      {demoModalSdr && isPexa && (
+        <DemoMeetingsModal
+          isOpen={!!demoModalSdr}
+          onClose={() => setDemoModalSdr(null)}
+          sdrName={demoModalSdr.sdrName}
+          clientId="pexa-clear"
+          dateRange={demoModalSdr.dateRange}
+        />
+      )}
 
       {/* Mobile Filter Drawer */}
       <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
@@ -1880,7 +2374,9 @@ const ActivityMonitor = () => {
           </DrawerHeader>
           <div className="px-4 pb-2 space-y-5 overflow-y-auto">
             <div>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Client</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                Client
+              </label>
               <Select value={clientFilter} onValueChange={setClientFilter}>
                 <SelectTrigger className="w-full min-h-[44px] bg-[#0f172a] text-white border-[#0f172a] dark:bg-white dark:text-[#0f172a] dark:border-white font-semibold">
                   <SelectValue placeholder="All Clients" />
@@ -1893,7 +2389,9 @@ const ActivityMonitor = () => {
                         {c.logo_url ? (
                           <img src={c.logo_url} alt="" className="w-4 h-4 rounded-sm object-contain flex-shrink-0" />
                         ) : (
-                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">{c.client_name.charAt(0)}</span>
+                          <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] font-bold text-muted-foreground flex-shrink-0">
+                            {c.client_name.charAt(0)}
+                          </span>
                         )}
                         {c.client_name}
                       </span>
@@ -1906,12 +2404,37 @@ const ActivityMonitor = () => {
             {mode === "historical" && (
               <>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Period</label>
-                  <Tabs value={dateMode} onValueChange={(v) => { const dm = v as DateMode; setDateMode(dm); if (dm === "week" || dm === "month") setTimeRange([0, 24]); else setTimeRange([9, 17]); }}>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                    Period
+                  </label>
+                  <Tabs
+                    value={dateMode}
+                    onValueChange={(v) => {
+                      const dm = v as DateMode;
+                      setDateMode(dm);
+                      if (dm === "week" || dm === "month") setTimeRange([0, 24]);
+                      else setTimeRange([9, 17]);
+                    }}
+                  >
                     <TabsList className="bg-muted/50 w-full">
-                      <TabsTrigger value="day" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Day</TabsTrigger>
-                      <TabsTrigger value="week" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Week</TabsTrigger>
-                      <TabsTrigger value="month" className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]">Month</TabsTrigger>
+                      <TabsTrigger
+                        value="day"
+                        className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
+                      >
+                        Day
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="week"
+                        className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
+                      >
+                        Week
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="month"
+                        className="flex-1 data-[state=active]:bg-[#0f172a] data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0f172a]"
+                      >
+                        Month
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
@@ -1921,13 +2444,21 @@ const ActivityMonitor = () => {
                     {dateMode === "day" ? "Date" : dateMode === "week" ? "Week" : "Month"}
                   </label>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => navigateDate("prev")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] rounded-md border border-white/20 dark:border-gray-300" style={{ width: 36, height: 40 }}>
+                    <button
+                      onClick={() => navigateDate("prev")}
+                      className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] rounded-md border border-white/20 dark:border-gray-300"
+                      style={{ width: 36, height: 40 }}
+                    >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
                     <div className="flex-1 text-center text-sm font-medium text-foreground bg-muted/50 rounded-md py-2.5 px-3">
                       {dateMode === "day" ? format(histDate, "EEE, MMM d, yyyy") : dateRangeInfo.label}
                     </div>
-                    <button onClick={() => navigateDate("next")} className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] rounded-md border border-white/20 dark:border-gray-300" style={{ width: 36, height: 40 }}>
+                    <button
+                      onClick={() => navigateDate("next")}
+                      className="flex items-center justify-center shrink-0 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] rounded-md border border-white/20 dark:border-gray-300"
+                      style={{ width: 36, height: 40 }}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
@@ -1939,35 +2470,49 @@ const ActivityMonitor = () => {
                       Time Range
                     </label>
                     <div className="flex items-center gap-2">
-                      <Select value={String(timeRange[0])} onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}>
+                      <Select
+                        value={String(timeRange[0])}
+                        onValueChange={(v) => setTimeRange([parseInt(v), timeRange[1]])}
+                      >
                         <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 24 }, (_, i) => (
-                            <SelectItem key={i} value={String(i)}>{formatHour(i)}</SelectItem>
+                            <SelectItem key={i} value={String(i)}>
+                              {formatHour(i)}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       <span className="text-xs font-semibold text-muted-foreground">→</span>
-                      <Select value={String(timeRange[1])} onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}>
+                      <Select
+                        value={String(timeRange[1])}
+                        onValueChange={(v) => setTimeRange([timeRange[0], parseInt(v)])}
+                      >
                         <SelectTrigger className="h-[34px] flex-1 bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a] border-white/20 dark:border-gray-300 text-xs font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
-                            <SelectItem key={h} value={String(h)}>{h === 24 ? "11:59 PM" : formatHour(h)}</SelectItem>
+                            <SelectItem key={h} value={String(h)}>
+                              {h === 24 ? "11:59 PM" : formatHour(h)}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap ml-3">· {timeRange[1] - timeRange[0]} hrs selected</span>
+                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap ml-3">
+                        · {timeRange[1] - timeRange[0]} hrs selected
+                      </span>
                     </div>
                   </div>
                 )}
 
                 {dateMode !== "day" && (
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Days</label>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                      Days
+                    </label>
                     <div className="flex flex-wrap gap-1.5">
                       {ALL_DAYS.map((day) => (
                         <button
@@ -1977,7 +2522,7 @@ const ActivityMonitor = () => {
                             "font-semibold rounded-lg text-xs h-[34px] px-2.5 transition-colors",
                             selectedWeekdays.includes(day)
                               ? "bg-[#0f172a] text-white dark:bg-white dark:text-[#0f172a]"
-                              : "bg-transparent text-[#94a3b8] border border-[#e2e8f0] dark:border-white/10"
+                              : "bg-transparent text-[#94a3b8] border border-[#e2e8f0] dark:border-white/10",
                           )}
                         >
                           {day.substring(0, 3)}
