@@ -25,6 +25,7 @@ interface DemoMeetingsModalProps {
   sdrName: string;
   clientId: string;
   dateRange: DateRange | undefined;
+  metric?: "demoBooked" | "demoAttended";
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -34,7 +35,14 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   no_show: { label: "No Show", color: "#ef4444" },
 };
 
-export const DemoMeetingsModal = ({ isOpen, onClose, sdrName, clientId, dateRange }: DemoMeetingsModalProps) => {
+export const DemoMeetingsModal = ({
+  isOpen,
+  onClose,
+  sdrName,
+  clientId,
+  dateRange,
+  metric = "demoBooked",
+}: DemoMeetingsModalProps) => {
   const isMobile = useIsMobile();
   const [demos, setDemos] = useState<DemoRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,7 +113,9 @@ export const DemoMeetingsModal = ({ isOpen, onClose, sdrName, clientId, dateRang
       >
         {/* Header — identical structure to SQL drill-down */}
         <DialogHeader className="shrink-0">
-          <DialogTitle>{sdrName} – Demo Booked</DialogTitle>
+          <DialogTitle>
+            {sdrName} – {metric === "demoAttended" ? "Demo Attended" : "Demo Booked"}
+          </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
             {demos.length} record{demos.length !== 1 ? "s" : ""}
           </p>
