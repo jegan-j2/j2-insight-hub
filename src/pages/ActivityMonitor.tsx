@@ -313,6 +313,37 @@ const ActivityMonitor = () => {
     fetchPhotosAndMembers();
   }, []);
 
+  // Fetch demo counts when PEXA filter is active — date range follows active mode
+  useEffect(() => {
+    if (!isPexa) {
+      setDemoCounts(new Map());
+      return;
+    }
+    const fetchDemos = async () => {
+      try {
+        // Live Today: use today only. Historical: use the selected date range.
+        const startDate = mode === "live" ? todayMelbourne : dateRangeInfo.dates[0] || todayMelbourne;
+        const endDate =
+          mode === "live" ? todayMelbourne : dateRangeInfo.dates[dateRangeInfo.dates.length - 1] || todayMelbourne;
+        const { data: rows, error } = await supabase.rpc("get_sdr_demo_counts", {
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_client_id: "pexa-clear",
+        });
+        if (!error && rows) {
+          const m = new Map<string, { demo_booked: number; demo_attended: number }>();
+          for (const r of rows) {
+            m.set(r.sdr_name, { demo_booked: Number(r.demo_booked) || 0, demo_attended: Number(r.demo_attended) || 0 });
+          }
+          setDemoCounts(m);
+        }
+      } catch (err) {
+        console.error("Demo counts error:", err);
+      }
+    };
+    fetchDemos();
+  }, [isPexa, clientFilter, mode, todayMelbourne, dateRangeInfo]);
+
   const handleExportCSV = () => {
     const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
     const headers = [
@@ -475,37 +506,6 @@ const ActivityMonitor = () => {
       };
     }
   }, [histDate, dateMode, selectedWeekdays]);
-
-  // Fetch demo counts when PEXA filter is active — date range follows active mode
-  useEffect(() => {
-    if (!isPexa) {
-      setDemoCounts(new Map());
-      return;
-    }
-    const fetchDemos = async () => {
-      try {
-        // Live Today: use today only. Historical: use the selected date range.
-        const startDate = mode === "live" ? todayMelbourne : dateRangeInfo.dates[0] || todayMelbourne;
-        const endDate =
-          mode === "live" ? todayMelbourne : dateRangeInfo.dates[dateRangeInfo.dates.length - 1] || todayMelbourne;
-        const { data: rows, error } = await supabase.rpc("get_sdr_demo_counts", {
-          p_start_date: startDate,
-          p_end_date: endDate,
-          p_client_id: "pexa-clear",
-        });
-        if (!error && rows) {
-          const m = new Map<string, { demo_booked: number; demo_attended: number }>();
-          for (const r of rows) {
-            m.set(r.sdr_name, { demo_booked: Number(r.demo_booked) || 0, demo_attended: Number(r.demo_attended) || 0 });
-          }
-          setDemoCounts(m);
-        }
-      } catch (err) {
-        console.error("Demo counts error:", err);
-      }
-    };
-    fetchDemos();
-  }, [isPexa, clientFilter, mode, todayMelbourne, dateRangeInfo]);
 
   const fetchLatestSqlLive = useCallback(async () => {
     let query = supabase
@@ -1784,33 +1784,33 @@ const ActivityMonitor = () => {
               <Table>
                 <TableHeader className="table-header-navy">
                   <TableRow>
-                    <TableHead className="px-4 py-3 text-left" style={{ minWidth: 180 }}>
+                    <TableHead className="px-3 py-3 text-left" style={{ minWidth: 160 }}>
                       <SortHeader label="SDR Name" sortKeyName="sdrName" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-left">
+                    <TableHead className="px-3 py-3 text-left">
                       <SortHeader label="Client" sortKeyName="clientId" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-center">
+                    <TableHead className="px-3 py-3 text-center">
                       <SortHeader label="Dials" sortKeyName="dials" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-center">
+                    <TableHead className="px-3 py-3 text-center">
                       <SortHeader label="Answered" sortKeyName="answered" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-center">
-                      <SortHeader label="Answer Rate" sortKeyName="answerRate" />
+                    <TableHead className="px-3 py-3 text-center">
+                      <SortHeader label="Ans. Rate" sortKeyName="answerRate" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-center">
-                      <SortHeader label="DM Conversations" sortKeyName="conversations" />
+                    <TableHead className="px-3 py-3 text-center">
+                      <SortHeader label="DM Conv." sortKeyName="conversations" />
                     </TableHead>
-                    <TableHead className="px-4 py-3 text-center">
+                    <TableHead className="px-3 py-3 text-center">
                       <SortHeader label="SQLs" sortKeyName="sqls" />
                     </TableHead>
-                    {isPexa && <TableHead className="px-4 py-3 text-center">Demo Booked</TableHead>}
-                    {isPexa && <TableHead className="px-4 py-3 text-center">Demo Attended</TableHead>}
-                    <TableHead className="px-4 py-3 text-center">
-                      <SortHeader label="Conversion Rate" sortKeyName="conversion" />
+                    {isPexa && <TableHead className="px-3 py-3 text-center">Demo Booked</TableHead>}
+                    {isPexa && <TableHead className="px-3 py-3 text-center">Demo Attended</TableHead>}
+                    <TableHead className="px-3 py-3 text-center">
+                      <SortHeader label="Conv. Rate" sortKeyName="conversion" />
                     </TableHead>
-                    {mode === "live" && <TableHead className="px-4 py-3 text-center">Last Activity</TableHead>}
+                    {mode === "live" && <TableHead className="px-3 py-3 text-center">Last Activity</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="table-striped">
@@ -1842,7 +1842,7 @@ const ActivityMonitor = () => {
                               recent && "bg-green-500/5 shadow-[inset_0_0_20px_rgba(34,197,94,0.05)]",
                             )}
                           >
-                            <TableCell className="font-medium text-foreground px-4 py-2" style={{ minWidth: 180 }}>
+                            <TableCell className="font-medium text-foreground px-3 py-2" style={{ minWidth: 160 }}>
                               <div className="flex items-center gap-2 whitespace-nowrap">
                                 <div className="relative shrink-0">
                                   <SDRAvatar name={row.sdrName} photoUrl={sdrPhotoMap[row.sdrName]} size="sm" />
@@ -1862,8 +1862,8 @@ const ActivityMonitor = () => {
                               </div>
                             </TableCell>
                             <TableCell
-                              className="text-muted-foreground px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis"
-                              style={{ maxWidth: 180 }}
+                              className="text-muted-foreground px-3 py-2 whitespace-nowrap overflow-hidden text-ellipsis"
+                              style={{ maxWidth: 160 }}
                             >
                               <span className="flex items-center gap-1.5">
                                 {clientLogoMap[row.clientId] ? (
@@ -1876,10 +1876,10 @@ const ActivityMonitor = () => {
                                 <span className="truncate">{clientNameMap[row.clientId] || row.clientId}</span>
                               </span>
                             </TableCell>
-                            <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                            <TableCell className="text-sm font-medium text-foreground text-center px-3 py-2">
                               {row.dials}
                             </TableCell>
-                            <TableCell className="text-center px-4 py-2">
+                            <TableCell className="text-center px-3 py-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -1889,10 +1889,10 @@ const ActivityMonitor = () => {
                                 {row.answered}
                               </Button>
                             </TableCell>
-                            <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                            <TableCell className="text-sm font-medium text-foreground text-center px-3 py-2">
                               {row.answerRate.toFixed(1)}%
                             </TableCell>
-                            <TableCell className="text-center px-4 py-2">
+                            <TableCell className="text-center px-3 py-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -1902,7 +1902,7 @@ const ActivityMonitor = () => {
                                 {row.conversations}
                               </Button>
                             </TableCell>
-                            <TableCell className="text-center px-4 py-2">
+                            <TableCell className="text-center px-3 py-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -1919,7 +1919,7 @@ const ActivityMonitor = () => {
                                 const attended = counts?.demo_attended || 0;
                                 return (
                                   <>
-                                    <TableCell className="text-center px-4 py-2">
+                                    <TableCell className="text-center px-3 py-2">
                                       <button
                                         className={
                                           booked > 0
@@ -1951,7 +1951,7 @@ const ActivityMonitor = () => {
                                         {booked}
                                       </button>
                                     </TableCell>
-                                    <TableCell className="text-center px-4 py-2">
+                                    <TableCell className="text-center px-3 py-2">
                                       <button
                                         className={
                                           attended > 0
@@ -1986,11 +1986,11 @@ const ActivityMonitor = () => {
                                   </>
                                 );
                               })()}
-                            <TableCell className="text-sm font-medium text-foreground text-center px-4 py-2">
+                            <TableCell className="text-sm font-medium text-foreground text-center px-3 py-2">
                               {row.conversion.toFixed(1)}%
                             </TableCell>
                             {mode === "live" && (
-                              <TableCell className="text-center px-4 py-2">
+                              <TableCell className="text-center px-3 py-2">
                                 {row.lastActivity ? (
                                   (() => {
                                     const minutesAgo = (Date.now() - new Date(row.lastActivity).getTime()) / 60000;
