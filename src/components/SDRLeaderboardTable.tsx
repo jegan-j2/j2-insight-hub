@@ -102,7 +102,10 @@ export const SDRLeaderboardTable = ({
 
   // Demo counts — only fetched when PEXA filter is active
   const [demoCounts, setDemoCounts] = useState<DemoCounts[]>([]);
-  const [demoModalSdr, setDemoModalSdr] = useState<LeaderboardEntry | null>(null);
+  const [demoModalSdr, setDemoModalSdr] = useState<{
+    sdr: LeaderboardEntry;
+    metric: "demoBooked" | "demoAttended";
+  } | null>(null);
 
   const isPexa = clientFilter === PEXA_CLIENT_ID;
 
@@ -598,7 +601,7 @@ export const SDRLeaderboardTable = ({
                                   ? "text-[#3b82f6] hover:text-[#2563eb] cursor-pointer hover:underline"
                                   : "text-muted-foreground cursor-default",
                               )}
-                              onClick={() => demoBooked > 0 && setDemoModalSdr(sdr)}
+                              onClick={() => demoBooked > 0 && setDemoModalSdr({ sdr, metric: "demoBooked" })}
                               disabled={demoBooked === 0}
                             >
                               {demoBooked}
@@ -614,7 +617,7 @@ export const SDRLeaderboardTable = ({
                                   ? "text-[#10b981] hover:text-[#059669] cursor-pointer hover:underline"
                                   : "text-muted-foreground cursor-default",
                               )}
-                              onClick={() => demoAttended > 0 && setDemoModalSdr(sdr)}
+                              onClick={() => demoAttended > 0 && setDemoModalSdr({ sdr, metric: "demoAttended" })}
                               disabled={demoAttended === 0}
                             >
                               {demoAttended}
@@ -676,9 +679,10 @@ export const SDRLeaderboardTable = ({
         <DemoMeetingsModal
           isOpen={!!demoModalSdr}
           onClose={() => setDemoModalSdr(null)}
-          sdrName={demoModalSdr.name}
+          sdrName={demoModalSdr.sdr.name}
           clientId={PEXA_CLIENT_ID}
           dateRange={dateRange}
+          metric={demoModalSdr.metric}
         />
       )}
     </>
