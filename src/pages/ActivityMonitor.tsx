@@ -257,9 +257,11 @@ const ActivityMonitor = () => {
     { client_id: string; client_name: string; logo_url: string | null }[]
   >([]);
 
-  const [demoModalSdr, setDemoModalSdr] = useState<{ sdrName: string; dateRange: { from: Date; to: Date } } | null>(
-    null,
-  );
+  const [demoModalSdr, setDemoModalSdr] = useState<{
+    sdrName: string;
+    dateRange: { from: Date; to: Date };
+    metric: "demoBooked" | "demoAttended";
+  } | null>(null);
   const [demoCounts, setDemoCounts] = useState<Map<string, { demo_booked: number; demo_attended: number }>>(new Map());
   const isPexa = clientFilter === "pexa-clear";
 
@@ -1953,6 +1955,7 @@ const ActivityMonitor = () => {
                                           booked > 0 &&
                                           setDemoModalSdr({
                                             sdrName: row.sdrName,
+                                            metric: "demoBooked",
                                             dateRange:
                                               mode === "live"
                                                 ? {
@@ -1983,6 +1986,7 @@ const ActivityMonitor = () => {
                                           attended > 0 &&
                                           setDemoModalSdr({
                                             sdrName: row.sdrName,
+                                            metric: "demoAttended",
                                             dateRange:
                                               mode === "live"
                                                 ? {
@@ -2384,6 +2388,7 @@ const ActivityMonitor = () => {
           sdrName={demoModalSdr.sdrName}
           clientId="pexa-clear"
           dateRange={demoModalSdr.dateRange}
+          metric={demoModalSdr.metric}
         />
       )}
 
