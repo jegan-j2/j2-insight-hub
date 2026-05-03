@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ import {
   Table2,
   SlidersHorizontal,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { format, isWithinInterval, parseISO, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -133,6 +135,8 @@ export const SQLBookedMeetingsTable = ({
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [reinstateTarget, setReinstateTarget] = useState<MeetingData | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MeetingData | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const displayMeetings = useMemo(() => {
     if (meetings && meetings.length > 0) return mapMeetings(meetings, clients);
@@ -400,6 +404,21 @@ export const SQLBookedMeetingsTable = ({
     [reinstateMeeting],
   );
 
+  const handleDelete = async (meeting: MeetingData) => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("sql_meetings").delete().eq("id", meeting.id);
+      if (!error) {
+        setLocalMeetings((prev) => prev.filter((m) => m.id !== meeting.id));
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
   const StatusBadge = ({ meeting }: { meeting: MeetingData }) => {
     const config = getStatusConfig(meeting.meetingStatus);
     const canEdit = !isSdr && canEditSQL(meeting.clientId);
@@ -425,6 +444,20 @@ export const SQLBookedMeetingsTable = ({
           >
             <RotateCcw className="h-3 w-3" />
             Reinstate
+          </Button>
+        )}
+        {isAdmin && isCancelled && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-[11px] text-red-500 hover:text-red-600 gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget(meeting);
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+            Delete
           </Button>
         )}
       </div>
@@ -1058,6 +1091,34 @@ export const SQLBookedMeetingsTable = ({
               onClick={() => reinstateTarget && handleReinstate(reinstateTarget)}
             >
               Reinstate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation — Admin only */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently delete this meeting?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove <strong>{deleteTarget?.contactPerson}</strong> ({deleteTarget?.companyName})
+              from SQL meetings. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={deleting}
+              onClick={() => deleteTarget && handleDelete(deleteTarget)}
+            >
+              {deleting ? "Deleting..." : "Delete permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
