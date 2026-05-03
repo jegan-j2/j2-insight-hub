@@ -1,12 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { X, Loader2, CalendarDays } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EmptyState } from "@/components/EmptyState";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
@@ -63,139 +60,104 @@ export const DemoMeetingsModal = ({ isOpen, onClose, sdrName, clientId, dateRang
     fetchDemos();
   }, [isOpen, sdrName, clientId, dateRange]);
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "-";
+  // Matches SQL drill-down: "29 Apr 2026 · 4:45 PM"
+  const formatBookedAt = (dateStr: string) => {
     try {
-      return format(new Date(dateStr + "T00:00:00"), "MMM d, yyyy");
+      const d = new Date(dateStr);
+      const dateLabel = d.toLocaleDateString("en-AU", {
+        timeZone: "Australia/Melbourne",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+      const timeLabel = d
+        .toLocaleTimeString("en-AU", {
+          timeZone: "Australia/Melbourne",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .replace(" am", " AM")
+        .replace(" pm", " PM");
+      return `${dateLabel} · ${timeLabel}`;
     } catch {
       return dateStr;
     }
   };
 
-  const formatTime = (timeStr: string | null) => {
-    if (!timeStr) return null;
-    return timeStr;
+  // Matches formatScheduledMeetingDateTime used in SQL drill-down
+  const formatMeetingDate = (date: string | null, time: string | null) => {
+    if (!date) return "-";
+    const dateLabel = format(new Date(date + "T00:00:00"), "d MMM yyyy");
+    if (!time) return dateLabel;
+    const attempt = new Date(`${date}T${time}`);
+    if (!isNaN(attempt.getTime())) return format(attempt, "d MMM yyyy, h:mm a");
+    return `${dateLabel}, ${time}`;
   };
-
-  const demoBooked = demos.filter((d) => d.demo_status === "demo_booked").length;
-  const demoAttended = demos.filter((d) => d.demo_status === "demo_attended").length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className={cn(
-          "overflow-y-auto p-0 gap-0",
-          isMobile ? "w-full h-full max-w-full max-h-full rounded-none" : "w-[90vw] max-w-[900px] max-h-[80vh]",
+          "bg-card border-border overflow-hidden flex flex-col",
+          isMobile ? "w-full h-full max-w-full max-h-full rounded-none" : "sm:max-w-[900px] max-h-[80vh]",
         )}
       >
-        {/* Header */}
-        <DialogHeader className="p-4 sm:p-6 pb-3 border-b border-border sticky top-0 bg-card z-10">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <DialogTitle className="text-xl font-bold text-foreground">{sdrName} - Demo Meetings</DialogTitle>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className="bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/30 text-xs">
-                  🎬 {demoBooked} Demo Booked
-                </Badge>
-                <Badge className="bg-[#10b981]/10 text-[#10b981] border-[#10b981]/30 text-xs">
-                  ✅ {demoAttended} Demo Attended
-                </Badge>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="min-h-[44px] min-w-[44px] shrink-0">
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-          {dateRange?.from && dateRange?.to && (
-            <p className="text-xs text-muted-foreground mt-2">
-              {format(dateRange.from, "MMM d, yyyy")} – {format(dateRange.to, "MMM d, yyyy")}
-            </p>
-          )}
+        {/* Header — identical structure to SQL drill-down */}
+        <DialogHeader className="shrink-0">
+          <DialogTitle>{sdrName} – Demo Booked</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            {demos.length} record{demos.length !== 1 ? "s" : ""}
+          </p>
         </DialogHeader>
 
-        <div className="p-4 sm:p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : demos.length === 0 ? (
-            <EmptyState
-              icon={CalendarDays}
-              title="No demo meetings found"
-              description="No demos recorded for this SDR in the selected period"
-            />
-          ) : isMobile ? (
-            /* Mobile: card layout */
-            <div className="space-y-2">
-              {demos.map((demo) => {
-                const config = STATUS_CONFIG[demo.demo_status] || STATUS_CONFIG.demo_booked;
-                return (
-                  <div key={demo.id} className="rounded-lg border border-border/50 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-foreground text-sm truncate">{demo.contact_person || "—"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{demo.company_name || "—"}</p>
-                      </div>
-                      <Badge className="text-white text-xs shrink-0" style={{ backgroundColor: config.color }}>
-                        {config.label}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span>Booked: {formatDate(demo.booking_date)}</span>
-                      {demo.meeting_date && (
-                        <span>
-                          Meeting: {formatDate(demo.meeting_date)}
-                          {demo.meeting_time ? ` ${formatTime(demo.meeting_time)}` : ""}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            /* Desktop: table layout */
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="table-header-navy">
-                  <TableRow>
-                    <TableHead className="px-4 py-3 text-left">Contact Person</TableHead>
-                    <TableHead className="px-4 py-3 text-left">Company</TableHead>
-                    <TableHead className="px-4 py-3 text-center">Booking Date</TableHead>
-                    <TableHead className="px-4 py-3 text-center">Meeting Date</TableHead>
-                    <TableHead className="px-4 py-3 text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="table-striped">
-                  {demos.map((demo) => {
-                    const config = STATUS_CONFIG[demo.demo_status] || STATUS_CONFIG.demo_booked;
-                    return (
-                      <TableRow key={demo.id} className="border-border/50">
-                        <TableCell className="px-4 py-3 font-medium text-foreground">
-                          {demo.contact_person || "—"}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-foreground">{demo.company_name || "—"}</TableCell>
-                        <TableCell className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                          {formatDate(demo.booking_date)}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                          {demo.meeting_date
-                            ? `${formatDate(demo.meeting_date)}${demo.meeting_time ? ` ${formatTime(demo.meeting_time)}` : ""}`
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-center">
-                          <Badge className="text-white text-xs" style={{ backgroundColor: config.color }}>
-                            {config.label}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </div>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="h-8 w-8 rounded-full border-2 border-[#0f172a] border-t-transparent animate-spin dark:border-white dark:border-t-transparent" />
+            <span className="text-sm text-muted-foreground">Loading...</span>
+          </div>
+        ) : demos.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            No demo bookings found for this SDR in the selected time range.
+          </p>
+        ) : (
+          <div className="overflow-y-auto overflow-x-hidden flex-1 max-w-full">
+            {/* Table — identical structure to SQL drill-down, Status replaces Recording */}
+            <Table className="table-fixed w-full">
+              <TableHeader className="table-header-navy sticky top-0 z-10">
+                <TableRow>
+                  <TableHead className="text-left w-[22%]">Booked At</TableHead>
+                  <TableHead className="text-left w-[20%]">Contact Person</TableHead>
+                  <TableHead className="text-left w-[20%]">Company</TableHead>
+                  <TableHead className="text-center w-[22%]">Meeting Date</TableHead>
+                  <TableHead className="text-center w-[16%]">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="table-striped">
+                {demos.map((demo) => {
+                  const config = STATUS_CONFIG[demo.demo_status] || STATUS_CONFIG.demo_booked;
+                  return (
+                    <TableRow key={demo.id} className="border-border/50">
+                      <TableCell className="text-left text-sm text-muted-foreground whitespace-nowrap tabular-nums">
+                        {formatBookedAt(demo.created_at)}
+                      </TableCell>
+                      <TableCell className="text-left font-medium">{demo.contact_person || "-"}</TableCell>
+                      <TableCell className="text-left">{demo.company_name || "-"}</TableCell>
+                      <TableCell className="text-center whitespace-nowrap tabular-nums">
+                        {formatMeetingDate(demo.meeting_date, demo.meeting_time)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge className="text-white text-xs" style={{ backgroundColor: config.color }}>
+                          {config.label}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
