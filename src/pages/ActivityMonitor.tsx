@@ -70,7 +70,17 @@ import { ACTIVE_SQL_MEETING_STATUSES, getRecordingUrlWithFallback } from "@/lib/
 import { DemoMeetingsModal } from "@/components/DemoMeetingsModal";
 
 type Mode = "live" | "historical";
-type SortKey = "sdrName" | "clientId" | "dials" | "answered" | "conversations" | "answerRate" | "sqls" | "conversion";
+type SortKey =
+  | "sdrName"
+  | "clientId"
+  | "dials"
+  | "answered"
+  | "conversations"
+  | "answerRate"
+  | "sqls"
+  | "conversion"
+  | "demoBooked"
+  | "demoAttended";
 type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls" | "conversations";
 type DateMode = "day" | "week" | "month";
@@ -891,6 +901,10 @@ const ActivityMonitor = () => {
         let cmp = 0;
         if (sortKey === "sdrName") cmp = a.sdrName.localeCompare(b.sdrName);
         else if (sortKey === "clientId") cmp = a.clientId.localeCompare(b.clientId);
+        else if (sortKey === "demoBooked")
+          cmp = (demoCounts.get(a.sdrName)?.demo_booked || 0) - (demoCounts.get(b.sdrName)?.demo_booked || 0);
+        else if (sortKey === "demoAttended")
+          cmp = (demoCounts.get(a.sdrName)?.demo_attended || 0) - (demoCounts.get(b.sdrName)?.demo_attended || 0);
         else cmp = (a[sortKey] as number) - (b[sortKey] as number);
         return sortDir === "desc" ? -cmp : cmp;
       }
@@ -1805,8 +1819,16 @@ const ActivityMonitor = () => {
                     <TableHead className="px-3 py-3 text-center">
                       <SortHeader label="SQLs" sortKeyName="sqls" />
                     </TableHead>
-                    {isPexa && <TableHead className="px-3 py-3 text-center">Demo Booked</TableHead>}
-                    {isPexa && <TableHead className="px-3 py-3 text-center">Demo Attended</TableHead>}
+                    {isPexa && (
+                      <TableHead className="px-3 py-3 text-center">
+                        <SortHeader label="Demo Booked" sortKeyName="demoBooked" />
+                      </TableHead>
+                    )}
+                    {isPexa && (
+                      <TableHead className="px-3 py-3 text-center">
+                        <SortHeader label="Demo Attended" sortKeyName="demoAttended" />
+                      </TableHead>
+                    )}
                     <TableHead className="px-3 py-3 text-center">
                       <SortHeader label="Conv. Rate" sortKeyName="conversion" />
                     </TableHead>
@@ -1824,7 +1846,10 @@ const ActivityMonitor = () => {
                         <>
                           {showDivider && (
                             <TableRow key="inactive-divider" className="border-0 pointer-events-none">
-                              <TableCell colSpan={mode === "live" ? 9 : 8} className="py-4 px-4">
+                              <TableCell
+                                colSpan={mode === "live" ? (isPexa ? 11 : 9) : isPexa ? 10 : 8}
+                                className="py-4 px-4"
+                              >
                                 <div className="flex items-center gap-3">
                                   <div className="flex-1 h-px bg-border/50" />
                                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap">
@@ -1920,12 +1945,10 @@ const ActivityMonitor = () => {
                                 return (
                                   <>
                                     <TableCell className="text-center px-3 py-2">
-                                      <button
-                                        className={
-                                          booked > 0
-                                            ? "text-[#3b82f6] font-medium hover:underline cursor-pointer tabular-nums"
-                                            : "text-muted-foreground tabular-nums"
-                                        }
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="font-bold text-foreground hover:text-foreground/80"
                                         onClick={() =>
                                           booked > 0 &&
                                           setDemoModalSdr({
@@ -1949,15 +1972,13 @@ const ActivityMonitor = () => {
                                         }
                                       >
                                         {booked}
-                                      </button>
+                                      </Button>
                                     </TableCell>
                                     <TableCell className="text-center px-3 py-2">
-                                      <button
-                                        className={
-                                          attended > 0
-                                            ? "text-[#10b981] font-medium hover:underline cursor-pointer tabular-nums"
-                                            : "text-muted-foreground tabular-nums"
-                                        }
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="font-bold text-foreground hover:text-foreground/80"
                                         onClick={() =>
                                           attended > 0 &&
                                           setDemoModalSdr({
@@ -1981,7 +2002,7 @@ const ActivityMonitor = () => {
                                         }
                                       >
                                         {attended}
-                                      </button>
+                                      </Button>
                                     </TableCell>
                                   </>
                                 );
