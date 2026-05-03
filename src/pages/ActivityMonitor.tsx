@@ -484,6 +484,7 @@ const ActivityMonitor = () => {
     }
     const fetchDemos = async () => {
       try {
+        // Live Today: use today only. Historical: use the selected date range.
         const startDate = mode === "live" ? todayMelbourne : dateRangeInfo.dates[0] || todayMelbourne;
         const endDate =
           mode === "live" ? todayMelbourne : dateRangeInfo.dates[dateRangeInfo.dates.length - 1] || todayMelbourne;
