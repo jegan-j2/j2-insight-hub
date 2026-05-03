@@ -313,37 +313,6 @@ const ActivityMonitor = () => {
     fetchPhotosAndMembers();
   }, []);
 
-  // Fetch demo counts when PEXA filter is active — date range follows active mode
-  useEffect(() => {
-    if (!isPexa) {
-      setDemoCounts(new Map());
-      return;
-    }
-    const fetchDemos = async () => {
-      try {
-        // Live Today: use today only. Historical: use the selected date range.
-        const startDate = mode === "live" ? todayMelbourne : dateRangeInfo.dates[0] || todayMelbourne;
-        const endDate =
-          mode === "live" ? todayMelbourne : dateRangeInfo.dates[dateRangeInfo.dates.length - 1] || todayMelbourne;
-        const { data: rows, error } = await supabase.rpc("get_sdr_demo_counts", {
-          p_start_date: startDate,
-          p_end_date: endDate,
-          p_client_id: "pexa-clear",
-        });
-        if (!error && rows) {
-          const m = new Map<string, { demo_booked: number; demo_attended: number }>();
-          for (const r of rows) {
-            m.set(r.sdr_name, { demo_booked: Number(r.demo_booked) || 0, demo_attended: Number(r.demo_attended) || 0 });
-          }
-          setDemoCounts(m);
-        }
-      } catch (err) {
-        console.error("Demo counts error:", err);
-      }
-    };
-    fetchDemos();
-  }, [isPexa, clientFilter, mode, todayMelbourne, dateRangeInfo]);
-
   const handleExportCSV = () => {
     const dateStr = mode === "live" ? todayMelbourne : format(histDate, "yyyy-MM-dd");
     const headers = [
@@ -506,6 +475,36 @@ const ActivityMonitor = () => {
       };
     }
   }, [histDate, dateMode, selectedWeekdays]);
+
+  // Fetch demo counts when PEXA filter is active — date range follows active mode
+  useEffect(() => {
+    if (!isPexa) {
+      setDemoCounts(new Map());
+      return;
+    }
+    const fetchDemos = async () => {
+      try {
+        const startDate = mode === "live" ? todayMelbourne : dateRangeInfo.dates[0] || todayMelbourne;
+        const endDate =
+          mode === "live" ? todayMelbourne : dateRangeInfo.dates[dateRangeInfo.dates.length - 1] || todayMelbourne;
+        const { data: rows, error } = await supabase.rpc("get_sdr_demo_counts", {
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_client_id: "pexa-clear",
+        });
+        if (!error && rows) {
+          const m = new Map<string, { demo_booked: number; demo_attended: number }>();
+          for (const r of rows) {
+            m.set(r.sdr_name, { demo_booked: Number(r.demo_booked) || 0, demo_attended: Number(r.demo_attended) || 0 });
+          }
+          setDemoCounts(m);
+        }
+      } catch (err) {
+        console.error("Demo counts error:", err);
+      }
+    };
+    fetchDemos();
+  }, [isPexa, clientFilter, mode, todayMelbourne, dateRangeInfo]);
 
   const fetchLatestSqlLive = useCallback(async () => {
     let query = supabase
