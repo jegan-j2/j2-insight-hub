@@ -252,6 +252,11 @@ const ActivityMonitor = () => {
     clientId: string;
     createdAt: string;
   } | null>(null);
+  const [latestDemo, setLatestDemo] = useState<{
+    sdrName: string;
+    companyName: string;
+    createdAt: string;
+  } | null>(null);
   const [clientOptions, setClientOptions] = useState<
     { client_id: string; client_name: string; logo_url: string | null }[]
   >([]);
@@ -540,6 +545,33 @@ const ActivityMonitor = () => {
     );
   }, [todayMelbourne, activeClientFilter]);
 
+  const fetchLatestDemo = useCallback(async () => {
+    if (!isPexa) {
+      setLatestDemo(null);
+      return;
+    }
+    const startDate = mode === "live" ? todayMelbourne : dateRangeInfo.dates[0] || todayMelbourne;
+    const endDate =
+      mode === "live" ? todayMelbourne : dateRangeInfo.dates[dateRangeInfo.dates.length - 1] || todayMelbourne;
+    const { data } = await supabase
+      .from("demo_meetings")
+      .select("sdr_name, company_name, created_at")
+      .eq("client_id", "pexa-clear")
+      .gte("booking_date", startDate)
+      .lte("booking_date", endDate)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    setLatestDemo(
+      data?.[0]
+        ? {
+            sdrName: data[0].sdr_name || "",
+            companyName: data[0].company_name || "",
+            createdAt: data[0].created_at,
+          }
+        : null,
+    );
+  }, [isPexa, mode, todayMelbourne, dateRangeInfo]);
+
   // LIVE fetch
   const fetchLiveData = useCallback(async () => {
     if (mode !== "live") return;
@@ -726,15 +758,17 @@ const ActivityMonitor = () => {
     if (mode === "live") {
       fetchLiveData();
       fetchLatestSqlLive();
+      fetchLatestDemo();
     }
-  }, [mode, fetchLiveData, fetchLatestSqlLive, refreshKey]);
+  }, [mode, fetchLiveData, fetchLatestSqlLive, fetchLatestDemo, refreshKey]);
 
   useEffect(() => {
     if (mode === "historical" && histApplied) {
       fetchHistoricalData();
+      fetchLatestDemo();
       setHistApplied(false);
     }
-  }, [histApplied, fetchHistoricalData, mode]);
+  }, [histApplied, fetchHistoricalData, fetchLatestDemo, mode]);
 
   // Auto-apply on mode switch to historical
   useEffect(() => {
@@ -769,8 +803,9 @@ const ActivityMonitor = () => {
       (a) => a.call_outcome?.toLowerCase() === "connected" && a.is_decision_maker,
     ).length;
     const sqls = histSqlMeetings.length;
-    return { dials, answered, conversations, sqls };
-  }, [activities, histSqlMeetings]);
+    const demoBooked = isPexa ? Array.from(demoCounts.values()).reduce((sum, d) => sum + d.demo_booked, 0) : 0;
+    return { dials, answered, conversations, sqls, demoBooked };
+  }, [activities, histSqlMeetings, isPexa, demoCounts]);
 
   // SDR rows
   const sdrRows = useMemo(() => {
@@ -1279,6 +1314,17 @@ const ActivityMonitor = () => {
       iconColor: "#f43f5e",
       iconBg: "rgba(244,63,94,0.1)",
     },
+    ...(isPexa
+      ? [
+          {
+            label: "Demo Booked",
+            value: totals.demoBooked.toLocaleString(),
+            icon: Target,
+            iconColor: "#f43f5e",
+            iconBg: "rgba(244,63,94,0.1)",
+          },
+        ]
+      : []),
   ];
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
@@ -1567,12 +1613,13 @@ const ActivityMonitor = () => {
         ))}
       </div>
 
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 border border-border/60 rounded-lg px-4 py-2.5">
-          <span>🎯</span>
+      <div className="flex items-center gap-3 w-full">
+        {/* Latest SQL pill */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 border border-border/60 rounded-lg px-4 py-2.5 min-w-0 flex-1">
+          <span className="shrink-0">🎯</span>
           {mode === "live" ? (
             latestSql ? (
-              <span>
+              <span className="truncate">
                 <span className="font-semibold text-foreground">Latest SQL</span>
                 {" · "}
                 <span>{latestSql.sdrName}</span>
@@ -1591,31 +1638,64 @@ const ActivityMonitor = () => {
                 <span>{clientNameMap[latestSql.clientId] || latestSql.clientId}</span>
               </span>
             ) : (
-              <span className="italic">Waiting for today's first SQL to be booked...</span>
+              <span className="italic">Waiting for today's first SQL...</span>
             )
-          ) : (
-            latestSql && (
+          ) : latestSql ? (
+            <span className="truncate">
+              <span className="font-semibold text-foreground">Latest SQL</span>
+              {" · "}
+              <span>{latestSql.sdrName}</span>
+              {" booked "}
+              <span className="font-semibold text-foreground">{latestSql.companyName}</span>
+              {" · "}
               <span>
-                <span className="font-semibold text-foreground">Latest SQL</span>
-                {" · "}
-                <span>{latestSql.sdrName}</span>
-                {" booked "}
-                <span className="font-semibold text-foreground">{latestSql.companyName}</span>
-                {" · "}
-                <span>
-                  {new Date(latestSql.createdAt).toLocaleDateString("en-AU", {
-                    timeZone: "Australia/Melbourne",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-                {" · "}
-                <span>{clientNameMap[latestSql.clientId] || latestSql.clientId}</span>
+                {new Date(latestSql.createdAt).toLocaleDateString("en-AU", {
+                  timeZone: "Australia/Melbourne",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </span>
-            )
+              {" · "}
+              <span>{clientNameMap[latestSql.clientId] || latestSql.clientId}</span>
+            </span>
+          ) : (
+            <span className="italic">No SQLs in this period</span>
           )}
         </div>
+        {/* Latest Demo pill — PEXA only */}
+        {isPexa && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 border border-border/60 rounded-lg px-4 py-2.5 min-w-0 flex-1">
+            <span className="shrink-0">🎬</span>
+            {latestDemo ? (
+              <span className="truncate">
+                <span className="font-semibold text-foreground">Latest Demo</span>
+                {" · "}
+                <span>{latestDemo.sdrName}</span>
+                {" booked "}
+                <span className="font-semibold text-foreground">{latestDemo.companyName}</span>
+                {" · "}
+                <span>
+                  {mode === "live"
+                    ? new Date(latestDemo.createdAt).toLocaleTimeString("en-AU", {
+                        timeZone: "Australia/Melbourne",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })
+                    : new Date(latestDemo.createdAt).toLocaleDateString("en-AU", {
+                        timeZone: "Australia/Melbourne",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                </span>
+              </span>
+            ) : (
+              <span className="italic">No demos in this period</span>
+            )}
+          </div>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-gray-100 gap-2">
