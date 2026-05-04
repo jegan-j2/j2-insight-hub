@@ -40,6 +40,7 @@ import {
   Table2,
   ChevronDown,
   SlidersHorizontal,
+  Film,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
@@ -1317,9 +1318,9 @@ const ActivityMonitor = () => {
     ...(isPexa
       ? [
           {
-            label: "Demo Booked",
+            label: "🎬 Demo Booked",
             value: totals.demoBooked.toLocaleString(),
-            icon: Target,
+            icon: Film,
             iconColor: "#f43f5e",
             iconBg: "rgba(244,63,94,0.1)",
           },
@@ -1593,7 +1594,12 @@ const ActivityMonitor = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div
+        className={cn(
+          "grid gap-4",
+          isPexa ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-6" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-5",
+        )}
+      >
         {kpiCards.map((kpi) => (
           <Card key={kpi.label} className="bg-card/50 backdrop-blur-sm border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
