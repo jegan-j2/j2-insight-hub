@@ -29,7 +29,6 @@ interface LeaderboardEntry {
   avgDuration: number;
 }
 
-// Demo counts per SDR — fetched separately when PEXA filter is active
 interface DemoCounts {
   sdr_name: string;
   client_id: string;
@@ -55,7 +54,6 @@ interface MostImprovedInfo {
   clientId: string;
   improvement: number;
 }
-
 interface ClientOption {
   client_id: string;
   client_name: string;
@@ -98,8 +96,6 @@ export const SDRLeaderboardTable = ({
   const [showAll, setShowAll] = useState(false);
   const [currentSdrName, setCurrentSdrName] = useState<string | null>(null);
   const [isSdrRole, setIsSdrRole] = useState(false);
-
-  // Demo counts — only fetched when PEXA filter is active
   const [demoCounts, setDemoCounts] = useState<DemoCounts[]>([]);
   const [demoModalSdr, setDemoModalSdr] = useState<{ sdr: LeaderboardEntry; metric: "demoBooked" } | null>(null);
 
@@ -117,7 +113,6 @@ export const SDRLeaderboardTable = ({
     fetchPhotos();
   }, []);
 
-  // Fetch demo counts when PEXA is selected
   useEffect(() => {
     if (!isPexa || !dateRange?.from || !dateRange?.to) {
       setDemoCounts([]);
@@ -147,13 +142,11 @@ export const SDRLeaderboardTable = ({
     fetchDemos();
   }, [isPexa, dateRange, clientFilter]);
 
-  // Helper to get demo counts for a specific SDR
   const getDemoCounts = (sdrName: string) => {
     const row = demoCounts.find((d) => d.sdr_name === sdrName);
-    return { demoBooked: row?.demo_booked || 0, demoAttended: row?.demo_attended || 0 };
+    return { demoBooked: row?.demo_booked || 0 };
   };
 
-  // Determine if current user is SDR role
   useEffect(() => {
     const resolveSelf = async () => {
       const {
@@ -194,7 +187,6 @@ export const SDRLeaderboardTable = ({
     const sorted = [...data].sort((a, b) => {
       let aVal: number | string;
       let bVal: number | string;
-
       switch (sortKey) {
         case "name":
           aVal = a.name.toLowerCase();
@@ -220,13 +212,11 @@ export const SDRLeaderboardTable = ({
           aVal = a[sortKey as keyof LeaderboardEntry] as number;
           bVal = b[sortKey as keyof LeaderboardEntry] as number;
       }
-
       if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
       if (a.totalDials !== b.totalDials) return b.totalDials - a.totalDials;
       return 0;
     });
-
     return sorted.map((sdr, idx) => ({ ...sdr, displayRank: idx + 1 }));
   }, [data, sortKey, sortDir, clientNameMap, demoCounts]);
 
@@ -243,31 +233,29 @@ export const SDRLeaderboardTable = ({
 
   const getAnswerRateBadge = (rate: string) => {
     const rateNum = parseFloat(rate);
-    if (rateNum >= 85) {
+    if (rateNum >= 85)
       return (
         <Badge className="bg-[#D1FAE5] text-[#065F46] border-[#D1FAE5] dark:bg-[#065F46]/20 dark:text-emerald-400">
           {rate}%
         </Badge>
       );
-    } else if (rateNum >= 70) {
+    if (rateNum >= 70)
       return (
         <Badge className="bg-[#DBEAFE] text-[#1E40AF] border-[#DBEAFE] dark:bg-[#1E40AF]/20 dark:text-blue-400">
           {rate}%
         </Badge>
       );
-    } else if (rateNum >= 50) {
+    if (rateNum >= 50)
       return (
         <Badge className="bg-[#FEF3C7] text-[#92400E] border-[#FEF3C7] dark:bg-[#92400E]/20 dark:text-amber-400">
           {rate}%
         </Badge>
       );
-    } else {
-      return (
-        <Badge className="bg-[#FEE2E2] text-[#991B1B] border-[#FEE2E2] dark:bg-[#991B1B]/20 dark:text-red-400">
-          {rate}%
-        </Badge>
-      );
-    }
+    return (
+      <Badge className="bg-[#FEE2E2] text-[#991B1B] border-[#FEE2E2] dark:bg-[#991B1B]/20 dark:text-red-400">
+        {rate}%
+      </Badge>
+    );
   };
 
   const getRankDisplay = (rank: number) => {
@@ -324,12 +312,11 @@ export const SDRLeaderboardTable = ({
               description="Add team members in Settings to see performance metrics"
             />
           ) : isMobile ? (
-            /* Mobile: compact card layout */
             <div className="space-y-2">
               {displayData.map((sdr) => {
                 const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
                 const clickable = canOpenRow(sdr.name);
-                const { demoBooked, demoAttended } = getDemoCounts(sdr.name);
+                const { demoBooked } = getDemoCounts(sdr.name);
                 return (
                   <div
                     key={`${sdr.name}-${sdr.clientId}`}
@@ -369,13 +356,13 @@ export const SDRLeaderboardTable = ({
                       <span>{getAnswerRateBadge(sdr.answerRate)}</span>
                       {isPexa && demoBooked > 0 && (
                         <span
-                          className="text-[#3b82f6] cursor-pointer hover:underline"
+                          className="cursor-pointer hover:underline"
                           onClick={(e) => {
                             e.stopPropagation();
                             setDemoModalSdr({ sdr, metric: "demoBooked" });
                           }}
                         >
-                          🎬 {demoBooked}
+                          {demoBooked} Demo
                         </span>
                       )}
                     </div>
@@ -406,9 +393,9 @@ export const SDRLeaderboardTable = ({
                   <col style={{ width: "95px" }} />
                   <col style={{ width: "85px" }} />
                   <col style={{ width: "60px" }} />
+                  {isPexa && <col style={{ width: "100px" }} />}
                   <col style={{ width: "85px" }} />
                   <col style={{ width: "90px" }} />
-                  {isPexa && <col style={{ width: "100px" }} />}
                 </colgroup>
                 <TableHeader className="table-header-navy">
                   <TableRow>
@@ -479,7 +466,6 @@ export const SDRLeaderboardTable = ({
                         Demo Booked <SortIcon column="demoBooked" />
                       </TableHead>
                     )}
-
                     <TableHead
                       className="text-center cursor-pointer select-none h-[44px]"
                       style={{ padding: cellPad }}
@@ -501,8 +487,7 @@ export const SDRLeaderboardTable = ({
                     const clientName = clientNameMap[sdr.clientId || ""] || sdr.clientId || "";
                     const dmValue = Number(sdr.totalDMs);
                     const clickable = canOpenRow(sdr.name);
-                    const { demoBooked, demoAttended } = getDemoCounts(sdr.name);
-
+                    const { demoBooked } = getDemoCounts(sdr.name);
                     return (
                       <TableRow
                         key={`${sdr.name}-${sdr.clientId}`}
@@ -576,22 +561,14 @@ export const SDRLeaderboardTable = ({
                           {sdr.totalSQLs.toLocaleString()}
                         </TableCell>
                         {isPexa && (
-                          <TableCell className="text-center" style={{ padding: cellPad }}>
-                            <button
-                              className={cn(
-                                "tabular-nums font-medium transition-colors",
-                                demoBooked > 0
-                                  ? "text-[#3b82f6] hover:text-[#2563eb] cursor-pointer hover:underline"
-                                  : "text-muted-foreground cursor-default",
-                              )}
-                              onClick={() => demoBooked > 0 && setDemoModalSdr({ sdr, metric: "demoBooked" })}
-                              disabled={demoBooked === 0}
-                            >
-                              {demoBooked}
-                            </button>
+                          <TableCell
+                            className={cn("text-center", demoBooked > 0 ? "cursor-pointer" : "")}
+                            style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
+                            onClick={() => demoBooked > 0 && setDemoModalSdr({ sdr, metric: "demoBooked" })}
+                          >
+                            {demoBooked}
                           </TableCell>
                         )}
-
                         <TableCell
                           className="text-center"
                           style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
@@ -620,7 +597,6 @@ export const SDRLeaderboardTable = ({
         </CardContent>
       </Card>
 
-      {/* SDR Detail Modal */}
       {selectedSDR && (
         <SDRDetailModal
           isOpen={!!selectedSDR}
@@ -642,7 +618,6 @@ export const SDRLeaderboardTable = ({
         />
       )}
 
-      {/* Demo Meetings Modal — PEXA only */}
       {demoModalSdr && isPexa && (
         <DemoMeetingsModal
           isOpen={!!demoModalSdr}
