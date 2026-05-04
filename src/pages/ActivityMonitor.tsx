@@ -40,7 +40,7 @@ import {
   Table2,
   ChevronDown,
   SlidersHorizontal,
-  Film,
+  CalendarCheck,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
@@ -1318,9 +1318,9 @@ const ActivityMonitor = () => {
     ...(isPexa
       ? [
           {
-            label: "🎬 Demo Booked",
+            label: "Total Demos",
             value: totals.demoBooked.toLocaleString(),
-            icon: Film,
+            icon: CalendarCheck,
             iconColor: "#f43f5e",
             iconBg: "rgba(244,63,94,0.1)",
           },
