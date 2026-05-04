@@ -79,8 +79,7 @@ type SortKey =
   | "answerRate"
   | "sqls"
   | "conversion"
-  | "demoBooked"
-  | "demoAttended";
+  | "demoBooked";
 type SortDir = "asc" | "desc";
 type DrillMetric = "answered" | "sqls" | "conversations";
 type DateMode = "day" | "week" | "month";
@@ -260,7 +259,7 @@ const ActivityMonitor = () => {
   const [demoModalSdr, setDemoModalSdr] = useState<{
     sdrName: string;
     dateRange: { from: Date; to: Date };
-    metric: "demoBooked" | "demoAttended";
+    metric: "demoBooked";
   } | null>(null);
   const [demoCounts, setDemoCounts] = useState<Map<string, { demo_booked: number; demo_attended: number }>>(new Map());
   const isPexa = clientFilter === "pexa-clear";
@@ -905,8 +904,6 @@ const ActivityMonitor = () => {
         else if (sortKey === "clientId") cmp = a.clientId.localeCompare(b.clientId);
         else if (sortKey === "demoBooked")
           cmp = (demoCounts.get(a.sdrName)?.demo_booked || 0) - (demoCounts.get(b.sdrName)?.demo_booked || 0);
-        else if (sortKey === "demoAttended")
-          cmp = (demoCounts.get(a.sdrName)?.demo_attended || 0) - (demoCounts.get(b.sdrName)?.demo_attended || 0);
         else cmp = (a[sortKey] as number) - (b[sortKey] as number);
         return sortDir === "desc" ? -cmp : cmp;
       }
@@ -1826,11 +1823,6 @@ const ActivityMonitor = () => {
                         <SortHeader label="Demo Booked" sortKeyName="demoBooked" />
                       </TableHead>
                     )}
-                    {isPexa && (
-                      <TableHead className="px-3 py-3 text-center">
-                        <SortHeader label="Demo Attended" sortKeyName="demoAttended" />
-                      </TableHead>
-                    )}
                     <TableHead className="px-3 py-3 text-center">
                       <SortHeader label="Conv. Rate" sortKeyName="conversion" />
                     </TableHead>
@@ -1849,7 +1841,7 @@ const ActivityMonitor = () => {
                           {showDivider && (
                             <TableRow key="inactive-divider" className="border-0 pointer-events-none">
                               <TableCell
-                                colSpan={mode === "live" ? (isPexa ? 11 : 9) : isPexa ? 10 : 8}
+                                colSpan={mode === "live" ? (isPexa ? 10 : 9) : isPexa ? 9 : 8}
                                 className="py-4 px-4"
                               >
                                 <div className="flex items-center gap-3">
@@ -1943,7 +1935,6 @@ const ActivityMonitor = () => {
                               (() => {
                                 const counts = demoCounts.get(row.sdrName);
                                 const booked = counts?.demo_booked || 0;
-                                const attended = counts?.demo_attended || 0;
                                 return (
                                   <>
                                     <TableCell className="text-center px-3 py-2">
@@ -1975,37 +1966,6 @@ const ActivityMonitor = () => {
                                         }
                                       >
                                         {booked}
-                                      </Button>
-                                    </TableCell>
-                                    <TableCell className="text-center px-3 py-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="font-bold text-foreground hover:text-foreground/80"
-                                        onClick={() =>
-                                          attended > 0 &&
-                                          setDemoModalSdr({
-                                            sdrName: row.sdrName,
-                                            metric: "demoAttended",
-                                            dateRange:
-                                              mode === "live"
-                                                ? {
-                                                    from: new Date(todayMelbourne + "T00:00:00"),
-                                                    to: new Date(todayMelbourne + "T23:59:59"),
-                                                  }
-                                                : {
-                                                    from: new Date(
-                                                      (dateRangeInfo.dates[0] || todayMelbourne) + "T00:00:00",
-                                                    ),
-                                                    to: new Date(
-                                                      (dateRangeInfo.dates[dateRangeInfo.dates.length - 1] ||
-                                                        todayMelbourne) + "T23:59:59",
-                                                    ),
-                                                  },
-                                          })
-                                        }
-                                      >
-                                        {attended}
                                       </Button>
                                     </TableCell>
                                   </>
