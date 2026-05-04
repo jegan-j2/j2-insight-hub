@@ -372,7 +372,7 @@ export const SDRLeaderboardTable = ({
                           className="text-[#3b82f6] cursor-pointer hover:underline"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDemoModalSdr({ sdr, metric: "demoBooked" });
+                            setDemoModalSdr(sdr);
                           }}
                         >
                           🎬 {demoBooked}
