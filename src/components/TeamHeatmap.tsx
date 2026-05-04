@@ -380,7 +380,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
           p_client_id: "pexa-clear",
           p_start_date: startDate,
           p_end_date: endDate,
-          p_mode: isHourMode ? "hour" : "day",
+          p_mode: "day",
         });
         if (!error && rows) {
           const m = new Map<string, { demo_booked: number; demo_attended: number }>();
@@ -592,16 +592,23 @@ export const TeamHeatmap = ({ clients }: Props) => {
           t.sqls += Number(r.sqls) || 0;
         }
       }
+      // For By Hour chart — demos are stored by day not hour
+      // Show total demos on the peak dial hour only
+      const totalDemosAll = isPexa
+        ? Array.from(demoHeatmapData.values()).reduce((s, d) => s + (d.demo_booked || 0), 0)
+        : 0;
+      let peakHour = "";
+      let peakDials = 0;
+      for (const k of HOUR_KEYS) {
+        const t = totals.get(k);
+        if (t && t.dials > peakDials) {
+          peakDials = t.dials;
+          peakHour = k;
+        }
+      }
       return HOUR_KEYS.map((k) => {
         const t = totals.get(k) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
         const otherDials = Math.max(0, t.dials - t.answered - t.dms);
-        // Sum demos across all SDRs for this hour key
-        let demos = 0;
-        if (isPexa) {
-          for (const [mapKey, d] of demoHeatmapData.entries()) {
-            if (mapKey.endsWith(`|${k}`)) demos += d.demo_booked || 0;
-          }
-        }
         return {
           key: k,
           label: HOUR_LABELS[k] ?? k,
@@ -610,7 +617,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
           dms: t.dms,
           sqls: t.sqls,
           dialsOnly: otherDials,
-          demos,
+          demos: isPexa && k === peakHour ? totalDemosAll : 0,
         };
       });
     }
@@ -667,8 +674,14 @@ export const TeamHeatmap = ({ clients }: Props) => {
     const sqlPart = sqls > 0 ? ` · ${sqls} 🎯` : "";
     let tooltip = `${formatColumnHeader(key)} - ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
     if (isPexa) {
-      const demo = demoHeatmapData.get(`${sdr}|${key}`);
-      if (demo && demo.demo_booked > 0) tooltip += ` · 🎬 ${demo.demo_booked} booked`;
+      if (isHourMode) {
+        // In Day mode, demos are by date not by hour — show SDR total for the day
+        const sdrDemos = sdrDayDemosMap.get(sdr) || 0;
+        if (sdrDemos > 0 && dials > 0) tooltip += ` · 🎬 ${sdrDemos} demo${sdrDemos === 1 ? "" : "s"} today`;
+      } else {
+        const demo = demoHeatmapData.get(`${sdr}|${key}`);
+        if (demo && demo.demo_booked > 0) tooltip += ` · 🎬 ${demo.demo_booked} booked`;
+      }
     }
     return tooltip;
   };
@@ -1192,18 +1205,10 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 iconColor: "text-rose-500",
                 iconBg: "bg-rose-500/10",
               },
-              {
-                title: "Active SDRs",
-                value: summary.activeSdrs.toLocaleString(),
-                subtitle: null,
-                icon: Users,
-                iconColor: "text-indigo-500",
-                iconBg: "bg-indigo-500/10",
-              },
               ...(isPexa
                 ? [
                     {
-                      title: "Total Demos",
+                      title: "Demos",
                       value: summary.totalDemos.toLocaleString(),
                       subtitle: null,
                       icon: TargetIcon,
@@ -1212,6 +1217,14 @@ export const TeamHeatmap = ({ clients }: Props) => {
                     },
                   ]
                 : []),
+              {
+                title: "Active SDRs",
+                value: summary.activeSdrs.toLocaleString(),
+                subtitle: null,
+                icon: Users,
+                iconColor: "text-indigo-500",
+                iconBg: "bg-indigo-500/10",
+              },
             ].map((card) => (
               <Card key={card.title} className="bg-card/50 backdrop-blur-sm border-border">
                 <CardContent className="p-6">
