@@ -897,10 +897,11 @@ export type Database = {
           contact_person: string
           created_at: string
           demo_status: string
-          hubspot_contact_id: string
+          hubspot_engagement_id: string
           id: string
           meeting_date: string
           meeting_time: string
+          sdr_name: string
         }[]
       }
       get_sdr_heatmap: {
