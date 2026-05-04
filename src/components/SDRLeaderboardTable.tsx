@@ -562,9 +562,8 @@ export const SDRLeaderboardTable = ({
                         </TableCell>
                         {isPexa && (
                           <TableCell
-                            className={cn("text-center", demoBooked > 0 ? "cursor-pointer" : "")}
+                            className="text-center"
                             style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
-                            onClick={() => demoBooked > 0 && setDemoModalSdr({ sdr, metric: "demoBooked" })}
                           >
                             {demoBooked}
                           </TableCell>
