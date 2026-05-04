@@ -380,6 +380,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
           p_client_id: "pexa-clear",
           p_start_date: startDate,
           p_end_date: endDate,
+          p_mode: isHourMode ? "hour" : "day",
         });
         if (!error && rows) {
           const m = new Map<string, { demo_booked: number; demo_attended: number }>();
@@ -394,7 +395,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       }
     };
     fetchDemoHeatmap();
-  }, [isPexa, startDate, endDate]);
+  }, [isPexa, startDate, endDate, isHourMode]);
 
   const clientLookup = useMemo(() => {
     const m = new Map<string, ClientLite>();
@@ -565,8 +566,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
     const answerRate = dials > 0 ? Math.round((answered / dials) * 1000) / 10 : 0;
     const convRate = dials > 0 ? Math.round((sqls / dials) * 1000) / 10 : 0;
     const dmRate = answered > 0 ? Math.round((dms / answered) * 1000) / 10 : null;
-    return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate, dmRate };
-  }, [data]);
+    // Total demos — sum all demo_booked values from demoHeatmapData
+    let totalDemos = 0;
+    if (isPexa) {
+      for (const d of demoHeatmapData.values()) totalDemos += d.demo_booked || 0;
+    }
+    return { dials, answered, sqls, dms, activeSdrs: activeSdrs.size, answerRate, convRate, dmRate, totalDemos };
+  }, [data, isPexa, demoHeatmapData]);
 
   const showHourChart = !isHourMode && chartView === "hour";
 
@@ -589,6 +595,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
       return HOUR_KEYS.map((k) => {
         const t = totals.get(k) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
         const otherDials = Math.max(0, t.dials - t.answered - t.dms);
+        // Sum demos across all SDRs for this hour key
+        let demos = 0;
+        if (isPexa) {
+          for (const [mapKey, d] of demoHeatmapData.entries()) {
+            if (mapKey.endsWith(`|${k}`)) demos += d.demo_booked || 0;
+          }
+        }
         return {
           key: k,
           label: HOUR_LABELS[k] ?? k,
@@ -597,6 +610,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
           dms: t.dms,
           sqls: t.sqls,
           dialsOnly: otherDials,
+          demos,
         };
       });
     }
@@ -614,6 +628,13 @@ export const TeamHeatmap = ({ clients }: Props) => {
     return columnKeys.map((k) => {
       const t = totals.get(k) || { dials: 0, answered: 0, dms: 0, sqls: 0 };
       const otherDials = Math.max(0, t.dials - t.answered - t.dms);
+      // Sum demos across all SDRs for this date key
+      let demos = 0;
+      if (isPexa) {
+        for (const [mapKey, d] of demoHeatmapData.entries()) {
+          if (mapKey.endsWith(`|${k}`)) demos += d.demo_booked || 0;
+        }
+      }
       return {
         key: k,
         label: formatColumnHeader(k),
@@ -622,9 +643,21 @@ export const TeamHeatmap = ({ clients }: Props) => {
         dms: t.dms,
         sqls: t.sqls,
         dialsOnly: otherDials,
+        demos,
       };
     });
-  }, [columnKeys, data, isHourMode, showHourChart, hourChartData]);
+  }, [columnKeys, data, isHourMode, showHourChart, hourChartData, isPexa, demoHeatmapData]);
+
+  // Build per-SDR total demos for Day mode (demos are per-day, not per-hour)
+  const sdrDayDemosMap = useMemo(() => {
+    if (!isPexa || !isHourMode) return new Map<string, number>();
+    const m = new Map<string, number>();
+    for (const [key, d] of demoHeatmapData.entries()) {
+      const sdrName = key.split("|")[0];
+      m.set(sdrName, (m.get(sdrName) || 0) + (d.demo_booked || 0));
+    }
+    return m;
+  }, [isPexa, isHourMode, demoHeatmapData]);
 
   const buildTooltip = (sdr: string, key: string): string => {
     const cell = cellMap.get(`${sdr}|${key}`);
@@ -633,13 +666,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
     const sqls = Number(cell?.sqls) || 0;
     const sqlPart = sqls > 0 ? ` · ${sqls} 🎯` : "";
     let tooltip = `${formatColumnHeader(key)} - ${dials} dial${dials === 1 ? "" : "s"} · ${answered} answered${sqlPart}`;
-    // Add demo counts for PEXA when present
     if (isPexa) {
-      const demoKey = `${sdr}|${key}`;
-      const demo = demoHeatmapData.get(demoKey);
-      if (demo && (demo.demo_booked > 0 || demo.demo_attended > 0)) {
-        tooltip += ` · 🎬 ${demo.demo_booked} booked`;
-      }
+      const demo = demoHeatmapData.get(`${sdr}|${key}`);
+      if (demo && demo.demo_booked > 0) tooltip += ` · 🎬 ${demo.demo_booked} booked`;
     }
     return tooltip;
   };
@@ -1127,7 +1156,9 @@ export const TeamHeatmap = ({ clients }: Props) => {
       {/* Summary stat cards */}
       {!loading && !errored && sdrs.length > 0 && (
         <>
-          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div
+            className={`grid grid-cols-1 min-[480px]:grid-cols-2 gap-4 ${isPexa ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}
+          >
             {[
               {
                 title: "Total Dials",
@@ -1169,6 +1200,18 @@ export const TeamHeatmap = ({ clients }: Props) => {
                 iconColor: "text-indigo-500",
                 iconBg: "bg-indigo-500/10",
               },
+              ...(isPexa
+                ? [
+                    {
+                      title: "Total Demos",
+                      value: summary.totalDemos.toLocaleString(),
+                      subtitle: null,
+                      icon: TargetIcon,
+                      iconColor: "text-rose-500",
+                      iconBg: "bg-rose-500/10",
+                    },
+                  ]
+                : []),
             ].map((card) => (
               <Card key={card.title} className="bg-card/50 backdrop-blur-sm border-border">
                 <CardContent className="p-6">
@@ -1249,6 +1292,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                           answered: number;
                           dms: number;
                           sqls: number;
+                          demos: number;
                         };
                         return (
                           <div
@@ -1264,6 +1308,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
                             {label} - {row.dials.toLocaleString()} dials · {row.answered.toLocaleString()} answered ·{" "}
                             {row.dms.toLocaleString()} DM conv.
                             {row.sqls > 0 && <> · 🎯 SQLs: {row.sqls.toLocaleString()}</>}
+                            {isPexa && row.demos > 0 && <> · 🎬 Demos: {row.demos.toLocaleString()}</>}
                           </div>
                         );
                       }}
