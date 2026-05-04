@@ -638,7 +638,7 @@ export const TeamHeatmap = ({ clients }: Props) => {
       const demoKey = `${sdr}|${key}`;
       const demo = demoHeatmapData.get(demoKey);
       if (demo && (demo.demo_booked > 0 || demo.demo_attended > 0)) {
-        tooltip += ` · 🎬 ${demo.demo_booked} booked · ✅ ${demo.demo_attended} attended`;
+        tooltip += ` · 🎬 ${demo.demo_booked} booked`;
       }
     }
     return tooltip;
