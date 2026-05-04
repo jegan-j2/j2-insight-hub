@@ -47,8 +47,7 @@ type SortKey =
   | "avgDuration"
   | "name"
   | "clientName"
-  | "demoBooked"
-  | "demoAttended";
+  | "demoBooked";
 type SortDir = "asc" | "desc";
 
 interface MostImprovedInfo {
@@ -102,10 +101,7 @@ export const SDRLeaderboardTable = ({
 
   // Demo counts — only fetched when PEXA filter is active
   const [demoCounts, setDemoCounts] = useState<DemoCounts[]>([]);
-  const [demoModalSdr, setDemoModalSdr] = useState<{
-    sdr: LeaderboardEntry;
-    metric: "demoBooked" | "demoAttended";
-  } | null>(null);
+  const [demoModalSdr, setDemoModalSdr] = useState<{ sdr: LeaderboardEntry; metric: "demoBooked" } | null>(null);
 
   const isPexa = clientFilter === PEXA_CLIENT_ID;
 
@@ -219,10 +215,6 @@ export const SDRLeaderboardTable = ({
         case "demoBooked":
           aVal = getDemoCounts(a.name).demoBooked;
           bVal = getDemoCounts(b.name).demoBooked;
-          break;
-        case "demoAttended":
-          aVal = getDemoCounts(a.name).demoAttended;
-          bVal = getDemoCounts(b.name).demoAttended;
           break;
         default:
           aVal = a[sortKey as keyof LeaderboardEntry] as number;
@@ -375,15 +367,15 @@ export const SDRLeaderboardTable = ({
                         <span className="font-medium text-foreground">{sdr.totalDials.toLocaleString()}</span> Dials
                       </span>
                       <span>{getAnswerRateBadge(sdr.answerRate)}</span>
-                      {isPexa && (demoBooked > 0 || demoAttended > 0) && (
+                      {isPexa && demoBooked > 0 && (
                         <span
                           className="text-[#3b82f6] cursor-pointer hover:underline"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDemoModalSdr({ sdr, metric: demoAttended > 0 ? "demoAttended" : "demoBooked" });
+                            setDemoModalSdr(sdr);
                           }}
                         >
-                          🎬 {demoBooked} / ✅ {demoAttended}
+                          🎬 {demoBooked}
                         </span>
                       )}
                     </div>
@@ -417,7 +409,6 @@ export const SDRLeaderboardTable = ({
                   <col style={{ width: "85px" }} />
                   <col style={{ width: "90px" }} />
                   {isPexa && <col style={{ width: "100px" }} />}
-                  {isPexa && <col style={{ width: "110px" }} />}
                 </colgroup>
                 <TableHeader className="table-header-navy">
                   <TableRow>
@@ -488,15 +479,7 @@ export const SDRLeaderboardTable = ({
                         Demo Booked <SortIcon column="demoBooked" />
                       </TableHead>
                     )}
-                    {isPexa && (
-                      <TableHead
-                        className="text-center cursor-pointer select-none h-[44px]"
-                        style={{ padding: cellPad }}
-                        onClick={() => handleSort("demoAttended")}
-                      >
-                        Demo Attended <SortIcon column="demoAttended" />
-                      </TableHead>
-                    )}
+
                     <TableHead
                       className="text-center cursor-pointer select-none h-[44px]"
                       style={{ padding: cellPad }}
@@ -608,22 +591,7 @@ export const SDRLeaderboardTable = ({
                             </button>
                           </TableCell>
                         )}
-                        {isPexa && (
-                          <TableCell className="text-center" style={{ padding: cellPad }}>
-                            <button
-                              className={cn(
-                                "tabular-nums font-medium transition-colors",
-                                demoAttended > 0
-                                  ? "text-[#10b981] hover:text-[#059669] cursor-pointer hover:underline"
-                                  : "text-muted-foreground cursor-default",
-                              )}
-                              onClick={() => demoAttended > 0 && setDemoModalSdr({ sdr, metric: "demoAttended" })}
-                              disabled={demoAttended === 0}
-                            >
-                              {demoAttended}
-                            </button>
-                          </TableCell>
-                        )}
+
                         <TableCell
                           className="text-center"
                           style={{ padding: cellPad, fontVariantNumeric: "tabular-nums" }}
