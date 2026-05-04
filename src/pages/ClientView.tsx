@@ -279,20 +279,13 @@ const ClientView = () => {
           />
 
           {/* Demo Counts — PEXA only */}
-          {isPexa && demoCounts && (demoCounts.demo_booked > 0 || demoCounts.demo_attended > 0) && (
+          {isPexa && demoCounts && demoCounts.demo_booked > 0 && (
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-3 px-5 py-4 rounded-lg border border-border bg-card/50">
                 <span className="text-2xl">🎬</span>
                 <div>
                   <p className="text-sm text-muted-foreground">Demo Booked</p>
                   <p className="text-3xl font-bold text-[#3b82f6]">{demoCounts.demo_booked}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 px-5 py-4 rounded-lg border border-border bg-card/50">
-                <span className="text-2xl">✅</span>
-                <div>
-                  <p className="text-sm text-muted-foreground">Demo Attended</p>
-                  <p className="text-3xl font-bold text-[#10b981]">{demoCounts.demo_attended}</p>
                 </div>
               </div>
             </div>
